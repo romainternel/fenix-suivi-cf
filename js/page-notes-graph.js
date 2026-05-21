@@ -208,6 +208,10 @@
             tbody.innerHTML = '';
             
             Object.entries(playerNotes)
+                .filter(([joueur]) => {
+                    if (typeof GARDIENS_FENIX === 'undefined' || !GARDIENS_FENIX.length) return true;
+                    return !GARDIENS_FENIX.some(g => matchPlayerName(g, joueur));
+                })
                 .sort((a, b) => {
                     const totalA = (a[1].attPlus - a[1].attMoins) + (a[1].defPlus - a[1].defMoins);
                     const totalB = (b[1].attPlus - b[1].attMoins) + (b[1].defPlus - b[1].defMoins);
@@ -300,7 +304,7 @@
 
             const entries = Object.entries(gbNotes);
             if (entries.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:1rem">Aucune donnée gardien</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#94a3b8;padding:1rem">Aucune donnée gardien</td></tr>';
                 return;
             }
 
@@ -316,6 +320,10 @@
                     const parMatch = (scoreTotal / nbMatchs).toFixed(1);
                     const bonusStr = n.bonus !== 0 ? ` <span style="font-size:0.75em;color:#94a3b8">(actions ${n.bonus > 0 ? '+' : ''}${n.bonus})</span>` : '';
 
+                    const tjData = (typeof getTJData === 'function') ? getTJData(gardien, [...n.matchSet]) : { total: null, matchs: null };
+                    const tjTotal = tjData.total !== null ? `${tjData.total} min` : '—';
+                    const tjMoy   = (tjData.total !== null && tjData.matchs > 0) ? `${Math.round(tjData.total / tjData.matchs)} min` : '—';
+
                     const g = gardien.replace(/'/g, "\\'");
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -327,6 +335,8 @@
                         <td style="color:var(--fenix-danger)">${sign(n.scoreButs)}</td>
                         <td><strong style="color:${scoreTotal >= 0 ? 'var(--fenix-success)' : 'var(--fenix-danger)'};font-size:1.1em">${sign(scoreTotal)}</strong>${bonusStr}</td>
                         <td style="color:#64748b">${parseFloat(parMatch) >= 0 ? '+' : ''}${parMatch}</td>
+                        <td style="color:#64748b">${tjTotal}</td>
+                        <td style="color:#94a3b8">${tjMoy}</td>
                     `;
                     tbody.appendChild(tr);
                 });

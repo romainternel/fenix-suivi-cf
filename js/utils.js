@@ -55,6 +55,26 @@
             return en.startsWith(tn + ' ') || tn.startsWith(en + ' ');
         }
 
+        function detectIsGB(nom) {
+            // 1. Depuis la feuille Joueurs (si chargée)
+            if (typeof JOUEURS_TERRAIN !== 'undefined' && JOUEURS_TERRAIN.length) {
+                const tp = JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom));
+                if (tp) return tp.poste === 'GB';
+            }
+            // 2. Fallback auto : si le joueur apparaît comme gardien dans les lignes adverses
+            const asGardien = DATA.filter(r =>
+                r[COLS.club] !== 'FENIX' &&
+                matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) &&
+                (r[COLS.resultat] === 'But' || r[COLS.finalite] === 'Tir arrêté')
+            ).length;
+            const asJoueur = DATA.filter(r =>
+                r[COLS.club] === 'FENIX' &&
+                matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom) &&
+                ['But','Tir raté'].includes(r[COLS.resultat])
+            ).length;
+            return asGardien > 0 && asGardien >= asJoueur;
+        }
+
         function checkDuplicateNames() {
             const seen = {};
             const dupes = [];

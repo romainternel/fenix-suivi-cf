@@ -64,7 +64,7 @@
 
         function selectJoueur(nom) {
             currentSelectedJoueur = nom;
-            const terrainPlayer = JOUEURS_TERRAIN.find(p => p.nom === nom);
+            const terrainPlayer = JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom));
             const color = terrainPlayer ? POSTE_COLORS[terrainPlayer.poste] : '#0A2463';
             const posteName = {
                 GB: 'Gardien de But', AG: 'Ailier Gauche', AD: 'Ailier Droit',
@@ -523,84 +523,140 @@
             const nom = currentSelectedJoueur;
             if (!nom) return;
 
-            const terrainPlayer = JOUEURS_TERRAIN.find(p => p.nom === nom);
-            const isGB          = terrainPlayer && terrainPlayer.poste === 'GB';
+            const isGB = (typeof detectIsGB === 'function') ? detectIsGB(nom) : (JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) || {}).poste === 'GB';
             const matchFilter   = document.getElementById('filter-joueur-match').value;
 
-            // === 1. Détail complet actions (toutes lignes NOTE_GROUPS, 2 colonnes) ===
-            const counts = {};
-            const matchSet = new Set();
-            DATA.forEach(row => {
-                if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
-                const joueurs = (row[COLS.action_joueur] || '').toString().split(';');
-                const atts    = (row[COLS.action_att]    || '').toString().split(';');
-                const defs    = (row[COLS.action_def]    || '').toString().split(';');
-                joueurs.forEach((j, idx) => {
-                    if (!matchPlayerName(j.trim(), nom)) return;
-                    if (row[COLS.rencontre]) matchSet.add(row[COLS.rencontre]);
-                    const att = lastNonEmpty(atts, idx);
-                    const def = lastNonEmpty(defs, idx);
-                    if (att) counts[att] = (counts[att] || 0) + 1;
-                    if (def) counts[def] = (counts[def] || 0) + 1;
+            // === 1. Détail actions (joueur de champ) ou Zones % (GB) ===
+            let actionCardHTML;
+            if (isGB) {
+                const DIFF_ORDER = ['Très difficile', 'Difficile', 'Moyen', 'Facile', 'Très facile', null];
+                const DIFF_COLOR = { 'Très difficile':'#FEE2E2', 'Difficile':'#FFEDD5', 'Moyen':'#FEF3C7', 'Facile':'#D1FAE5', 'Très facile':'#F1F5F9' };
+                const gbZones = {};
+                DATA.forEach(row => {
+                    if (row[COLS.club] === 'FENIX') return;
+                    if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                    const g = (row[COLS.gardien]||'').toString().trim();
+                    if (!matchPlayerName(g, nom)) return;
+                    const isArret = row[COLS.finalite] === 'Tir arrêté';
+                    const isBut   = row[COLS.resultat] === 'But';
+                    if (!isArret && !isBut) return;
+                    const zone = (row[COLS.field_position]||'').toString().trim() || '(sans zone)';
+                    if (!gbZones[zone]) gbZones[zone] = { arrets: 0, buts: 0 };
+                    if (isArret) gbZones[zone].arrets++;
+                    if (isBut)   gbZones[zone].buts++;
                 });
-            });
-            const nb = matchSet.size || 1;
-            const gc = g => {
-                const total = g.main.reduce((s, a) => s + (counts[a] || 0), 0);
-                return { total, sub: g.sub ? (counts[g.sub] || 0) : null };
-            };
-            const buildSection = (groups, color, label) => {
-                const rows = groups.map(g => {
-                    const { total, sub } = gc(g);
-                    const avg  = total > 0 ? (total / nb).toFixed(1) : '-';
-                    const cTxt = sub !== null
-                        ? `${total} <span style="color:#94A3B8;font-size:0.78em">(${sub})</span>`
-                        : (total > 0 ? total : '-');
-                    return `<tr style="border-bottom:1px solid #F1F5F9;opacity:${total === 0 ? '0.45' : '1'}">
-                        <td style="padding:3px 6px;font-size:0.78rem">${g.label}</td>
-                        <td style="padding:3px 6px;text-align:right;font-weight:700;color:${total > 0 ? color : '#CBD5E1'};font-size:0.82rem">${cTxt}</td>
-                        <td style="padding:3px 6px;text-align:right;color:#64748B;font-size:0.75rem">${avg}</td>
+                const wz = (typeof GB_ZONE_WEIGHTS !== 'undefined') ? GB_ZONE_WEIGHTS : {};
+                const allZones = Object.keys(gbZones).sort((a, b) => {
+                    const da = wz[a] ? DIFF_ORDER.indexOf(wz[a].diff) : 99;
+                    const db = wz[b] ? DIFF_ORDER.indexOf(wz[b].diff) : 99;
+                    return da - db;
+                });
+                const zoneRows = allZones.map(zone => {
+                    const zd = gbZones[zone];
+                    const tirs = zd.arrets + zd.buts;
+                    const pct  = tirs > 0 ? Math.round(zd.arrets / tirs * 100) : 0;
+                    const w    = wz[zone] || {};
+                    const diff = w.diff || '—';
+                    const bg   = DIFF_COLOR[diff] || '#ffffff';
+                    const pctColor = pct >= 40 ? '#10B981' : '#EF4444';
+                    return `<tr style="border-bottom:1px solid #F1F5F9">
+                        <td style="padding:3px 6px;font-weight:600;font-size:0.78rem">${zone}</td>
+                        <td style="padding:3px 6px"><span style="background:${bg};border-radius:4px;padding:0.1rem 0.3rem;font-size:0.72rem">${diff}</span></td>
+                        <td style="padding:3px 6px;text-align:center;color:#10B981;font-weight:600">${zd.arrets}</td>
+                        <td style="padding:3px 6px;text-align:center;color:#EF4444;font-weight:600">${zd.buts}</td>
+                        <td style="padding:3px 6px;text-align:center;color:#64748b">${tirs}</td>
+                        <td style="padding:3px 6px;text-align:center;font-weight:700;color:${pctColor}">${pct}%</td>
                     </tr>`;
                 }).join('');
-                return `<div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden">
-                    <div style="background:${color};color:white;padding:4px 8px;font-weight:700;font-size:0.75rem;letter-spacing:1px">${label}</div>
-                    <table style="width:100%;border-collapse:collapse">
-                        <thead><tr style="background:#F8FAFC">
-                            <th style="padding:2px 6px;text-align:left;font-size:0.68rem;color:#94A3B8;font-weight:600">ACTION</th>
-                            <th style="padding:2px 6px;text-align:right;font-size:0.68rem;color:#94A3B8;font-weight:600">TOTAL</th>
-                            <th style="padding:2px 6px;text-align:right;font-size:0.68rem;color:#94A3B8;font-weight:600">/MATCH</th>
-                        </tr></thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                </div>`;
-            };
-            const totAP = NOTE_GROUPS.attPlus.reduce((s, g)  => s + gc(g).total, 0);
-            const totAM = NOTE_GROUPS.attMoins.reduce((s, g) => s + gc(g).total, 0);
-            const totDP = NOTE_GROUPS.defPlus.reduce((s, g)  => s + gc(g).total, 0);
-            const totDM = NOTE_GROUPS.defMoins.reduce((s, g) => s + gc(g).total, 0);
-            const noteAtt   = totAP - totAM;
-            const noteDef   = totDP - totDM;
-            const noteTotal = noteAtt + noteDef;
-            const sign      = v => (v >= 0 ? '+' : '') + v;
-            const ntColor   = noteTotal >= 0 ? '#10B981' : '#EF4444';
-            const naColor   = noteAtt   >= 0 ? '#10B981' : '#EF4444';
-            const ndColor   = noteDef   >= 0 ? '#10B981' : '#EF4444';
-
-            const actionCardHTML = `
-                <div style="margin:12px 0">
-                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#0A2463;margin-bottom:8px;letter-spacing:1.5px">DÉTAIL DES ACTIONS — ${nb} MATCH${nb > 1 ? 'S' : ''}</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                        ${buildSection(NOTE_GROUPS.attPlus,  '#10B981', 'ATTAQUE +')}
-                        ${buildSection(NOTE_GROUPS.defPlus,  '#10B981', 'DÉFENSE +')}
-                        ${buildSection(NOTE_GROUPS.attMoins, '#EF4444', 'ATTAQUE -')}
-                        ${buildSection(NOTE_GROUPS.defMoins, '#EF4444', 'DÉFENSE -')}
-                    </div>
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;border-top:2px solid #0A2463;margin-top:10px;padding-top:8px">
-                        <div><div style="font-weight:700;font-size:1.1rem;color:${naColor}">${sign(noteAtt)}</div><div style="font-size:0.72rem;color:#64748B">Note ATT</div></div>
-                        <div><div style="font-weight:700;font-size:1.1rem;color:${ndColor}">${sign(noteDef)}</div><div style="font-size:0.72rem;color:#64748B">Note DEF</div></div>
-                        <div><div style="font-weight:700;font-size:1.3rem;color:${ntColor}">${sign(noteTotal)}</div><div style="font-size:0.72rem;color:#64748B">Note globale</div></div>
-                    </div>
-                </div>`;
+                actionCardHTML = `
+                    <div style="margin:12px 0">
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#0A2463;margin-bottom:8px;letter-spacing:1.5px">STATS PAR ZONE — GARDIEN</div>
+                        <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+                            <thead><tr style="background:#F8FAFC">
+                                <th style="padding:3px 6px;text-align:left;font-size:0.7rem;color:#475569;font-weight:700">ZONE</th>
+                                <th style="padding:3px 6px;text-align:left;font-size:0.7rem;color:#475569;font-weight:700">DIFFICULTÉ</th>
+                                <th style="padding:3px 6px;text-align:center;font-size:0.7rem;color:#10B981;font-weight:700">ARRÊTS</th>
+                                <th style="padding:3px 6px;text-align:center;font-size:0.7rem;color:#EF4444;font-weight:700">BUTS</th>
+                                <th style="padding:3px 6px;text-align:center;font-size:0.7rem;color:#64748b;font-weight:700">TIRS</th>
+                                <th style="padding:3px 6px;text-align:center;font-size:0.7rem;color:#475569;font-weight:700">%</th>
+                            </tr></thead>
+                            <tbody>${zoneRows || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:1rem">Aucune donnée</td></tr>'}</tbody>
+                        </table>
+                    </div>`;
+            } else {
+                const counts = {};
+                const matchSet = new Set();
+                DATA.forEach(row => {
+                    if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                    const joueurs = (row[COLS.action_joueur] || '').toString().split(';');
+                    const atts    = (row[COLS.action_att]    || '').toString().split(';');
+                    const defs    = (row[COLS.action_def]    || '').toString().split(';');
+                    joueurs.forEach((j, idx) => {
+                        if (!matchPlayerName(j.trim(), nom)) return;
+                        if (row[COLS.rencontre]) matchSet.add(row[COLS.rencontre]);
+                        const att = lastNonEmpty(atts, idx);
+                        const def = lastNonEmpty(defs, idx);
+                        if (att) counts[att] = (counts[att] || 0) + 1;
+                        if (def) counts[def] = (counts[def] || 0) + 1;
+                    });
+                });
+                const nb = matchSet.size || 1;
+                const gc = g => {
+                    const total = g.main.reduce((s, a) => s + (counts[a] || 0), 0);
+                    return { total, sub: g.sub ? (counts[g.sub] || 0) : null };
+                };
+                const buildSection = (groups, color, label) => {
+                    const rows = groups.map(g => {
+                        const { total, sub } = gc(g);
+                        const avg  = total > 0 ? (total / nb).toFixed(1) : '-';
+                        const cTxt = sub !== null
+                            ? `${total} <span style="color:#94A3B8;font-size:0.78em">(${sub})</span>`
+                            : (total > 0 ? total : '-');
+                        return `<tr style="border-bottom:1px solid #F1F5F9;opacity:${total === 0 ? '0.45' : '1'}">
+                            <td style="padding:3px 6px;font-size:0.78rem">${g.label}</td>
+                            <td style="padding:3px 6px;text-align:right;font-weight:700;color:${total > 0 ? color : '#CBD5E1'};font-size:0.82rem">${cTxt}</td>
+                            <td style="padding:3px 6px;text-align:right;color:#64748B;font-size:0.75rem">${avg}</td>
+                        </tr>`;
+                    }).join('');
+                    return `<div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden">
+                        <div style="background:${color};color:white;padding:4px 8px;font-weight:700;font-size:0.75rem;letter-spacing:1px">${label}</div>
+                        <table style="width:100%;border-collapse:collapse">
+                            <thead><tr style="background:#F8FAFC">
+                                <th style="padding:2px 6px;text-align:left;font-size:0.68rem;color:#94A3B8;font-weight:600">ACTION</th>
+                                <th style="padding:2px 6px;text-align:right;font-size:0.68rem;color:#94A3B8;font-weight:600">TOTAL</th>
+                                <th style="padding:2px 6px;text-align:right;font-size:0.68rem;color:#94A3B8;font-weight:600">/MATCH</th>
+                            </tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>`;
+                };
+                const totAP = NOTE_GROUPS.attPlus.reduce((s, g)  => s + gc(g).total, 0);
+                const totAM = NOTE_GROUPS.attMoins.reduce((s, g) => s + gc(g).total, 0);
+                const totDP = NOTE_GROUPS.defPlus.reduce((s, g)  => s + gc(g).total, 0);
+                const totDM = NOTE_GROUPS.defMoins.reduce((s, g) => s + gc(g).total, 0);
+                const noteAtt   = totAP - totAM;
+                const noteDef   = totDP - totDM;
+                const noteTotal = noteAtt + noteDef;
+                const sign      = v => (v >= 0 ? '+' : '') + v;
+                const ntColor   = noteTotal >= 0 ? '#10B981' : '#EF4444';
+                const naColor   = noteAtt   >= 0 ? '#10B981' : '#EF4444';
+                const ndColor   = noteDef   >= 0 ? '#10B981' : '#EF4444';
+                actionCardHTML = `
+                    <div style="margin:12px 0">
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#0A2463;margin-bottom:8px;letter-spacing:1.5px">DÉTAIL DES ACTIONS — ${nb} MATCH${nb > 1 ? 'S' : ''}</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                            ${buildSection(NOTE_GROUPS.attPlus,  '#10B981', 'ATTAQUE +')}
+                            ${buildSection(NOTE_GROUPS.defPlus,  '#10B981', 'DÉFENSE +')}
+                            ${buildSection(NOTE_GROUPS.attMoins, '#EF4444', 'ATTAQUE -')}
+                            ${buildSection(NOTE_GROUPS.defMoins, '#EF4444', 'DÉFENSE -')}
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;border-top:2px solid #0A2463;margin-top:10px;padding-top:8px">
+                            <div><div style="font-weight:700;font-size:1.1rem;color:${naColor}">${sign(noteAtt)}</div><div style="font-size:0.72rem;color:#64748B">Note ATT</div></div>
+                            <div><div style="font-weight:700;font-size:1.1rem;color:${ndColor}">${sign(noteDef)}</div><div style="font-size:0.72rem;color:#64748B">Note DEF</div></div>
+                            <div><div style="font-weight:700;font-size:1.3rem;color:${ntColor}">${sign(noteTotal)}</div><div style="font-size:0.72rem;color:#64748B">Note globale</div></div>
+                        </div>
+                    </div>`;
+            }
 
             // === 2. Note graph — canvas DOM direct (Safari ne rend pas les data: URL en print) ===
             let graphCanvas = null;

@@ -85,9 +85,9 @@
 
         function _renderPlayerFicheContent(nom, page) {
 
-            const tp        = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => p.nom === nom) : null;
+            const tp        = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) : null;
             const posteCode = tp ? tp.poste : '';
-            const isGB      = posteCode === 'GB';
+            const isGB      = (typeof detectIsGB === 'function') ? detectIsGB(nom) : (posteCode === 'GB');
             const posteName = { GB:'Gardien de But', AG:'Ailier Gauche', AD:'Ailier Droit', ARG:'Arrière Gauche', ARD:'Arrière Droit', DC:'Demi-Centre', PIV:'Pivot' };
             const color     = (typeof POSTE_COLORS !== 'undefined' && POSTE_COLORS[posteCode]) ? POSTE_COLORS[posteCode] : '#0A2463';
             const initials  = nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
@@ -168,8 +168,8 @@
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div><div class="pmf-kpi-lbl">NOTE</div></div>
                 </div>`;
 
-            // ── Encart 2 : Actions détaillées (style photo 1) ──
-            const actionsHTML = _buildDetailedActionsHTML(nom);
+            // ── Encart 2 : Actions (joueur de champ) ou Zones % (GB) ──
+            const actionsHTML = isGB ? _buildGbZoneTableHTML(nom) : _buildDetailedActionsHTML(nom);
 
             // ── Encart 3 : Impact ──
             _pmfZoneFilter = '';
@@ -209,7 +209,7 @@
                 </div>
 
                 <div class="pmf-card">
-                    <div class="pmf-card-title">ACTIONS</div>
+                    <div class="pmf-card-title">${isGB ? 'STATS PAR ZONE' : 'ACTIONS'}</div>
                     ${actionsHTML}
                 </div>
 
@@ -237,6 +237,75 @@
 
             renderPmfGraph(nom);
             _drawPmfImpact(impactRowsAll, isGB);
+        }
+
+        // ── Tableau zones de tir GB (remplace ACTIONS pour les gardiens) ────────
+        function _buildGbZoneTableHTML(nom) {
+            const DIFF_ORDER = ['Très difficile', 'Difficile', 'Moyen', 'Facile', 'Très facile', null];
+            const DIFF_COLOR = {
+                'Très difficile': '#FEE2E2',
+                'Difficile':      '#FFEDD5',
+                'Moyen':          '#FEF3C7',
+                'Facile':         '#D1FAE5',
+                'Très facile':    '#F1F5F9',
+            };
+
+            const zones = {};
+            DATA.forEach(row => {
+                if (row[COLS.club] === 'FENIX') return;
+                const g = (row[COLS.gardien]||'').toString().trim();
+                if (!matchPlayerName(g, nom)) return;
+                const isArret = row[COLS.finalite] === 'Tir arrêté';
+                const isBut   = row[COLS.resultat] === 'But';
+                if (!isArret && !isBut) return;
+                const zone = (row[COLS.field_position]||'').toString().trim() || '(sans zone)';
+                if (!zones[zone]) zones[zone] = { arrets: 0, buts: 0 };
+                if (isArret) zones[zone].arrets++;
+                if (isBut)   zones[zone].buts++;
+            });
+
+            const w = (typeof GB_ZONE_WEIGHTS !== 'undefined') ? GB_ZONE_WEIGHTS : {};
+            const allZones = Object.keys(zones).sort((a, b) => {
+                const da = w[a] ? DIFF_ORDER.indexOf(w[a].diff) : 99;
+                const db = w[b] ? DIFF_ORDER.indexOf(w[b].diff) : 99;
+                return da - db;
+            });
+
+            if (allZones.length === 0) return '<div style="text-align:center;color:#94a3b8;padding:1rem">Aucune donnée par zone</div>';
+
+            const rows = allZones.map(zone => {
+                const zd = zones[zone];
+                const tirs = zd.arrets + zd.buts;
+                const pct  = tirs > 0 ? Math.round(zd.arrets / tirs * 100) : 0;
+                const wz   = w[zone] || {};
+                const diff = wz.diff || '—';
+                const bg   = DIFF_COLOR[diff] || '#ffffff';
+                const pctColor = pct >= 40 ? 'var(--fenix-success)' : 'var(--fenix-danger)';
+                return `<tr style="border-bottom:1px solid #F1F5F9">
+                    <td style="padding:0.4rem 0.5rem;font-weight:600;font-size:0.82rem">${zone}</td>
+                    <td style="padding:0.4rem 0.5rem"><span style="background:${bg};border-radius:4px;padding:0.1rem 0.35rem;font-size:0.75rem">${diff}</span></td>
+                    <td style="padding:0.4rem 0.5rem;text-align:center;color:var(--fenix-success);font-weight:600">${zd.arrets}</td>
+                    <td style="padding:0.4rem 0.5rem;text-align:center;color:var(--fenix-danger);font-weight:600">${zd.buts}</td>
+                    <td style="padding:0.4rem 0.5rem;text-align:center;color:#64748b">${tirs}</td>
+                    <td style="padding:0.4rem 0.5rem;text-align:center;font-weight:700;color:${pctColor}">${pct}%</td>
+                </tr>`;
+            }).join('');
+
+            return `<div style="overflow-x:auto">
+                <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+                    <thead>
+                        <tr style="background:#F8FAFC">
+                            <th style="padding:0.4rem 0.5rem;text-align:left;font-size:0.72rem;color:#475569;font-weight:700">ZONE</th>
+                            <th style="padding:0.4rem 0.5rem;text-align:left;font-size:0.72rem;color:#475569;font-weight:700">DIFFICULTÉ</th>
+                            <th style="padding:0.4rem 0.5rem;text-align:center;font-size:0.72rem;color:#059669;font-weight:700">ARRÊTS</th>
+                            <th style="padding:0.4rem 0.5rem;text-align:center;font-size:0.72rem;color:#DC2626;font-weight:700">BUTS</th>
+                            <th style="padding:0.4rem 0.5rem;text-align:center;font-size:0.72rem;color:#64748b;font-weight:700">TIRS</th>
+                            <th style="padding:0.4rem 0.5rem;text-align:center;font-size:0.72rem;color:#475569;font-weight:700">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
         }
 
         // ── Détail des actions (style modal photo 1) ─────────────────────────────
