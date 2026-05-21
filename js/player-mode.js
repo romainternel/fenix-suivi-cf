@@ -394,38 +394,76 @@
 
             if (isGB) {
                 const gbMd = {};
-                MATCHS.forEach(m => gbMd[m] = { arrets: 0, buts: 0 });
+                MATCHS.forEach(m => gbMd[m] = { arrets: 0, buts: 0, score: 0 });
                 DATA.forEach(row => {
                     if (row[COLS.club] === 'FENIX') return;
                     const g = (row[COLS.gardien]||'').toString().trim();
                     if (!matchPlayerName(g, nom)) return;
                     const m = row[COLS.rencontre]; if (!m || !gbMd[m]) return;
-                    if (row[COLS.finalite] === 'Tir arrêté') gbMd[m].arrets++;
-                    if (row[COLS.resultat]  === 'But')        gbMd[m].buts++;
+                    const isArret = row[COLS.finalite] === 'Tir arrêté';
+                    const isBut   = row[COLS.resultat]  === 'But';
+                    if (!isArret && !isBut) return;
+                    const zone = (row[COLS.field_position]||'').toString().trim();
+                    const w = (typeof GB_ZONE_WEIGHTS !== 'undefined' && GB_ZONE_WEIGHTS[zone]) ? GB_ZONE_WEIGHTS[zone] : { arret:1, but:-1 };
+                    if (isArret) { gbMd[m].arrets++; gbMd[m].score += w.arret; }
+                    if (isBut)   { gbMd[m].buts++;   gbMd[m].score += w.but;   }
                 });
                 const played = MATCHS.filter(m => gbMd[m].arrets + gbMd[m].buts > 0);
                 if (played.length === 0) return;
 
                 const arrArr = played.map(m => gbMd[m].arrets);
-                const butArr = played.map(m => gbMd[m].buts);
+                const scrArr = played.map(m => gbMd[m].score);
                 const pctArr = played.map(m => {
                     const tot = gbMd[m].arrets + gbMd[m].buts;
                     return tot > 0 ? Math.round(gbMd[m].arrets / tot * 100) : 0;
                 });
+                const tjArr = played.map(m => {
+                    const jnum = (m.match(/^(J\d+)/i)||[])[1];
+                    if (!jnum) return null;
+                    const entry = TEMPS_JEU[nom.toLowerCase()];
+                    return (entry && entry[jnum] !== undefined) ? entry[jnum] : null;
+                });
+
+                const yMin = Math.min(0, ...scrArr);
+                const yMax = Math.max(...arrArr, ...scrArr, 1) + 1;
+                const y1Min = yMax > 0 ? Math.floor(100 * yMin / yMax) : 0;
+
+                const tempsPlugin = {
+                    id: 'pmfGbTemps',
+                    afterDatasetsDraw(chart) {
+                        const meta = chart.getDatasetMeta(0);
+                        if (!meta || meta.type !== 'bar') return;
+                        const { ctx: c } = chart;
+                        meta.data.forEach((bar, i) => {
+                            const tj = tjArr[i], nb = arrArr[i];
+                            if (nb === 0) return;
+                            c.save();
+                            c.font = 'bold 11px Inter, sans-serif';
+                            c.fillStyle = '#065f46';
+                            c.textAlign = 'center';
+                            c.textBaseline = 'bottom';
+                            c.fillText(nb + (tj !== null ? ' | ' + tj + "'" : ''), bar.x, bar.y - 3);
+                            c.restore();
+                        });
+                    }
+                };
 
                 _pmfChart = new Chart(canvas, {
+                    plugins: [tempsPlugin],
                     data: {
                         labels: played,
                         datasets: [
-                            { type:'bar',  label:'ARRÊTS',         data:arrArr, backgroundColor:'rgba(16,185,129,0.75)', borderColor:'#10B981', borderWidth:1, yAxisID:'y', order:2 },
-                            { type:'bar',  label:'BUTS CONCÉDÉS',  data:butArr, backgroundColor:'rgba(239,68,68,0.6)',   borderColor:'#EF4444', borderWidth:1, yAxisID:'y', order:3 },
-                            { type:'line', label:'% ARRÊTS',       data:pctArr, borderColor:'#2563EB', backgroundColor:'transparent', borderWidth:2.5, pointRadius:5, pointBackgroundColor:'#2563EB', tension:0.3, yAxisID:'pct', order:1 },
+                            { type:'bar',  label:'Arrêts',      data:arrArr, yAxisID:'y',  backgroundColor:'rgba(16,185,129,0.65)', borderColor:'#10B981', borderWidth:1, order:3 },
+                            { type:'line', label:'Score Total', data:scrArr, yAxisID:'y',  borderColor:'#1E3A5F', backgroundColor:'#1E3A5F', borderWidth:2.5, pointRadius:5, pointBackgroundColor:'#1E3A5F', tension:0.3, order:1 },
+                            { type:'line', label:'% Arrêts',   data:pctArr, yAxisID:'y1', borderColor:'#0EA5E9', backgroundColor:'rgba(14,165,233,0.1)', borderWidth:2, pointRadius:4, pointBackgroundColor:'#0EA5E9', tension:0.3, fill:false, order:2 },
+                            { type:'line', label:'__zero__',   data:played.map(()=>0), yAxisID:'y', borderColor:'#1E3A5F', borderWidth:1, pointRadius:0, tension:0, order:6 },
                         ],
                     },
                     options: {
                         responsive:true, maintainAspectRatio:false,
+                        interaction:{ mode:'index', intersect:false },
                         plugins: {
-                            legend: { position:'bottom', labels:{ font:{size:11}, padding:14, usePointStyle:true } },
+                            legend: { position:'bottom', labels:{ font:{size:11}, padding:14, usePointStyle:true, filter: item => item.text !== '__zero__' } },
                             title: { display:false },
                         },
                         scales: {
@@ -435,18 +473,8 @@
                                 },
                                 grid: { display:false },
                             },
-                            y: {
-                                title:{ display:true, text:'Nb tirs', font:{size:11} },
-                                grid:{ color:'#F1F5F9' },
-                                ticks:{ font:{size:11} },
-                                min:0, position:'left',
-                            },
-                            pct: {
-                                title:{ display:true, text:'% Arrêts', font:{size:11} },
-                                grid:{ display:false },
-                                ticks:{ font:{size:11}, callback: v => v+'%' },
-                                min:0, max:100, position:'right',
-                            },
+                            y:  { position:'left',  min:yMin, max:yMax, title:{ display:true, text:'Arrêts / Score', font:{size:11} }, ticks:{ font:{size:11} }, grid:{ color:'#F1F5F9' } },
+                            y1: { position:'right', min:y1Min, max:100,  title:{ display:true, text:'% Arrêts', font:{size:11} }, ticks:{ font:{size:11}, callback: v => v>=0 ? v+'%':'' }, grid:{ drawOnChartArea:false } },
                         },
                     },
                 });
