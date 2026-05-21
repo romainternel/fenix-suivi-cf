@@ -490,20 +490,21 @@
                         },
                     },
                 },
-            }, plugins: [{
-                id: 'medianLabel',
-                afterDraw(chart) {
-                    const { ctx: dc, chartArea, scales } = chart;
-                    if (!scales.y) return;
-                    const yPx = scales.y.getPixelForValue(median);
-                    dc.save();
-                    dc.font = 'bold 13px Inter, sans-serif';
-                    dc.fillStyle = '#1E3A5F';
-                    dc.textAlign = 'left';
-                    dc.fillText(median % 1 === 0 ? String(median) : median.toFixed(1), chartArea.right + 4, yPx + 4);
-                    dc.restore();
-                }
-            }] });
+                plugins: [{
+                    id: 'medianLabel',
+                    afterDraw(chart) {
+                        const { ctx: dc, chartArea, scales } = chart;
+                        if (!scales.y) return;
+                        const yPx = scales.y.getPixelForValue(median);
+                        dc.save();
+                        dc.font = 'bold 13px Inter, sans-serif';
+                        dc.fillStyle = '#1E3A5F';
+                        dc.textAlign = 'left';
+                        dc.fillText(median % 1 === 0 ? String(median) : median.toFixed(1), chartArea.right + 4, yPx + 4);
+                        dc.restore();
+                    }
+                }]
+            });
         }
 
         function openGbZoneModal(gardien) {
