@@ -1,6 +1,7 @@
         // ── Session ─────────────────────────────────────────────────────────────
         let PLAYER_SESSION = null;
         let _pmfChart = null;
+        let _pmfZoneFilter = '';
 
         function isPlayerMode() {
             return PLAYER_SESSION && PLAYER_SESSION.role === 'joueur';
@@ -171,11 +172,23 @@
             const actionsHTML = _buildDetailedActionsHTML(nom);
 
             // ── Encart 3 : Impact ──
+            _pmfZoneFilter = '';
             const impactTitle  = isGB ? 'ARRÊTS ET BUTS CONCÉDÉS' : 'ZONES DE TIR';
             const impactLegend = isGB
                 ? `<span class="pmf-legend-dot pmf-legend-green">●</span> Tir arrêté <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> But encaissé`
                 : `<span class="pmf-legend-dot pmf-legend-green">●</span> But <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> Tir raté`;
-            const zoneOpts = '<option value="">Toutes les zones</option>' + zones.map(z => `<option value="${z}">${z}</option>`).join('');
+
+            const _zrCell = (z) => `<div class="zr-cell${zones.includes(z) ? '' : ' zr-empty'}" data-zone="${z}" onclick="onPmfZoneClick('${z}')">${z}</div>`;
+            const zoneGridHTML = `
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <span style="font-size:0.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px">Zone</span>
+                    <button id="pmf-zone-reset" onclick="onPmfZoneClick('')" style="display:none;font-size:0.7rem;color:#2563eb;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0">✕ Tout voir</button>
+                </div>
+                <div id="pmf-zone-grid" style="display:flex;flex-direction:column;gap:4px">
+                    <div class="zr-row">${_zrCell('6m ail G')}${_zrCell('6m ext G')}${_zrCell('6m central G')}${_zrCell('6m central D')}${_zrCell('6m ext D')}${_zrCell('6m ail D')}</div>
+                    <div class="zr-row">${_zrCell('6-9 ext G')}${_zrCell('6-9 central G')}<div class="zr-cell zr-7m${zones.includes('7m') ? '' : ' zr-empty'}" data-zone="7m" onclick="onPmfZoneClick('7m')">7m</div>${_zrCell('6-9 central D')}${_zrCell('6-9 ext D')}</div>
+                    <div class="zr-row">${_zrCell('9m ext G')}${_zrCell('9m Int G')}${_zrCell('9m Int D')}${_zrCell('9m ext D')}</div>
+                </div>`;
 
             // ── Assemblage ──
             if (!page) return;
@@ -208,19 +221,15 @@
                 </div>
 
                 <div class="pmf-card">
-                    <div class="pmf-card-header-row">
-                        <div class="pmf-card-title">${impactTitle}</div>
-                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                            <span class="pmf-legend">${impactLegend}</span>
-                            <select id="pmf-zone-sel" onchange="onPmfZoneChange()" class="pmf-zone-sel">${zoneOpts}</select>
-                        </div>
-                    </div>
+                    <div class="pmf-card-title">${impactTitle}</div>
                     <div class="pmf-canvases">
                         <div class="pmf-canvas-wrap"><canvas id="pmf-canvas-alg"></canvas><div class="pmf-canvas-lbl">EXT GAUCHE</div></div>
                         <div class="pmf-canvas-wrap"><canvas id="pmf-canvas-face"></canvas><div class="pmf-canvas-lbl">CENTRAL</div></div>
                         <div class="pmf-canvas-wrap"><canvas id="pmf-canvas-ald"></canvas><div class="pmf-canvas-lbl">EXT DROIT</div></div>
                     </div>
                     ${impactRowsAll.length === 0 ? '<div class="pmf-no-impact">Aucune donnée de tir avec coordonnées</div>' : ''}
+                    <div style="margin-top:12px">${zoneGridHTML}</div>
+                    <div class="pmf-legend" style="margin-top:8px">${impactLegend}</div>
                 </div>`;
 
             renderPmfGraph(nom);
@@ -399,7 +408,17 @@
         }
 
         // ── Zone impact (fiche) ──────────────────────────────────────────────────
-        function onPmfZoneChange() {
+        function onPmfZoneClick(zone) {
+            // Toggle : re-clic sur zone sélectionnée = tout voir
+            _pmfZoneFilter = (_pmfZoneFilter === zone) ? '' : zone;
+
+            // Mise à jour visuelle des cellules
+            document.querySelectorAll('#pmf-zone-grid .zr-cell').forEach(cell => {
+                cell.classList.toggle('zr-selected', cell.dataset.zone === _pmfZoneFilter && _pmfZoneFilter !== '');
+            });
+            const resetBtn = document.getElementById('pmf-zone-reset');
+            if (resetBtn) resetBtn.style.display = _pmfZoneFilter ? 'inline' : 'none';
+
             const nom  = getSessionPlayerNom();
             const tp   = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p=>p.nom===nom) : null;
             const isGB = tp && tp.poste === 'GB';
@@ -410,8 +429,7 @@
         }
 
         function _drawPmfImpact(allRows, isGB) {
-            const zone = (document.getElementById('pmf-zone-sel')||{}).value || '';
-            const rows = zone ? allRows.filter(r => (r[COLS.field_position]||'').toString().trim()===zone) : allRows;
+            const rows = _pmfZoneFilter ? allRows.filter(r => (r[COLS.field_position]||'').toString().trim() === _pmfZoneFilter) : allRows;
 
             const drawOn = (canvasId, b64, subset) => {
                 const canvas = document.getElementById(canvasId);
