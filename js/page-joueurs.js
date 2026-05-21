@@ -942,23 +942,44 @@
                 }
             }
 
-            const header   = '<div class="print-fenix-header">FENIX HANDBALL — Centre de Formation</div>';
-            const noImpact = `<div style="color:#94a3b8;text-align:center;padding:60px 0;font-size:0.9rem">Aucune donnée de tir avec coordonnées d'impact</div>`;
+            const ph = '<div class="print-fenix-header">FENIX HANDBALL — Centre de Formation</div>';
+            const graphLabel = isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION DES NOTES';
+            const noImpact   = `<div style="color:#94a3b8;text-align:center;padding:60px 0;font-size:0.9rem">Aucune donnée de tir avec coordonnées d'impact</div>`;
+
+            const graphBlock = graphCanvas ? `
+                <div style="page-break-inside:avoid;margin-bottom:20px">
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#0A2463;margin-bottom:8px;letter-spacing:1.5px;border-bottom:2px solid #0A2463;padding-bottom:4px">${graphLabel}</div>
+                    <div id="pdf-graph-slot"></div>
+                </div>` : '';
+
+            const impactBlock = impactCanvases ? `
+                <div style="page-break-inside:avoid">
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#0A2463;margin-bottom:10px;letter-spacing:1.5px;border-bottom:2px solid #0A2463;padding-bottom:4px">${impactTitre}</div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+                        <div style="text-align:center"><div id="pdf-alg-slot"></div><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">EXT GAUCHE</div></div>
+                        <div style="text-align:center"><div id="pdf-face-slot"></div><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">CENTRAL</div></div>
+                        <div style="text-align:center"><div id="pdf-ald-slot"></div><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">EXT DROIT</div></div>
+                    </div>
+                </div>` : noImpact;
 
             const printZone = document.getElementById('joueur-print-zone');
             printZone.innerHTML = `
-                <div class="pdf-page">
-                    ${header}
+                <div class="pdf-page" style="padding:20px 28px">
+                    ${ph}
                     ${panel.outerHTML}
+                </div>
+                <div class="pdf-page" style="padding:20px 28px">
+                    ${ph}
                     ${actionCardHTML}
                 </div>
-                <div class="pdf-page">
+                <div class="pdf-page" style="padding:20px 28px">
+                    ${ph}
                     ${matches.outerHTML}
-                    ${graphCanvas ? `<div style="margin:16px 0"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#0A2463;margin-bottom:6px;letter-spacing:1.5px">PROGRESSION DES NOTES</div><div id="pdf-graph-slot"></div></div>` : ''}
                 </div>
-                <div>
-                    ${header}
-                    ${impactCanvases ? `<div style="margin:16px 0"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#0A2463;margin-bottom:6px;letter-spacing:1.5px">${impactTitre}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div style="text-align:center"><div id="pdf-alg-slot"></div><div style="font-size:0.72rem;color:#64748B;margin-top:3px;font-weight:600">EXT GAUCHE</div></div><div style="text-align:center"><div id="pdf-face-slot"></div><div style="font-size:0.72rem;color:#64748B;margin-top:3px;font-weight:600">CENTRAL</div></div><div style="text-align:center"><div id="pdf-ald-slot"></div><div style="font-size:0.72rem;color:#64748B;margin-top:3px;font-weight:600">EXT DROIT</div></div></div></div>` : noImpact}
+                <div style="padding:20px 28px">
+                    ${ph}
+                    ${graphBlock}
+                    ${impactBlock}
                 </div>`;
 
             if (graphCanvas)    document.getElementById('pdf-graph-slot').appendChild(graphCanvas);
