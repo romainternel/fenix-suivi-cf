@@ -658,9 +658,120 @@
                     </div>`;
             }
 
-            // === 2. Note graph — canvas DOM direct (Safari ne rend pas les data: URL en print) ===
+            // === 2. Graph — GB : performances (arrêts/score/%) | Joueur : notes ===
             let graphCanvas = null;
-            {
+            if (isGB) {
+                const gbMd = {};
+                MATCHS.forEach(m => gbMd[m] = { arrets:0, buts:0, score:0 });
+                DATA.forEach(row => {
+                    if (row[COLS.club] === 'FENIX') return;
+                    const g = (row[COLS.gardien]||'').toString().trim();
+                    if (!matchPlayerName(g, nom)) return;
+                    const m = row[COLS.rencontre]; if (!gbMd[m]) return;
+                    const isArret = row[COLS.finalite]==='Tir arrêté';
+                    const isBut   = row[COLS.resultat]==='But';
+                    if (!isArret && !isBut) return;
+                    const zone = (row[COLS.field_position]||'').toString().trim();
+                    const wz = (typeof GB_ZONE_WEIGHTS!=='undefined' && GB_ZONE_WEIGHTS[zone]) ? GB_ZONE_WEIGHTS[zone] : {arret:1,but:-1};
+                    if (isArret) { gbMd[m].arrets++; gbMd[m].score += wz.arret; }
+                    if (isBut)   { gbMd[m].buts++;   gbMd[m].score += wz.but; }
+                });
+                const gbPlayed = MATCHS.filter(m => gbMd[m].arrets + gbMd[m].buts > 0);
+                if (gbPlayed.length > 0) {
+                    const arrArr = gbPlayed.map(m => gbMd[m].arrets);
+                    const scrArr = gbPlayed.map(m => gbMd[m].score);
+                    const pctArr = gbPlayed.map(m => {
+                        const t = gbMd[m].arrets + gbMd[m].buts;
+                        return t > 0 ? Math.round(gbMd[m].arrets/t*100) : 0;
+                    });
+                    const tjArr = gbPlayed.map(m => {
+                        const jnum = (m.match(/^(J\d+)/i)||[])[1];
+                        const entry = TEMPS_JEU[nom.toLowerCase()];
+                        return (entry && jnum && entry[jnum]!==undefined) ? entry[jnum] : null;
+                    });
+                    const W=800, H=290;
+                    const pl={t:40,r:55,b:58,l:46};
+                    const cW=W-pl.l-pl.r, cH=H-pl.t-pl.b;
+                    const lMin=Math.min(0,...scrArr)-1, lMax=Math.max(...arrArr,...scrArr,1)+1, lRng=lMax-lMin;
+                    const toYL = v => pl.t + cH - ((v-lMin)/lRng)*cH;
+                    const toYR = p => pl.t + cH - (p/100)*cH;
+                    const slotW=cW/gbPlayed.length, bW=slotW*0.52;
+                    const cx = i => pl.l+(i+0.5)*slotW;
+                    const c=document.createElement('canvas'); c.width=W; c.height=H;
+                    c.style.cssText='width:100%;display:block;border-radius:8px;border:1px solid #E2E8F0';
+                    const ctx=c.getContext('2d');
+                    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+                    // Grid + left axis
+                    const lStep = lRng>20?5:lRng>10?2:1;
+                    for(let v=Math.ceil(lMin);v<=Math.floor(lMax);v++){
+                        if(v%lStep!==0) continue;
+                        const y=toYL(v);
+                        ctx.strokeStyle='#F1F5F9'; ctx.lineWidth=1;
+                        ctx.beginPath(); ctx.moveTo(pl.l,y); ctx.lineTo(pl.l+cW,y); ctx.stroke();
+                        ctx.fillStyle='#94A3B8'; ctx.font='10px Inter,sans-serif';
+                        ctx.textAlign='right'; ctx.fillText(v,pl.l-4,y+3);
+                    }
+                    // Right axis (%)
+                    [0,20,40,60,80,100].forEach(p=>{
+                        ctx.fillStyle='#0EA5E9'; ctx.font='9px Inter,sans-serif';
+                        ctx.textAlign='left'; ctx.fillText(p+'%',pl.l+cW+4,toYR(p)+3);
+                    });
+                    // 0 line
+                    const y0=toYL(0);
+                    ctx.strokeStyle='#CBD5E1'; ctx.lineWidth=1.5;
+                    ctx.beginPath(); ctx.moveTo(pl.l,y0); ctx.lineTo(pl.l+cW,y0); ctx.stroke();
+                    // Bars arrêts
+                    arrArr.forEach((v,i)=>{
+                        const bh=Math.abs(toYL(v)-y0);
+                        ctx.fillStyle='rgba(16,185,129,0.65)';
+                        ctx.fillRect(cx(i)-bW/2, Math.min(toYL(v),y0), bW, bh||1);
+                        if(v>0){
+                            const tj=tjArr[i];
+                            ctx.fillStyle='#065f46'; ctx.font='bold 10px Inter,sans-serif';
+                            ctx.textAlign='center';
+                            ctx.fillText(v+(tj!==null?' | '+tj+"'":''), cx(i), toYL(v)-4);
+                        }
+                    });
+                    // Line Score Total
+                    ctx.strokeStyle='#1E3A5F'; ctx.lineWidth=2.5;
+                    ctx.beginPath();
+                    scrArr.forEach((v,i)=>{ i===0?ctx.moveTo(cx(i),toYL(v)):ctx.lineTo(cx(i),toYL(v)); });
+                    ctx.stroke();
+                    scrArr.forEach((v,i)=>{
+                        ctx.beginPath(); ctx.arc(cx(i),toYL(v),4,0,Math.PI*2);
+                        ctx.fillStyle='#1E3A5F'; ctx.fill();
+                        ctx.fillStyle='#1E3A5F'; ctx.font='bold 9px Inter,sans-serif';
+                        ctx.textAlign='center'; ctx.fillText((v>=0?'+':'')+v, cx(i), toYL(v)-7);
+                    });
+                    // Line % Arrêts
+                    ctx.strokeStyle='#0EA5E9'; ctx.lineWidth=2;
+                    ctx.beginPath();
+                    pctArr.forEach((v,i)=>{ i===0?ctx.moveTo(cx(i),toYR(v)):ctx.lineTo(cx(i),toYR(v)); });
+                    ctx.stroke();
+                    pctArr.forEach((v,i)=>{
+                        ctx.beginPath(); ctx.arc(cx(i),toYR(v),3,0,Math.PI*2);
+                        ctx.fillStyle='#0EA5E9'; ctx.fill();
+                    });
+                    // X labels
+                    ctx.fillStyle='#334155'; ctx.font='bold 10px Inter,sans-serif'; ctx.textAlign='center';
+                    gbPlayed.forEach((m,i)=>{ ctx.fillText(m.split(' ')[0], cx(i), H-pl.b+14); });
+                    // Title
+                    ctx.fillStyle='#1E3A5F'; ctx.font='bold 14px Inter,sans-serif';
+                    ctx.textAlign='center'; ctx.fillText(`Performances par rencontre — ${nom}`, W/2, 22);
+                    // Legend
+                    const ly=H-10;
+                    ctx.fillStyle='rgba(16,185,129,0.65)'; ctx.fillRect(pl.l,ly-9,12,10);
+                    ctx.fillStyle='#334155'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='left';
+                    ctx.fillText('Arrêts',pl.l+15,ly);
+                    ctx.strokeStyle='#1E3A5F'; ctx.lineWidth=2;
+                    ctx.beginPath(); ctx.moveTo(pl.l+70,ly-4); ctx.lineTo(pl.l+82,ly-4); ctx.stroke();
+                    ctx.fillStyle='#334155'; ctx.fillText('Score Total',pl.l+86,ly);
+                    ctx.strokeStyle='#0EA5E9';
+                    ctx.beginPath(); ctx.moveTo(pl.l+180,ly-4); ctx.lineTo(pl.l+192,ly-4); ctx.stroke();
+                    ctx.fillStyle='#0EA5E9'; ctx.fillText('% Arrêts',pl.l+196,ly);
+                    graphCanvas = c;
+                }
+            } else {
                 const matchData = {};
                 MATCHS.forEach(m => matchData[m] = { ap:0, am:0, dp:0, dm:0 });
                 DATA.forEach(row => {
