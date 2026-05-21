@@ -221,7 +221,10 @@
                 </div>
 
                 <div class="pmf-card">
-                    <div class="pmf-card-title">${impactTitle}</div>
+                    <div class="pmf-card-header-row">
+                        <div class="pmf-card-title">${impactTitle}</div>
+                        <div id="pmf-impact-stats"></div>
+                    </div>
                     <div class="pmf-canvases">
                         <div class="pmf-canvas-wrap"><canvas id="pmf-canvas-alg"></canvas><div class="pmf-canvas-lbl">EXT GAUCHE</div></div>
                         <div class="pmf-canvas-wrap"><canvas id="pmf-canvas-face"></canvas><div class="pmf-canvas-lbl">CENTRAL</div></div>
@@ -430,6 +433,37 @@
 
         function _drawPmfImpact(allRows, isGB) {
             const rows = _pmfZoneFilter ? allRows.filter(r => (r[COLS.field_position]||'').toString().trim() === _pmfZoneFilter) : allRows;
+
+            // ── Stats au tir pour la zone filtrée ──
+            const statsEl = document.getElementById('pmf-impact-stats');
+            if (statsEl) {
+                if (isGB) {
+                    const arrets = rows.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
+                    const buts   = rows.filter(r => r[COLS.resultat]  === 'But').length;
+                    const tot    = arrets + buts;
+                    const eff    = tot > 0 ? Math.round(arrets / tot * 100) : 0;
+                    const effColor = (typeof getEffColor === 'function') ? getEffColor(eff, 'GB') : '#0A2463';
+                    statsEl.innerHTML = tot === 0 ? '' : `
+                        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                            <span style="font-size:0.8rem;color:#64748B">${arrets} arrêt${arrets>1?'s':''} / ${tot} tir${tot>1?'s':''}</span>
+                            <span style="font-size:1.1rem;font-weight:800;color:${effColor}">${eff}%</span>
+                        </div>`;
+                } else {
+                    const buts  = rows.filter(r => r[COLS.resultat] === 'But').length;
+                    const rates = rows.filter(r => r[COLS.resultat] === 'Tir raté').length;
+                    const tot   = buts + rates;
+                    const eff   = tot > 0 ? Math.round(buts / tot * 100) : 0;
+                    const nom   = getSessionPlayerNom();
+                    const tp    = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => p.nom === nom) : null;
+                    const poste = tp ? tp.poste : '';
+                    const effColor = (typeof getEffColor === 'function') ? getEffColor(eff, poste) : '#0A2463';
+                    statsEl.innerHTML = tot === 0 ? '' : `
+                        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                            <span style="font-size:0.8rem;color:#64748B">${buts} but${buts>1?'s':''} / ${tot} tir${tot>1?'s':''}</span>
+                            <span style="font-size:1.1rem;font-weight:800;color:${effColor}">${eff}%</span>
+                        </div>`;
+                }
+            }
 
             const drawOn = (canvasId, b64, subset) => {
                 const canvas = document.getElementById(canvasId);
