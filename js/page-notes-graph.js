@@ -699,7 +699,8 @@
                             font: { size: 18, weight: 'bold', family: 'Bebas Neue' },
                             color: '#1E3A5F', padding: { bottom: 14 },
                         },
-                        legend: { position: 'bottom', labels: { font: { size: 13 }, padding: 18, usePointStyle: true, filter: item => item.text !== '__zero__' } },
+                        legend:  { position: 'bottom', labels: { font: { size: 13 }, padding: 18, usePointStyle: true, filter: item => item.text !== '__zero__' } },
+                        tooltip: { filter: item => item.dataset.label !== '__zero__' },
                     },
                     scales: {
                         x: { ticks: { font: { size: 12, weight: '700' }, maxRotation: 45 } },
