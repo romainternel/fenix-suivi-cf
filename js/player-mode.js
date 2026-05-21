@@ -69,7 +69,20 @@
         // ── Fiche joueur ─────────────────────────────────────────────────────────
         function renderPlayerFiche() {
             const nom = getSessionPlayerNom();
-            if (!nom || !DATA.length) return;
+            const page = document.getElementById('pm-fiche-page');
+            if (!nom || !DATA.length) {
+                if (page) page.innerHTML = '<div style="padding:40px;text-align:center;color:#64748B">Aucune donnée — veuillez réimporter le fichier Excel.</div>';
+                return;
+            }
+            try {
+                _renderPlayerFicheContent(nom, page);
+            } catch(err) {
+                if (page) page.innerHTML = `<div style="padding:40px;text-align:center;color:#EF4444;font-family:monospace;white-space:pre-wrap">Erreur fiche joueur :<br>${err.message}<br><br>${err.stack||''}</div>`;
+                console.error('renderPlayerFiche error:', err);
+            }
+        }
+
+        function _renderPlayerFicheContent(nom, page) {
 
             const tp        = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => p.nom === nom) : null;
             const posteCode = tp ? tp.poste : '';
@@ -165,7 +178,6 @@
             const zoneOpts = '<option value="">Toutes les zones</option>' + zones.map(z => `<option value="${z}">${z}</option>`).join('');
 
             // ── Assemblage ──
-            const page = document.getElementById('pm-fiche-page');
             if (!page) return;
 
             page.innerHTML = `

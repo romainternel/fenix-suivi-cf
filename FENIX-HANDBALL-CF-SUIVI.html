@@ -1262,12 +1262,13 @@ let _effInfoPoste = null;
                 populateFilters();
                 updateMatchSelection();
                 showDataLoaded();
-                if (typeof buildPmMatchSelector === 'function') buildPmMatchSelector();
-                if (typeof isPlayerMode === 'function' && isPlayerMode() && typeof pmTab === 'function') pmTab('fiche');
                 updateImportUI(filename, date);
             } catch(e) {
                 localStorage.removeItem('fenix_data');
+                return;
             }
+            if (typeof buildPmMatchSelector === 'function') buildPmMatchSelector();
+            if (typeof isPlayerMode === 'function' && isPlayerMode() && typeof pmTab === 'function') pmTab('fiche');
         }
 
         function extractUniqueValues() {
