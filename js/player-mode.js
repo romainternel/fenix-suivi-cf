@@ -1,5 +1,6 @@
         // ── Session ─────────────────────────────────────────────────────────────
         let PLAYER_SESSION = null;
+        let _pmfChart = null;
 
         function isPlayerMode() {
             return PLAYER_SESSION && PLAYER_SESSION.role === 'joueur';
@@ -20,17 +21,14 @@
         function setupPlayerUI() {
             document.body.classList.add('player-mode');
 
-            // Cacher tout le contenu staff d'un coup (important pour écraser tout override)
             ['header', 'nav', 'main'].forEach(sel => {
                 const el = document.querySelector('.' + sel);
                 if (el) el.style.setProperty('display', 'none', 'important');
             });
 
-            // Masquer le bouton "Comptes joueurs" (staff only)
             const accountsBtn = document.getElementById('btn-player-accounts');
             if (accountsBtn) accountsBtn.style.display = 'none';
 
-            // Afficher la barre mode joueur
             const bar = document.getElementById('pm-bar');
             if (bar) {
                 bar.style.display = 'flex';
@@ -38,13 +36,10 @@
                 if (nameEl) nameEl.textContent = PLAYER_SESSION.nom;
             }
 
-            // Lancer le rendu fiche si données disponibles
-            if (typeof DATA !== 'undefined' && DATA.length > 0) {
-                pmTab('fiche');
-            }
+            if (typeof DATA !== 'undefined' && DATA.length > 0) pmTab('fiche');
         }
 
-        // ── Navigation tabs joueur ───────────────────────────────────────────────
+        // ── Navigation tabs ──────────────────────────────────────────────────────
         let _pmActiveTab = 'fiche';
 
         function pmTab(tab) {
@@ -53,7 +48,6 @@
                 b.classList.toggle('active', b.dataset.tab === tab);
             });
 
-            // Toujours s'assurer que le contenu staff reste caché
             const mainEl = document.querySelector('.main');
             if (mainEl) mainEl.style.setProperty('display', 'none', 'important');
 
@@ -65,40 +59,30 @@
                 if (ficheEl) ficheEl.style.display = 'block';
                 if (typeof DATA !== 'undefined' && DATA.length > 0) renderPlayerFiche();
             } else {
+                if (_pmfChart) { _pmfChart.destroy(); _pmfChart = null; }
                 if (ficheEl) ficheEl.style.display = 'none';
                 if (matchEl) matchEl.style.display = 'block';
                 renderPlayerMatchStats();
             }
         }
 
-        // ── Fiche joueur — 3 encarts ─────────────────────────────────────────────
+        // ── Fiche joueur ─────────────────────────────────────────────────────────
         function renderPlayerFiche() {
             const nom = getSessionPlayerNom();
             if (!nom || !DATA.length) return;
 
-            const terrainPlayer = (typeof JOUEURS_TERRAIN !== 'undefined')
-                ? JOUEURS_TERRAIN.find(p => p.nom === nom) : null;
-            const posteCode = terrainPlayer ? terrainPlayer.poste : '';
-            const isGB = posteCode === 'GB';
-            const posteName = {
-                GB: 'Gardien de But', AG: 'Ailier Gauche', AD: 'Ailier Droit',
-                ARG: 'Arrière Gauche', ARD: 'Arrière Droit', DC: 'Demi-Centre', PIV: 'Pivot'
-            };
-            const posteLabel = posteName[posteCode] || posteCode;
-            const initials = nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
-            const color = (typeof POSTE_COLORS !== 'undefined' && POSTE_COLORS[posteCode]) ? POSTE_COLORS[posteCode] : '#0A2463';
+            const tp        = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => p.nom === nom) : null;
+            const posteCode = tp ? tp.poste : '';
+            const isGB      = posteCode === 'GB';
+            const posteName = { GB:'Gardien de But', AG:'Ailier Gauche', AD:'Ailier Droit', ARG:'Arrière Gauche', ARD:'Arrière Droit', DC:'Demi-Centre', PIV:'Pivot' };
+            const color     = (typeof POSTE_COLORS !== 'undefined' && POSTE_COLORS[posteCode]) ? POSTE_COLORS[posteCode] : '#0A2463';
+            const initials  = nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
 
-            // ── Temps de jeu ──
-            const tjNom = (typeof getTJData === 'function') ? getTJData(nom, MATCHS) : { matchs: 0, total: 0 };
-            const tjStr = tjNom.matchs
-                ? `<span class="pmf-meta-item">⏱ ${tjNom.matchs} match${tjNom.matchs > 1 ? 's' : ''}</span><span class="pmf-meta-item">⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>`
-                : '';
+            const tjNom  = (typeof getTJData === 'function') ? getTJData(nom, MATCHS) : { matchs: 0, total: 0 };
+            const tjStr  = tjNom.matchs ? `<span class="pmf-meta-item">⏱ ${tjNom.matchs} match${tjNom.matchs > 1 ? 's' : ''}</span><span class="pmf-meta-item">⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>` : '';
 
-            // ── Calcul stats offensifs ──
-            const fenixRows = DATA.filter(r =>
-                r[COLS.club] === 'FENIX' &&
-                matchPlayerName((r[COLS.joueur] || '').toString().trim(), nom)
-            );
+            // ── Stats KPI ──
+            const fenixRows = DATA.filter(r => r[COLS.club] === 'FENIX' && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom));
             const buts  = fenixRows.filter(r => r[COLS.resultat] === 'But').length;
             const tirs  = fenixRows.filter(r => r[COLS.resultat] === 'Tir raté').length;
             const pb    = fenixRows.filter(r => r[COLS.resultat] === 'PB').length;
@@ -107,28 +91,24 @@
             const eff   = total > 0 ? Math.round(buts / total * 100) : 0;
             const effColor = (typeof getEffColor === 'function') ? getEffColor(eff, posteCode) : '#0A2463';
 
-            // PD
             let pd = 0;
             DATA.forEach(row => {
-                (row[COLS.action_joueur] || '').toString().split(';').forEach((j, i) => {
+                (row[COLS.action_joueur]||'').toString().split(';').forEach((j, i) => {
                     if (!matchPlayerName(j.trim(), nom)) return;
-                    const act = (typeof lastNonEmpty === 'function')
-                        ? lastNonEmpty((row[COLS.action_att] || '').toString().split(';'), i)
-                        : '';
+                    const act = (typeof lastNonEmpty === 'function') ? lastNonEmpty((row[COLS.action_att]||'').toString().split(';'), i) : '';
                     if (act === 'PD' || act === 'PD DG') pd++;
                 });
             });
 
-            // Notes ATT/DEF
             let attPlus = 0, attMoins = 0, defPlus = 0, defMoins = 0;
             DATA.forEach(row => {
-                const joueurs = (row[COLS.action_joueur] || '').toString().split(';');
-                const atts   = (row[COLS.action_att]    || '').toString().split(';');
-                const defs   = (row[COLS.action_def]    || '').toString().split(';');
+                const joueurs = (row[COLS.action_joueur]||'').toString().split(';');
+                const atts   = (row[COLS.action_att]||'').toString().split(';');
+                const defs   = (row[COLS.action_def]||'').toString().split(';');
                 joueurs.forEach((j, idx) => {
                     if (!matchPlayerName(j.trim(), nom)) return;
-                    const att = (typeof lastNonEmpty === 'function') ? lastNonEmpty(atts, idx) : '';
-                    const def = (typeof lastNonEmpty === 'function') ? lastNonEmpty(defs, idx) : '';
+                    const att = lastNonEmpty(atts, idx);
+                    const def = lastNonEmpty(defs, idx);
                     if (isPositiveATT(att)) attPlus++;
                     else if (isNegativeATT(att)) attMoins++;
                     if (isPositiveDEF(def)) defPlus++;
@@ -139,336 +119,366 @@
             const noteColor   = note > 0 ? '#10B981' : note < 0 ? '#EF4444' : '#64748B';
             const noteDisplay = (note > 0 ? '+' : '') + note;
 
-            // ── GB : stats arrêts ──
+            // GB stats
             let gbArrets = 0, gbButs = 0, gbEff = 0, gbEffColor = '#64748B';
             if (isGB) {
-                const gbRows = DATA.filter(r =>
-                    r[COLS.club] !== 'FENIX' &&
-                    matchPlayerName((r[COLS.gardien] || '').toString().trim(), nom) &&
-                    (r[COLS.resultat] === 'But' || r[COLS.finalite] === 'Tir arrêté')
-                );
+                const gbRows = DATA.filter(r => r[COLS.club] !== 'FENIX' && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && (r[COLS.resultat] === 'But' || r[COLS.finalite] === 'Tir arrêté'));
                 gbArrets = gbRows.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
                 gbButs   = gbRows.filter(r => r[COLS.resultat]  === 'But').length;
-                const gbTotal = gbArrets + gbButs;
-                gbEff = gbTotal > 0 ? Math.round(gbArrets / gbTotal * 100) : 0;
+                const gbTot = gbArrets + gbButs;
+                gbEff = gbTot > 0 ? Math.round(gbArrets / gbTot * 100) : 0;
                 gbEffColor = (typeof getEffColor === 'function') ? getEffColor(gbEff, 'GB') : '#0A2463';
             }
 
-            // ── Données impact pour cet encart ──
+            // ── Impact data ──
             const impactRowsAll = isGB
-                ? DATA.filter(r =>
-                    r[COLS.club] !== 'FENIX' &&
-                    matchPlayerName((r[COLS.gardien] || '').toString().trim(), nom) &&
-                    r[COLS.impact] && String(r[COLS.impact]).includes(';'))
-                : DATA.filter(r =>
-                    r[COLS.club] === 'FENIX' &&
-                    matchPlayerName((r[COLS.joueur] || '').toString().trim(), nom) &&
-                    r[COLS.impact] && String(r[COLS.impact]).includes(';'));
+                ? DATA.filter(r => r[COLS.club] !== 'FENIX' && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
+                : DATA.filter(r => r[COLS.club] === 'FENIX' && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
+            const zones = [...new Set(impactRowsAll.map(r => (r[COLS.field_position]||'').toString().trim()).filter(Boolean))].sort();
 
-            // ── Zones disponibles pour ce joueur ──
-            const zones = [...new Set(impactRowsAll.map(r =>
-                (r[COLS.field_position] || '').toString().trim()).filter(Boolean))].sort();
-
-            // ── Encart 1 : Stats ─────────────────────────────────────────────────
+            // ── Encart 1 : Stats KPI ──
             const statsHTML = isGB ? `
                 <div class="pmf-kpi-grid pmf-kpi-5">
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val">${gbArrets}/${gbArrets + gbButs}</div>
-                        <div class="pmf-kpi-lbl">ARRÊTS / TIRS</div>
-                    </div>
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val" style="color:${gbEffColor}">${gbEff}%</div>
-                        <div class="pmf-kpi-lbl">% ARRÊTS</div>
-                    </div>
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val" style="color:#EF4444">${gbButs}</div>
-                        <div class="pmf-kpi-lbl">BUTS CONCÉDÉS</div>
-                    </div>
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val">${pd}</div>
-                        <div class="pmf-kpi-lbl">PD</div>
-                    </div>
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div>
-                        <div class="pmf-kpi-lbl">NOTE</div>
-                    </div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val">${gbArrets}/${gbArrets+gbButs}</div><div class="pmf-kpi-lbl">ARRÊTS / TIRS</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${gbEffColor}">${gbEff}%</div><div class="pmf-kpi-lbl">% ARRÊTS</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:#EF4444">${gbButs}</div><div class="pmf-kpi-lbl">BUTS CONCÉDÉS</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val">${pd}</div><div class="pmf-kpi-lbl">PD</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div><div class="pmf-kpi-lbl">NOTE</div></div>
                 </div>` : `
                 <div class="pmf-kpi-grid">
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val">${buts}/${total}</div>
-                        <div class="pmf-kpi-lbl">BUT / TIR</div>
-                    </div>
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val" style="color:${effColor}">${eff}%</div>
-                        <div class="pmf-kpi-lbl">EFFICACITÉ</div>
-                    </div>
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val">${pd}</div>
-                        <div class="pmf-kpi-lbl">PD</div>
-                    </div>
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val">${po}</div>
-                        <div class="pmf-kpi-lbl">PÉN. OBTENUS</div>
-                    </div>
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val" style="color:#EF4444">${pb}</div>
-                        <div class="pmf-kpi-lbl">PERTES BALLE</div>
-                    </div>
-                    <div class="pmf-kpi-box">
-                        <div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div>
-                        <div class="pmf-kpi-lbl">NOTE</div>
-                    </div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val">${buts}/${total}</div><div class="pmf-kpi-lbl">BUT / TIR</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${effColor}">${eff}%</div><div class="pmf-kpi-lbl">EFFICACITÉ</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val">${pd}</div><div class="pmf-kpi-lbl">PD</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val">${po}</div><div class="pmf-kpi-lbl">PÉN. OBTENUS</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:#EF4444">${pb}</div><div class="pmf-kpi-lbl">PERTES BALLE</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div><div class="pmf-kpi-lbl">NOTE</div></div>
                 </div>`;
 
-            // ── Encart 2 : Notes ─────────────────────────────────────────────────
-            const notesHTML = `
-                <div class="pmf-notes-grid">
-                    <div class="pmf-note-box pmf-note-att-plus">
-                        <div class="pmf-note-val">${attPlus}</div>
-                        <div class="pmf-note-lbl">ATT +</div>
-                    </div>
-                    <div class="pmf-note-box pmf-note-att-moins">
-                        <div class="pmf-note-val">${attMoins}</div>
-                        <div class="pmf-note-lbl">ATT −</div>
-                    </div>
-                    <div class="pmf-note-box pmf-note-def-plus">
-                        <div class="pmf-note-val">${defPlus}</div>
-                        <div class="pmf-note-lbl">DEF +</div>
-                    </div>
-                    <div class="pmf-note-box pmf-note-def-moins">
-                        <div class="pmf-note-val">${defMoins}</div>
-                        <div class="pmf-note-lbl">DEF −</div>
-                    </div>
-                </div>
-                <div class="pmf-note-total">
-                    Note totale : <strong style="color:${noteColor};font-size:1.1rem">${noteDisplay}</strong>
-                </div>`;
+            // ── Encart 2 : Actions détaillées (style photo 1) ──
+            const actionsHTML = _buildDetailedActionsHTML(nom);
 
-            // ── Encart 3 : Impact ────────────────────────────────────────────────
-            const zoneOpts = '<option value="">Toutes les zones</option>'
-                + zones.map(z => `<option value="${z}">${z}</option>`).join('');
-
+            // ── Encart 3 : Impact ──
+            const impactTitle  = isGB ? 'ARRÊTS ET BUTS CONCÉDÉS' : 'ZONES DE TIR';
             const impactLegend = isGB
-                ? `<span class="pmf-legend-dot pmf-legend-green">●</span> Tir arrêté
-                   <span class="pmf-legend-dot pmf-legend-red" style="margin-left:12px">✕</span> But encaissé`
-                : `<span class="pmf-legend-dot pmf-legend-green">●</span> But
-                   <span class="pmf-legend-dot pmf-legend-red" style="margin-left:12px">✕</span> Tir raté`;
+                ? `<span class="pmf-legend-dot pmf-legend-green">●</span> Tir arrêté <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> But encaissé`
+                : `<span class="pmf-legend-dot pmf-legend-green">●</span> But <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> Tir raté`;
+            const zoneOpts = '<option value="">Toutes les zones</option>' + zones.map(z => `<option value="${z}">${z}</option>`).join('');
 
-            const impactTitle = isGB ? 'ARRÊTS ET BUTS CONCÉDÉS' : 'ZONES DE TIR';
-
-            // ── Assemblage HTML ──────────────────────────────────────────────────
+            // ── Assemblage ──
             const page = document.getElementById('pm-fiche-page');
             if (!page) return;
 
             page.innerHTML = `
-                <!-- Header joueur -->
                 <div class="pmf-header" style="background:linear-gradient(135deg,${color} 0%,${color}cc 100%)">
                     <div class="pmf-avatar">${initials}</div>
                     <div>
                         <div class="pmf-player-name">${nom}</div>
-                        <div class="pmf-player-poste">${posteCode} — ${posteLabel}</div>
+                        <div class="pmf-player-poste">${posteCode} — ${posteName[posteCode]||posteCode}</div>
                         <div class="pmf-meta">${tjStr}</div>
                     </div>
                 </div>
 
-                <!-- Encart 1 : Stats -->
                 <div class="pmf-card">
                     <div class="pmf-card-title">MA FICHE</div>
                     ${statsHTML}
                 </div>
 
-                <!-- Encart 2 : Notes -->
                 <div class="pmf-card">
                     <div class="pmf-card-title">ACTIONS</div>
-                    ${notesHTML}
+                    ${actionsHTML}
                 </div>
 
-                <!-- Encart 3 : Impact -->
+                <div class="pmf-card">
+                    <div class="pmf-card-title">PROGRESSION — SAISON</div>
+                    <div style="position:relative;height:280px">
+                        <canvas id="pmf-graph-canvas"></canvas>
+                    </div>
+                </div>
+
                 <div class="pmf-card">
                     <div class="pmf-card-header-row">
                         <div class="pmf-card-title">${impactTitle}</div>
                         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                             <span class="pmf-legend">${impactLegend}</span>
-                            <select id="pmf-zone-sel" onchange="onPmfZoneChange()"
-                                class="pmf-zone-sel">
-                                ${zoneOpts}
-                            </select>
+                            <select id="pmf-zone-sel" onchange="onPmfZoneChange()" class="pmf-zone-sel">${zoneOpts}</select>
                         </div>
                     </div>
                     <div class="pmf-canvases">
-                        <div class="pmf-canvas-wrap">
-                            <canvas id="pmf-canvas-alg"></canvas>
-                            <div class="pmf-canvas-lbl">EXT GAUCHE</div>
-                        </div>
-                        <div class="pmf-canvas-wrap">
-                            <canvas id="pmf-canvas-face"></canvas>
-                            <div class="pmf-canvas-lbl">CENTRAL</div>
-                        </div>
-                        <div class="pmf-canvas-wrap">
-                            <canvas id="pmf-canvas-ald"></canvas>
-                            <div class="pmf-canvas-lbl">EXT DROIT</div>
-                        </div>
+                        <div class="pmf-canvas-wrap"><canvas id="pmf-canvas-alg"></canvas><div class="pmf-canvas-lbl">EXT GAUCHE</div></div>
+                        <div class="pmf-canvas-wrap"><canvas id="pmf-canvas-face"></canvas><div class="pmf-canvas-lbl">CENTRAL</div></div>
+                        <div class="pmf-canvas-wrap"><canvas id="pmf-canvas-ald"></canvas><div class="pmf-canvas-lbl">EXT DROIT</div></div>
                     </div>
-                    ${impactRowsAll.length === 0
-                        ? '<div class="pmf-no-impact">Aucune donnée de tir avec coordonnées</div>'
-                        : ''}
+                    ${impactRowsAll.length === 0 ? '<div class="pmf-no-impact">Aucune donnée de tir avec coordonnées</div>' : ''}
                 </div>`;
 
-            // Dessiner les canvases
+            renderPmfGraph(nom);
             _drawPmfImpact(impactRowsAll, isGB);
         }
 
-        // ── Changement de zone impact ────────────────────────────────────────────
+        // ── Détail des actions (style modal photo 1) ─────────────────────────────
+        function _buildDetailedActionsHTML(nom) {
+            const ATT_PLUS  = (typeof ACTIONS_ATT_PLUS  !== 'undefined') ? ACTIONS_ATT_PLUS  : ['But', 'But DG', 'PD', 'PD DG', 'PO', "2' Obt", 'Duel gagné att', 'Bon choix', 'Bloc', 'Glissement', 'Écran'];
+            const ATT_MOINS = (typeof ACTIONS_ATT_MOINS !== 'undefined') ? ACTIONS_ATT_MOINS : ['Tir raté', 'PB', 'PF', 'Neutralisé', 'Mauvais choix', 'Bloc -'];
+            const DEF_PLUS  = (typeof ACTIONS_DEF_PLUS  !== 'undefined') ? ACTIONS_DEF_PLUS  : ['Duel gagné déf', 'Contre +', 'Récup', 'Intercep', 'Dissua', 'Entraide +', 'Impair +', 'Contournement pivot +'];
+            const DEF_MOINS = (typeof ACTIONS_DEF_MOINS !== 'undefined') ? ACTIONS_DEF_MOINS : ['Duel perdu', '2 min', 'Entraide -', 'Impair -', 'Sortie de bloc -', 'Contre -', 'Inactif', 'Hs/Répart/Changmt', 'Toucher -', 'Contournement pivot -', 'replis -'];
+
+            const counts = {};
+            const matchSet = new Set();
+            DATA.forEach(row => {
+                const joueurs = (row[COLS.action_joueur]||'').toString().split(';');
+                const atts   = (row[COLS.action_att]||'').toString().split(';');
+                const defs   = (row[COLS.action_def]||'').toString().split(';');
+                joueurs.forEach((j, idx) => {
+                    if (!matchPlayerName(j.trim(), nom)) return;
+                    if (row[COLS.rencontre]) matchSet.add(row[COLS.rencontre]);
+                    const att = lastNonEmpty(atts, idx);
+                    const def = lastNonEmpty(defs, idx);
+                    if (att) counts[att] = (counts[att]||0) + 1;
+                    if (def) counts[def] = (counts[def]||0) + 1;
+                });
+            });
+            const nbM = matchSet.size || 1;
+
+            const makeSection = (actions, headerColor, bgColor, isPos) => {
+                const rows = actions.map(a => {
+                    const cnt = counts[a] || 0;
+                    const style = cnt === 0 ? 'color:#CBD5E1' : (isPos ? 'color:#059669;font-weight:700' : 'color:#DC2626;font-weight:700');
+                    return `<tr>
+                        <td style="padding:4px 8px;font-size:0.82rem;${cnt===0?'color:#CBD5E1':''}">${a}</td>
+                        <td style="padding:4px 8px;text-align:right;${style}">${cnt > 0 ? cnt : '—'}</td>
+                        <td style="padding:4px 8px;text-align:right;color:#94A3B8;font-size:0.78rem">${cnt > 0 ? (cnt/nbM).toFixed(1) : '—'}</td>
+                    </tr>`;
+                }).join('');
+                return `<div style="flex:1;min-width:0">
+                    <div style="background:${headerColor};color:#fff;padding:5px 10px;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:1px;border-radius:6px 6px 0 0">${isPos ? (actions === ATT_PLUS ? 'ATTAQUE +' : 'DÉFENSE +') : (actions === ATT_MOINS ? 'ATTAQUE −' : 'DÉFENSE −')}</div>
+                    <div style="background:${bgColor};border-radius:0 0 6px 6px;overflow:hidden">
+                        <table style="width:100%;border-collapse:collapse">
+                            <thead><tr style="background:rgba(0,0,0,0.06)">
+                                <th style="padding:4px 8px;text-align:left;font-size:0.7rem;color:#475569;font-weight:700">ACTION</th>
+                                <th style="padding:4px 8px;text-align:right;font-size:0.7rem;color:#475569;font-weight:700">TOTAL</th>
+                                <th style="padding:4px 8px;text-align:right;font-size:0.7rem;color:#94A3B8;font-weight:700">/MATCH</th>
+                            </tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+            };
+
+            const attPlusTotal  = ATT_PLUS.reduce((s,a)  => s+(counts[a]||0), 0);
+            const attMoinsTotal = ATT_MOINS.reduce((s,a) => s+(counts[a]||0), 0);
+            const defPlusTotal  = DEF_PLUS.reduce((s,a)  => s+(counts[a]||0), 0);
+            const defMoinsTotal = DEF_MOINS.reduce((s,a) => s+(counts[a]||0), 0);
+            const totalAtt = attPlusTotal - attMoinsTotal;
+            const totalDef = defPlusTotal - defMoinsTotal;
+            const totalJoueur = totalAtt + totalDef;
+            const sign = v => (v >= 0 ? '+' : '') + v;
+            const vColor = v => v > 0 ? '#059669' : v < 0 ? '#DC2626' : '#64748B';
+
+            return `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                    ${makeSection(ATT_PLUS,  '#059669', '#F0FDF4', true)}
+                    ${makeSection(DEF_PLUS,  '#059669', '#EFF6FF', true)}
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+                    ${makeSection(ATT_MOINS, '#DC2626', '#FEF2F2', false)}
+                    ${makeSection(DEF_MOINS, '#DC2626', '#FEF9E7', false)}
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding-top:10px;border-top:1px solid #E2E8F0;text-align:center">
+                    <div><div style="font-size:1.3rem;font-weight:800;color:${vColor(totalAtt)}">${sign(totalAtt)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL ATT</div><div style="font-size:0.7rem;color:#94A3B8">${(totalAtt/nbM).toFixed(1)}/match</div></div>
+                    <div><div style="font-size:1.3rem;font-weight:800;color:${vColor(totalDef)}">${sign(totalDef)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL DEF</div><div style="font-size:0.7rem;color:#94A3B8">${(totalDef/nbM).toFixed(1)}/match</div></div>
+                    <div><div style="font-size:1.5rem;font-weight:900;color:${vColor(totalJoueur)}">${sign(totalJoueur)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL JOUEUR</div><div style="font-size:0.7rem;color:#94A3B8">${(totalJoueur/nbM).toFixed(1)}/match</div></div>
+                    <div><div style="font-size:1.5rem;font-weight:900;color:#0A2463">${nbM}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">MATCHS JOUÉS</div></div>
+                </div>`;
+        }
+
+        // ── Graphique note progression (style photo 3) ────────────────────────────
+        function renderPmfGraph(nom) {
+            if (_pmfChart) { _pmfChart.destroy(); _pmfChart = null; }
+            const canvas = document.getElementById('pmf-graph-canvas');
+            if (!canvas || typeof Chart === 'undefined') return;
+
+            const matchData = {};
+            MATCHS.forEach(m => matchData[m] = { ap:0, am:0, dp:0, dm:0 });
+            DATA.forEach(row => {
+                const m = row[COLS.rencontre];
+                if (!matchData[m]) return;
+                const joueurs = (row[COLS.action_joueur]||'').toString().split(';');
+                const atts    = (row[COLS.action_att]||'').toString().split(';');
+                const defs    = (row[COLS.action_def]||'').toString().split(';');
+                joueurs.forEach((j, idx) => {
+                    if (!matchPlayerName(j.trim(), nom)) return;
+                    const att = lastNonEmpty(atts, idx);
+                    const def = lastNonEmpty(defs, idx);
+                    if (isPositiveATT(att)) matchData[m].ap++;
+                    if (isNegativeATT(att)) matchData[m].am++;
+                    if (isPositiveDEF(def)) matchData[m].dp++;
+                    if (isNegativeDEF(def)) matchData[m].dm++;
+                });
+            });
+
+            const played = MATCHS.filter(m => { const d=matchData[m]; return d.ap+d.am+d.dp+d.dm>0; });
+            if (played.length === 0) return;
+
+            const noteATT = played.map(m => matchData[m].ap - matchData[m].am);
+            const noteDEF = played.map(m => matchData[m].dp - matchData[m].dm);
+            const total   = played.map((_, i) => noteATT[i] + noteDEF[i]);
+
+            const sorted = [...total].sort((a,b) => a-b);
+            const mid    = Math.floor(sorted.length / 2);
+            const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid-1]+sorted[mid])/2;
+
+            const n = total.length, xMean = (n-1)/2, yMean = total.reduce((s,v)=>s+v,0)/n;
+            let num=0, den=0;
+            total.forEach((v,i) => { num+=(i-xMean)*(v-yMean); den+=(i-xMean)**2; });
+            const slope = den===0?0:num/den;
+            const trend = played.map((_,i) => +(slope*i+yMean-slope*xMean).toFixed(2));
+
+            const medianPlugin = {
+                id: 'pmfMedianLabel',
+                afterDraw(chart) {
+                    const { ctx, chartArea, scales } = chart;
+                    if (!scales.y) return;
+                    const yPx = scales.y.getPixelForValue(median);
+                    ctx.save();
+                    ctx.font = 'bold 12px Inter, sans-serif';
+                    ctx.fillStyle = '#64748B';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(median % 1 === 0 ? median : median.toFixed(1), chartArea.right + 4, yPx + 4);
+                    ctx.restore();
+                }
+            };
+
+            _pmfChart = new Chart(canvas, {
+                plugins: [medianPlugin],
+                data: {
+                    labels: played,
+                    datasets: [
+                        { type:'bar',  label:'NOTE ATT',     data:noteATT, backgroundColor:'rgba(20,184,166,0.75)',  borderColor:'#14B8A6', borderWidth:1, order:4 },
+                        { type:'bar',  label:'NOTE DEF',     data:noteDEF, backgroundColor:'rgba(245,158,11,0.75)', borderColor:'#F59E0B', borderWidth:1, order:5 },
+                        { type:'line', label:'TOTAL JOUEUR', data:total,   borderColor:'#1E3A5F', backgroundColor:'#1E3A5F', borderWidth:2.5, pointRadius:5, pointBackgroundColor:'#1E3A5F', tension:0.3, order:1 },
+                        { type:'line', label:'Médiane',      data:played.map(()=>median), borderColor:'#94A3B8', borderWidth:1.5, borderDash:[6,4], pointRadius:0, tension:0, order:2 },
+                        { type:'line', label:'Tendance',     data:trend, borderColor:'#60A5FA', borderWidth:1.5, borderDash:[3,3], pointRadius:0, tension:0, order:3 },
+                        { type:'line', label:'__zero__',     data:played.map(()=>0), borderColor:'#1E3A5F', borderWidth:1, pointRadius:0, tension:0, order:6 },
+                    ],
+                },
+                options: {
+                    responsive:true, maintainAspectRatio:false,
+                    plugins: {
+                        legend: { position:'bottom', labels:{ font:{size:11}, padding:14, usePointStyle:true, filter:item=>item.text!=='__zero__' } },
+                        title:  { display:false },
+                    },
+                    layout: { padding: { right: 36 } },
+                    scales: {
+                        x: {
+                            ticks: { font:{size:10,weight:'700'}, maxRotation:45,
+                                color: ctx => { const m=played[ctx.index]; if(!m) return '#334155'; const f=DATA.filter(r=>r[COLS.rencontre]===m&&r[COLS.club]==='FENIX'&&r[COLS.resultat]==='But').length; const a=DATA.filter(r=>r[COLS.rencontre]===m&&r[COLS.club]!=='FENIX'&&r[COLS.resultat]==='But').length; return f>a?'#16A34A':f<a?'#DC2626':'#1E293B'; }
+                            },
+                            grid: { display:false },
+                        },
+                        y: {
+                            title: { display:true, text:'Note', font:{size:12} },
+                            grid: { color:'#F1F5F9' },
+                            ticks: { font:{size:11} },
+                            afterDataLimits(scale) { scale.max+=2; scale.min-=2; },
+                        },
+                    },
+                },
+            });
+        }
+
+        // ── Zone impact (fiche) ──────────────────────────────────────────────────
         function onPmfZoneChange() {
-            const nom   = getSessionPlayerNom();
-            const tp    = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => p.nom === nom) : null;
-            const isGB  = tp && tp.poste === 'GB';
-            const all   = isGB
-                ? DATA.filter(r =>
-                    r[COLS.club] !== 'FENIX' &&
-                    matchPlayerName((r[COLS.gardien] || '').toString().trim(), nom) &&
-                    r[COLS.impact] && String(r[COLS.impact]).includes(';'))
-                : DATA.filter(r =>
-                    r[COLS.club] === 'FENIX' &&
-                    matchPlayerName((r[COLS.joueur] || '').toString().trim(), nom) &&
-                    r[COLS.impact] && String(r[COLS.impact]).includes(';'));
+            const nom  = getSessionPlayerNom();
+            const tp   = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p=>p.nom===nom) : null;
+            const isGB = tp && tp.poste === 'GB';
+            const all  = isGB
+                ? DATA.filter(r => r[COLS.club]!=='FENIX' && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
+                : DATA.filter(r => r[COLS.club]==='FENIX'  && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom)   && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
             _drawPmfImpact(all, isGB);
         }
 
-        // ── Dessin des 3 canvases impact ─────────────────────────────────────────
         function _drawPmfImpact(allRows, isGB) {
-            const zone = (document.getElementById('pmf-zone-sel') || {}).value || '';
-            const rows = zone ? allRows.filter(r =>
-                (r[COLS.field_position] || '').toString().trim() === zone) : allRows;
+            const zone = (document.getElementById('pmf-zone-sel')||{}).value || '';
+            const rows = zone ? allRows.filter(r => (r[COLS.field_position]||'').toString().trim()===zone) : allRows;
 
             const drawOn = (canvasId, b64, subset) => {
                 const canvas = document.getElementById(canvasId);
                 if (!canvas) return;
                 const W = canvas.parentElement.clientWidth || 300;
                 const H = Math.round(W * 0.62);
-                canvas.width  = W;
-                canvas.height = H;
+                canvas.width=W; canvas.height=H;
                 const ctx = canvas.getContext('2d');
-
                 const paint = img => {
-                    if (img) {
-                        ctx.drawImage(img, 0, 0, W, H);
-                    } else {
-                        ctx.fillStyle = '#DBEAFE';
-                        ctx.fillRect(0, 0, W, H);
-                    }
+                    if (img) { ctx.drawImage(img, 0, 0, W, H); }
+                    else { ctx.fillStyle='#DBEAFE'; ctx.fillRect(0,0,W,H); }
                     subset.forEach(row => {
-                        const p = String(row[COLS.impact]).split(';');
-                        const x = parseFloat(p[0]), y = parseFloat(p[1]);
-                        if (isNaN(x) || isNaN(y)) return;
-                        const dotX = (x / 100) * W;
-                        const dotY = (y / 100) * H;
-                        const s = Math.max(5, W * 0.022);
-                        const isPos = isGB
-                            ? row[COLS.finalite] === 'Tir arrêté'
-                            : row[COLS.resultat] === 'But';
-                        ctx.save();
-                        ctx.lineCap = 'round';
+                        const p=String(row[COLS.impact]).split(';');
+                        const x=parseFloat(p[0]),y=parseFloat(p[1]);
+                        if(isNaN(x)||isNaN(y)) return;
+                        const dotX=(x/100)*W, dotY=(y/100)*H, s=Math.max(5,W*0.022);
+                        const isPos = isGB ? row[COLS.finalite]==='Tir arrêté' : row[COLS.resultat]==='But';
+                        ctx.save(); ctx.lineCap='round';
                         if (isPos) {
-                            ctx.beginPath();
-                            ctx.arc(dotX, dotY, s, 0, Math.PI * 2);
-                            ctx.fillStyle = '#10B981';
-                            ctx.fill();
-                            ctx.strokeStyle = '#fff';
-                            ctx.lineWidth = 1.5;
-                            ctx.stroke();
+                            ctx.beginPath(); ctx.arc(dotX,dotY,s,0,Math.PI*2);
+                            ctx.fillStyle='#10B981'; ctx.fill();
+                            ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
                         } else {
-                            const sc = s / Math.SQRT2;
-                            ctx.strokeStyle = '#EF4444';
-                            ctx.lineWidth = 2.5;
+                            const sc=s/Math.SQRT2;
+                            ctx.strokeStyle='#EF4444'; ctx.lineWidth=2.5;
                             ctx.beginPath();
-                            ctx.moveTo(dotX - sc, dotY - sc);
-                            ctx.lineTo(dotX + sc, dotY + sc);
-                            ctx.moveTo(dotX + sc, dotY - sc);
-                            ctx.lineTo(dotX - sc, dotY + sc);
+                            ctx.moveTo(dotX-sc,dotY-sc); ctx.lineTo(dotX+sc,dotY+sc);
+                            ctx.moveTo(dotX+sc,dotY-sc); ctx.lineTo(dotX-sc,dotY+sc);
                             ctx.stroke();
                         }
                         ctx.restore();
                     });
                 };
-
-                if (typeof IMPACT_B64 !== 'undefined' && b64) {
-                    const img = new Image();
-                    img.onload  = () => paint(img);
-                    img.onerror = () => paint(null);
-                    img.src = b64;
-                } else {
-                    paint(null);
-                }
+                if (typeof IMPACT_B64!=='undefined' && b64) {
+                    const img=new Image(); img.onload=()=>paint(img); img.onerror=()=>paint(null); img.src=b64;
+                } else { paint(null); }
             };
 
-            const b64 = (typeof IMPACT_B64 !== 'undefined') ? IMPACT_B64 : {};
-            drawOn('pmf-canvas-alg',  b64.alg,  rows.filter(r => getImpactView(r) === 'alg'));
-            drawOn('pmf-canvas-face', b64.face, rows.filter(r => getImpactView(r) === 'face'));
-            drawOn('pmf-canvas-ald',  b64.ald,  rows.filter(r => getImpactView(r) === 'ald'));
+            const b64=(typeof IMPACT_B64!=='undefined')?IMPACT_B64:{};
+            drawOn('pmf-canvas-alg',  b64.alg,  rows.filter(r=>getImpactView(r)==='alg'));
+            drawOn('pmf-canvas-face', b64.face, rows.filter(r=>getImpactView(r)==='face'));
+            drawOn('pmf-canvas-ald',  b64.ald,  rows.filter(r=>getImpactView(r)==='ald'));
         }
 
-        // ── Stats Match (mode joueur) ────────────────────────────────────────────
+        // ── Stats Match : équipes ────────────────────────────────────────────────
         function renderPlayerMatchStats() {
-            const selEl = document.getElementById('pm-match-sel');
+            const selEl      = document.getElementById('pm-match-sel');
             const matchFilter = selEl ? selEl.value : '';
+            const filtered   = matchFilter ? DATA.filter(r=>r[COLS.rencontre]===matchFilter) : DATA;
+            const uniq       = [...new Set(filtered.map(r=>r[COLS.rencontre]).filter(Boolean))];
+            const matchCount = uniq.length || 1;
+            const showAvg    = matchCount > 1;
 
-            const filteredData = matchFilter
-                ? DATA.filter(r => r[COLS.rencontre] === matchFilter)
-                : DATA;
-
-            const uniqueMatches = [...new Set(filteredData.map(r => r[COLS.rencontre]).filter(Boolean))];
-            const matchCount    = uniqueMatches.length || 1;
-            const showAvg       = matchCount > 1;
-
-            const fenix = filteredData.filter(r => r[COLS.club] === 'FENIX');
-            const adv   = filteredData.filter(r => r[COLS.club] !== 'FENIX' && r[COLS.club]);
+            const fenix = filtered.filter(r=>r[COLS.club]==='FENIX');
+            const adv   = filtered.filter(r=>r[COLS.club]!=='FENIX' && r[COLS.club]);
 
             const compute = rows => {
-                const buts  = rows.filter(r => r[COLS.resultat] === 'But').length;
-                const rates = rows.filter(r => r[COLS.resultat] === 'Tir raté').length;
-                const total = buts + rates;
-                const pen   = rows.filter(r => r[COLS.ge] && String(r[COLS.ge]).toLowerCase().includes('pen'));
-                const penB  = pen.filter(r => r[COLS.resultat] === 'But').length;
-                const penT  = penB + pen.filter(r => r[COLS.resultat] === 'Tir raté').length;
-                const poss  = rows.filter(r => r[COLS.possession] && String(r[COLS.possession]).trim()).length;
-                const pb    = rows.filter(r => r[COLS.resultat] === 'PB').length;
-                const po    = rows.filter(r => r[COLS.resultat] === 'PO').length;
-                const neut  = rows.filter(r => r[COLS.resultat] === 'Jet franc').length;
-                const eff   = total > 0 ? Math.round(buts / total * 100) : 0;
-                return { buts, rates, total, penB, penT, poss, pb, po, neut, eff };
+                const buts=rows.filter(r=>r[COLS.resultat]==='But').length;
+                const rates=rows.filter(r=>r[COLS.resultat]==='Tir raté').length;
+                const total=buts+rates;
+                const pen=rows.filter(r=>r[COLS.ge]&&String(r[COLS.ge]).toLowerCase().includes('pen'));
+                const penB=pen.filter(r=>r[COLS.resultat]==='But').length;
+                const penT=penB+pen.filter(r=>r[COLS.resultat]==='Tir raté').length;
+                const poss=rows.filter(r=>r[COLS.possession]&&String(r[COLS.possession]).trim()).length;
+                const pb=rows.filter(r=>r[COLS.resultat]==='PB').length;
+                const po=rows.filter(r=>r[COLS.resultat]==='PO').length;
+                const neut=rows.filter(r=>r[COLS.resultat]==='Jet franc').length;
+                const eff=total>0?Math.round(buts/total*100):0;
+                return {buts,rates,total,penB,penT,poss,pb,po,neut,eff};
             };
 
-            const rd = (n, d) => Math.round(n / d);
-            const fv = compute(fenix);
-            const av = compute(adv);
-            const advName = matchFilter
-                ? ([...new Set(adv.map(r => r[COLS.club]).filter(Boolean))][0] || 'ADVERSAIRE')
-                : 'ADVERSAIRE';
+            const rd=(n,d)=>Math.round(n/d);
+            const fv=compute(fenix), av=compute(adv);
+            const advName = matchFilter ? ([...new Set(adv.map(r=>r[COLS.club]).filter(Boolean))][0]||'ADVERSAIRE') : 'ADVERSAIRE';
 
-            const card = (data, color, title) => {
-                const d = showAvg ? {
-                    poss: rd(data.poss, matchCount),
-                    buts: `${rd(data.buts, matchCount)}/${rd(data.total, matchCount)}`,
-                    pen:  `Pen: ${rd(data.penB, matchCount)}/${rd(data.penT, matchCount)}`,
-                    pb:   rd(data.pb, matchCount),
-                    po:   rd(data.po, matchCount),
-                    neut: rd(data.neut, matchCount),
-                } : {
-                    poss: data.poss,
-                    buts: `${data.buts}/${data.total}`,
-                    pen:  `Pen: ${data.penB}/${data.penT}`,
-                    pb:   data.pb,
-                    po:   data.po,
-                    neut: data.neut,
-                };
-                return `
-                <div class="pm-team-card" style="border-left:4px solid ${color}">
-                    <div class="pm-team-title">
-                        <span class="pm-dot" style="background:${color}"></span>
-                        <strong>${title}</strong>
-                        ${showAvg ? '<span class="pm-avg-lbl">(Moy./match)</span>' : ''}
-                    </div>
+            const card=(data,color,title)=>{
+                const d=showAvg?{poss:rd(data.poss,matchCount),buts:`${rd(data.buts,matchCount)}/${rd(data.total,matchCount)}`,pen:`Pen: ${rd(data.penB,matchCount)}/${rd(data.penT,matchCount)}`,pb:rd(data.pb,matchCount),po:rd(data.po,matchCount),neut:rd(data.neut,matchCount)}:{poss:data.poss,buts:`${data.buts}/${data.total}`,pen:`Pen: ${data.penB}/${data.penT}`,pb:data.pb,po:data.po,neut:data.neut};
+                return `<div class="pm-team-card" style="border-left:4px solid ${color}">
+                    <div class="pm-team-title"><span class="pm-dot" style="background:${color}"></span><strong>${title}</strong>${showAvg?'<span class="pm-avg-lbl">(Moy./match)</span>':''}</div>
                     <div class="pm-stats-grid">
                         <div class="pm-stat-box"><div class="pm-stat-val">${d.poss}</div><div class="pm-stat-lbl">POSSESSIONS</div></div>
                         <div class="pm-stat-box"><div class="pm-stat-val">${d.buts}</div><div class="pm-stat-lbl">BUTS<br><small style="color:#94a3b8">${d.pen}</small></div></div>
@@ -481,8 +491,117 @@
             };
 
             const cardsEl = document.getElementById('pm-match-cards');
-            if (cardsEl) {
-                cardsEl.innerHTML = card(fv, '#0A2463', 'FENIX TOULOUSE') + card(av, '#EF4444', advName);
+            if (cardsEl) cardsEl.innerHTML = card(fv,'#0A2463','FENIX TOULOUSE') + card(av,'#EF4444',advName);
+
+            // Table personnelle du joueur
+            const nom = getSessionPlayerNom();
+            if (nom) {
+                const tp   = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p=>p.nom===nom) : null;
+                const isGB = tp && tp.poste === 'GB';
+                renderPlayerMatchTable(nom, isGB, matchFilter);
+            }
+        }
+
+        // ── Table stats personnelles (onglet Stats Match) ────────────────────────
+        function renderPlayerMatchTable(nom, isGB, matchFilter) {
+            const wrap = document.getElementById('pm-match-player-table');
+            if (!wrap) return;
+
+            // Matches à afficher
+            const matchesToShow = matchFilter
+                ? (DATA.some(r=>r[COLS.rencontre]===matchFilter) ? [matchFilter] : [])
+                : MATCHS;
+
+            if (isGB) {
+                const gbSbm = {};
+                const initGb = () => ({ ac:0,bc:0,ap:0,bp:0,pd:0,pb:0,but:0 });
+
+                DATA.forEach(row => {
+                    if (row[COLS.club]==='FENIX') return;
+                    if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
+                    const g=(row[COLS.gardien]||'').toString().trim();
+                    if (!matchPlayerName(g, nom)) return;
+                    const m=row[COLS.rencontre]; if (!m) return;
+                    if (!gbSbm[m]) gbSbm[m]=initGb();
+                    const isPen=(row[COLS.ge]||'').toString().toLowerCase().includes('pen');
+                    const isArret=row[COLS.finalite]==='Tir arrêté';
+                    const isBut=row[COLS.resultat]==='But';
+                    if (!isArret&&!isBut) return;
+                    if (isPen) { isArret?gbSbm[m].ap++:gbSbm[m].bp++; }
+                    else       { isArret?gbSbm[m].ac++:gbSbm[m].bc++; }
+                });
+                DATA.forEach(row => {
+                    if (row[COLS.club]!=='FENIX') return;
+                    if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
+                    if (!matchPlayerName((row[COLS.joueur]||'').toString().trim(), nom)) return;
+                    const m=row[COLS.rencontre]; if (!m) return;
+                    if (!gbSbm[m]) gbSbm[m]=initGb();
+                    if (row[COLS.resultat]==='But') gbSbm[m].but++;
+                    if (row[COLS.resultat]==='PB')  gbSbm[m].pb++;
+                });
+                DATA.forEach(row => {
+                    if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
+                    const m=row[COLS.rencontre]; if (!m) return;
+                    (row[COLS.action_joueur]||'').toString().split(';').forEach((j,i)=>{
+                        if (!matchPlayerName(j.trim(),nom)) return;
+                        const act=lastNonEmpty((row[COLS.action_att]||'').toString().split(';'),i);
+                        if (act==='PD'||act==='PD DG') { if(!gbSbm[m]) gbSbm[m]=initGb(); gbSbm[m].pd++; }
+                    });
+                });
+
+                let gt=initGb(), rows='';
+                matchesToShow.forEach(m => {
+                    const s=gbSbm[m]; if(!s) return;
+                    const tC=s.ac+s.bc,tP=s.ap+s.bp,tT=tC+tP,aT=s.ac+s.ap;
+                    Object.keys(gt).forEach(k=>gt[k]+=s[k]);
+                    const jnum=(m.match(/^(J\d+)/i)||[])[1];
+                    const tjE=TEMPS_JEU[nom.toLowerCase()];
+                    const tjMin=tjE&&jnum&&tjE[jnum]!==undefined?` <span style="color:#94A3B8;font-size:0.8em">(${tjE[jnum]} min)</span>`:'';
+                    rows+=`<tr><td style="color:${matchResultColor(m)}">${m}${tjMin}</td><td>${aT}/${tT}</td><td>${tT>0?Math.round(aT/tT*100)+'%':'-'}</td><td>${s.ac}/${tC}</td><td>${tC>0?Math.round(s.ac/tC*100)+'%':'-'}</td><td>${s.ap}/${tP}</td><td>${tP>0?Math.round(s.ap/tP*100)+'%':'-'}</td><td>${s.but}</td><td>${s.pd}</td><td>${s.pb}</td></tr>`;
+                });
+                const gtC=gt.ac+gt.bc,gtP=gt.ap+gt.bp,gtT=gtC+gtP,gaT=gt.ac+gt.ap;
+                rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${gaT}/${gtT}</td><td>${gtT>0?Math.round(gaT/gtT*100)+'%':'-'}</td><td>${gt.ac}/${gtC}</td><td>${gtC>0?Math.round(gt.ac/gtC*100)+'%':'-'}</td><td>${gt.ap}/${gtP}</td><td>${gtP>0?Math.round(gt.ap/gtP*100)+'%':'-'}</td><td>${gt.but}</td><td>${gt.pd}</td><td>${gt.pb}</td></tr>`;
+
+                wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>Total</th><th>%</th><th>Champ</th><th>%</th><th>Pen</th><th>%</th><th>But</th><th>PD</th><th>PB</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+
+            } else {
+                const sbm = {};
+                DATA.forEach(row => {
+                    if (row[COLS.club]!=='FENIX') return;
+                    if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
+                    if (!matchPlayerName((row[COLS.joueur]||'').toString().trim(), nom)) return;
+                    const m=row[COLS.rencontre]; if (!m) return;
+                    if (!sbm[m]) sbm[m]={bc:0,tc:0,bp:0,tp:0,pb:0,po:0,pd:0};
+                    const isPen=(row[COLS.ge]||'').toString().toLowerCase().includes('pen');
+                    if (row[COLS.resultat]==='But')       { isPen?sbm[m].bp++:sbm[m].bc++; }
+                    else if (row[COLS.resultat]==='Tir raté') { isPen?sbm[m].tp++:sbm[m].tc++; }
+                    else if (row[COLS.resultat]==='PB')   sbm[m].pb++;
+                    else if (row[COLS.resultat]==='PO')   sbm[m].po++;
+                });
+                DATA.forEach(row => {
+                    if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
+                    const m=row[COLS.rencontre]; if (!m) return;
+                    (row[COLS.action_joueur]||'').toString().split(';').forEach((j,i)=>{
+                        if (!matchPlayerName(j.trim(),nom)) return;
+                        const act=lastNonEmpty((row[COLS.action_att]||'').toString().split(';'),i);
+                        if (act==='PD'||act==='PD DG') { if(!sbm[m]) sbm[m]={bc:0,tc:0,bp:0,tp:0,pb:0,po:0,pd:0}; sbm[m].pd++; }
+                    });
+                });
+
+                let tot={bc:0,tc:0,bp:0,tp:0,pb:0,po:0,pd:0}, rows='';
+                matchesToShow.forEach(m => {
+                    const s=sbm[m]; if(!s) return;
+                    const tC=s.bc+s.tc,tP=s.bp+s.tp,tT=tC+tP,tB=s.bc+s.bp;
+                    Object.keys(tot).forEach(k=>tot[k]+=s[k]);
+                    const jnum=(m.match(/^(J\d+)/i)||[])[1];
+                    const tjE=TEMPS_JEU[nom.toLowerCase()];
+                    const tjMin=tjE&&jnum&&tjE[jnum]!==undefined?` <span style="color:#94A3B8;font-size:0.8em">(${tjE[jnum]} min)</span>`:'';
+                    rows+=`<tr><td style="color:${matchResultColor(m)}">${m}${tjMin}</td><td>${s.bc}/${tC}</td><td>${tC>0?Math.round(s.bc/tC*100)+'%':'-'}</td><td>${tP>0?s.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(s.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${s.pb}</td><td>${s.po}</td><td>${s.pd}</td></tr>`;
+                });
+                const tC=tot.bc+tot.tc,tP=tot.bp+tot.tp,tT=tC+tP,tB=tot.bc+tot.bp;
+                rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${tot.bc}/${tC}</td><td>${tC>0?Math.round(tot.bc/tC*100)+'%':'-'}</td><td>${tP>0?tot.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(tot.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${tot.pb}</td><td>${tot.po}</td><td>${tot.pd}</td></tr>`;
+
+                wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>But/Tir</th><th>% Champ</th><th>Pen (B/T)</th><th>% Pen</th><th>% Total</th><th>PB</th><th>PO</th><th>PD</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
             }
         }
 
@@ -491,35 +610,23 @@
             const sel = document.getElementById('pm-match-sel');
             if (!sel) return;
             sel.innerHTML = '<option value="">Tous les matchs</option>'
-                + MATCHS.map(m => `<option value="${m}">${m}</option>`).join('');
+                + MATCHS.map(m=>`<option value="${m}">${m}</option>`).join('');
         }
 
         // ── Gestion comptes joueurs (staff only) ─────────────────────────────────
         function openPlayerAccountsModal() {
-            const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts') || '{}');
+            const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts')||'{}');
             const nomSel = document.getElementById('pa-nom-sel');
             if (nomSel && typeof JOUEURS_TERRAIN !== 'undefined') {
                 const existing = Object.keys(accounts);
-                const opts = JOUEURS_TERRAIN
-                    .filter(p => !existing.includes(p.nom))
-                    .map(p => `<option value="${p.nom}">${p.nom} (${p.poste})</option>`)
-                    .join('');
-                nomSel.innerHTML = '<option value="">-- Choisir un joueur --</option>' + opts;
+                nomSel.innerHTML = '<option value="">-- Choisir un joueur --</option>'
+                    + JOUEURS_TERRAIN.filter(p=>!existing.includes(p.nom)).map(p=>`<option value="${p.nom}">${p.nom} (${p.poste})</option>`).join('');
             }
             const tbody = document.getElementById('pa-accounts-list');
             if (tbody) {
                 tbody.innerHTML = Object.entries(accounts).length === 0
                     ? '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:12px">Aucun compte joueur</td></tr>'
-                    : Object.entries(accounts).map(([nom, pwd]) => `
-                        <tr>
-                            <td style="padding:6px 10px">${nom}</td>
-                            <td style="padding:6px 10px">${'•'.repeat(Math.min(pwd.length, 8))}</td>
-                            <td style="padding:6px 10px;text-align:right">
-                                <button onclick="deletePlayerAccount('${nom}')"
-                                    style="color:#EF4444;background:none;border:none;cursor:pointer;font-size:1rem"
-                                    title="Supprimer">🗑</button>
-                            </td>
-                        </tr>`).join('');
+                    : Object.entries(accounts).map(([nom,pwd])=>`<tr><td style="padding:6px 10px">${nom}</td><td style="padding:6px 10px">${'•'.repeat(Math.min(pwd.length,8))}</td><td style="padding:6px 10px;text-align:right"><button onclick="deletePlayerAccount('${nom}')" style="color:#EF4444;background:none;border:none;cursor:pointer;font-size:1rem" title="Supprimer">🗑</button></td></tr>`).join('');
             }
             const modal = document.getElementById('pa-modal');
             if (modal) modal.style.display = 'flex';
@@ -535,11 +642,8 @@
             const pwdEl = document.getElementById('pa-pwd');
             const nom = selEl ? selEl.value.trim() : '';
             const pwd = pwdEl ? pwdEl.value.trim() : '';
-            if (!nom || !pwd) {
-                alert('Sélectionne un joueur et saisis un mot de passe');
-                return;
-            }
-            const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts') || '{}');
+            if (!nom || !pwd) { alert('Sélectionne un joueur et saisis un mot de passe'); return; }
+            const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts')||'{}');
             accounts[nom] = pwd;
             localStorage.setItem('fenix_player_accounts', JSON.stringify(accounts));
             if (pwdEl) pwdEl.value = '';
@@ -548,13 +652,13 @@
 
         function deletePlayerAccount(nom) {
             if (!confirm(`Supprimer le compte de ${nom} ?`)) return;
-            const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts') || '{}');
+            const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts')||'{}');
             delete accounts[nom];
             localStorage.setItem('fenix_player_accounts', JSON.stringify(accounts));
             openPlayerAccountsModal();
         }
 
-        // ── Init au chargement ───────────────────────────────────────────────────
+        // ── Init ─────────────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', function () {
             const stored = sessionStorage.getItem('fenix_session');
             if (stored) {
