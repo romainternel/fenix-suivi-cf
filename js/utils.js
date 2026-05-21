@@ -76,6 +76,11 @@
             return new Set(rows.map(r => (r[COLS.joueur] || '').toString().trim()).filter(Boolean));
         }
 
+        var ACTIONS_ATT_PLUS  = ['But', 'But DG', 'PD', 'PD DG', 'PO', "2' Obt", 'Duel gagné att', 'Bon choix', 'Bloc', 'Glissement', 'Écran'];
+        var ACTIONS_ATT_MOINS = ['Tir raté', 'PB', 'PF', 'Neutralisé', 'Mauvais choix', 'Bloc -'];
+        var ACTIONS_DEF_PLUS  = ['Duel gagné déf', 'Contre +', 'Récup', 'Intercep', 'Dissua', 'Entraide +', 'Impair +', 'Contournement pivot +'];
+        var ACTIONS_DEF_MOINS = ['Duel perdu', '2 min', 'Entraide -', 'Impair -', 'Sortie de bloc -', 'Contre -', 'Inactif', 'Hs/Répart/Changmt', 'Toucher -', 'Contournement pivot -', 'replis -'];
+
         function isPositiveATT(action) {
             return ACTIONS_ATT_PLUS.some(a => action.includes(a));
         }

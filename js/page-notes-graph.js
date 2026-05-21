@@ -142,10 +142,7 @@
             document.getElementById('notes-detail-modal').style.display = 'none';
         }
 
-        const ACTIONS_ATT_PLUS  = ['But', 'But DG', 'PD', 'PD DG', 'PO', "2' Obt", 'Duel gagné att', 'Bon choix', 'Bloc', 'Glissement', 'Écran'];
-        const ACTIONS_ATT_MOINS = ['Tir raté', 'PB', 'PF', 'Neutralisé', 'Mauvais choix', 'Bloc -'];
-        const ACTIONS_DEF_PLUS  = ['Duel gagné déf', 'Contre +', 'Récup', 'Intercep', 'Dissua', 'Entraide +', 'Impair +', 'Contournement pivot +'];
-        const ACTIONS_DEF_MOINS = ['Duel perdu', '2 min', 'Entraide -', 'Impair -', 'Sortie de bloc -', 'Contre -', 'Inactif', 'Hs/Répart/Changmt', 'Toucher -', 'Contournement pivot -', 'replis -'];
+        // ACTIONS_ATT_PLUS / MOINS / DEF_PLUS / MOINS sont définis dans utils.js (chargé en premier)
 
         const GB_ZONE_WEIGHTS = {
             '6m central G':  { diff: 'Très difficile', arret: 3, but: -1 },
