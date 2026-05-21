@@ -471,6 +471,7 @@
                                 filter: item => item.text !== '__zero__',
                             },
                         },
+                        tooltip: { filter: item => item.dataset.label !== '__zero__' },
                     },
                     scales: {
                         x: {

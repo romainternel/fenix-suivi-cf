@@ -549,8 +549,9 @@
                 options: {
                     responsive:true, maintainAspectRatio:false,
                     plugins: {
-                        legend: { position:'bottom', labels:{ font:{size:11}, padding:14, usePointStyle:true, filter:item=>item.text!=='__zero__' } },
-                        title:  { display:false },
+                        legend:  { position:'bottom', labels:{ font:{size:11}, padding:14, usePointStyle:true, filter:item=>item.text!=='__zero__' } },
+                        tooltip: { filter: item => item.dataset.label !== '__zero__' },
+                        title:   { display:false },
                     },
                     layout: { padding: { right: 36 } },
                     scales: {
