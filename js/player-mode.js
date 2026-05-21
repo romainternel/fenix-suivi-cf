@@ -214,7 +214,7 @@
                 </div>
 
                 <div class="pmf-card">
-                    <div class="pmf-card-title">PROGRESSION — SAISON</div>
+                    <div class="pmf-card-title">${isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION — SAISON'}</div>
                     <div style="position:relative;height:280px">
                         <canvas id="pmf-graph-canvas"></canvas>
                     </div>
@@ -389,6 +389,69 @@
             if (_pmfChart) { _pmfChart.destroy(); _pmfChart = null; }
             const canvas = document.getElementById('pmf-graph-canvas');
             if (!canvas || typeof Chart === 'undefined') return;
+
+            const isGB = (typeof detectIsGB === 'function') ? detectIsGB(nom) : false;
+
+            if (isGB) {
+                const gbMd = {};
+                MATCHS.forEach(m => gbMd[m] = { arrets: 0, buts: 0 });
+                DATA.forEach(row => {
+                    if (row[COLS.club] === 'FENIX') return;
+                    const g = (row[COLS.gardien]||'').toString().trim();
+                    if (!matchPlayerName(g, nom)) return;
+                    const m = row[COLS.rencontre]; if (!m || !gbMd[m]) return;
+                    if (row[COLS.finalite] === 'Tir arrêté') gbMd[m].arrets++;
+                    if (row[COLS.resultat]  === 'But')        gbMd[m].buts++;
+                });
+                const played = MATCHS.filter(m => gbMd[m].arrets + gbMd[m].buts > 0);
+                if (played.length === 0) return;
+
+                const arrArr = played.map(m => gbMd[m].arrets);
+                const butArr = played.map(m => gbMd[m].buts);
+                const pctArr = played.map(m => {
+                    const tot = gbMd[m].arrets + gbMd[m].buts;
+                    return tot > 0 ? Math.round(gbMd[m].arrets / tot * 100) : 0;
+                });
+
+                _pmfChart = new Chart(canvas, {
+                    data: {
+                        labels: played,
+                        datasets: [
+                            { type:'bar',  label:'ARRÊTS',         data:arrArr, backgroundColor:'rgba(16,185,129,0.75)', borderColor:'#10B981', borderWidth:1, yAxisID:'y', order:2 },
+                            { type:'bar',  label:'BUTS CONCÉDÉS',  data:butArr, backgroundColor:'rgba(239,68,68,0.6)',   borderColor:'#EF4444', borderWidth:1, yAxisID:'y', order:3 },
+                            { type:'line', label:'% ARRÊTS',       data:pctArr, borderColor:'#2563EB', backgroundColor:'transparent', borderWidth:2.5, pointRadius:5, pointBackgroundColor:'#2563EB', tension:0.3, yAxisID:'pct', order:1 },
+                        ],
+                    },
+                    options: {
+                        responsive:true, maintainAspectRatio:false,
+                        plugins: {
+                            legend: { position:'bottom', labels:{ font:{size:11}, padding:14, usePointStyle:true } },
+                            title: { display:false },
+                        },
+                        scales: {
+                            x: {
+                                ticks: { font:{size:10,weight:'700'}, maxRotation:45,
+                                    color: ctx => { const m=played[ctx.index]; if(!m) return '#334155'; const f=DATA.filter(r=>r[COLS.rencontre]===m&&r[COLS.club]==='FENIX'&&r[COLS.resultat]==='But').length; const a=DATA.filter(r=>r[COLS.rencontre]===m&&r[COLS.club]!=='FENIX'&&r[COLS.resultat]==='But').length; return f>a?'#16A34A':f<a?'#DC2626':'#1E293B'; }
+                                },
+                                grid: { display:false },
+                            },
+                            y: {
+                                title:{ display:true, text:'Nb tirs', font:{size:11} },
+                                grid:{ color:'#F1F5F9' },
+                                ticks:{ font:{size:11} },
+                                min:0, position:'left',
+                            },
+                            pct: {
+                                title:{ display:true, text:'% Arrêts', font:{size:11} },
+                                grid:{ display:false },
+                                ticks:{ font:{size:11}, callback: v => v+'%' },
+                                min:0, max:100, position:'right',
+                            },
+                        },
+                    },
+                });
+                return;
+            }
 
             const matchData = {};
             MATCHS.forEach(m => matchData[m] = { ap:0, am:0, dp:0, dm:0 });
