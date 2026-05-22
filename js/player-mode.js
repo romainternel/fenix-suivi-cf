@@ -1,7 +1,6 @@
         // ── Session ─────────────────────────────────────────────────────────────
         let PLAYER_SESSION = null;
         let _pmfChart = null;
-        let _pmfZoneFilter = '';
         let _pmmZoneFilter = '';
         let _pmmImpactRows = [];
         let _pmmIsGB = false;
@@ -147,12 +146,6 @@
                 gbEffColor = (typeof getEffColor === 'function') ? getEffColor(gbEff, 'GB') : '#0A2463';
             }
 
-            // ── Impact data ──
-            const impactRowsAll = isGB
-                ? DATA.filter(r => r[COLS.club] !== 'FENIX' && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
-                : DATA.filter(r => r[COLS.club] === 'FENIX' && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
-            const zones = [...new Set(impactRowsAll.map(r => (r[COLS.field_position]||'').toString().trim()).filter(Boolean))].sort();
-
             // ── Encart 1 : Stats KPI ──
             const statsHTML = isGB ? `
                 <div class="pmf-kpi-grid pmf-kpi-5">
@@ -173,25 +166,6 @@
 
             // ── Encart 2 : Actions (joueur de champ) ou Zones % (GB) ──
             const actionsHTML = isGB ? _buildGbZoneTableHTML(nom) : _buildDetailedActionsHTML(nom);
-
-            // ── Encart 3 : Impact ──
-            _pmfZoneFilter = '';
-            const impactTitle  = isGB ? 'ARRÊTS ET BUTS CONCÉDÉS' : 'ZONES DE TIR';
-            const impactLegend = isGB
-                ? `<span class="pmf-legend-dot pmf-legend-green">●</span> Tir arrêté <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> But encaissé`
-                : `<span class="pmf-legend-dot pmf-legend-green">●</span> But <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> Tir raté`;
-
-            const _zrCell = (z) => `<div class="zr-cell${zones.includes(z) ? '' : ' zr-empty'}" data-zone="${z}" onclick="onPmfZoneClick('${z}')">${z}</div>`;
-            const zoneGridHTML = `
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    <span style="font-size:0.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px">Zone</span>
-                    <button id="pmf-zone-reset" onclick="onPmfZoneClick('')" style="display:none;font-size:0.7rem;color:#2563eb;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0">✕ Tout voir</button>
-                </div>
-                <div id="pmf-zone-grid" style="display:flex;flex-direction:column;gap:4px">
-                    <div class="zr-row">${_zrCell('6m ail G')}${_zrCell('6m ext G')}${_zrCell('6m central G')}${_zrCell('6m central D')}${_zrCell('6m ext D')}${_zrCell('6m ail D')}</div>
-                    <div class="zr-row">${_zrCell('6-9 ext G')}${_zrCell('6-9 central G')}<div class="zr-cell zr-7m${zones.includes('7m') ? '' : ' zr-empty'}" data-zone="7m" onclick="onPmfZoneClick('7m')">7m</div>${_zrCell('6-9 central D')}${_zrCell('6-9 ext D')}</div>
-                    <div class="zr-row">${_zrCell('9m ext G')}${_zrCell('9m Int G')}${_zrCell('9m Int D')}${_zrCell('9m ext D')}</div>
-                </div>`;
 
             // ── Assemblage ──
             if (!page) return;
@@ -562,104 +536,6 @@
             });
         }
 
-        // ── Zone impact (fiche) ──────────────────────────────────────────────────
-        function onPmfZoneClick(zone) {
-            // Toggle : re-clic sur zone sélectionnée = tout voir
-            _pmfZoneFilter = (_pmfZoneFilter === zone) ? '' : zone;
-
-            // Mise à jour visuelle des cellules
-            document.querySelectorAll('#pmf-zone-grid .zr-cell').forEach(cell => {
-                cell.classList.toggle('zr-selected', cell.dataset.zone === _pmfZoneFilter && _pmfZoneFilter !== '');
-            });
-            const resetBtn = document.getElementById('pmf-zone-reset');
-            if (resetBtn) resetBtn.style.display = _pmfZoneFilter ? 'inline' : 'none';
-
-            const nom  = getSessionPlayerNom();
-            const tp   = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p=>p.nom===nom) : null;
-            const isGB = tp && tp.poste === 'GB';
-            const all  = isGB
-                ? DATA.filter(r => r[COLS.club]!=='FENIX' && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
-                : DATA.filter(r => r[COLS.club]==='FENIX'  && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom)   && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
-            _drawPmfImpact(all, isGB);
-        }
-
-        function _drawPmfImpact(allRows, isGB) {
-            const rows = _pmfZoneFilter ? allRows.filter(r => (r[COLS.field_position]||'').toString().trim() === _pmfZoneFilter) : allRows;
-
-            // ── Stats au tir pour la zone filtrée ──
-            const statsEl = document.getElementById('pmf-impact-stats');
-            if (statsEl) {
-                if (isGB) {
-                    const arrets = rows.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
-                    const buts   = rows.filter(r => r[COLS.resultat]  === 'But').length;
-                    const tot    = arrets + buts;
-                    const eff    = tot > 0 ? Math.round(arrets / tot * 100) : 0;
-                    const effColor = (typeof getEffColor === 'function') ? getEffColor(eff, 'GB') : '#0A2463';
-                    statsEl.innerHTML = tot === 0 ? '' : `
-                        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-                            <span style="font-size:0.8rem;color:#64748B">${arrets} arrêt${arrets>1?'s':''} / ${tot} tir${tot>1?'s':''}</span>
-                            <span style="font-size:1.1rem;font-weight:800;color:${effColor}">${eff}%</span>
-                        </div>`;
-                } else {
-                    const buts  = rows.filter(r => r[COLS.resultat] === 'But').length;
-                    const rates = rows.filter(r => r[COLS.resultat] === 'Tir raté').length;
-                    const tot   = buts + rates;
-                    const eff   = tot > 0 ? Math.round(buts / tot * 100) : 0;
-                    const nom   = getSessionPlayerNom();
-                    const tp    = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => p.nom === nom) : null;
-                    const poste = tp ? tp.poste : '';
-                    const effColor = (typeof getEffColor === 'function') ? getEffColor(eff, poste) : '#0A2463';
-                    statsEl.innerHTML = tot === 0 ? '' : `
-                        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-                            <span style="font-size:0.8rem;color:#64748B">${buts} but${buts>1?'s':''} / ${tot} tir${tot>1?'s':''}</span>
-                            <span style="font-size:1.1rem;font-weight:800;color:${effColor}">${eff}%</span>
-                        </div>`;
-                }
-            }
-
-            const drawOn = (canvasId, b64, subset) => {
-                const canvas = document.getElementById(canvasId);
-                if (!canvas) return;
-                const W = canvas.parentElement.clientWidth || 300;
-                const H = Math.round(W * 0.62);
-                canvas.width=W; canvas.height=H;
-                const ctx = canvas.getContext('2d');
-                const paint = img => {
-                    if (img) { ctx.drawImage(img, 0, 0, W, H); }
-                    else { ctx.fillStyle='#DBEAFE'; ctx.fillRect(0,0,W,H); }
-                    subset.forEach(row => {
-                        const p=String(row[COLS.impact]).split(';');
-                        const x=parseFloat(p[0]),y=parseFloat(p[1]);
-                        if(isNaN(x)||isNaN(y)) return;
-                        const dotX=(x/100)*W, dotY=(y/100)*H, s=Math.max(5,W*0.022);
-                        const isPos = isGB ? row[COLS.finalite]==='Tir arrêté' : row[COLS.resultat]==='But';
-                        ctx.save(); ctx.lineCap='round';
-                        if (isPos) {
-                            ctx.beginPath(); ctx.arc(dotX,dotY,s,0,Math.PI*2);
-                            ctx.fillStyle='#10B981'; ctx.fill();
-                            ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
-                        } else {
-                            const sc=s/Math.SQRT2;
-                            ctx.strokeStyle='#EF4444'; ctx.lineWidth=2.5;
-                            ctx.beginPath();
-                            ctx.moveTo(dotX-sc,dotY-sc); ctx.lineTo(dotX+sc,dotY+sc);
-                            ctx.moveTo(dotX+sc,dotY-sc); ctx.lineTo(dotX-sc,dotY+sc);
-                            ctx.stroke();
-                        }
-                        ctx.restore();
-                    });
-                };
-                if (typeof IMPACT_B64!=='undefined' && b64) {
-                    const img=new Image(); img.onload=()=>paint(img); img.onerror=()=>paint(null); img.src=b64;
-                } else { paint(null); }
-            };
-
-            const b64=(typeof IMPACT_B64!=='undefined')?IMPACT_B64:{};
-            drawOn('pmf-canvas-alg',  b64.alg,  rows.filter(r=>getImpactView(r)==='alg'));
-            drawOn('pmf-canvas-face', b64.face, rows.filter(r=>getImpactView(r)==='face'));
-            drawOn('pmf-canvas-ald',  b64.ald,  rows.filter(r=>getImpactView(r)==='ald'));
-        }
-
         // ── Canvas draw helper (partagé fiche + match) ──────────────────────────
         function _drawImpactCanvas(canvasId, b64src, subset, isGB) {
             const canvas = document.getElementById(canvasId);
@@ -745,6 +621,7 @@
 
         // ── Extras Stats Match : impact + actions/zones ─────────────────────────
         function renderPlayerMatchExtras(nom, isGB, matchFilter) {
+            pmCloseFS();
             const wrap = document.getElementById('pm-match-extras');
             if (!wrap) return;
 

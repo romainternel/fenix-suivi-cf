@@ -766,10 +766,11 @@
         /* Sélecteur zone rectangulaire */
         .zr-row { display: flex; gap: 4px; }
         .zr-cell {
-            flex: 1; padding: 0.38rem 0.2rem; text-align: center;
+            flex: 1; padding: 0.6rem 0.3rem; min-height: 36px; text-align: center;
             font-size: 0.71rem; font-weight: 600; color: #334155;
             border-radius: 5px; cursor: pointer; user-select: none;
             transition: background 0.12s, color 0.12s;
+            display: flex; align-items: center; justify-content: center;
         }
         .zr-row:nth-child(1) .zr-cell { background: #dbeafe; }
         .zr-row:nth-child(2) .zr-cell { background: #ede9fe; }
@@ -1770,7 +1771,7 @@
         .pmf-fs-btn {
             position: absolute; top: 10px; right: 10px;
             background: none; border: none; cursor: pointer;
-            font-size: 1.1rem; color: #94a3b8; padding: 4px; line-height: 1;
+            font-size: 1.1rem; color: #94a3b8; padding: 8px; line-height: 1;
             border-radius: 4px; transition: color .15s, background .15s;
             z-index: 2;
         }
@@ -1782,15 +1783,17 @@
             background: rgba(0,0,0,.6); z-index: 1400;
             align-items: flex-start; justify-content: center;
             overflow-y: auto; padding: 20px;
+            -webkit-overflow-scrolling: touch;
         }
         #pmf-fs-inner {
             background: white; border-radius: 16px; padding: 28px 28px 24px;
             width: 96vw; max-width: 1400px; margin: auto;
             min-height: 75vh; max-height: 92vh; overflow-y: auto;
             position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.35);
+            overscroll-behavior: contain;
         }
         /* Graph et tables plus hauts en mode fullscreen */
-        #pmf-fs-inner .pmf-graph-wrap { height: 65vh !important; }
+        #pmf-fs-inner .pmf-graph-wrap { height: min(65vh, 500px) !important; }
         #pmf-fs-inner .jm-table { font-size: 1rem !important; }
         #pmf-fs-inner .jm-table th, #pmf-fs-inner .jm-table td { padding: 10px 12px !important; }
         #pmf-fs-inner > .pmf-card {
