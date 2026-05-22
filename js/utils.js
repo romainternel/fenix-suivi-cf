@@ -51,13 +51,11 @@
             const en = excelName.toLowerCase().trim();
             const tn = terrainName.toLowerCase().trim();
             if (en === tn) return true;
-            // Excel name is an exact known player → require exact match
+            // Excel name is an exact known player → require exact match, no prefix
             if (JOUEURS_TERRAIN.some(p => p.nom.toLowerCase().trim() === en)) return false;
-            // Excel longer than terrain (e.g. Excel="Jules Ferrer", terrain="Jules F")
+            // Excel longer than terrain : "Jules Fernandez" matches terrain "Jules F"
+            // Direction inverse (terrain plus long qu'Excel) supprimée : trop ambiguë avec homonymes
             if (en.startsWith(tn + ' ')) return true;
-            // Terrain longer than Excel: only if terrain name is NOT itself an exact known player
-            // (prevents "Jules" matching "Jules F" when "Jules F" is a distinct player)
-            if (tn.startsWith(en + ' ') && !JOUEURS_TERRAIN.some(p => p.nom.toLowerCase().trim() === tn)) return true;
             return false;
         }
 
