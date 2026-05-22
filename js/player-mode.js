@@ -218,7 +218,7 @@
 
                 <div class="pmf-card">
                     <div class="pmf-card-title">${isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION — SAISON'}</div>
-                    <div style="position:relative;height:280px">
+                    <div class="pmf-graph-wrap" style="position:relative;height:280px">
                         <canvas id="pmf-graph-canvas"></canvas>
                     </div>
                 </div>`;
@@ -1059,13 +1059,17 @@
         }
 
         function _fsRedrawCanvases(card) {
+            const inModal = !!document.getElementById('pmf-fs-inner')?.contains(card);
+            if (card.querySelector('#pmf-graph-canvas')) {
+                // Adapter la hauteur du wrapper selon le contexte
+                const wrap = card.querySelector('.pmf-graph-wrap');
+                if (wrap) wrap.style.height = inModal ? '65vh' : '280px';
+                const nom = getSessionPlayerNom();
+                if (nom) renderPmfGraph(nom);
+            }
             if (card.querySelector('#pmm-canvas-alg')) {
                 const rows = _pmmZoneFilter ? _pmmImpactRows.filter(r => (r[COLS.field_position]||'').toString().trim() === _pmmZoneFilter) : _pmmImpactRows;
                 _drawMatchExtrasImpact(rows);
-            }
-            if (card.querySelector('#pmf-graph-canvas')) {
-                const nom = getSessionPlayerNom();
-                if (nom) renderPmfGraph(nom);
             }
         }
 
