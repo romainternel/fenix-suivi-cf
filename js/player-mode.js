@@ -240,7 +240,7 @@
         }
 
         // ── Tableau zones de tir GB (remplace ACTIONS pour les gardiens) ────────
-        function _buildGbZoneTableHTML(nom) {
+        function _buildGbZoneTableHTML(nom, matchFilter) {
             const DIFF_ORDER = ['Très difficile', 'Difficile', 'Moyen', 'Facile', 'Très facile', null];
             const DIFF_COLOR = {
                 'Très difficile': '#FEE2E2',
@@ -253,6 +253,7 @@
             const zones = {};
             DATA.forEach(row => {
                 if (row[COLS.club] === 'FENIX') return;
+                if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
                 const g = (row[COLS.gardien]||'').toString().trim();
                 if (!matchPlayerName(g, nom)) return;
                 const isArret = row[COLS.finalite] === 'Tir arrêté';
@@ -309,7 +310,7 @@
         }
 
         // ── Détail des actions (style modal photo 1) ─────────────────────────────
-        function _buildDetailedActionsHTML(nom) {
+        function _buildDetailedActionsHTML(nom, matchFilter) {
             const ATT_PLUS  = (typeof ACTIONS_ATT_PLUS  !== 'undefined') ? ACTIONS_ATT_PLUS  : ['But', 'But DG', 'PD', 'PD DG', 'PO', "2' Obt", 'Duel gagné att', 'Bon choix', 'Bloc', 'Glissement', 'Écran'];
             const ATT_MOINS = (typeof ACTIONS_ATT_MOINS !== 'undefined') ? ACTIONS_ATT_MOINS : ['Tir raté', 'PB', 'PF', 'Neutralisé', 'Mauvais choix', 'Bloc -'];
             const DEF_PLUS  = (typeof ACTIONS_DEF_PLUS  !== 'undefined') ? ACTIONS_DEF_PLUS  : ['Duel gagné déf', 'Contre +', 'Récup', 'Intercep', 'Dissua', 'Entraide +', 'Impair +', 'Contournement pivot +'];
@@ -318,6 +319,7 @@
             const counts = {};
             const matchSet = new Set();
             DATA.forEach(row => {
+                if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
                 const joueurs = (row[COLS.action_joueur]||'').toString().split(';');
                 const atts   = (row[COLS.action_att]||'').toString().split(';');
                 const defs   = (row[COLS.action_def]||'').toString().split(';');
@@ -670,6 +672,108 @@
             drawOn('pmf-canvas-ald',  b64.ald,  rows.filter(r=>getImpactView(r)==='ald'));
         }
 
+        // ── Extras Stats Match : impact + actions/zones ─────────────────────────
+        function renderPlayerMatchExtras(nom, isGB, matchFilter) {
+            const wrap = document.getElementById('pm-match-extras');
+            if (!wrap) return;
+
+            const impactRows = isGB
+                ? DATA.filter(r => r[COLS.club] !== 'FENIX' && (!matchFilter || r[COLS.rencontre] === matchFilter) && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
+                : DATA.filter(r => r[COLS.club] === 'FENIX'  && (!matchFilter || r[COLS.rencontre] === matchFilter) && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom)   && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
+
+            // Stats synthèse pour l'en-tête impact
+            let impactStatsHTML = '';
+            if (isGB) {
+                const ar = impactRows.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
+                const bu = impactRows.filter(r => r[COLS.resultat]  === 'But').length;
+                const tot = ar + bu;
+                const eff = tot > 0 ? Math.round(ar / tot * 100) : 0;
+                const ec  = (typeof getEffColor === 'function') ? getEffColor(eff, 'GB') : '#0A2463';
+                impactStatsHTML = tot === 0 ? '' : `<div style="display:flex;gap:12px;align-items:center">
+                    <span style="font-size:0.8rem;color:#64748B">${ar} arrêt${ar>1?'s':''} / ${tot} tir${tot>1?'s':''}</span>
+                    <span style="font-size:1.1rem;font-weight:800;color:${ec}">${eff}%</span></div>`;
+            } else {
+                const bu  = impactRows.filter(r => r[COLS.resultat] === 'But').length;
+                const ra  = impactRows.filter(r => r[COLS.resultat] === 'Tir raté').length;
+                const tot = bu + ra;
+                const eff = tot > 0 ? Math.round(bu / tot * 100) : 0;
+                const tp  = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) : null;
+                const ec  = (typeof getEffColor === 'function') ? getEffColor(eff, tp ? tp.poste : '') : '#0A2463';
+                impactStatsHTML = tot === 0 ? '' : `<div style="display:flex;gap:12px;align-items:center">
+                    <span style="font-size:0.8rem;color:#64748B">${bu} but${bu>1?'s':''} / ${tot} tir${tot>1?'s':''}</span>
+                    <span style="font-size:1.1rem;font-weight:800;color:${ec}">${eff}%</span></div>`;
+            }
+
+            const impactTitle  = isGB ? 'ARRÊTS ET BUTS CONCÉDÉS' : 'ZONES DE TIR';
+            const impactLegend = isGB
+                ? `<span class="pmf-legend-dot pmf-legend-green">●</span> Tir arrêté <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> But encaissé`
+                : `<span class="pmf-legend-dot pmf-legend-green">●</span> But <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> Tir raté`;
+
+            const actionsHTML  = isGB ? _buildGbZoneTableHTML(nom, matchFilter) : _buildDetailedActionsHTML(nom, matchFilter);
+            const actionsTitle = isGB ? 'STATS PAR ZONE' : 'ACTIONS';
+
+            wrap.innerHTML = `
+                <div class="pmf-card">
+                    <div class="pmf-card-header-row">
+                        <div class="pmf-card-title">${impactTitle}</div>
+                        <div>${impactStatsHTML}</div>
+                    </div>
+                    <div class="pmf-canvases">
+                        <div class="pmf-canvas-wrap"><canvas id="pmm-canvas-alg"></canvas><div class="pmf-canvas-lbl">EXT GAUCHE</div></div>
+                        <div class="pmf-canvas-wrap"><canvas id="pmm-canvas-face"></canvas><div class="pmf-canvas-lbl">CENTRAL</div></div>
+                        <div class="pmf-canvas-wrap"><canvas id="pmm-canvas-ald"></canvas><div class="pmf-canvas-lbl">EXT DROIT</div></div>
+                    </div>
+                    ${impactRows.length === 0 ? '<div class="pmf-no-impact">Aucune donnée de tir avec coordonnées</div>' : ''}
+                    <div class="pmf-legend" style="margin-top:8px">${impactLegend}</div>
+                </div>
+                <div class="pmf-card">
+                    <div class="pmf-card-title">${actionsTitle}</div>
+                    ${actionsHTML}
+                </div>`;
+
+            // Dessin des canvas impact
+            const drawOn = (canvasId, b64src, subset) => {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                const W = canvas.parentElement.clientWidth || 300;
+                const H = Math.round(W * 0.62);
+                canvas.width = W; canvas.height = H;
+                const ctx = canvas.getContext('2d');
+                const paint = img => {
+                    if (img) ctx.drawImage(img, 0, 0, W, H);
+                    else { ctx.fillStyle = '#DBEAFE'; ctx.fillRect(0, 0, W, H); }
+                    subset.forEach(row => {
+                        const p = String(row[COLS.impact]).split(';');
+                        const x = parseFloat(p[0]), y = parseFloat(p[1]);
+                        if (isNaN(x) || isNaN(y)) return;
+                        const dotX = (x/100)*W, dotY = (y/100)*H, s = Math.max(5, W*0.022);
+                        const isPos = isGB ? row[COLS.finalite] === 'Tir arrêté' : row[COLS.resultat] === 'But';
+                        ctx.save(); ctx.lineCap = 'round';
+                        if (isPos) {
+                            ctx.beginPath(); ctx.arc(dotX, dotY, s, 0, Math.PI*2);
+                            ctx.fillStyle = '#10B981'; ctx.fill();
+                            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+                        } else {
+                            const sc = s / Math.SQRT2;
+                            ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 2.5;
+                            ctx.beginPath();
+                            ctx.moveTo(dotX-sc, dotY-sc); ctx.lineTo(dotX+sc, dotY+sc);
+                            ctx.moveTo(dotX+sc, dotY-sc); ctx.lineTo(dotX-sc, dotY+sc);
+                            ctx.stroke();
+                        }
+                        ctx.restore();
+                    });
+                };
+                if (typeof IMPACT_B64 !== 'undefined' && b64src) {
+                    const img = new Image(); img.onload = () => paint(img); img.onerror = () => paint(null); img.src = b64src;
+                } else { paint(null); }
+            };
+            const b64 = (typeof IMPACT_B64 !== 'undefined') ? IMPACT_B64 : {};
+            drawOn('pmm-canvas-alg',  b64.alg,  impactRows.filter(r => getImpactView(r) === 'alg'));
+            drawOn('pmm-canvas-face', b64.face, impactRows.filter(r => getImpactView(r) === 'face'));
+            drawOn('pmm-canvas-ald',  b64.ald,  impactRows.filter(r => getImpactView(r) === 'ald'));
+        }
+
         // ── Stats Match : équipes ────────────────────────────────────────────────
         function renderPlayerMatchStats() {
             const selEl      = document.getElementById('pm-match-sel');
@@ -719,12 +823,12 @@
             const cardsEl = document.getElementById('pm-match-cards');
             if (cardsEl) cardsEl.innerHTML = card(fv,'#0A2463','FENIX TOULOUSE') + card(av,'#EF4444',advName);
 
-            // Table personnelle du joueur
+            // Table + extras personnels du joueur
             const nom = getSessionPlayerNom();
             if (nom) {
-                const tp   = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p=>p.nom===nom) : null;
-                const isGB = tp && tp.poste === 'GB';
+                const isGB = (typeof detectIsGB === 'function') ? detectIsGB(nom) : false;
                 renderPlayerMatchTable(nom, isGB, matchFilter);
+                renderPlayerMatchExtras(nom, isGB, matchFilter);
             }
         }
 
