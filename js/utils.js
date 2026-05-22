@@ -51,8 +51,14 @@
             const en = excelName.toLowerCase().trim();
             const tn = terrainName.toLowerCase().trim();
             if (en === tn) return true;
+            // Excel name is an exact known player → require exact match
             if (JOUEURS_TERRAIN.some(p => p.nom.toLowerCase().trim() === en)) return false;
-            return en.startsWith(tn + ' ') || tn.startsWith(en + ' ');
+            // Excel longer than terrain (e.g. Excel="Jules Ferrer", terrain="Jules F")
+            if (en.startsWith(tn + ' ')) return true;
+            // Terrain longer than Excel: only if terrain name is NOT itself an exact known player
+            // (prevents "Jules" matching "Jules F" when "Jules F" is a distinct player)
+            if (tn.startsWith(en + ' ') && !JOUEURS_TERRAIN.some(p => p.nom.toLowerCase().trim() === tn)) return true;
+            return false;
         }
 
         function detectIsGB(nom) {
