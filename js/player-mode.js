@@ -1033,7 +1033,7 @@
             modal.style.display = 'flex';
             document.body.classList.add('pmf-fs-active');
 
-            setTimeout(() => _fsRedrawCanvases(card), 80);
+            setTimeout(() => _fsRedrawCanvases(card), 150);
         }
 
         function pmCloseFS() {

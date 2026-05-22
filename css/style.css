@@ -1785,7 +1785,7 @@
         }
         #pmf-fs-inner {
             background: white; border-radius: 16px; padding: 28px 28px 16px;
-            width: 100%; max-width: 960px; margin: auto;
+            width: 96vw; max-width: 1400px; margin: auto;
             position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.35);
         }
         #pmf-fs-inner > .pmf-card {
