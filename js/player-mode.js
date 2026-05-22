@@ -355,6 +355,7 @@
             if (!canvas || typeof Chart === 'undefined') return;
 
             const isGB = (typeof detectIsGB === 'function') ? detectIsGB(nom) : false;
+            const isMobile = window.innerWidth < 520;
 
             if (isGB) {
                 const gbMd = {};
@@ -427,10 +428,11 @@
                         responsive:true, maintainAspectRatio:false,
                         interaction:{ mode:'index', intersect:false },
                         plugins: {
-                            legend:  { position:'top', labels:{ font:{size:11}, padding:14, usePointStyle:true, filter: item => item.text !== '__zero__' } },
+                            legend:  { position:'top', labels:{ font:{size:isMobile?9:11}, padding:isMobile?6:14, boxWidth:isMobile?10:14, usePointStyle:true, filter: item => item.text !== '__zero__' } },
                             tooltip: { filter: item => item.dataset.label !== '__zero__' },
                             title:   { display:false },
                         },
+                        layout: { padding: { right: isMobile ? 4 : 8 } },
                         scales: {
                             x: {
                                 ticks: { font:{size:8,weight:'700'}, maxRotation:90, minRotation:45,
@@ -438,8 +440,8 @@
                                 },
                                 grid: { display:false },
                             },
-                            y:  { position:'left',  min:yMin, max:yMax, title:{ display:true, text:'Arrêts / Score', font:{size:11} }, ticks:{ font:{size:11} }, grid:{ color:'#F1F5F9' } },
-                            y1: { position:'right', min:y1Min, max:100,  title:{ display:true, text:'% Arrêts', font:{size:11} }, ticks:{ font:{size:11}, callback: v => v>=0 ? v+'%':'' }, grid:{ drawOnChartArea:false } },
+                            y:  { position:'left',  min:yMin, max:yMax, title:{ display:!isMobile, text:'Arrêts / Score', font:{size:11} }, ticks:{ font:{size:isMobile?9:11} }, grid:{ color:'#F1F5F9' } },
+                            y1: { position:'right', min:y1Min, max:100,  title:{ display:!isMobile, text:'% Arrêts', font:{size:11} }, ticks:{ font:{size:isMobile?9:11}, callback: v => v>=0 ? v+'%':'' }, grid:{ drawOnChartArea:false } },
                         },
                     },
                 });
@@ -513,11 +515,11 @@
                 options: {
                     responsive:true, maintainAspectRatio:false,
                     plugins: {
-                        legend:  { position:'top', labels:{ font:{size:11}, padding:14, usePointStyle:true, filter:item=>item.text!=='__zero__' } },
+                        legend:  { position:'top', labels:{ font:{size:isMobile?9:11}, padding:isMobile?6:14, boxWidth:isMobile?10:14, usePointStyle:true, filter:item=>item.text!=='__zero__' } },
                         tooltip: { filter: item => item.dataset.label !== '__zero__' },
                         title:   { display:false },
                     },
-                    layout: { padding: { right: 36 } },
+                    layout: { padding: { right: isMobile ? 20 : 36 } },
                     scales: {
                         x: {
                             ticks: { font:{size:8,weight:'700'}, maxRotation:90, minRotation:45,
@@ -526,9 +528,9 @@
                             grid: { display:false },
                         },
                         y: {
-                            title: { display:true, text:'Note', font:{size:12} },
+                            title: { display:!isMobile, text:'Note', font:{size:12} },
                             grid: { color:'#F1F5F9' },
-                            ticks: { font:{size:11} },
+                            ticks: { font:{size:isMobile?9:11} },
                             afterDataLimits(scale) { scale.max+=2; scale.min-=2; },
                         },
                     },

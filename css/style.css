@@ -1949,6 +1949,8 @@
             .pmf-actions-2col   { grid-template-columns: 1fr; }
             /* Totaux : 2 colonnes au lieu de 4 */
             .pmf-actions-totals { grid-template-columns: 1fr 1fr; }
+            /* Graph plus haut sur iPhone */
+            .pmf-graph-wrap     { height: 380px !important; }
 
 
             /* Barre navigation : 2 lignes (logo / tabs + logout) */
