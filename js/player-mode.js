@@ -192,7 +192,7 @@
 
                 <div class="pmf-card">
                     <div class="pmf-card-title">${isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION — SAISON'}</div>
-                    <div class="pmf-graph-wrap" style="position:relative;height:280px">
+                    <div class="pmf-graph-wrap" style="position:relative;height:340px">
                         <canvas id="pmf-graph-canvas"></canvas>
                     </div>
                 </div>`;
@@ -332,15 +332,15 @@
             const vColor = v => v > 0 ? '#059669' : v < 0 ? '#DC2626' : '#64748B';
 
             return `
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                <div class="pmf-actions-2col">
                     ${makeSection(ATT_PLUS,  '#059669', '#F0FDF4', true)}
                     ${makeSection(DEF_PLUS,  '#059669', '#EFF6FF', true)}
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+                <div class="pmf-actions-2col">
                     ${makeSection(ATT_MOINS, '#DC2626', '#FEF2F2', false)}
                     ${makeSection(DEF_MOINS, '#DC2626', '#FEF9E7', false)}
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding-top:10px;border-top:1px solid #E2E8F0;text-align:center">
+                <div class="pmf-actions-totals">
                     <div><div style="font-size:1.3rem;font-weight:800;color:${vColor(totalAtt)}">${sign(totalAtt)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL ATT</div><div style="font-size:0.7rem;color:#94A3B8">${(totalAtt/nbM).toFixed(1)}/match</div></div>
                     <div><div style="font-size:1.3rem;font-weight:800;color:${vColor(totalDef)}">${sign(totalDef)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL DEF</div><div style="font-size:0.7rem;color:#94A3B8">${(totalDef/nbM).toFixed(1)}/match</div></div>
                     <div><div style="font-size:1.5rem;font-weight:900;color:${vColor(totalJoueur)}">${sign(totalJoueur)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL JOUEUR</div><div style="font-size:0.7rem;color:#94A3B8">${(totalJoueur/nbM).toFixed(1)}/match</div></div>
@@ -427,13 +427,13 @@
                         responsive:true, maintainAspectRatio:false,
                         interaction:{ mode:'index', intersect:false },
                         plugins: {
-                            legend:  { position:'bottom', labels:{ font:{size:11}, padding:14, usePointStyle:true, filter: item => item.text !== '__zero__' } },
+                            legend:  { position:'top', labels:{ font:{size:11}, padding:14, usePointStyle:true, filter: item => item.text !== '__zero__' } },
                             tooltip: { filter: item => item.dataset.label !== '__zero__' },
                             title:   { display:false },
                         },
                         scales: {
                             x: {
-                                ticks: { font:{size:10,weight:'700'}, maxRotation:45,
+                                ticks: { font:{size:8,weight:'700'}, maxRotation:90, minRotation:45,
                                     color: ctx => { const m=played[ctx.index]; if(!m) return '#334155'; const f=DATA.filter(r=>r[COLS.rencontre]===m&&r[COLS.club]==='FENIX'&&r[COLS.resultat]==='But').length; const a=DATA.filter(r=>r[COLS.rencontre]===m&&r[COLS.club]!=='FENIX'&&r[COLS.resultat]==='But').length; return f>a?'#16A34A':f<a?'#DC2626':'#1E293B'; }
                                 },
                                 grid: { display:false },
@@ -513,14 +513,14 @@
                 options: {
                     responsive:true, maintainAspectRatio:false,
                     plugins: {
-                        legend:  { position:'bottom', labels:{ font:{size:11}, padding:14, usePointStyle:true, filter:item=>item.text!=='__zero__' } },
+                        legend:  { position:'top', labels:{ font:{size:11}, padding:14, usePointStyle:true, filter:item=>item.text!=='__zero__' } },
                         tooltip: { filter: item => item.dataset.label !== '__zero__' },
                         title:   { display:false },
                     },
                     layout: { padding: { right: 36 } },
                     scales: {
                         x: {
-                            ticks: { font:{size:10,weight:'700'}, maxRotation:45,
+                            ticks: { font:{size:8,weight:'700'}, maxRotation:90, minRotation:45,
                                 color: ctx => { const m=played[ctx.index]; if(!m) return '#334155'; const f=DATA.filter(r=>r[COLS.rencontre]===m&&r[COLS.club]==='FENIX'&&r[COLS.resultat]==='But').length; const a=DATA.filter(r=>r[COLS.rencontre]===m&&r[COLS.club]!=='FENIX'&&r[COLS.resultat]==='But').length; return f>a?'#16A34A':f<a?'#DC2626':'#1E293B'; }
                             },
                             grid: { display:false },

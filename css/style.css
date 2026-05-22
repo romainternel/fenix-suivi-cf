@@ -1933,8 +1933,23 @@
             font-size: 0.85rem; padding: 20px 0;
         }
 
+        /* Actions 4 quadrants */
+        .pmf-actions-2col {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;
+        }
+        .pmf-actions-totals {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 8px; padding-top: 10px;
+            border-top: 1px solid #E2E8F0; text-align: center;
+        }
+
         /* ── Player Mode : responsive iPhone (< 520px) ────────────────────────── */
         @media (max-width: 520px) {
+            /* Actions : 1 quadrant par ligne */
+            .pmf-actions-2col   { grid-template-columns: 1fr; }
+            /* Totaux : 2 colonnes au lieu de 4 */
+            .pmf-actions-totals { grid-template-columns: 1fr 1fr; }
+
 
             /* Barre navigation : 2 lignes (logo / tabs + logout) */
             #pm-bar {
