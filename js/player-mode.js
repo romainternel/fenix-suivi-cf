@@ -224,6 +224,7 @@
                 </div>`;
 
             renderPmfGraph(nom);
+            addFSButtons(page);
         }
 
         // ── Tableau zones de tir GB (remplace ACTIONS pour les gardiens) ────────
@@ -796,6 +797,7 @@
 
             _updatePmmImpactStats(_pmmImpactRows);
             _drawMatchExtrasImpact(_pmmImpactRows);
+            addFSButtons(wrap);
         }
 
         // ── Stats Match : équipes ────────────────────────────────────────────────
@@ -917,6 +919,7 @@
                 rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${gaT}/${gtT}</td><td>${gtT>0?Math.round(gaT/gtT*100)+'%':'-'}</td><td>${gt.ac}/${gtC}</td><td>${gtC>0?Math.round(gt.ac/gtC*100)+'%':'-'}</td><td>${gt.ap}/${gtP}</td><td>${gtP>0?Math.round(gt.ap/gtP*100)+'%':'-'}</td><td>${gt.but}</td><td>${gt.pd}</td><td>${gt.pb}</td></tr>`;
 
                 wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>Total</th><th>%</th><th>Champ</th><th>%</th><th>Pen</th><th>%</th><th>But</th><th>PD</th><th>PB</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+                addFSButtons(wrap);
 
             } else {
                 const sbm = {};
@@ -956,6 +959,7 @@
                 rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${tot.bc}/${tC}</td><td>${tC>0?Math.round(tot.bc/tC*100)+'%':'-'}</td><td>${tP>0?tot.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(tot.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${tot.pb}</td><td>${tot.po}</td><td>${tot.pd}</td></tr>`;
 
                 wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>But/Tir</th><th>% Champ</th><th>Pen (B/T)</th><th>% Pen</th><th>% Total</th><th>PB</th><th>PO</th><th>PD</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+                addFSButtons(wrap);
             }
         }
 
@@ -1012,6 +1016,49 @@
             openPlayerAccountsModal();
         }
 
+        // ── Plein écran carte ────────────────────────────────────────────────────
+        function pmToggleFS(btn) {
+            const card = btn.closest('.pmf-card');
+            const entering = !card.classList.contains('pmf-fs');
+            // Fermer tout autre plein écran ouvert
+            document.querySelectorAll('.pmf-card.pmf-fs').forEach(c => {
+                c.classList.remove('pmf-fs');
+                const b = c.querySelector('.pmf-fs-btn');
+                if (b) b.textContent = '⛶';
+            });
+            if (entering) {
+                card.classList.add('pmf-fs');
+                btn.textContent = '✕';
+                document.body.classList.add('pmf-fs-active');
+                // Redraw canvases si nécessaire
+                setTimeout(() => {
+                    if (card.querySelector('#pmm-canvas-alg')) {
+                        const rows = _pmmZoneFilter ? _pmmImpactRows.filter(r => (r[COLS.field_position]||'').toString().trim() === _pmmZoneFilter) : _pmmImpactRows;
+                        _drawMatchExtrasImpact(rows);
+                    }
+                    if (card.querySelector('#pmf-graph-canvas')) {
+                        const nom = getSessionPlayerNom();
+                        if (nom) renderPmfGraph(nom);
+                    }
+                }, 80);
+            } else {
+                document.body.classList.remove('pmf-fs-active');
+            }
+        }
+
+        function addFSButtons(root) {
+            const container = root || document;
+            container.querySelectorAll('.pmf-card').forEach(card => {
+                if (card.querySelector('.pmf-fs-btn')) return;
+                const btn = document.createElement('button');
+                btn.className = 'pmf-fs-btn';
+                btn.textContent = '⛶';
+                btn.title = 'Plein écran';
+                btn.onclick = () => pmToggleFS(btn);
+                card.insertBefore(btn, card.firstChild);
+            });
+        }
+
         // ── Init ─────────────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', function () {
             const stored = sessionStorage.getItem('fenix_session');
@@ -1021,4 +1068,15 @@
                     if (isPlayerMode()) setupPlayerUI();
                 } catch (e) {}
             }
+
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.pmf-card.pmf-fs').forEach(card => {
+                        card.classList.remove('pmf-fs');
+                        const b = card.querySelector('.pmf-fs-btn');
+                        if (b) b.textContent = '⛶';
+                    });
+                    document.body.classList.remove('pmf-fs-active');
+                }
+            });
         });
