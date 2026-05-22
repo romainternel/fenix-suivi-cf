@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=19">
-    <script src="js/utils.js?v=19"></script>
-    <script src="js/impact-images.js?v=19"></script>
-    <script src="js/player-mode.js?v=19"></script>
-    <script src="js/page-joueurs.js?v=19"></script>
-    <script src="js/page-notes-graph.js?v=19"></script>
-    <script src="js/page-analyse.js?v=19"></script>
+    <link rel="stylesheet" href="css/style.css?v=20">
+    <script src="js/utils.js?v=20"></script>
+    <script src="js/impact-images.js?v=20"></script>
+    <script src="js/player-mode.js?v=20"></script>
+    <script src="js/page-joueurs.js?v=20"></script>
+    <script src="js/page-notes-graph.js?v=20"></script>
+    <script src="js/page-analyse.js?v=20"></script>
 </head>
 <body>
 
@@ -2898,6 +2898,13 @@ let _effInfoPoste = null;
         <div id="pm-match-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:20px"></div>
         <div id="pm-match-player-table" style="margin-top:1.2rem"></div>
         <div id="pm-match-extras" style="margin-top:1.2rem"></div>
+    </div>
+
+    <!-- ── MODE JOUEUR ── modal plein écran carte ─────────────────────────── -->
+    <div id="pmf-fs-modal" onclick="pmCloseFSBackdrop(event)">
+        <div id="pmf-fs-inner">
+            <button id="pmf-fs-close" onclick="pmCloseFS()" title="Fermer">✕</button>
+        </div>
     </div>
 
     <!-- ── STAFF ── modal gestion comptes joueurs ──────────────────────────── -->

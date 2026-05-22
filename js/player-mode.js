@@ -1016,33 +1016,56 @@
             openPlayerAccountsModal();
         }
 
-        // ── Plein écran carte ────────────────────────────────────────────────────
-        function pmToggleFS(btn) {
-            const card = btn.closest('.pmf-card');
-            const entering = !card.classList.contains('pmf-fs');
-            // Fermer tout autre plein écran ouvert
-            document.querySelectorAll('.pmf-card.pmf-fs').forEach(c => {
-                c.classList.remove('pmf-fs');
-                const b = c.querySelector('.pmf-fs-btn');
-                if (b) b.textContent = '⛶';
-            });
-            if (entering) {
-                card.classList.add('pmf-fs');
-                btn.textContent = '✕';
-                document.body.classList.add('pmf-fs-active');
-                // Redraw canvases si nécessaire
-                setTimeout(() => {
-                    if (card.querySelector('#pmm-canvas-alg')) {
-                        const rows = _pmmZoneFilter ? _pmmImpactRows.filter(r => (r[COLS.field_position]||'').toString().trim() === _pmmZoneFilter) : _pmmImpactRows;
-                        _drawMatchExtrasImpact(rows);
-                    }
-                    if (card.querySelector('#pmf-graph-canvas')) {
-                        const nom = getSessionPlayerNom();
-                        if (nom) renderPmfGraph(nom);
-                    }
-                }, 80);
-            } else {
-                document.body.classList.remove('pmf-fs-active');
+        // ── Modal plein écran carte ───────────────────────────────────────────────
+        let _fsOrigParent = null;
+        let _fsOrigNext   = null;
+
+        function pmOpenFS(btn) {
+            const card  = btn.closest('.pmf-card');
+            const modal = document.getElementById('pmf-fs-modal');
+            const inner = document.getElementById('pmf-fs-inner');
+            if (!modal || !inner || !card) return;
+
+            _fsOrigParent = card.parentElement;
+            _fsOrigNext   = card.nextSibling;
+
+            inner.appendChild(card);
+            modal.style.display = 'flex';
+            document.body.classList.add('pmf-fs-active');
+
+            setTimeout(() => _fsRedrawCanvases(card), 80);
+        }
+
+        function pmCloseFS() {
+            const modal = document.getElementById('pmf-fs-modal');
+            const inner = document.getElementById('pmf-fs-inner');
+            if (!modal) return;
+            const card = inner ? inner.querySelector('.pmf-card') : null;
+            if (card && _fsOrigParent) {
+                if (_fsOrigNext && _fsOrigNext.parentElement === _fsOrigParent) {
+                    _fsOrigParent.insertBefore(card, _fsOrigNext);
+                } else {
+                    _fsOrigParent.appendChild(card);
+                }
+                setTimeout(() => _fsRedrawCanvases(card), 80);
+            }
+            modal.style.display = 'none';
+            document.body.classList.remove('pmf-fs-active');
+            _fsOrigParent = null; _fsOrigNext = null;
+        }
+
+        function pmCloseFSBackdrop(e) {
+            if (e.target === document.getElementById('pmf-fs-modal')) pmCloseFS();
+        }
+
+        function _fsRedrawCanvases(card) {
+            if (card.querySelector('#pmm-canvas-alg')) {
+                const rows = _pmmZoneFilter ? _pmmImpactRows.filter(r => (r[COLS.field_position]||'').toString().trim() === _pmmZoneFilter) : _pmmImpactRows;
+                _drawMatchExtrasImpact(rows);
+            }
+            if (card.querySelector('#pmf-graph-canvas')) {
+                const nom = getSessionPlayerNom();
+                if (nom) renderPmfGraph(nom);
             }
         }
 
@@ -1054,7 +1077,7 @@
                 btn.className = 'pmf-fs-btn';
                 btn.textContent = '⛶';
                 btn.title = 'Plein écran';
-                btn.onclick = () => pmToggleFS(btn);
+                btn.onclick = () => pmOpenFS(btn);
                 card.insertBefore(btn, card.firstChild);
             });
         }
@@ -1070,13 +1093,6 @@
             }
 
             document.addEventListener('keydown', e => {
-                if (e.key === 'Escape') {
-                    document.querySelectorAll('.pmf-card.pmf-fs').forEach(card => {
-                        card.classList.remove('pmf-fs');
-                        const b = card.querySelector('.pmf-fs-btn');
-                        if (b) b.textContent = '⛶';
-                    });
-                    document.body.classList.remove('pmf-fs-active');
-                }
+                if (e.key === 'Escape') pmCloseFS();
             });
         });
