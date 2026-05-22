@@ -1932,3 +1932,42 @@
             text-align: center; color: #94a3b8;
             font-size: 0.85rem; padding: 20px 0;
         }
+
+        /* ── Player Mode : responsive iPhone (< 520px) ────────────────────────── */
+        @media (max-width: 520px) {
+
+            /* Barre navigation : 2 lignes (logo / tabs + logout) */
+            #pm-bar {
+                height: auto !important;
+                flex-wrap: wrap !important;
+                padding: 8px 14px !important;
+                gap: 4px 8px !important;
+            }
+            /* Logo + nom joueur prend toute la 1re ligne */
+            #pm-bar > div:first-child {
+                flex: 0 0 100% !important;
+            }
+
+            /* Offset contenu pour barre 2 lignes (~92px) */
+            body.player-mode { padding-top: 92px; }
+            #pm-fiche-page   { padding-top: 92px !important; }
+            #pm-match-page   { padding: 92px 14px 24px !important; }
+
+            /* Match page : titre + filtre sur 2 lignes */
+            #pm-match-page > div:first-child {
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+            #pm-match-page > div:first-child > div {
+                margin-left: 0 !important;
+                width: 100%;
+            }
+            #pm-match-sel { width: 100%; box-sizing: border-box; }
+
+            /* Cartes équipes en 1 colonne */
+            #pm-match-cards { grid-template-columns: 1fr !important; }
+
+            /* Canvases impact : 2 colonnes + 3e centré */
+            .pmf-canvases { grid-template-columns: repeat(2, 1fr) !important; }
+            .pmf-canvas-wrap:last-child { grid-column: span 2; max-width: 52%; margin: 0 auto; }
+        }
