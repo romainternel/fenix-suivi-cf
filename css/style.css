@@ -1989,22 +1989,24 @@
             .pmf-canvas-wrap:last-child { grid-column: span 2; max-width: 52%; margin: 0 auto; }
         }
 
-        /* ── Sous-navigation Joueurs ─────────────────────────────────────────── */
+        /* ── Sous-navigation Joueurs (barre contenu) ────────────────────────── */
         .joueurs-subnav {
             display: flex;
-            gap: 4px;
-            padding: 6px 1.5rem;
-            background: #F1F5F9;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 1.5rem;
+            background: #fff;
             border-bottom: 1px solid #E2E8F0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
             flex-wrap: wrap;
         }
         .jsub-btn {
-            background: transparent;
-            border: 1px solid #CBD5E1;
-            border-radius: 20px;
-            padding: 4px 14px;
-            font-size: 0.8rem;
-            font-weight: 500;
+            background: #F1F5F9;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 8px 18px;
+            font-size: 0.82rem;
+            font-weight: 600;
             color: #475569;
             cursor: pointer;
             transition: all 0.15s;

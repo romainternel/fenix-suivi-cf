@@ -84,14 +84,15 @@
             <button class="nav-btn" data-page="joueurs">👥 Joueurs</button>
             <button id="btn-player-accounts" onclick="openPlayerAccountsModal()">🔑 Comptes joueurs</button>
         </nav>
-        <nav id="joueurs-subnav" class="joueurs-subnav" style="display:none;">
-            <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
-            <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">⭐ Notes</button>
-            <button class="jsub-btn" data-jsub="notegraph" onclick="switchJoueursTab('notegraph')">📈 Graphique</button>
-            <button class="jsub-btn" data-jsub="impact" onclick="switchJoueursTab('impact')">🎯 Impact</button>
-            <button class="jsub-btn" data-jsub="gardiens" onclick="switchJoueursTab('gardiens')">🥅 Gardiens</button>
-        </nav>
     </header>
+
+    <div id="joueurs-subnav" class="joueurs-subnav" style="display:none;">
+        <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
+        <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">⭐ Notes</button>
+        <button class="jsub-btn" data-jsub="notegraph" onclick="switchJoueursTab('notegraph')">📈 Graphique</button>
+        <button class="jsub-btn" data-jsub="impact" onclick="switchJoueursTab('impact')">🎯 Impact</button>
+        <button class="jsub-btn" data-jsub="gardiens" onclick="switchJoueursTab('gardiens')">🥅 Gardiens</button>
+    </div>
 
     <main class="main">
         <!-- Dashboard Page -->
