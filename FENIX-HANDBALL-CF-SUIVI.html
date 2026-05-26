@@ -134,6 +134,7 @@
                         </div>
                     </div>
                 </div>
+                <button class="btn-goto-analyse" onclick="goToAnalysePage()">🔍 Analyse</button>
             </div>
 
             <!-- Team Cards -->
@@ -922,7 +923,6 @@
             </div>
         </div>
     </main>
-    <button id="btn-fixed-analyse" class="btn-fixed-analyse" onclick="goToAnalysePage()" style="display:none;" title="Voir l'Analyse">🔍<br>Analyse</button>
     <div id="impact-tooltip" style="position:fixed;display:none;background:rgba(15,23,42,0.93);color:#f1f5f9;padding:0.45rem 0.75rem;border-radius:9px;font-size:0.78rem;pointer-events:none;z-index:2000;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,0.3);"></div>
 
     <script>
@@ -1271,10 +1271,10 @@ let _effInfoPoste = null;
             const btn = document.getElementById('import-btn');
             btn.textContent = '🔄 Réimporter';
             btn.classList.add('reimport-btn');
+            document.getElementById('import-section').style.display = 'none';
             const badge = document.getElementById('header-data-badge');
-            badge.textContent = '📁 ' + filename;
+            badge.textContent = '📁 ' + filename + '  ·  ' + date;
             badge.style.display = 'inline-flex';
-            document.getElementById('btn-fixed-analyse').style.display = 'flex';
         }
 
         function loadFromLocalStorage() {
