@@ -76,6 +76,7 @@
                     <option value="" style="color:#0A2463">Toutes saisons</option>
                 </select>
                 <span>ANALYSE HANDBALL PRO</span>
+                <button id="header-data-badge" class="header-data-badge" onclick="document.getElementById('file-input').click()" style="display:none;"></button>
             </div>
         </div>
         <nav class="nav">
@@ -214,10 +215,7 @@
             <div class="section" id="players-section" style="display: none;">
                 <div class="section-header">
                     <h2 class="section-title">📋 Statistiques Joueurs</h2>
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <button class="avg-toggle-btn" id="avg-toggle-btn" onclick="togglePlayerAverages()">⌀ Moyenne</button>
-                        <button class="btn-goto-analyse" onclick="goToAnalysePage()">🔍 Analyse →</button>
-                    </div>
+                    <button class="avg-toggle-btn" id="avg-toggle-btn" onclick="togglePlayerAverages()">⌀ Moyenne</button>
                 </div>
                 <div class="table-container">
                     <table>
@@ -924,6 +922,7 @@
             </div>
         </div>
     </main>
+    <button id="btn-fixed-analyse" class="btn-fixed-analyse" onclick="goToAnalysePage()" style="display:none;" title="Voir l'Analyse">🔍<br>Analyse</button>
     <div id="impact-tooltip" style="position:fixed;display:none;background:rgba(15,23,42,0.93);color:#f1f5f9;padding:0.45rem 0.75rem;border-radius:9px;font-size:0.78rem;pointer-events:none;z-index:2000;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,0.3);"></div>
 
     <script>
@@ -1272,6 +1271,10 @@ let _effInfoPoste = null;
             const btn = document.getElementById('import-btn');
             btn.textContent = '🔄 Réimporter';
             btn.classList.add('reimport-btn');
+            const badge = document.getElementById('header-data-badge');
+            badge.textContent = '📁 ' + filename;
+            badge.style.display = 'inline-flex';
+            document.getElementById('btn-fixed-analyse').style.display = 'flex';
         }
 
         function loadFromLocalStorage() {
