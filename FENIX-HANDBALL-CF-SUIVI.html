@@ -1133,7 +1133,7 @@ let _effInfoPoste = null;
 
         function goToAnalysePage() {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('[data-page="analyse"]').classList.add('active');
+            document.getElementById('joueurs-subnav').style.display = 'none';
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-analyse').classList.add('active');
             if (DATA.length > 0) refreshPage('analyse');
