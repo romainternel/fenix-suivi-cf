@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=28">
-    <script src="js/utils.js?v=28"></script>
-    <script src="js/impact-images.js?v=28"></script>
-    <script src="js/player-mode.js?v=28"></script>
-    <script src="js/page-joueurs.js?v=28"></script>
-    <script src="js/page-notes-graph.js?v=28"></script>
-    <script src="js/page-analyse.js?v=28"></script>
+    <link rel="stylesheet" href="css/style.css?v=29">
+    <script src="js/utils.js?v=29"></script>
+    <script src="js/impact-images.js?v=29"></script>
+    <script src="js/player-mode.js?v=29"></script>
+    <script src="js/page-joueurs.js?v=29"></script>
+    <script src="js/page-notes-graph.js?v=29"></script>
+    <script src="js/page-analyse.js?v=29"></script>
 </head>
 <body>
 
@@ -80,13 +80,8 @@
         </div>
         <nav class="nav">
             <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
-            <button class="nav-btn" data-page="match">🏆 Match</button>
             <button class="nav-btn" data-page="analyse">🔍 Analyse</button>
             <button class="nav-btn" data-page="joueurs">👥 Joueurs</button>
-            <button class="nav-btn" data-page="notes">⭐ Notes</button>
-            <button class="nav-btn" data-page="notegraph">📈 Graphiques</button>
-            <button class="nav-btn" data-page="gardiens">🥅 Gardiens</button>
-            <button class="nav-btn" data-page="impact">🎯 Impact</button>
             <button id="btn-player-accounts" onclick="openPlayerAccountsModal()">🔑 Comptes joueurs</button>
         </nav>
     </header>
@@ -132,6 +127,7 @@
                         </div>
                     </div>
                 </div>
+                <button class="btn-goto-analyse" onclick="goToAnalysePage()">🔍 Analyse →</button>
             </div>
 
             <!-- Team Cards -->
@@ -240,13 +236,13 @@
             </div>
         </div>
 
-        <!-- Match Page -->
-        <div class="page" id="page-match">
+        <!-- Match — fusionné dans page-analyse -->
+        <div class="page" id="page-match" style="display:none !important;"></div>
+
+        <!-- Analyse Page -->
+        <div class="page" id="page-analyse">
+            <!-- Bloc Match : terrain + stats équipes -->
             <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">🏆 Analyse Match</h2>
-                </div>
-                
                 <div class="filters">
                     <div class="filter-group" style="position:relative;">
                         <label>Matchs</label>
@@ -306,7 +302,7 @@
                 </div>
 
                 <div class="match-layout">
-                    <!-- Terrain plus petit -->
+                    <!-- Terrain -->
                     <div>
                         <div class="terrain-wrapper-small" id="terrain-wrapper">
                             <canvas id="terrain-canvas" class="terrain-canvas"></canvas>
@@ -319,7 +315,7 @@
                             <span><svg width="12" height="12" style="vertical-align:middle;margin-right:3px"><polygon points="6,1 11,11 1,11" fill="#F59E0B"/></svg>Jet franc</span>
                         </div>
                     </div>
-                    
+
                     <!-- Card FENIX -->
                     <div class="match-team-card fenix">
                         <div class="mtc-header">🔵 FENIX</div>
@@ -397,15 +393,11 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Analyse Page -->
-        <div class="page" id="page-analyse">
+            <div class="analyse-separator"></div>
+
+            <!-- Bloc Analyse détaillée -->
             <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">🔍 Analyse de Match</h2>
-                </div>
-                
                 <div class="filters">
                     <div class="filter-group">
                         <label>Sélectionner un match</label>
@@ -1123,6 +1115,14 @@ let _effInfoPoste = null;
             });
         });
 
+        function goToAnalysePage() {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-page="analyse"]').classList.add('active');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-analyse').classList.add('active');
+            if (DATA.length > 0) refreshPage('analyse');
+        }
+
         function setupNavigation() {
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -1604,7 +1604,7 @@ let _effInfoPoste = null;
             switch(page) {
                 case 'dashboard': updateDashboard(); break;
                 case 'match': updateMatchPage(); break;
-                case 'analyse': updateAnalysePage(); break;
+                case 'analyse': updateMatchPage(); updateAnalysePage(); break;
                 case 'joueurs': updateJoueursPage(); break;
                 case 'notes': updateNotesPage(); break;
                 case 'notegraph': _ngFromDetail = null; updateNoteGraph(); updateGbGraph(); break;

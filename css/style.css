@@ -1988,3 +1988,26 @@
             .pmf-canvases { grid-template-columns: repeat(2, 1fr) !important; }
             .pmf-canvas-wrap:last-child { grid-column: span 2; max-width: 52%; margin: 0 auto; }
         }
+
+        /* ── Navigation 3 boutons ─────────────────────────────────────────────── */
+        .btn-goto-analyse {
+            background: var(--fenix-blue);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .btn-goto-analyse:hover { background: var(--fenix-blue-light); }
+
+        .analyse-separator {
+            height: 3px;
+            background: linear-gradient(90deg, var(--fenix-blue) 0%, var(--fenix-accent) 100%);
+            margin: 0.5rem 0;
+            border-radius: 2px;
+            opacity: 0.3;
+        }
