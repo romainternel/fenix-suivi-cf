@@ -347,8 +347,6 @@
 
         function goToNoteGraph(joueur) {
             _ngFromDetail = joueur;
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.nav-btn[data-page="notegraph"]').classList.add('active');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-notegraph').classList.add('active');
             document.getElementById('ng-joueur').value = joueur;
@@ -358,12 +356,14 @@
         function ngGoBack() {
             const joueur = _ngFromDetail;
             _ngFromDetail = null;
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.nav-btn[data-page="notes"]').classList.add('active');
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-notes').classList.add('active');
-            updateNotesPage();
-            if (joueur) openNotesDetail(joueur);
+            if (joueur) {
+                // came from Notes detail → back to Notes
+                switchJoueursTab('notes');
+                if (typeof openNotesDetail === 'function') openNotesDetail(joueur);
+            } else {
+                // came from Joueurs contextual button → back to Fiche
+                switchJoueursTab('joueurs');
+            }
         }
 
         function updateNoteGraph() {
@@ -581,8 +581,6 @@
 
         function goToGbGraph(gardien) {
             _gbgFromNotes = gardien;
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.nav-btn[data-page="notegraph"]').classList.add('active');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-notegraph').classList.add('active');
             document.getElementById('gbg-gardien').value = gardien;

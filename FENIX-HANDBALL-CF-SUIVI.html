@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=29">
-    <script src="js/utils.js?v=29"></script>
-    <script src="js/impact-images.js?v=29"></script>
-    <script src="js/player-mode.js?v=29"></script>
-    <script src="js/page-joueurs.js?v=29"></script>
-    <script src="js/page-notes-graph.js?v=29"></script>
-    <script src="js/page-analyse.js?v=29"></script>
+    <link rel="stylesheet" href="css/style.css?v=30">
+    <script src="js/utils.js?v=30"></script>
+    <script src="js/impact-images.js?v=30"></script>
+    <script src="js/player-mode.js?v=30"></script>
+    <script src="js/page-joueurs.js?v=30"></script>
+    <script src="js/page-notes-graph.js?v=30"></script>
+    <script src="js/page-analyse.js?v=30"></script>
 </head>
 <body>
 
@@ -89,9 +89,6 @@
     <div id="joueurs-subnav" class="joueurs-subnav" style="display:none;">
         <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
         <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">⭐ Notes</button>
-        <button class="jsub-btn" data-jsub="notegraph" onclick="switchJoueursTab('notegraph')">📈 Graphique</button>
-        <button class="jsub-btn" data-jsub="impact" onclick="switchJoueursTab('impact')">🎯 Impact</button>
-        <button class="jsub-btn" data-jsub="gardiens" onclick="switchJoueursTab('gardiens')">🥅 Gardiens</button>
     </div>
 
     <main class="main">
@@ -490,12 +487,18 @@
             <div class="section">
                 <!-- Titre + filtre sur la même ligne -->
                 <div class="joueurs-topbar">
-                    <h2 class="section-title">👥 Statistiques Joueurs</h2>
-                    <div class="filter-group">
-                        <label>Match</label>
-                        <select id="filter-joueur-match" onchange="updateJoueursPage()">
-                            <option value="">Tous les matchs</option>
-                        </select>
+                    <div class="joueurs-topbar-left">
+                        <h2 class="section-title">👥 Statistiques Joueurs</h2>
+                        <div class="filter-group">
+                            <label>Match</label>
+                            <select id="filter-joueur-match" onchange="updateJoueursPage()">
+                                <option value="">Tous les matchs</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="joueurs-topbar-actions">
+                        <button id="btn-joueur-graph" class="btn-joueur-context" disabled onclick="openGraphiqueForSelected()">📈 Graphique</button>
+                        <button id="btn-joueur-impact" class="btn-joueur-context" disabled onclick="openImpactForSelected()">🎯 Impact</button>
                     </div>
                 </div>
 
@@ -1127,8 +1130,58 @@ let _effInfoPoste = null;
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
             document.querySelectorAll('.jsub-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector(`[data-jsub="${page}"]`).classList.add('active');
+            const subBtn = document.querySelector(`[data-jsub="${page}"]`);
+            if (subBtn) subBtn.classList.add('active');
             if (DATA.length > 0) refreshPage(page);
+        }
+
+        function updatePlayerContextButtons() {
+            const hasPlayer = !!currentSelectedJoueur;
+            const btnGraph = document.getElementById('btn-joueur-graph');
+            const btnImpact = document.getElementById('btn-joueur-impact');
+            if (btnGraph) btnGraph.disabled = !hasPlayer;
+            if (btnImpact) btnImpact.disabled = !hasPlayer;
+        }
+
+        function openGraphiqueForSelected() {
+            if (!currentSelectedJoueur) return;
+            const sel = document.getElementById('ng-joueur');
+            if (sel) {
+                for (let i = 0; i < sel.options.length; i++) {
+                    if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) {
+                        sel.value = sel.options[i].value;
+                        break;
+                    }
+                }
+            }
+            switchJoueursTab('notegraph');
+        }
+
+        function openImpactForSelected() {
+            if (!currentSelectedJoueur) return;
+            if (detectIsGB(currentSelectedJoueur)) {
+                const sel = document.getElementById('filter-gardien');
+                if (sel) {
+                    for (let i = 0; i < sel.options.length; i++) {
+                        if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) {
+                            sel.value = sel.options[i].value;
+                            break;
+                        }
+                    }
+                }
+                switchJoueursTab('gardiens');
+            } else {
+                const sel = document.getElementById('filter-impact-joueur');
+                if (sel) {
+                    for (let i = 0; i < sel.options.length; i++) {
+                        if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) {
+                            sel.value = sel.options[i].value;
+                            break;
+                        }
+                    }
+                }
+                switchJoueursTab('impact');
+            }
         }
 
         function goToAnalysePage() {

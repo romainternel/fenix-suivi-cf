@@ -356,6 +356,7 @@
             }
 
             renderCourtPlayers(getPlayersInData());
+            if (typeof updatePlayerContextButtons === 'function') updatePlayerContextButtons();
         }
 
         // ── Joueurs page update ────────────────────────────────────────────────
