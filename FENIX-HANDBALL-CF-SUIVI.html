@@ -83,6 +83,13 @@
             <button class="nav-btn" data-page="joueurs">👥 Joueurs</button>
             <button id="btn-player-accounts" onclick="openPlayerAccountsModal()">🔑 Comptes joueurs</button>
         </nav>
+        <nav id="joueurs-subnav" class="joueurs-subnav" style="display:none;">
+            <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
+            <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">⭐ Notes</button>
+            <button class="jsub-btn" data-jsub="notegraph" onclick="switchJoueursTab('notegraph')">📈 Graphique</button>
+            <button class="jsub-btn" data-jsub="impact" onclick="switchJoueursTab('impact')">🎯 Impact</button>
+            <button class="jsub-btn" data-jsub="gardiens" onclick="switchJoueursTab('gardiens')">🥅 Gardiens</button>
+        </nav>
     </header>
 
     <main class="main">
@@ -1116,6 +1123,14 @@ let _effInfoPoste = null;
             });
         });
 
+        function switchJoueursTab(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.querySelectorAll('.jsub-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-jsub="${page}"]`).classList.add('active');
+            if (DATA.length > 0) refreshPage(page);
+        }
+
         function goToAnalysePage() {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('[data-page="analyse"]').classList.add('active');
@@ -1131,6 +1146,14 @@ let _effInfoPoste = null;
                     this.classList.add('active');
                     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                     document.getElementById('page-' + this.dataset.page).classList.add('active');
+                    const subnav = document.getElementById('joueurs-subnav');
+                    if (this.dataset.page === 'joueurs') {
+                        subnav.style.display = 'flex';
+                        document.querySelectorAll('.jsub-btn').forEach(b => b.classList.remove('active'));
+                        document.querySelector('[data-jsub="joueurs"]').classList.add('active');
+                    } else {
+                        subnav.style.display = 'none';
+                    }
                     if (DATA.length > 0) refreshPage(this.dataset.page);
                 });
             });

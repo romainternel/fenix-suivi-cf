@@ -1989,6 +1989,34 @@
             .pmf-canvas-wrap:last-child { grid-column: span 2; max-width: 52%; margin: 0 auto; }
         }
 
+        /* ── Sous-navigation Joueurs ─────────────────────────────────────────── */
+        .joueurs-subnav {
+            display: flex;
+            gap: 4px;
+            padding: 6px 1.5rem;
+            background: #F1F5F9;
+            border-bottom: 1px solid #E2E8F0;
+            flex-wrap: wrap;
+        }
+        .jsub-btn {
+            background: transparent;
+            border: 1px solid #CBD5E1;
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .jsub-btn:hover { background: #E2E8F0; }
+        .jsub-btn.active {
+            background: var(--fenix-blue);
+            color: #fff;
+            border-color: var(--fenix-blue);
+        }
+
         /* ── Navigation 3 boutons ─────────────────────────────────────────────── */
         .btn-goto-analyse {
             background: var(--fenix-blue);
