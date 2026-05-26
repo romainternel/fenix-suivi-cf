@@ -127,7 +127,6 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn-goto-analyse" onclick="goToAnalysePage()">🔍 Analyse →</button>
             </div>
 
             <!-- Team Cards -->
@@ -209,7 +208,10 @@
             <div class="section" id="players-section" style="display: none;">
                 <div class="section-header">
                     <h2 class="section-title">📋 Statistiques Joueurs</h2>
-                    <button class="avg-toggle-btn" id="avg-toggle-btn" onclick="togglePlayerAverages()">⌀ Moyenne</button>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button class="avg-toggle-btn" id="avg-toggle-btn" onclick="togglePlayerAverages()">⌀ Moyenne</button>
+                        <button class="btn-goto-analyse" onclick="goToAnalysePage()">🔍 Analyse →</button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table>
