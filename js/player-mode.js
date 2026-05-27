@@ -1038,6 +1038,12 @@
                 exitBtn.style.color = '#FCA5A5';
             }
 
+            // Restaurer les boutons staff de la nav
+            const accountsBtn = document.getElementById('btn-player-accounts');
+            if (accountsBtn) accountsBtn.style.removeProperty('display');
+            const previewBtn = document.getElementById('btn-preview-mode');
+            if (previewBtn) previewBtn.style.removeProperty('display');
+
             // Rétablir la page active
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const pageEl = document.getElementById('page-' + _previewSavedNavPage);
