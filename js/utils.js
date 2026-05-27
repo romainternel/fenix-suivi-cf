@@ -120,3 +120,32 @@
         function isNegativeDEF(action) {
             return ACTIONS_DEF_MOINS.some(a => action.includes(a));
         }
+
+        // ── Fonctions partagées timeline (utilisées par page-analyse.js ET player-mode.js) ──
+        function parseTimecode(tc) {
+            if (!tc) return 0;
+            const s = tc.toString().trim();
+            const parts = s.split(':');
+            if (parts.length === 3) return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+            if (parts.length === 2) return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+            return parseFloat(s) || 0;
+        }
+
+        function getPeriodeNum(row) {
+            const p = (row[COLS.periode] || '').toString().trim();
+            if (/^2/.test(p)) return 2;
+            return 1;
+        }
+
+        function getSortedGoals(matchData) {
+            const goals = matchData.filter(r => r[COLS.resultat] === 'But');
+            const g1 = goals.filter(r => getPeriodeNum(r) === 1);
+            const g2 = goals.filter(r => getPeriodeNum(r) === 2);
+            const max1 = g1.length ? Math.max(...g1.map(r => parseTimecode(r[COLS.position]))) : 0;
+            const min2 = g2.length ? Math.min(...g2.map(r => parseTimecode(r[COLS.position]))) : Infinity;
+            const offset = (g2.length > 0 && min2 < max1) ? max1 : 0;
+            return [
+                ...g1.map(r => ({ row: r, pos: parseTimecode(r[COLS.position]) })),
+                ...g2.map(r => ({ row: r, pos: parseTimecode(r[COLS.position]) + offset }))
+            ].sort((a, b) => a.pos - b.pos);
+        }

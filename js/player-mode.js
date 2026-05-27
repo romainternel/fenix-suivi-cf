@@ -4,6 +4,29 @@
         let _pmmZoneFilter = '';
         let _pmmImpactRows = [];
         let _pmmIsGB = false;
+        let _cachedSeasonStats = null;
+
+        function getPlayerSeasonStats(nom) {
+            if (_cachedSeasonStats && _cachedSeasonStats._nom === nom) return _cachedSeasonStats;
+            const rows = DATA.filter(r => r[COLS.club] === 'FENIX' && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom));
+            const buts  = rows.filter(r => r[COLS.resultat] === 'But').length;
+            const tirs  = rows.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const pb    = rows.filter(r => r[COLS.resultat] === 'PB').length;
+            const po    = rows.filter(r => r[COLS.resultat] === 'PO').length;
+            const total = buts + tirs;
+            const eff   = total > 0 ? Math.round(buts / total * 100) : 0;
+            let pd = 0;
+            DATA.forEach(row => {
+                (row[COLS.action_joueur]||'').toString().split(';').forEach((j, i) => {
+                    if (!matchPlayerName(j.trim(), nom)) return;
+                    const act = lastNonEmpty((row[COLS.action_att]||'').toString().split(';'), i);
+                    if (act === 'PD' || act === 'PD DG') pd++;
+                });
+            });
+            const matchSet = new Set(rows.map(r => r[COLS.rencontre]).filter(Boolean));
+            _cachedSeasonStats = { _nom: nom, buts, tirs, total, eff, pb, po, pd, matchCount: matchSet.size };
+            return _cachedSeasonStats;
+        }
 
         function isPlayerMode() {
             return PLAYER_SESSION && PLAYER_SESSION.role === 'joueur';
@@ -159,7 +182,7 @@
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val">${buts}/${total}</div><div class="pmf-kpi-lbl">BUT / TIR</div></div>
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${effColor}">${eff}%</div><div class="pmf-kpi-lbl">EFFICACITÉ</div></div>
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val">${pd}</div><div class="pmf-kpi-lbl">PD</div></div>
-                    <div class="pmf-kpi-box"><div class="pmf-kpi-val">${po}</div><div class="pmf-kpi-lbl">PÉN. OBTENUS</div></div>
+                    ${po > 0 ? `<div class="pmf-kpi-box"><div class="pmf-kpi-val">${po}</div><div class="pmf-kpi-lbl">PÉN. OBTENUS</div></div>` : ''}
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:#EF4444">${pb}</div><div class="pmf-kpi-lbl">PERTES BALLE</div></div>
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div><div class="pmf-kpi-lbl">NOTE</div></div>
                 </div>`;
@@ -180,6 +203,8 @@
                     </div>
                 </div>
 
+                <div id="pmf-badges"></div>
+
                 <div class="pmf-card">
                     <div class="pmf-card-title">MA FICHE</div>
                     ${statsHTML}
@@ -198,7 +223,57 @@
                 </div>`;
 
             renderPmfGraph(nom);
-            addFSButtons(page);
+            renderBadges(nom, posteCode);
+        }
+
+        // ── Badges joueur ────────────────────────────────────────────────────────
+        function computePlayerRank(nom, posteCode) {
+            if (!posteCode || !JOUEURS_TERRAIN) return null;
+            const teammates = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
+            let rank = 1;
+            const myEff = getPlayerSeasonStats(nom).eff;
+            teammates.forEach(p => {
+                const s = getPlayerSeasonStats(p.nom);
+                if (s.eff > myEff) rank++;
+            });
+            return { rank, total: teammates.length + 1 };
+        }
+
+        function computeStreak(nom) {
+            const matchStats = MATCHS.map(m => {
+                const rows = DATA.filter(r => r[COLS.club] === 'FENIX' && r[COLS.rencontre] === m && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom));
+                if (!rows.length) return null;
+                const buts = rows.filter(r => r[COLS.resultat] === 'But').length;
+                const tirs = rows.filter(r => r[COLS.resultat] === 'Tir raté').length;
+                const total = buts + tirs;
+                return total > 0 ? Math.round(buts / total * 100) : null;
+            }).filter(v => v !== null);
+            if (matchStats.length < 2) return { streak: 0, dir: 0 };
+            const last = matchStats[matchStats.length - 1];
+            const prev = matchStats[matchStats.length - 2];
+            let streak = 1;
+            const dir = last >= prev ? 1 : -1;
+            for (let i = matchStats.length - 2; i >= 0; i--) {
+                if (dir === 1 && matchStats[i] <= (i > 0 ? matchStats[i-1] : -1)) { if (i < matchStats.length-2) break; }
+                streak++;
+                if (streak >= 3) break;
+            }
+            return { streak: Math.min(streak, matchStats.length), dir, last, prev };
+        }
+
+        function renderBadges(nom, posteCode) {
+            const el = document.getElementById('pmf-badges');
+            if (!el) return;
+            const badges = [];
+            const rank = computePlayerRank(nom, posteCode);
+            if (rank && rank.total > 1) {
+                const medal = rank.rank === 1 ? '🥇' : rank.rank === 2 ? '🥈' : rank.rank === 3 ? '🥉' : null;
+                if (medal) badges.push(`<span class="pmf-badge pmf-badge-rank">${medal} #${rank.rank} au poste</span>`);
+            }
+            const str = computeStreak(nom);
+            if (str.dir === 1 && str.streak >= 2) badges.push(`<span class="pmf-badge pmf-badge-up">↑ En progression (${str.streak} matchs)</span>`);
+            else if (str.dir === -1 && str.streak >= 2) badges.push(`<span class="pmf-badge pmf-badge-down">↓ En baisse (${str.streak} matchs)</span>`);
+            el.innerHTML = badges.length ? `<div class="pmf-badges-row">${badges.join('')}</div>` : '';
         }
 
         // ── Tableau zones de tir GB (remplace ACTIONS pour les gardiens) ────────
@@ -331,14 +406,36 @@
             const sign = v => (v >= 0 ? '+' : '') + v;
             const vColor = v => v > 0 ? '#059669' : v < 0 ? '#DC2626' : '#64748B';
 
-            return `
-                <div class="pmf-actions-2col">
-                    ${makeSection(ATT_PLUS,  '#059669', '#F0FDF4', true)}
-                    ${makeSection(DEF_PLUS,  '#059669', '#EFF6FF', true)}
+            const allPlus  = [...ATT_PLUS,  ...DEF_PLUS].filter(a => (counts[a]||0) > 0).sort((a,b) => (counts[b]||0)-(counts[a]||0));
+            const allMoins = [...ATT_MOINS, ...DEF_MOINS].filter(a => (counts[a]||0) > 0).sort((a,b) => (counts[b]||0)-(counts[a]||0));
+            const top3Plus  = allPlus.slice(0,3);
+            const top3Moins = allMoins.slice(0,3);
+            const top3HTML = `
+                <div style="display:flex;gap:12px;margin-bottom:10px">
+                    <div style="flex:1;background:#F0FDF4;border-radius:8px;padding:8px 10px">
+                        <div style="font-size:0.7rem;font-weight:700;color:#059669;text-transform:uppercase;margin-bottom:6px">TOP POINTS FORTS</div>
+                        ${top3Plus.length ? top3Plus.map(a=>`<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:2px 0"><span style="color:#1E293B">${a}</span><span style="font-weight:700;color:#059669">${counts[a]}</span></div>`).join('') : '<div style="font-size:0.8rem;color:#94a3b8">Aucune action</div>'}
+                    </div>
+                    <div style="flex:1;background:#FEF2F2;border-radius:8px;padding:8px 10px">
+                        <div style="font-size:0.7rem;font-weight:700;color:#DC2626;text-transform:uppercase;margin-bottom:6px">TOP POINTS À CORRIGER</div>
+                        ${top3Moins.length ? top3Moins.map(a=>`<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:2px 0"><span style="color:#1E293B">${a}</span><span style="font-weight:700;color:#DC2626">${counts[a]}</span></div>`).join('') : '<div style="font-size:0.8rem;color:#94a3b8">Aucune action</div>'}
+                    </div>
                 </div>
-                <div class="pmf-actions-2col">
-                    ${makeSection(ATT_MOINS, '#DC2626', '#FEF2F2', false)}
-                    ${makeSection(DEF_MOINS, '#DC2626', '#FEF9E7', false)}
+                <div style="text-align:right;margin-bottom:8px">
+                    <button onclick="_pmToggleActions(this)" style="background:none;border:1px solid #E2E8F0;border-radius:6px;padding:4px 12px;font-size:0.78rem;color:#64748B;cursor:pointer">Voir tout ▼</button>
+                </div>`;
+
+            return `
+                ${top3HTML}
+                <div class="pmf-actions-detail" style="display:none">
+                    <div class="pmf-actions-2col">
+                        ${makeSection(ATT_PLUS,  '#059669', '#F0FDF4', true)}
+                        ${makeSection(DEF_PLUS,  '#059669', '#EFF6FF', true)}
+                    </div>
+                    <div class="pmf-actions-2col">
+                        ${makeSection(ATT_MOINS, '#DC2626', '#FEF2F2', false)}
+                        ${makeSection(DEF_MOINS, '#DC2626', '#FEF9E7', false)}
+                    </div>
                 </div>
                 <div class="pmf-actions-totals">
                     <div><div style="font-size:1.3rem;font-weight:800;color:${vColor(totalAtt)}">${sign(totalAtt)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL ATT</div><div style="font-size:0.7rem;color:#94A3B8">${(totalAtt/nbM).toFixed(1)}/match</div></div>
@@ -346,6 +443,14 @@
                     <div><div style="font-size:1.5rem;font-weight:900;color:${vColor(totalJoueur)}">${sign(totalJoueur)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL JOUEUR</div><div style="font-size:0.7rem;color:#94A3B8">${(totalJoueur/nbM).toFixed(1)}/match</div></div>
                     <div><div style="font-size:1.5rem;font-weight:900;color:#0A2463">${nbM}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">MATCHS JOUÉS</div></div>
                 </div>`;
+        }
+
+        function _pmToggleActions(btn) {
+            const detail = btn.closest('.pmf-card')?.querySelector('.pmf-actions-detail');
+            if (!detail) return;
+            const open = detail.style.display !== 'none';
+            detail.style.display = open ? 'none' : 'block';
+            btn.textContent = open ? 'Voir tout ▼' : 'Réduire ▲';
         }
 
         // ── Graphique note progression (style photo 3) ────────────────────────────
@@ -623,7 +728,6 @@
 
         // ── Extras Stats Match : impact + actions/zones ─────────────────────────
         function renderPlayerMatchExtras(nom, isGB, matchFilter) {
-            pmCloseFS();
             const wrap = document.getElementById('pm-match-extras');
             if (!wrap) return;
 
@@ -676,13 +780,11 @@
 
             _updatePmmImpactStats(_pmmImpactRows);
             _drawMatchExtrasImpact(_pmmImpactRows);
-            addFSButtons(wrap);
         }
 
         // ── Stats Match : équipes ────────────────────────────────────────────────
         function renderPlayerMatchStats() {
-            const selEl      = document.getElementById('pm-match-sel');
-            const matchFilter = selEl ? selEl.value : '';
+            const matchFilter = _pmCurrentMatchIdx >= 0 ? (MATCHS[_pmCurrentMatchIdx] || '') : '';
             const filtered   = matchFilter ? DATA.filter(r=>r[COLS.rencontre]===matchFilter) : DATA;
             const uniq       = [...new Set(filtered.map(r=>r[COLS.rencontre]).filter(Boolean))];
             const matchCount = uniq.length || 1;
@@ -701,9 +803,8 @@
                 const poss=rows.filter(r=>r[COLS.possession]&&String(r[COLS.possession]).trim()).length;
                 const pb=rows.filter(r=>r[COLS.resultat]==='PB').length;
                 const po=rows.filter(r=>r[COLS.resultat]==='PO').length;
-                const neut=rows.filter(r=>r[COLS.resultat]==='Jet franc').length;
                 const eff=total>0?Math.round(buts/total*100):0;
-                return {buts,rates,total,penB,penT,poss,pb,po,neut,eff};
+                return {buts,rates,total,penB,penT,poss,pb,po,eff};
             };
 
             const rd=(n,d)=>Math.round(n/d);
@@ -711,7 +812,7 @@
             const advName = matchFilter ? ([...new Set(adv.map(r=>r[COLS.club]).filter(Boolean))][0]||'ADVERSAIRE') : 'ADVERSAIRE';
 
             const card=(data,color,title)=>{
-                const d=showAvg?{poss:rd(data.poss,matchCount),buts:`${rd(data.buts,matchCount)}/${rd(data.total,matchCount)}`,pen:`Pen: ${rd(data.penB,matchCount)}/${rd(data.penT,matchCount)}`,pb:rd(data.pb,matchCount),po:rd(data.po,matchCount),neut:rd(data.neut,matchCount)}:{poss:data.poss,buts:`${data.buts}/${data.total}`,pen:`Pen: ${data.penB}/${data.penT}`,pb:data.pb,po:data.po,neut:data.neut};
+                const d=showAvg?{poss:rd(data.poss,matchCount),buts:`${rd(data.buts,matchCount)}/${rd(data.total,matchCount)}`,pen:`Pen: ${rd(data.penB,matchCount)}/${rd(data.penT,matchCount)}`,pb:rd(data.pb,matchCount),po:rd(data.po,matchCount)}:{poss:data.poss,buts:`${data.buts}/${data.total}`,pen:`Pen: ${data.penB}/${data.penT}`,pb:data.pb,po:data.po};
                 return `<div class="pm-team-card" style="border-left:4px solid ${color}">
                     <div class="pm-team-title"><span class="pm-dot" style="background:${color}"></span><strong>${title}</strong>${showAvg?'<span class="pm-avg-lbl">(Moy./match)</span>':''}</div>
                     <div class="pm-stats-grid">
@@ -720,13 +821,15 @@
                         <div class="pm-stat-box"><div class="pm-stat-val" style="color:${color}">${data.eff}%</div><div class="pm-stat-lbl">% RÉUSSITE</div></div>
                         <div class="pm-stat-box"><div class="pm-stat-val">${d.pb}</div><div class="pm-stat-lbl">PERTES DE BALLE</div></div>
                         <div class="pm-stat-box"><div class="pm-stat-val">${d.po}</div><div class="pm-stat-lbl">PEN. OBTENUS</div></div>
-                        <div class="pm-stat-box"><div class="pm-stat-val">${d.neut}</div><div class="pm-stat-lbl">NEUTRALISÉ</div></div>
                     </div>
                 </div>`;
             };
 
             const cardsEl = document.getElementById('pm-match-cards');
             if (cardsEl) cardsEl.innerHTML = card(fv,'#0A2463','FENIX TOULOUSE') + card(av,'#EF4444',advName);
+
+            renderMatchSummaryBanner(matchFilter);
+            renderAICard(matchFilter);
 
             // Table + extras personnels du joueur
             const nom = getSessionPlayerNom();
@@ -798,7 +901,6 @@
                 rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${gaT}/${gtT}</td><td>${gtT>0?Math.round(gaT/gtT*100)+'%':'-'}</td><td>${gt.ac}/${gtC}</td><td>${gtC>0?Math.round(gt.ac/gtC*100)+'%':'-'}</td><td>${gt.ap}/${gtP}</td><td>${gtP>0?Math.round(gt.ap/gtP*100)+'%':'-'}</td><td>${gt.but}</td><td>${gt.pd}</td><td>${gt.pb}</td></tr>`;
 
                 wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>Total</th><th>%</th><th>Champ</th><th>%</th><th>Pen</th><th>%</th><th>But</th><th>PD</th><th>PB</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
-                addFSButtons(wrap);
 
             } else {
                 const sbm = {};
@@ -838,16 +940,155 @@
                 rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${tot.bc}/${tC}</td><td>${tC>0?Math.round(tot.bc/tC*100)+'%':'-'}</td><td>${tP>0?tot.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(tot.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${tot.pb}</td><td>${tot.po}</td><td>${tot.pd}</td></tr>`;
 
                 wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>But/Tir</th><th>% Champ</th><th>Pen (B/T)</th><th>% Pen</th><th>% Total</th><th>PB</th><th>PO</th><th>PD</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
-                addFSButtons(wrap);
             }
         }
 
-        // ── Sélecteur de match (mode joueur) ────────────────────────────────────
-        function buildPmMatchSelector() {
-            const sel = document.getElementById('pm-match-sel');
-            if (!sel) return;
-            sel.innerHTML = '<option value="">Tous les matchs</option>'
-                + MATCHS.map(m=>`<option value="${m}">${m}</option>`).join('');
+        // ── Navigation chevrons match (mode joueur) ──────────────────────────────
+        let _pmCurrentMatchIdx = -1;
+
+        function buildPmMatchNav() {
+            _pmCurrentMatchIdx = -1;
+            _pmApplyMatchNav();
+        }
+
+        function _pmApplyMatchNav() {
+            const label = document.getElementById('pm-nav-label');
+            const prev  = document.getElementById('pm-nav-prev');
+            const next  = document.getElementById('pm-nav-next');
+            const total = (typeof MATCHS !== 'undefined') ? MATCHS.length : 0;
+            if (label) label.textContent = _pmCurrentMatchIdx < 0 ? 'Tous les matchs' : (MATCHS[_pmCurrentMatchIdx] || '');
+            if (prev)  prev.disabled  = _pmCurrentMatchIdx < 0;
+            if (next)  next.disabled  = _pmCurrentMatchIdx >= total - 1;
+            renderPlayerMatchStats();
+        }
+
+        function pmMatchPrev() {
+            if (_pmCurrentMatchIdx > -1) { _pmCurrentMatchIdx--; _pmApplyMatchNav(); }
+        }
+
+        function pmMatchNext() {
+            const total = (typeof MATCHS !== 'undefined') ? MATCHS.length : 0;
+            if (_pmCurrentMatchIdx < total - 1) { _pmCurrentMatchIdx++; _pmApplyMatchNav(); }
+        }
+
+        // ── Analyse IA locale (match du joueur) ─────────────────────────────────
+        function getPlayerMatchStats(nom, matchFilter) {
+            const rows = DATA.filter(r =>
+                r[COLS.club] === 'FENIX' &&
+                matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom) &&
+                (!matchFilter || r[COLS.rencontre] === matchFilter)
+            );
+            const buts  = rows.filter(r => r[COLS.resultat] === 'But').length;
+            const tirs  = rows.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const total = buts + tirs;
+            const pb    = rows.filter(r => r[COLS.resultat] === 'PB').length;
+            const eff   = total > 0 ? Math.round(buts / total * 100) : 0;
+            let attPlus = 0, attMoins = 0, defPlus = 0, defMoins = 0;
+            DATA.filter(r => !matchFilter || r[COLS.rencontre] === matchFilter).forEach(row => {
+                const joueurs = (row[COLS.action_joueur]||'').toString().split(';');
+                const atts   = (row[COLS.action_att]||'').toString().split(';');
+                const defs   = (row[COLS.action_def]||'').toString().split(';');
+                joueurs.forEach((j, idx) => {
+                    if (!matchPlayerName(j.trim(), nom)) return;
+                    const att = lastNonEmpty(atts, idx);
+                    const def = lastNonEmpty(defs, idx);
+                    if (isPositiveATT(att)) attPlus++;
+                    else if (isNegativeATT(att)) attMoins++;
+                    if (isPositiveDEF(def)) defPlus++;
+                    else if (isNegativeDEF(def)) defMoins++;
+                });
+            });
+            return { buts, tirs, total, eff, pb, attPlus, attMoins, defPlus, defMoins };
+        }
+
+        function generateLocalAI(nom, matchFilter) {
+            const ms = getPlayerMatchStats(nom, matchFilter);
+            const ss = getPlayerSeasonStats(nom);
+            const lines = [];
+
+            if (ms.total > 0) {
+                const effDiff = ms.eff - ss.eff;
+                if (Math.abs(effDiff) >= 10) {
+                    lines.push(effDiff > 0
+                        ? `Excellente efficacité ce match : ${ms.eff}% (saison : ${ss.eff}%). Continue sur cette lancée.`
+                        : `Efficacité en retrait : ${ms.eff}% contre ${ss.eff}% en moyenne cette saison.`);
+                } else {
+                    lines.push(`${ms.buts} but${ms.buts > 1 ? 's' : ''} sur ${ms.total} tir${ms.total > 1 ? 's' : ''} (${ms.eff}%) — dans la moyenne saisonnière.`);
+                }
+            } else {
+                lines.push('Aucun tir enregistré sur ce match.');
+            }
+
+            const noteAtm = ms.attPlus - ms.attMoins;
+            const noteDefm = ms.defPlus - ms.defMoins;
+            if (noteAtm > 0) lines.push(`Bon impact offensif : ${ms.attPlus} action${ms.attPlus > 1 ? 's' : ''} positive${ms.attPlus > 1 ? 's' : ''}.`);
+            else if (noteAtm < 0) lines.push(`Côté offensif à améliorer (${ms.attMoins} action${ms.attMoins > 1 ? 's' : ''} négative${ms.attMoins > 1 ? 's' : ''}).`);
+
+            if (noteDefm > 0) lines.push(`Bonne contribution défensive (${ms.defPlus} action${ms.defPlus > 1 ? 's' : ''} positive${ms.defPlus > 1 ? 's' : ''}).`);
+            else if (noteDefm < 0) lines.push(`Points défensifs à corriger (${ms.defMoins} action${ms.defMoins > 1 ? 's' : ''} négative${ms.defMoins > 1 ? 's' : ''}).`);
+
+            if (ms.pb > 0) lines.push(`${ms.pb} perte${ms.pb > 1 ? 's' : ''} de balle — sécuriser le ballon est prioritaire.`);
+
+            return lines.length ? lines.join(' ') : 'Données insuffisantes pour générer une analyse.';
+        }
+
+        function renderAICard(matchFilter) {
+            const el = document.getElementById('pm-ai-card');
+            if (!el) return;
+            if (!matchFilter) { el.innerHTML = ''; return; }
+            const nom = getSessionPlayerNom();
+            if (!nom) { el.innerHTML = ''; return; }
+            const text = generateLocalAI(nom, matchFilter);
+            el.innerHTML = `
+                <div class="pmf-card" style="padding:14px 16px;border-left:4px solid #0A2463">
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:1.5px;color:#0A2463;margin-bottom:8px">ANALYSE DU MATCH</div>
+                    <p style="margin:0;font-size:0.88rem;color:#1E293B;line-height:1.55">${text}</p>
+                </div>`;
+        }
+
+        // ── Bannière résumé match (timeline SVG inline) ──────────────────────────
+        function renderMatchSummaryBanner(matchFilter) {
+            const el = document.getElementById('pm-match-banner');
+            if (!el) return;
+            if (!matchFilter) { el.innerHTML = ''; return; }
+
+            const matchData = DATA.filter(r => r[COLS.rencontre] === matchFilter);
+            if (!matchData.length) { el.innerHTML = ''; return; }
+
+            const goals = getSortedGoals(matchData);
+            if (!goals.length) { el.innerHTML = ''; return; }
+
+            const maxPos = goals[goals.length - 1].pos || 1;
+            const W = 320, H = 52, pad = 14;
+            const cx = pos => pad + (pos / maxPos) * (W - 2 * pad);
+
+            let fenixScore = 0, advScore = 0;
+            const dots = goals.map(g => {
+                const isFenix = g.row[COLS.club] === 'FENIX';
+                if (isFenix) fenixScore++; else advScore++;
+                const x = cx(g.pos);
+                const color = isFenix ? '#0A2463' : '#EF4444';
+                const min = Math.round(g.pos / 60);
+                return `<circle cx="${x}" cy="${H/2}" r="5" fill="${color}" opacity="0.85"/>
+                        <title>${isFenix?'FENIX':'ADV'} ${fenixScore}-${advScore} (${min}')</title>`;
+            }).join('');
+
+            const resultColor = fenixScore > advScore ? '#10B981' : fenixScore < advScore ? '#EF4444' : '#64748B';
+
+            el.innerHTML = `
+                <div class="pmf-card" style="padding:12px 16px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                        <span style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:1.5px;color:#0A2463">RÉSUMÉ DU MATCH</span>
+                        <span style="font-size:1.3rem;font-weight:700;color:${resultColor}">${fenixScore} – ${advScore}</span>
+                    </div>
+                    <svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block">
+                        <line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#E2E8F0" stroke-width="2"/>
+                        ${dots}
+                    </svg>
+                    <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#94a3b8;margin-top:2px">
+                        <span>0'</span><span style="color:#0A2463">● FENIX</span><span style="color:#EF4444">● ADV</span><span>fin</span>
+                    </div>
+                </div>`;
         }
 
         // ── Gestion comptes joueurs (staff only) ─────────────────────────────────
@@ -893,76 +1134,6 @@
             delete accounts[nom];
             localStorage.setItem('fenix_player_accounts', JSON.stringify(accounts));
             openPlayerAccountsModal();
-        }
-
-        // ── Modal plein écran carte ───────────────────────────────────────────────
-        let _fsOrigParent = null;
-        let _fsOrigNext   = null;
-
-        function pmOpenFS(btn) {
-            const card  = btn.closest('.pmf-card');
-            const modal = document.getElementById('pmf-fs-modal');
-            const inner = document.getElementById('pmf-fs-inner');
-            if (!modal || !inner || !card) return;
-
-            _fsOrigParent = card.parentElement;
-            _fsOrigNext   = card.nextSibling;
-
-            inner.appendChild(card);
-            modal.style.display = 'flex';
-            document.body.classList.add('pmf-fs-active');
-
-            setTimeout(() => _fsRedrawCanvases(card), 150);
-        }
-
-        function pmCloseFS() {
-            const modal = document.getElementById('pmf-fs-modal');
-            const inner = document.getElementById('pmf-fs-inner');
-            if (!modal) return;
-            const card = inner ? inner.querySelector('.pmf-card') : null;
-            if (card && _fsOrigParent) {
-                if (_fsOrigNext && _fsOrigNext.parentElement === _fsOrigParent) {
-                    _fsOrigParent.insertBefore(card, _fsOrigNext);
-                } else {
-                    _fsOrigParent.appendChild(card);
-                }
-                setTimeout(() => _fsRedrawCanvases(card), 80);
-            }
-            modal.style.display = 'none';
-            document.body.classList.remove('pmf-fs-active');
-            _fsOrigParent = null; _fsOrigNext = null;
-        }
-
-        function pmCloseFSBackdrop(e) {
-            if (e.target === document.getElementById('pmf-fs-modal')) pmCloseFS();
-        }
-
-        function _fsRedrawCanvases(card) {
-            const inModal = !!document.getElementById('pmf-fs-inner')?.contains(card);
-            if (card.querySelector('#pmf-graph-canvas')) {
-                // Adapter la hauteur du wrapper selon le contexte
-                const wrap = card.querySelector('.pmf-graph-wrap');
-                if (wrap) wrap.style.height = inModal ? '65vh' : '280px';
-                const nom = getSessionPlayerNom();
-                if (nom) renderPmfGraph(nom);
-            }
-            if (card.querySelector('#pmm-canvas-alg')) {
-                const rows = _pmmZoneFilter ? _pmmImpactRows.filter(r => (r[COLS.field_position]||'').toString().trim() === _pmmZoneFilter) : _pmmImpactRows;
-                _drawMatchExtrasImpact(rows);
-            }
-        }
-
-        function addFSButtons(root) {
-            const container = root || document;
-            container.querySelectorAll('.pmf-card').forEach(card => {
-                if (card.querySelector('.pmf-fs-btn')) return;
-                const btn = document.createElement('button');
-                btn.className = 'pmf-fs-btn';
-                btn.textContent = '⛶';
-                btn.title = 'Plein écran';
-                btn.onclick = () => pmOpenFS(btn);
-                card.insertBefore(btn, card.firstChild);
-            });
         }
 
         // ── Preview mode (staff → simule vue joueur) ─────────────────────────────
@@ -1071,6 +1242,9 @@
             }
 
             document.addEventListener('keydown', e => {
-                if (e.key === 'Escape') pmCloseFS();
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('pm-player-modal');
+                    if (modal && modal.style.display !== 'none') closePlayerModal();
+                }
             });
         });
