@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=31">
-    <script src="js/utils.js?v=31"></script>
-    <script src="js/impact-images.js?v=31"></script>
-    <script src="js/player-mode.js?v=31"></script>
-    <script src="js/page-joueurs.js?v=31"></script>
-    <script src="js/page-notes-graph.js?v=31"></script>
-    <script src="js/page-analyse.js?v=31"></script>
+    <link rel="stylesheet" href="css/style.css?v=32">
+    <script src="js/utils.js?v=32"></script>
+    <script src="js/impact-images.js?v=32"></script>
+    <script src="js/player-mode.js?v=32"></script>
+    <script src="js/page-joueurs.js?v=32"></script>
+    <script src="js/page-notes-graph.js?v=32"></script>
+    <script src="js/page-analyse.js?v=32"></script>
 </head>
 <body>
 
@@ -1146,16 +1146,46 @@ let _effInfoPoste = null;
 
         function openGraphiqueForSelected() {
             if (!currentSelectedJoueur) return;
-            const sel = document.getElementById('ng-joueur');
-            if (sel) {
-                for (let i = 0; i < sel.options.length; i++) {
-                    if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) {
-                        sel.value = sel.options[i].value;
-                        break;
+            const isGB = detectIsGB(currentSelectedJoueur);
+
+            if (isGB) {
+                // GB → pré-sélectionner dans gbg-gardien
+                const selGB = document.getElementById('gbg-gardien');
+                if (selGB) {
+                    selGB.value = '';
+                    for (let i = 0; i < selGB.options.length; i++) {
+                        if (matchPlayerName(selGB.options[i].value, currentSelectedJoueur)) {
+                            selGB.value = selGB.options[i].value;
+                            break;
+                        }
                     }
                 }
+                // Vider le filtre joueur de champ
+                const selNG = document.getElementById('ng-joueur');
+                if (selNG) selNG.value = '';
+            } else {
+                // Joueur de champ → pré-sélectionner dans ng-joueur
+                const selNG = document.getElementById('ng-joueur');
+                if (selNG) {
+                    selNG.value = '';
+                    for (let i = 0; i < selNG.options.length; i++) {
+                        if (matchPlayerName(selNG.options[i].value, currentSelectedJoueur)) {
+                            selNG.value = selNG.options[i].value;
+                            break;
+                        }
+                    }
+                }
+                // Vider le filtre gardien
+                const selGB = document.getElementById('gbg-gardien');
+                if (selGB) selGB.value = '';
             }
-            switchJoueursTab('notegraph');
+
+            // Naviguer directement sans passer par refreshPage (évite le timing race)
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-notegraph').classList.add('active');
+            _ngFromDetail = null;
+            updateNoteGraph();
+            updateGbGraph();
         }
 
         function openImpactForSelected() {
@@ -1163,6 +1193,7 @@ let _effInfoPoste = null;
             if (detectIsGB(currentSelectedJoueur)) {
                 const sel = document.getElementById('filter-gardien');
                 if (sel) {
+                    sel.value = '';
                     for (let i = 0; i < sel.options.length; i++) {
                         if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) {
                             sel.value = sel.options[i].value;
@@ -1170,10 +1201,13 @@ let _effInfoPoste = null;
                         }
                     }
                 }
-                switchJoueursTab('gardiens');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('page-gardiens').classList.add('active');
+                updateGardiensPage();
             } else {
                 const sel = document.getElementById('filter-impact-joueur');
                 if (sel) {
+                    sel.value = '';
                     for (let i = 0; i < sel.options.length; i++) {
                         if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) {
                             sel.value = sel.options[i].value;
@@ -1181,7 +1215,9 @@ let _effInfoPoste = null;
                         }
                     }
                 }
-                switchJoueursTab('impact');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('page-impact').classList.add('active');
+                updateImpactPage();
             }
         }
 
