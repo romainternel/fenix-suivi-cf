@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=30">
-    <script src="js/utils.js?v=30"></script>
-    <script src="js/impact-images.js?v=30"></script>
-    <script src="js/player-mode.js?v=30"></script>
-    <script src="js/page-joueurs.js?v=30"></script>
-    <script src="js/page-notes-graph.js?v=30"></script>
-    <script src="js/page-analyse.js?v=30"></script>
+    <link rel="stylesheet" href="css/style.css?v=31">
+    <script src="js/utils.js?v=31"></script>
+    <script src="js/impact-images.js?v=31"></script>
+    <script src="js/player-mode.js?v=31"></script>
+    <script src="js/page-joueurs.js?v=31"></script>
+    <script src="js/page-notes-graph.js?v=31"></script>
+    <script src="js/page-analyse.js?v=31"></script>
 </head>
 <body>
 
@@ -487,19 +487,18 @@
             <div class="section">
                 <!-- Titre + filtre sur la même ligne -->
                 <div class="joueurs-topbar">
-                    <div class="joueurs-topbar-left">
-                        <h2 class="section-title">👥 Statistiques Joueurs</h2>
-                        <div class="filter-group">
-                            <label>Match</label>
-                            <select id="filter-joueur-match" onchange="updateJoueursPage()">
-                                <option value="">Tous les matchs</option>
-                            </select>
-                        </div>
+                    <h2 class="section-title">👥 Statistiques Joueurs</h2>
+                    <div class="filter-group">
+                        <label>Match</label>
+                        <select id="filter-joueur-match" onchange="updateJoueursPage()">
+                            <option value="">Tous les matchs</option>
+                        </select>
                     </div>
-                    <div class="joueurs-topbar-actions">
-                        <button id="btn-joueur-graph" class="btn-joueur-context" disabled onclick="openGraphiqueForSelected()">📈 Graphique</button>
-                        <button id="btn-joueur-impact" class="btn-joueur-context" disabled onclick="openImpactForSelected()">🎯 Impact</button>
-                    </div>
+                </div>
+                <div class="joueurs-context-bar">
+                    <span class="joueurs-context-label">Joueur sélectionné :</span>
+                    <button id="btn-joueur-graph" class="btn-joueur-context" disabled onclick="openGraphiqueForSelected()">📈 Graphique</button>
+                    <button id="btn-joueur-impact" class="btn-joueur-context" disabled onclick="openImpactForSelected()">🎯 Impact</button>
                 </div>
 
                 <!-- Warnings noms ambigus -->
@@ -1139,8 +1138,10 @@ let _effInfoPoste = null;
             const hasPlayer = !!currentSelectedJoueur;
             const btnGraph = document.getElementById('btn-joueur-graph');
             const btnImpact = document.getElementById('btn-joueur-impact');
+            const label = document.querySelector('.joueurs-context-label');
             if (btnGraph) btnGraph.disabled = !hasPlayer;
             if (btnImpact) btnImpact.disabled = !hasPlayer;
+            if (label) label.textContent = hasPlayer ? currentSelectedJoueur + ' :' : 'Joueur sélectionné :';
         }
 
         function openGraphiqueForSelected() {
