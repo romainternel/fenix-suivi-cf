@@ -1039,10 +1039,13 @@
             }
 
             // Rétablir la page active
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const pageEl = document.getElementById('page-' + _previewSavedNavPage);
+            if (pageEl) pageEl.classList.add('active');
+
             const subnav = document.getElementById('joueurs-subnav');
-            if (_previewSavedNavPage === 'joueurs' && subnav) {
-                subnav.style.display = 'flex';
-            }
+            if (subnav) subnav.style.display = _previewSavedNavPage === 'joueurs' ? 'flex' : 'none';
+
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.classList.toggle('active', b.dataset.page === _previewSavedNavPage);
             });
