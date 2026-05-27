@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=37">
-    <script src="js/utils.js?v=37"></script>
-    <script src="js/impact-images.js?v=37"></script>
-    <script src="js/player-mode.js?v=37"></script>
-    <script src="js/page-joueurs.js?v=37"></script>
-    <script src="js/page-notes-graph.js?v=37"></script>
-    <script src="js/page-analyse.js?v=37"></script>
+    <link rel="stylesheet" href="css/style.css?v=38">
+    <script src="js/utils.js?v=38"></script>
+    <script src="js/impact-images.js?v=38"></script>
+    <script src="js/player-mode.js?v=38"></script>
+    <script src="js/page-joueurs.js?v=38"></script>
+    <script src="js/page-notes-graph.js?v=38"></script>
+    <script src="js/page-analyse.js?v=38"></script>
 </head>
 <body>
 
@@ -415,9 +415,11 @@
                 </div>
 
                 <div id="analyse-content" style="display: none;">
+                    <div id="periode-warning"></div>
                     <!-- Timeline du score -->
                     <div class="analyse-section">
                         <h3 class="analyse-section-title">📈 Évolution du Score</h3>
+                        <div id="timeline-scores" class="timeline-scores"></div>
                         <div class="timeline-container">
                             <canvas id="timeline-canvas"></canvas>
                         </div>
@@ -426,11 +428,11 @@
 
                     <!-- Analyse comparative -->
                     <div class="analyse-grid">
-                        <!-- Auto-analyse IA -->
+                        <!-- Résumé automatique du match -->
                         <div class="analyse-card ia-card">
                             <div class="analyse-card-header">
-                                <span>🤖</span>
-                                <h3>Analyse IA</h3>
+                                <span>📊</span>
+                                <h3>Résumé du match</h3>
                             </div>
                             <div class="analyse-card-body" id="ia-analyse">
                                 <!-- Généré automatiquement -->

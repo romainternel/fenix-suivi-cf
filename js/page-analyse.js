@@ -2,23 +2,43 @@
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
+        function checkPeriodeData(matchData) {
+            const total = matchData.length;
+            if (total === 0) return { ok: false, withPeriode: 0, total: 0 };
+            const withPeriode = matchData.filter(row => /^[12]/.test((row[COLS.periode] || '').toString().trim())).length;
+            return { ok: withPeriode / total >= 0.7, withPeriode, total };
+        }
+
         function updateAnalysePage() {
             const matchFilter = document.getElementById('filter-analyse-match').value;
-            
+
             if (!matchFilter) {
                 document.getElementById('analyse-content').style.display = 'none';
                 document.getElementById('analyse-empty').style.display = 'block';
                 return;
             }
-            
+
             document.getElementById('analyse-content').style.display = 'block';
             document.getElementById('analyse-empty').style.display = 'none';
-            
+
             const matchData = DATA.filter(row => row[COLS.rencontre] === matchFilter);
-            
+
+            // Vérifier la qualité des données période
+            const periodeCheck = checkPeriodeData(matchData);
+            const hasPeriode = periodeCheck.ok;
+            const warningEl = document.getElementById('periode-warning');
+            if (warningEl) {
+                if (!hasPeriode && matchData.length > 0) {
+                    warningEl.textContent = `⚠️ Données période incomplètes (${periodeCheck.withPeriode}/${periodeCheck.total} lignes reconnues) — colonnes MT1/MT2 masquées.`;
+                    warningEl.style.display = 'block';
+                } else {
+                    warningEl.style.display = 'none';
+                }
+            }
+
             // Charger l'analyse coach sauvegardée
             document.getElementById('coach-analyse').value = coachAnalyses[matchFilter] || '';
-            
+
             // Reset chat
             chatHistory = [];
             document.getElementById('chat-messages').innerHTML = `
@@ -27,147 +47,183 @@
                     <div class="chat-content">Salut Coach ! Je suis prêt à analyser le match <strong>${matchFilter}</strong> avec toi. Pose-moi tes questions !</div>
                 </div>
             `;
-            
+
             // Générer l'analyse
-            generateIAAnalyse(matchFilter, matchData);
-            generateIndicateurs(matchFilter, matchData);
+            generateResume3Points(matchFilter, matchData, hasPeriode);
+            generateIndicateurs(matchFilter, matchData, hasPeriode);
             drawTimeline(matchFilter, matchData);
             findMomentsCles(matchFilter, matchData);
         }
 
-        function generateIAAnalyse(matchName, matchData) {
+        function generateResume3Points(matchName, matchData, hasPeriode) {
             const fenixData = matchData.filter(row => row[COLS.club] === 'FENIX');
-            const advData = matchData.filter(row => row[COLS.club] !== 'FENIX');
-            
-            // Calculs
-            const fenixButs = fenixData.filter(row => row[COLS.resultat] === 'But').length;
-            const advButs = advData.filter(row => row[COLS.resultat] === 'But').length;
-            const fenixTirs = fenixButs + fenixData.filter(row => row[COLS.resultat] === 'Tir raté').length;
-            const advTirs = advButs + advData.filter(row => row[COLS.resultat] === 'Tir raté').length;
-            const fenixEff = fenixTirs > 0 ? Math.round(fenixButs / fenixTirs * 100) : 0;
-            const advEff = advTirs > 0 ? Math.round(advButs / advTirs * 100) : 0;
-            const fenixPB = fenixData.filter(row => row[COLS.resultat] === 'PB').length;
-            const advPB = advData.filter(row => row[COLS.resultat] === 'PB').length;
-            const fenixPoss = fenixData.filter(row => row[COLS.possession]).length;
-            const advPoss = advData.filter(row => row[COLS.possession]).length;
-            
-            // Gardien
-            const fenixTirsSubis = advData.filter(row => row[COLS.resultat] === 'But' || row[COLS.resultat] === 'Tir raté').length;
-            const fenixArrets = advData.filter(row => row[COLS.resultat] === 'Tir raté').length;
-            const fenixGardienEff = fenixTirsSubis > 0 ? Math.round(fenixArrets / fenixTirsSubis * 100) : 0;
-            
-            const advTirsSubis = fenixData.filter(row => row[COLS.resultat] === 'But' || row[COLS.resultat] === 'Tir raté').length;
-            const advArrets = fenixData.filter(row => row[COLS.resultat] === 'Tir raté').length;
-            const advGardienEff = advTirsSubis > 0 ? Math.round(advArrets / advTirsSubis * 100) : 0;
-            
-            // Déterminer V/D/N
-            let resultClass, resultText;
-            if (fenixButs > advButs) {
-                resultClass = 'victoire';
-                resultText = `✅ VICTOIRE ${fenixButs}-${advButs}`;
-            } else if (fenixButs < advButs) {
-                resultClass = 'defaite';
-                resultText = `❌ DÉFAITE ${fenixButs}-${advButs}`;
-            } else {
-                resultClass = 'nul';
-                resultText = `➖ MATCH NUL ${fenixButs}-${advButs}`;
-            }
-            
-            // Analyser les causes
-            const causes = [];
-            const points = [];
-            
+            const advData   = matchData.filter(row => row[COLS.club] !== 'FENIX');
+
+            const fenixButs = fenixData.filter(r => r[COLS.resultat] === 'But').length;
+            const advButs   = advData.filter(r => r[COLS.resultat] === 'But').length;
+            const fenixTirs = fenixButs + fenixData.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const advTirs   = advButs  + advData.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const fenixEff  = fenixTirs > 0 ? Math.round(fenixButs / fenixTirs * 100) : 0;
+            const advEff    = advTirs  > 0 ? Math.round(advButs  / advTirs  * 100) : 0;
+            const fenixPB   = fenixData.filter(r => r[COLS.resultat] === 'PB').length;
+            const advPB     = advData.filter(r => r[COLS.resultat] === 'PB').length;
+
+            const fenixTirsSubis = advData.filter(r => r[COLS.resultat] === 'But' || r[COLS.resultat] === 'Tir raté').length;
+            const fenixArrets    = advData.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const fenixGardEff   = fenixTirsSubis > 0 ? Math.round(fenixArrets / fenixTirsSubis * 100) : 0;
+            const advTirsSubis   = fenixData.filter(r => r[COLS.resultat] === 'But' || r[COLS.resultat] === 'Tir raté').length;
+            const advArrets      = fenixData.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const advGardEff     = advTirsSubis > 0 ? Math.round(advArrets / advTirsSubis * 100) : 0;
+
+            const getSup = (data, sign) => data.filter(r => (r[COLS.phase_att] || '').toString().includes(sign));
+            const fSup = getSup(fenixData, '+'), aSup = getSup(advData, '+');
+            const fSupB = fSup.filter(r => r[COLS.resultat] === 'But').length;
+            const fSupT = fSupB + fSup.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const aSupB = aSup.filter(r => r[COLS.resultat] === 'But').length;
+            const aSupT = aSupB + aSup.filter(r => r[COLS.resultat] === 'Tir raté').length;
+
+            const candidates = [];
+
             // Efficacité
-            if (fenixEff < advEff - 5) {
-                causes.push(`Efficacité au tir insuffisante (${fenixEff}% vs ${advEff}%)`);
-                points.push({ icon: '🎯', text: `Efficacité: ${fenixEff}% vs ${advEff}% adversaire`, type: 'negatif' });
-            } else if (fenixEff > advEff + 5) {
-                points.push({ icon: '🎯', text: `Bonne efficacité: ${fenixEff}% vs ${advEff}%`, type: 'positif' });
-            }
-            
-            // Pertes de balle
-            if (fenixPB > advPB + 2) {
-                causes.push(`Trop de pertes de balle (${fenixPB} vs ${advPB})`);
-                points.push({ icon: '🔴', text: `${fenixPB} pertes de balle (vs ${advPB})`, type: 'negatif' });
-            } else if (fenixPB < advPB - 2) {
-                points.push({ icon: '✅', text: `Maîtrise du ballon: seulement ${fenixPB} PB`, type: 'positif' });
-            }
-            
-            // Gardien
-            if (fenixGardienEff < advGardienEff - 5) {
-                causes.push(`Gardien en difficulté (${fenixGardienEff}% vs ${advGardienEff}%)`);
-                points.push({ icon: '🧤', text: `Gardien: ${fenixGardienEff}% d'arrêts (vs ${advGardienEff}%)`, type: 'negatif' });
-            } else if (fenixGardienEff > advGardienEff + 5) {
-                points.push({ icon: '🧤', text: `Bon match du gardien: ${fenixGardienEff}% d'arrêts`, type: 'positif' });
-            }
-            
-            // Possessions
-            if (fenixPoss < advPoss - 3) {
-                points.push({ icon: '⏱️', text: `Moins de possessions (${fenixPoss} vs ${advPoss})`, type: 'negatif' });
-            }
-            
-            // Construire le HTML
-            let html = `<div class="ia-diagnostic ${resultClass}"><h4>${resultText}</h4>`;
-            
-            if (resultClass === 'defaite' && causes.length > 0) {
-                html += `<p><strong>Causes probables :</strong></p><ul>`;
-                causes.forEach(c => html += `<li>${c}</li>`);
-                html += `</ul>`;
-            } else if (resultClass === 'victoire') {
-                html += `<p>Belle performance de l'équipe !</p>`;
-            }
-            html += `</div>`;
-            
-            // Points d'analyse
-            points.forEach(p => {
-                html += `<div class="ia-point"><span class="ia-point-icon">${p.icon}</span><span>${p.text}</span></div>`;
+            const effDiff = fenixEff - advEff;
+            if (Math.abs(effDiff) >= 5) candidates.push({
+                score: Math.abs(effDiff),
+                icon: '🎯',
+                text: effDiff > 0
+                    ? `Bonne efficacité FENIX : ${fenixEff}% vs ${advEff}%`
+                    : `Efficacité insuffisante : ${fenixEff}% vs ${advEff}% adversaire`
             });
-            
+
+            // Pertes de balle
+            const pbDiff = fenixPB - advPB;
+            if (Math.abs(pbDiff) >= 2) candidates.push({
+                score: Math.abs(pbDiff) * 2,
+                icon: pbDiff < 0 ? '✅' : '🔴',
+                text: pbDiff < 0
+                    ? `Maîtrise du ballon : seulement ${fenixPB} PB (vs ${advPB})`
+                    : `${fenixPB} pertes de balle (vs ${advPB} adversaire)`
+            });
+
+            // Gardien
+            const gardDiff = fenixGardEff - advGardEff;
+            if (Math.abs(gardDiff) >= 5) candidates.push({
+                score: Math.abs(gardDiff),
+                icon: '🧤',
+                text: gardDiff > 0
+                    ? `Bon gardien : ${fenixGardEff}% d'arrêts (vs ${advGardEff}%)`
+                    : `Gardien en difficulté : ${fenixGardEff}% d'arrêts (vs ${advGardEff}%)`
+            });
+
+            // Supériorités
+            const supDiff = fSupB - aSupB;
+            if (Math.abs(supDiff) >= 1 && (fSupT > 0 || aSupT > 0)) candidates.push({
+                score: Math.abs(supDiff) * 3,
+                icon: supDiff > 0 ? '💪' : '⚠️',
+                text: supDiff > 0
+                    ? `Supériorités gagnées : FENIX ${fSupB}/${fSupT} vs ADV ${aSupB}/${aSupT}`
+                    : `Supériorités perdues : FENIX ${fSupB}/${fSupT} vs ADV ${aSupB}/${aSupT}`
+            });
+
+            // Momentum MT2 (si données période fiables)
+            if (hasPeriode) {
+                const fMT1 = fenixData.filter(r => r[COLS.resultat] === 'But' && getPeriodeNum(r) === 1).length;
+                const fMT2 = fenixData.filter(r => r[COLS.resultat] === 'But' && getPeriodeNum(r) === 2).length;
+                const aMT1 = advData.filter(r => r[COLS.resultat] === 'But' && getPeriodeNum(r) === 1).length;
+                const aMT2 = advData.filter(r => r[COLS.resultat] === 'But' && getPeriodeNum(r) === 2).length;
+                const delta = (fMT2 - aMT2) - (fMT1 - aMT1);
+                if (Math.abs(delta) >= 2) candidates.push({
+                    score: Math.abs(delta) * 2,
+                    icon: delta > 0 ? '📈' : '📉',
+                    text: delta > 0
+                        ? `FENIX meilleur en MT2 : ${fMT2}-${aMT2} (vs MT1 ${fMT1}-${aMT1})`
+                        : `Déclin en MT2 : ${fMT2}-${aMT2} (vs MT1 ${fMT1}-${aMT1})`
+                });
+            }
+
+            // Trier par magnitude décroissante → top 3
+            candidates.sort((a, b) => b.score - a.score);
+            const top3 = candidates.slice(0, 3);
+
+            let resultClass, resultText;
+            if (fenixButs > advButs) { resultClass = 'victoire'; resultText = `✅ VICTOIRE ${fenixButs}-${advButs}`; }
+            else if (fenixButs < advButs) { resultClass = 'defaite'; resultText = `❌ DÉFAITE ${fenixButs}-${advButs}`; }
+            else { resultClass = 'nul'; resultText = `➖ MATCH NUL ${fenixButs}-${advButs}`; }
+
+            let html = `<div class="ia-diagnostic ${resultClass}"><h4>${resultText}</h4></div>`;
+            if (top3.length === 0) {
+                html += `<p style="color:#6B7280;font-size:0.85rem;">Pas assez de données pour générer un résumé.</p>`;
+            } else {
+                top3.forEach(p => {
+                    html += `<div class="ia-point"><span class="ia-point-icon">${p.icon}</span><span>${p.text}</span></div>`;
+                });
+            }
             document.getElementById('ia-analyse').innerHTML = html;
         }
 
-        function generateIndicateurs(matchName, matchData) {
+        function generateIndicateurs(matchName, matchData, hasPeriode) {
             const fenixData = matchData.filter(row => row[COLS.club] === 'FENIX');
-            const advData = matchData.filter(row => row[COLS.club] !== 'FENIX');
-            
-            const indicators = [
-                { label: 'Buts', fenix: fenixData.filter(r => r[COLS.resultat] === 'But').length, adv: advData.filter(r => r[COLS.resultat] === 'But').length },
-                { label: 'Tirs', fenix: fenixData.filter(r => r[COLS.resultat] === 'But' || r[COLS.resultat] === 'Tir raté').length, adv: advData.filter(r => r[COLS.resultat] === 'But' || r[COLS.resultat] === 'Tir raté').length },
-                { label: 'Efficacité', fenix: 0, adv: 0, isPct: true },
-                { label: 'Pertes de balle', fenix: fenixData.filter(r => r[COLS.resultat] === 'PB').length, adv: advData.filter(r => r[COLS.resultat] === 'PB').length, inverse: true },
-                { label: 'Possessions', fenix: fenixData.filter(r => r[COLS.possession]).length, adv: advData.filter(r => r[COLS.possession]).length },
-                { label: 'Neutralisé', fenix: fenixData.filter(r => r[COLS.resultat] === 'Jet franc').length, adv: advData.filter(r => r[COLS.resultat] === 'Jet franc').length }
-            ];
-            
-            // Calculer efficacité
-            const fenixButs = indicators[0].fenix;
-            const fenixTirs = indicators[1].fenix;
-            const advButs = indicators[0].adv;
-            const advTirs = indicators[1].adv;
-            indicators[2].fenix = fenixTirs > 0 ? Math.round(fenixButs / fenixTirs * 100) : 0;
-            indicators[2].adv = advTirs > 0 ? Math.round(advButs / advTirs * 100) : 0;
-            
-            let html = '';
-            indicators.forEach(ind => {
-                let cardClass = '';
-                if (ind.inverse) {
-                    cardClass = ind.fenix < ind.adv ? 'avantage' : (ind.fenix > ind.adv ? 'desavantage' : '');
-                } else {
-                    cardClass = ind.fenix > ind.adv ? 'avantage' : (ind.fenix < ind.adv ? 'desavantage' : '');
+            const advData   = matchData.filter(row => row[COLS.club] !== 'FENIX');
+
+            const subData = (data, p) => hasPeriode ? data.filter(r => getPeriodeNum(r) === p) : [];
+
+            function stats(data) {
+                const buts = data.filter(r => r[COLS.resultat] === 'But').length;
+                const tirs = buts + data.filter(r => r[COLS.resultat] === 'Tir raté').length;
+                return {
+                    buts, tirs,
+                    eff:  tirs > 0 ? Math.round(buts / tirs * 100) : null,
+                    pb:   data.filter(r => r[COLS.resultat] === 'PB').length,
+                    poss: data.filter(r => r[COLS.possession]).length
+                };
+            }
+
+            const tot = { f: stats(fenixData),             a: stats(advData) };
+            const mt1 = { f: stats(subData(fenixData, 1)), a: stats(subData(advData, 1)) };
+            const mt2 = { f: stats(subData(fenixData, 2)), a: stats(subData(advData, 2)) };
+
+            const getSup = (data, s) => data.filter(r => (r[COLS.phase_att] || '').toString().includes(s));
+            const fSup = getSup(fenixData, '+'), aSup = getSup(advData, '+');
+            const fSupB = fSup.filter(r => r[COLS.resultat] === 'But').length;
+            const fSupT = fSupB + fSup.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const aSupB = aSup.filter(r => r[COLS.resultat] === 'But').length;
+            const aSupT = aSupB + aSup.filter(r => r[COLS.resultat] === 'Tir raté').length;
+
+            function card(label, fVal, aVal, { inverse = false, isPct = false, fMT1 = null, aMT1 = null, fMT2 = null, aMT2 = null } = {}) {
+                const cls = fVal == null || aVal == null ? '' :
+                    inverse ? (fVal < aVal ? 'avantage' : fVal > aVal ? 'desavantage' : '') :
+                              (fVal > aVal ? 'avantage' : fVal < aVal ? 'desavantage' : '');
+                const fmt = v => v != null ? `${v}${isPct ? '%' : ''}` : '—';
+                let sub = '';
+                if (hasPeriode && fMT1 != null) {
+                    sub = `<div class="ind-sub">MT1 ${fmt(fMT1)}<span class="ind-sub-vs">–</span>${fmt(aMT1)} · MT2 ${fmt(fMT2)}<span class="ind-sub-vs">–</span>${fmt(aMT2)}</div>`;
                 }
-                
-                html += `
-                    <div class="indicateur-card ${cardClass}">
-                        <div class="indicateur-label">${ind.label}</div>
-                        <div class="indicateur-values">
-                            <span class="indicateur-fenix">${ind.fenix}${ind.isPct ? '%' : ''}</span>
-                            <span class="indicateur-vs">vs</span>
-                            <span class="indicateur-adv">${ind.adv}${ind.isPct ? '%' : ''}</span>
-                        </div>
-                    </div>
-                `;
-            });
-            
+                return `<div class="indicateur-card ${cls}">
+                    <div class="indicateur-label">${label}</div>
+                    <div class="indicateur-values">
+                        <span class="indicateur-fenix">${fmt(fVal)}</span>
+                        <span class="indicateur-vs">vs</span>
+                        <span class="indicateur-adv">${fmt(aVal)}</span>
+                    </div>${sub}
+                </div>`;
+            }
+
+            const supCls = fSupB > aSupB ? 'avantage' : fSupB < aSupB ? 'desavantage' : '';
+
+            let html = '';
+            html += card('Buts',           tot.f.buts, tot.a.buts, { fMT1: mt1.f.buts, aMT1: mt1.a.buts, fMT2: mt2.f.buts, aMT2: mt2.a.buts });
+            html += card('Tirs',           tot.f.tirs, tot.a.tirs, { fMT1: mt1.f.tirs, aMT1: mt1.a.tirs, fMT2: mt2.f.tirs, aMT2: mt2.a.tirs });
+            html += card('Efficacité',     tot.f.eff,  tot.a.eff,  { isPct: true, fMT1: mt1.f.eff, aMT1: mt1.a.eff, fMT2: mt2.f.eff, aMT2: mt2.a.eff });
+            html += card('Pertes de balle', tot.f.pb,  tot.a.pb,   { inverse: true, fMT1: mt1.f.pb, aMT1: mt1.a.pb, fMT2: mt2.f.pb, aMT2: mt2.a.pb });
+            html += card('Possessions',    tot.f.poss, tot.a.poss, { fMT1: mt1.f.poss, aMT1: mt1.a.poss, fMT2: mt2.f.poss, aMT2: mt2.a.poss });
+            html += `<div class="indicateur-card ${supCls}">
+                <div class="indicateur-label">Supériorités (+)</div>
+                <div class="indicateur-values">
+                    <span class="indicateur-fenix">${fSupB}b/${fSupT}t</span>
+                    <span class="indicateur-vs">vs</span>
+                    <span class="indicateur-adv">${aSupB}b/${aSupT}t</span>
+                </div>
+            </div>`;
+
             document.getElementById('indicateurs-grid').innerHTML = html;
         }
 
@@ -233,6 +289,16 @@
                 else advScore++;
                 scoreHistory.push({ pos: normPos(pos), fenix: fenixScore, adv: advScore });
             });
+
+            // Score à la mi-temps → #timeline-scores
+            const fenixMT1G = sortedGoals.filter(g => getPeriodeNum(g.row) === 1 && g.row[COLS.club] === 'FENIX').length;
+            const advMT1G   = sortedGoals.filter(g => getPeriodeNum(g.row) === 1 && g.row[COLS.club] !== 'FENIX').length;
+            const scoresEl  = document.getElementById('timeline-scores');
+            if (scoresEl) {
+                scoresEl.textContent = hasTwo
+                    ? `MT1 : ${fenixMT1G}-${advMT1G} · Final : ${fenixScore}-${advScore}`
+                    : `Score final : ${fenixScore}-${advScore}`;
+            }
 
             const padding = { top: 40, right: 30, bottom: 40, left: 45 };
             const graphWidth  = canvas.width  - padding.left - padding.right;
