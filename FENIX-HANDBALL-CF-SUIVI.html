@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=32">
-    <script src="js/utils.js?v=32"></script>
-    <script src="js/impact-images.js?v=32"></script>
-    <script src="js/player-mode.js?v=32"></script>
-    <script src="js/page-joueurs.js?v=32"></script>
-    <script src="js/page-notes-graph.js?v=32"></script>
-    <script src="js/page-analyse.js?v=32"></script>
+    <link rel="stylesheet" href="css/style.css?v=33">
+    <script src="js/utils.js?v=33"></script>
+    <script src="js/impact-images.js?v=33"></script>
+    <script src="js/player-mode.js?v=33"></script>
+    <script src="js/page-joueurs.js?v=33"></script>
+    <script src="js/page-notes-graph.js?v=33"></script>
+    <script src="js/page-analyse.js?v=33"></script>
 </head>
 <body>
 
@@ -726,17 +726,20 @@
         <div class="page" id="page-notegraph" onclick="ngGoBack()">
             <div class="ng-page-layout" onclick="event.stopPropagation()">
                 <div class="ng-header">
-                    <div class="filter-group" style="margin:0">
-                        <label style="color:white;font-weight:600;">Joueur</label>
-                        <select id="ng-joueur" onchange="updateNoteGraph()">
-                            <option value="">— Joueur —</option>
-                        </select>
-                    </div>
-                    <div class="filter-group" style="margin:0">
-                        <label style="color:white;font-weight:600;">Gardien</label>
-                        <select id="gbg-gardien" onchange="updateGbGraph()">
-                            <option value="">— Gardien —</option>
-                        </select>
+                    <button class="btn-comparer" onclick="toggleCompare('ng-filters', this)">🔀 Comparer</button>
+                    <div id="ng-filters" style="display:none;display:none;gap:0.75rem;align-items:center;flex-wrap:wrap;" class="compare-filters">
+                        <div class="filter-group" style="margin:0">
+                            <label style="color:white;font-weight:600;">Joueur</label>
+                            <select id="ng-joueur" onchange="updateNoteGraph()">
+                                <option value="">— Joueur —</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" style="margin:0">
+                            <label style="color:white;font-weight:600;">Gardien</label>
+                            <select id="gbg-gardien" onchange="updateGbGraph()">
+                                <option value="">— Gardien —</option>
+                            </select>
+                        </div>
                     </div>
                     <span style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-left:auto">Cliquer en dehors pour fermer</span>
                 </div>
@@ -756,18 +759,19 @@
             <div class="section">
                 <div class="section-header">
                     <h2 class="section-title">🥅 Statistiques Gardiens</h2>
+                    <button class="btn-comparer btn-comparer-dark" onclick="toggleCompare('gardien-filters', this)">🔀 Comparer</button>
                 </div>
-                
-                <div class="filters">
+
+                <div id="gardien-filters" class="filters compare-filters" style="display:none;">
                     <div class="filter-group">
                         <label>Gardien</label>
-                        <select id="filter-gardien">
+                        <select id="filter-gardien" onchange="updateGardiensPage()">
                             <option value="">Tous les gardiens</option>
                         </select>
                     </div>
                     <div class="filter-group">
                         <label>Match</label>
-                        <select id="filter-gardien-match">
+                        <select id="filter-gardien-match" onchange="updateGardiensPage()">
                             <option value="">Tous les matchs</option>
                         </select>
                     </div>
@@ -842,20 +846,21 @@
             <div class="section">
                 <div class="section-header">
                     <h2 class="section-title">🎯 Impact au Shoot</h2>
+                    <button class="btn-comparer btn-comparer-dark" onclick="toggleCompare('impact-filters', this)">🔀 Comparer</button>
                 </div>
 
                 <!-- Filtres + Stats alignés sur la même ligne -->
                 <div style="display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem;">
-                    <div class="filters" style="flex:1;margin:0;">
+                    <div id="impact-filters" class="filters compare-filters" style="flex:1;margin:0;display:none;">
                         <div class="filter-group">
                             <label>Joueur</label>
-                            <select id="filter-impact-joueur">
+                            <select id="filter-impact-joueur" onchange="updateImpactPage()">
                                 <option value="">Tous les joueurs</option>
                             </select>
                         </div>
                         <div class="filter-group">
                             <label>Résultat</label>
-                            <select id="filter-impact-resultat">
+                            <select id="filter-impact-resultat" onchange="updateImpactPage()">
                                 <option value="">Tous</option>
                                 <option value="But">But</option>
                                 <option value="Tir raté">Tir arrêté</option>
@@ -1134,6 +1139,26 @@ let _effInfoPoste = null;
             if (DATA.length > 0) refreshPage(page);
         }
 
+        function toggleCompare(filterId, btn) {
+            const el = document.getElementById(filterId);
+            if (!el) return;
+            const visible = el.style.display !== 'none' && el.style.display !== '';
+            el.style.display = visible ? 'none' : (filterId === 'ng-filters' ? 'flex' : 'flex');
+            btn.classList.toggle('btn-comparer-active', !visible);
+            btn.textContent = visible ? '🔀 Comparer' : '✕ Fermer';
+        }
+
+        function hideCompareFilters() {
+            ['ng-filters', 'gardien-filters', 'impact-filters'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            document.querySelectorAll('.btn-comparer').forEach(btn => {
+                btn.classList.remove('btn-comparer-active');
+                btn.textContent = btn.textContent.includes('Fermer') ? '🔀 Comparer' : btn.textContent;
+            });
+        }
+
         function updatePlayerContextButtons() {
             const hasPlayer = !!currentSelectedJoueur;
             const btnGraph = document.getElementById('btn-joueur-graph');
@@ -1181,6 +1206,7 @@ let _effInfoPoste = null;
             }
 
             // Naviguer directement sans passer par refreshPage (évite le timing race)
+            hideCompareFilters();
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-notegraph').classList.add('active');
             _ngFromDetail = null;
@@ -1201,6 +1227,7 @@ let _effInfoPoste = null;
                         }
                     }
                 }
+                hideCompareFilters();
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 document.getElementById('page-gardiens').classList.add('active');
                 updateGardiensPage();
@@ -1215,6 +1242,7 @@ let _effInfoPoste = null;
                         }
                     }
                 }
+                hideCompareFilters();
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 document.getElementById('page-impact').classList.add('active');
                 updateImpactPage();
