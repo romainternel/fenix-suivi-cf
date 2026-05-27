@@ -818,7 +818,7 @@
                     <div class="pm-stats-grid">
                         <div class="pm-stat-box"><div class="pm-stat-val">${d.poss}</div><div class="pm-stat-lbl">POSSESSIONS</div></div>
                         <div class="pm-stat-box"><div class="pm-stat-val">${d.buts}</div><div class="pm-stat-lbl">BUTS<br><small style="color:#94a3b8">${d.pen}</small></div></div>
-                        <div class="pm-stat-box"><div class="pm-stat-val" style="color:${color}">${data.eff}%</div><div class="pm-stat-lbl">% RÉUSSITE</div></div>
+                        <div class="pm-stat-box"><div class="pm-stat-val" style="color:${data.eff>=60?'#10B981':data.eff>=45?'#2563eb':'#EF4444'}">${data.eff}%</div><div class="pm-stat-lbl">% RÉUSSITE</div></div>
                         <div class="pm-stat-box"><div class="pm-stat-val">${d.pb}</div><div class="pm-stat-lbl">PERTES DE BALLE</div></div>
                         <div class="pm-stat-box"><div class="pm-stat-val">${d.po}</div><div class="pm-stat-lbl">PEN. OBTENUS</div></div>
                     </div>
@@ -943,32 +943,24 @@
             }
         }
 
-        // ── Navigation chevrons match (mode joueur) ──────────────────────────────
+        // ── Sélecteur match (mode joueur) ────────────────────────────────────────
         let _pmCurrentMatchIdx = -1;
 
         function buildPmMatchNav() {
+            const sel = document.getElementById('pm-match-sel');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Tous les matchs</option>'
+                + (MATCHS || []).map(m => `<option value="${m}">${m}</option>`).join('');
+            sel.value = '';
             _pmCurrentMatchIdx = -1;
-            _pmApplyMatchNav();
-        }
-
-        function _pmApplyMatchNav() {
-            const label = document.getElementById('pm-nav-label');
-            const prev  = document.getElementById('pm-nav-prev');
-            const next  = document.getElementById('pm-nav-next');
-            const total = (typeof MATCHS !== 'undefined') ? MATCHS.length : 0;
-            if (label) label.textContent = _pmCurrentMatchIdx < 0 ? 'Tous les matchs' : (MATCHS[_pmCurrentMatchIdx] || '');
-            if (prev)  prev.disabled  = _pmCurrentMatchIdx < 0;
-            if (next)  next.disabled  = _pmCurrentMatchIdx >= total - 1;
             renderPlayerMatchStats();
         }
 
-        function pmMatchPrev() {
-            if (_pmCurrentMatchIdx > -1) { _pmCurrentMatchIdx--; _pmApplyMatchNav(); }
-        }
-
-        function pmMatchNext() {
-            const total = (typeof MATCHS !== 'undefined') ? MATCHS.length : 0;
-            if (_pmCurrentMatchIdx < total - 1) { _pmCurrentMatchIdx++; _pmApplyMatchNav(); }
+        function pmMatchSelect() {
+            const sel = document.getElementById('pm-match-sel');
+            const val = sel ? sel.value : '';
+            _pmCurrentMatchIdx = val ? (MATCHS || []).indexOf(val) : -1;
+            renderPlayerMatchStats();
         }
 
         // ── Analyse IA locale (match du joueur) ─────────────────────────────────
@@ -1006,28 +998,32 @@
             const ss = getPlayerSeasonStats(nom);
             const lines = [];
 
+            // Tirs
             if (ms.total > 0) {
-                const effDiff = ms.eff - ss.eff;
-                if (Math.abs(effDiff) >= 10) {
-                    lines.push(effDiff > 0
-                        ? `Excellente efficacité ce match : ${ms.eff}% (saison : ${ss.eff}%). Continue sur cette lancée.`
-                        : `Efficacité en retrait : ${ms.eff}% contre ${ss.eff}% en moyenne cette saison.`);
-                } else {
-                    lines.push(`${ms.buts} but${ms.buts > 1 ? 's' : ''} sur ${ms.total} tir${ms.total > 1 ? 's' : ''} (${ms.eff}%) — dans la moyenne saisonnière.`);
-                }
+                const effLabel = ms.eff >= 60 ? 'Bonne' : ms.eff >= 45 ? 'Moyenne' : 'Faible';
+                const vsStr = ss.total > 0 ? ` (moy. saison : ${ss.eff}%)` : '';
+                lines.push(`${effLabel} efficacité : ${ms.buts}/${ms.total} tirs réussis (${ms.eff}%)${vsStr}.`);
             } else {
                 lines.push('Aucun tir enregistré sur ce match.');
             }
 
+            // Actions offensives
             const noteAtm = ms.attPlus - ms.attMoins;
+            if (ms.attPlus > 0 || ms.attMoins > 0) {
+                if (noteAtm > 0) lines.push(`Bon impact offensif : ${ms.attPlus}+ / ${ms.attMoins}−.`);
+                else if (noteAtm < 0) lines.push(`Côté offensif à travailler : ${ms.attPlus}+ / ${ms.attMoins}−.`);
+                else lines.push(`Bilan offensif équilibré : ${ms.attPlus}+ / ${ms.attMoins}−.`);
+            }
+
+            // Actions défensives
             const noteDefm = ms.defPlus - ms.defMoins;
-            if (noteAtm > 0) lines.push(`Bon impact offensif : ${ms.attPlus} action${ms.attPlus > 1 ? 's' : ''} positive${ms.attPlus > 1 ? 's' : ''}.`);
-            else if (noteAtm < 0) lines.push(`Côté offensif à améliorer (${ms.attMoins} action${ms.attMoins > 1 ? 's' : ''} négative${ms.attMoins > 1 ? 's' : ''}).`);
+            if (ms.defPlus > 0 || ms.defMoins > 0) {
+                if (noteDefm > 0) lines.push(`Bonne contribution défensive : ${ms.defPlus}+ / ${ms.defMoins}−.`);
+                else if (noteDefm < 0) lines.push(`Points défensifs à corriger : ${ms.defPlus}+ / ${ms.defMoins}−.`);
+            }
 
-            if (noteDefm > 0) lines.push(`Bonne contribution défensive (${ms.defPlus} action${ms.defPlus > 1 ? 's' : ''} positive${ms.defPlus > 1 ? 's' : ''}).`);
-            else if (noteDefm < 0) lines.push(`Points défensifs à corriger (${ms.defMoins} action${ms.defMoins > 1 ? 's' : ''} négative${ms.defMoins > 1 ? 's' : ''}).`);
-
-            if (ms.pb > 0) lines.push(`${ms.pb} perte${ms.pb > 1 ? 's' : ''} de balle — sécuriser le ballon est prioritaire.`);
+            // Pertes de balle
+            if (ms.pb > 0) lines.push(`${ms.pb} perte${ms.pb > 1 ? 's' : ''} de balle.`);
 
             return lines.length ? lines.join(' ') : 'Données insuffisantes pour générer une analyse.';
         }
@@ -1059,35 +1055,44 @@
             if (!goals.length) { el.innerHTML = ''; return; }
 
             const maxPos = goals[goals.length - 1].pos || 1;
-            const W = 320, H = 52, pad = 14;
+            const W = 400, H = 70, pad = 16;
+            const yF = 22, yA = 50;
             const cx = pos => pad + (pos / maxPos) * (W - 2 * pad);
 
             let fenixScore = 0, advScore = 0;
-            const dots = goals.map(g => {
+            const fenixDots = [], advDots = [];
+            goals.forEach(g => {
                 const isFenix = g.row[COLS.club] === 'FENIX';
                 if (isFenix) fenixScore++; else advScore++;
-                const x = cx(g.pos);
-                const color = isFenix ? '#0A2463' : '#EF4444';
+                const x = Math.round(cx(g.pos));
                 const min = Math.round(g.pos / 60);
-                return `<circle cx="${x}" cy="${H/2}" r="5" fill="${color}" opacity="0.85"/>
-                        <title>${isFenix?'FENIX':'ADV'} ${fenixScore}-${advScore} (${min}')</title>`;
-            }).join('');
+                const tip = `${isFenix ? 'FENIX' : 'ADV'} ${fenixScore}-${advScore} (${min}')`;
+                if (isFenix) {
+                    fenixDots.push(`<circle cx="${x}" cy="${yF}" r="6" fill="#0A2463"><title>${tip}</title></circle>`);
+                } else {
+                    advDots.push(`<circle cx="${x}" cy="${yA}" r="6" fill="#EF4444"><title>${tip}</title></circle>`);
+                }
+            });
 
             const resultColor = fenixScore > advScore ? '#10B981' : fenixScore < advScore ? '#EF4444' : '#64748B';
+            const advName = [...new Set(matchData.filter(r => r[COLS.club] !== 'FENIX').map(r => r[COLS.club]).filter(Boolean))][0] || 'ADV';
 
             el.innerHTML = `
                 <div class="pmf-card" style="padding:12px 16px">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
                         <span style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:1.5px;color:#0A2463">RÉSUMÉ DU MATCH</span>
-                        <span style="font-size:1.3rem;font-weight:700;color:${resultColor}">${fenixScore} – ${advScore}</span>
+                        <span style="font-size:1.4rem;font-weight:700;color:${resultColor}">${fenixScore} – ${advScore}</span>
                     </div>
-                    <svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block">
-                        <line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#E2E8F0" stroke-width="2"/>
-                        ${dots}
+                    <svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible">
+                        <text x="${pad - 4}" y="${yF + 4}" font-size="9" fill="#0A2463" font-weight="700" font-family="sans-serif">FENIX</text>
+                        <line x1="${pad + 34}" y1="${yF}" x2="${W - pad}" y2="${yF}" stroke="#BFDBFE" stroke-width="2"/>
+                        ${fenixDots.join('')}
+                        <text x="${pad - 4}" y="${yA + 4}" font-size="9" fill="#EF4444" font-weight="700" font-family="sans-serif">${advName.substring(0,5)}</text>
+                        <line x1="${pad + 34}" y1="${yA}" x2="${W - pad}" y2="${yA}" stroke="#FECACA" stroke-width="2"/>
+                        ${advDots.join('')}
+                        <text x="${pad + 36}" y="${H - 2}" font-size="8" fill="#94a3b8" font-family="sans-serif">0'</text>
+                        <text x="${W - pad - 10}" y="${H - 2}" font-size="8" fill="#94a3b8" font-family="sans-serif">fin</text>
                     </svg>
-                    <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#94a3b8;margin-top:2px">
-                        <span>0'</span><span style="color:#0A2463">● FENIX</span><span style="color:#EF4444">● ADV</span><span>fin</span>
-                    </div>
                 </div>`;
         }
 

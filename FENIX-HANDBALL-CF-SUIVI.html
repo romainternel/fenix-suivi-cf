@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=39">
-    <script src="js/utils.js?v=39"></script>
-    <script src="js/impact-images.js?v=39"></script>
-    <script src="js/player-mode.js?v=39"></script>
-    <script src="js/page-joueurs.js?v=39"></script>
-    <script src="js/page-notes-graph.js?v=39"></script>
-    <script src="js/page-analyse.js?v=39"></script>
+    <link rel="stylesheet" href="css/style.css?v=40">
+    <script src="js/utils.js?v=40"></script>
+    <script src="js/impact-images.js?v=40"></script>
+    <script src="js/player-mode.js?v=40"></script>
+    <script src="js/page-joueurs.js?v=40"></script>
+    <script src="js/page-notes-graph.js?v=40"></script>
+    <script src="js/page-analyse.js?v=40"></script>
 </head>
 <body>
 
@@ -3130,13 +3130,13 @@ let _effInfoPoste = null;
             <span style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#0A2463;letter-spacing:2px">
                 🏆 STATS DU MATCH
             </span>
-            <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-                <button onclick="pmMatchPrev()" id="pm-nav-prev"
-                        style="border:1px solid #E2E8F0;background:white;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:1rem;color:#0A2463;line-height:1">◀</button>
-                <span id="pm-nav-label"
-                      style="font-size:0.85rem;font-weight:600;color:#1E293B;min-width:160px;text-align:center;padding:0 4px">Tous les matchs</span>
-                <button onclick="pmMatchNext()" id="pm-nav-next"
-                        style="border:1px solid #E2E8F0;background:white;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:1rem;color:#0A2463;line-height:1">▶</button>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+                <label style="font-size:0.8rem;font-weight:600;color:#64748B">MATCH</label>
+                <select id="pm-match-sel" onchange="pmMatchSelect()"
+                        style="border:1px solid #E2E8F0;border-radius:8px;padding:6px 12px;
+                               font-size:0.85rem;color:#1E293B;background:white;max-width:220px">
+                    <option value="">Tous les matchs</option>
+                </select>
             </div>
         </div>
         <div id="pm-match-banner" style="margin-bottom:1rem"></div>
