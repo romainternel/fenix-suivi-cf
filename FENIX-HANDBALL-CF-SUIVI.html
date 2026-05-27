@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=35">
-    <script src="js/utils.js?v=35"></script>
-    <script src="js/impact-images.js?v=35"></script>
-    <script src="js/player-mode.js?v=35"></script>
-    <script src="js/page-joueurs.js?v=35"></script>
-    <script src="js/page-notes-graph.js?v=35"></script>
-    <script src="js/page-analyse.js?v=35"></script>
+    <link rel="stylesheet" href="css/style.css?v=36">
+    <script src="js/utils.js?v=36"></script>
+    <script src="js/impact-images.js?v=36"></script>
+    <script src="js/player-mode.js?v=36"></script>
+    <script src="js/page-joueurs.js?v=36"></script>
+    <script src="js/page-notes-graph.js?v=36"></script>
+    <script src="js/page-analyse.js?v=36"></script>
 </head>
 <body>
 
@@ -82,7 +82,8 @@
         <nav class="nav">
             <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
             <button class="nav-btn" data-page="joueurs">👥 Joueurs</button>
-            <button id="btn-player-accounts" onclick="openPlayerAccountsModal()">🔑 Comptes joueurs</button>
+            <span class="nav-separator"></span>
+            <button id="btn-player-accounts" onclick="openPlayerAccountsModal()">🔑 Comptes</button>
             <button id="btn-preview-mode" onclick="openPreviewModal()">👤 Vue joueur</button>
         </nav>
     </header>
@@ -745,6 +746,11 @@
                     <span style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-left:auto">Cliquer en dehors pour fermer</span>
                 </div>
                 <div class="ng-charts-body">
+                    <div id="ng-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:rgba(255,255,255,0.5);gap:12px;">
+                        <span style="font-size:2.5rem">📈</span>
+                        <span style="font-size:0.9rem;font-weight:600">Sélectionne un joueur sur le terrain</span>
+                        <button onclick="ngGoBack()" style="margin-top:8px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:7px 18px;border-radius:20px;cursor:pointer;font-size:0.82rem">← Retour</button>
+                    </div>
                     <div class="ng-chart-section" id="ng-section-joueur" style="display:none">
                         <canvas id="ng-canvas"></canvas>
                     </div>
@@ -1167,7 +1173,15 @@ let _effInfoPoste = null;
             const label = document.querySelector('.joueurs-context-label');
             if (btnGraph) btnGraph.disabled = !hasPlayer;
             if (btnImpact) btnImpact.disabled = !hasPlayer;
-            if (label) label.textContent = hasPlayer ? currentSelectedJoueur + ' :' : 'Joueur sélectionné :';
+            if (label) {
+                if (hasPlayer) {
+                    const tp = JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, currentSelectedJoueur));
+                    const poste = tp ? tp.poste : '';
+                    label.innerHTML = `<strong style="color:#1e293b">${currentSelectedJoueur}</strong>${poste ? '<span style="color:#64748B;margin-left:4px">· ' + poste + '</span>' : ''}`;
+                } else {
+                    label.innerHTML = '<span style="color:#94A3B8">← Clique un joueur sur le terrain</span>';
+                }
+            }
         }
 
         function openGraphiqueForSelected() {

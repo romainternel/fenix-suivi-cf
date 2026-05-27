@@ -366,11 +366,19 @@
             }
         }
 
+        function _updateNgEmptyState() {
+            const hasJoueur  = !!(document.getElementById('ng-joueur')?.value);
+            const hasGardien = !!(document.getElementById('gbg-gardien')?.value);
+            const empty = document.getElementById('ng-empty-state');
+            if (empty) empty.style.display = (hasJoueur || hasGardien) ? 'none' : 'flex';
+        }
+
         function updateNoteGraph() {
             const joueur = document.getElementById('ng-joueur').value;
             if (noteGraphChart) { noteGraphChart.destroy(); noteGraphChart = null; }
             const sec = document.getElementById('ng-section-joueur');
             if (sec) sec.style.display = joueur && DATA.length > 0 ? 'block' : 'none';
+            _updateNgEmptyState();
             if (!joueur || DATA.length === 0) return;
 
             const matchData = {};
@@ -592,6 +600,7 @@
             if (gbGraphChart) { gbGraphChart.destroy(); gbGraphChart = null; }
             const sec = document.getElementById('ng-section-gb');
             if (sec) sec.style.display = gardien && DATA.length > 0 ? 'block' : 'none';
+            _updateNgEmptyState();
             if (!gardien || DATA.length === 0) return;
 
             const matchData = {};

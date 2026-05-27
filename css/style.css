@@ -67,6 +67,7 @@
 
         .nav-btn:hover { background: rgba(255,255,255,0.2); }
         .nav-btn.active { background: var(--fenix-white); color: var(--fenix-blue); }
+        .nav-separator { width: 1px; background: rgba(255,255,255,0.2); align-self: stretch; margin: 4px 4px; }
 
         .main { padding: 2rem; max-width: 1600px; margin: 0 auto; }
 
@@ -1655,21 +1656,21 @@
             line-height: 1.2;
         }
 
-        /* Staff button — Comptes joueurs */
+        /* Staff buttons — outils (après séparateur) */
         #btn-player-accounts {
-            background: rgba(255,255,255,0.12);
-            border: 1px solid rgba(255,255,255,0.25);
-            color: rgba(255,255,255,0.85);
-            padding: 0.3rem 0.75rem;
-            border-radius: 6px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.8);
+            padding: 6px 14px;
+            border-radius: 20px;
             cursor: pointer;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 600;
             font-family: 'Inter', sans-serif;
             transition: all 0.2s;
             white-space: nowrap;
         }
-        #btn-player-accounts:hover { background: rgba(255,255,255,0.22); color: #fff; }
+        #btn-player-accounts:hover { background: rgba(255,255,255,0.12); color: #fff; }
 
         #btn-preview-mode {
             background: rgba(16,185,129,0.15);
