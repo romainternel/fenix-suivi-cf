@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=33">
-    <script src="js/utils.js?v=33"></script>
-    <script src="js/impact-images.js?v=33"></script>
-    <script src="js/player-mode.js?v=33"></script>
-    <script src="js/page-joueurs.js?v=33"></script>
-    <script src="js/page-notes-graph.js?v=33"></script>
-    <script src="js/page-analyse.js?v=33"></script>
+    <link rel="stylesheet" href="css/style.css?v=34">
+    <script src="js/utils.js?v=34"></script>
+    <script src="js/impact-images.js?v=34"></script>
+    <script src="js/player-mode.js?v=34"></script>
+    <script src="js/page-joueurs.js?v=34"></script>
+    <script src="js/page-notes-graph.js?v=34"></script>
+    <script src="js/page-analyse.js?v=34"></script>
 </head>
 <body>
 
@@ -83,6 +83,7 @@
             <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
             <button class="nav-btn" data-page="joueurs">👥 Joueurs</button>
             <button id="btn-player-accounts" onclick="openPlayerAccountsModal()">🔑 Comptes joueurs</button>
+            <button id="btn-preview-mode" onclick="openPreviewModal()">👤 Vue joueur</button>
         </nav>
     </header>
 
@@ -3025,6 +3026,35 @@ let _effInfoPoste = null;
 
     <!-- ── MODE JOUEUR ── page fiche joueur ─────────────────────────────────── -->
     <div id="pm-fiche-page" style="display:none"></div>
+
+    <!-- ── MODAL PREVIEW MODE JOUEUR ────────────────────────────────────────── -->
+    <div id="preview-modal" style="display:none;position:fixed;inset:0;z-index:2000;
+         background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:380px;width:90%;
+                    box-shadow:0 20px 60px rgba(0,0,0,.25);">
+            <h3 style="margin:0 0 6px;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;
+                       letter-spacing:1px;color:#0A2463">👤 Vue joueur</h3>
+            <p style="margin:0 0 18px;font-size:0.83rem;color:#64748B">
+                Choisir un joueur pour prévisualiser ce qu'il voit avec son compte.
+            </p>
+            <select id="preview-player-sel" style="width:100%;padding:9px 12px;border:1.5px solid #E2E8F0;
+                    border-radius:8px;font-size:0.9rem;margin-bottom:16px;background:#F8FAFC;">
+                <option value="">— Sélectionner un joueur —</option>
+            </select>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="closePreviewModal()"
+                        style="padding:8px 20px;border:1.5px solid #E2E8F0;background:#fff;border-radius:8px;
+                               cursor:pointer;font-size:0.85rem;color:#64748B;font-weight:600">
+                    Annuler
+                </button>
+                <button onclick="startPreviewMode()"
+                        style="padding:8px 20px;background:#0A2463;color:#fff;border:none;border-radius:8px;
+                               cursor:pointer;font-size:0.85rem;font-weight:700">
+                    Voir sa vue →
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ── MODE JOUEUR ── page stats match ────────────────────────────────── -->
     <div id="pm-match-page" style="display:none;padding:76px 24px 24px;max-width:1100px;margin:0 auto">

@@ -1671,6 +1671,19 @@
         }
         #btn-player-accounts:hover { background: rgba(255,255,255,0.22); color: #fff; }
 
+        #btn-preview-mode {
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.4);
+            color: #6EE7B7;
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        #btn-preview-mode:hover { background: rgba(16,185,129,0.28); color: #fff; }
+
         /* Player accounts modal */
         #pa-modal {
             display: none; position: fixed; inset: 0;

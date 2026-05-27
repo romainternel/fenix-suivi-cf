@@ -965,6 +965,92 @@
             });
         }
 
+        // ── Preview mode (staff → simule vue joueur) ─────────────────────────────
+        let _previewSavedNavPage = 'dashboard';
+        let _previewSavedSubnavVisible = false;
+
+        function openPreviewModal() {
+            const sel = document.getElementById('preview-player-sel');
+            if (sel && typeof JOUEURS_TERRAIN !== 'undefined' && JOUEURS_TERRAIN.length) {
+                sel.innerHTML = '<option value="">— Sélectionner un joueur —</option>'
+                    + JOUEURS_TERRAIN.map(p => `<option value="${p.nom}">${p.nom} (${p.poste})</option>`).join('');
+            }
+            const modal = document.getElementById('preview-modal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closePreviewModal() {
+            const modal = document.getElementById('preview-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function startPreviewMode() {
+            const sel = document.getElementById('preview-player-sel');
+            const nom = sel ? sel.value.trim() : '';
+            if (!nom) { alert('Sélectionne un joueur'); return; }
+
+            closePreviewModal();
+
+            // Sauvegarder l'état staff
+            _previewSavedNavPage = document.querySelector('.nav-btn.active')?.dataset.page || 'dashboard';
+            _previewSavedSubnavVisible = document.getElementById('joueurs-subnav')?.style.display === 'flex';
+
+            // Démarrer la session preview
+            PLAYER_SESSION = { nom, role: 'joueur', isPreview: true };
+            setupPlayerUI();
+
+            // Remplacer "Déconnexion" par "← Retour staff"
+            const logoutBtn = document.querySelector('#pm-bar button[onclick="playerLogout()"]');
+            if (logoutBtn) {
+                logoutBtn.textContent = '← Retour staff';
+                logoutBtn.style.background = 'rgba(255,255,255,0.15)';
+                logoutBtn.style.borderColor = 'rgba(255,255,255,0.4)';
+                logoutBtn.style.color = 'white';
+                logoutBtn.setAttribute('onclick', 'exitPreviewMode()');
+            }
+        }
+
+        function exitPreviewMode() {
+            PLAYER_SESSION = null;
+
+            // Restaurer l'interface staff
+            ['header', 'nav', 'main'].forEach(sel => {
+                const el = document.querySelector('.' + sel);
+                if (el) el.style.removeProperty('display');
+            });
+            document.body.classList.remove('player-mode');
+
+            // Masquer les pages joueur
+            const bar = document.getElementById('pm-bar');
+            if (bar) bar.style.display = 'none';
+            const fichePage = document.getElementById('pm-fiche-page');
+            if (fichePage) fichePage.style.display = 'none';
+            const matchPage = document.getElementById('pm-match-page');
+            if (matchPage) matchPage.style.display = 'none';
+
+            // Remettre le bouton déconnexion d'origine
+            const exitBtn = document.querySelector('#pm-bar button[onclick="exitPreviewMode()"]');
+            if (exitBtn) {
+                exitBtn.textContent = '🚪 Déconnexion';
+                exitBtn.setAttribute('onclick', 'playerLogout()');
+                exitBtn.style.background = 'rgba(239,68,68,.2)';
+                exitBtn.style.borderColor = '#EF4444';
+                exitBtn.style.color = '#FCA5A5';
+            }
+
+            // Rétablir la page active
+            const subnav = document.getElementById('joueurs-subnav');
+            if (_previewSavedNavPage === 'joueurs' && subnav) {
+                subnav.style.display = 'flex';
+            }
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.page === _previewSavedNavPage);
+            });
+            if (typeof refreshPage === 'function' && typeof DATA !== 'undefined' && DATA.length > 0) {
+                refreshPage(_previewSavedNavPage);
+            }
+        }
+
         // ── Init ─────────────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', function () {
             const stored = sessionStorage.getItem('fenix_session');
