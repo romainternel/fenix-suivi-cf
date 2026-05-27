@@ -171,35 +171,55 @@
             document.getElementById('indicateurs-grid').innerHTML = html;
         }
 
+        function parseTimecode(tc) {
+            if (!tc) return 0;
+            const s = tc.toString().trim();
+            const parts = s.split(':');
+            if (parts.length === 3) return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+            if (parts.length === 2) return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+            return parseFloat(s) || 0;
+        }
+
+        function getPeriodeNum(row) {
+            const p = (row[COLS.periode] || '').toString().trim();
+            if (/^2/.test(p)) return 2;
+            return 1;
+        }
+
+        // Retourne les buts triés chronologiquement, corrigés pour les matchs à 2 fichiers vidéo
+        function getSortedGoals(matchData) {
+            const goals = matchData.filter(r => r[COLS.resultat] === 'But');
+            const g1 = goals.filter(r => getPeriodeNum(r) === 1);
+            const g2 = goals.filter(r => getPeriodeNum(r) === 2);
+            const max1 = g1.length ? Math.max(...g1.map(r => parseTimecode(r[COLS.position]))) : 0;
+            const min2 = g2.length ? Math.min(...g2.map(r => parseTimecode(r[COLS.position]))) : Infinity;
+            // Si le timecode de la 2ème MT repart à 0 (< fin de la 1ère MT) → 2 fichiers vidéo séparés
+            const offset = (g2.length > 0 && min2 < max1) ? max1 : 0;
+            return [
+                ...g1.map(r => ({ row: r, pos: parseTimecode(r[COLS.position]) })),
+                ...g2.map(r => ({ row: r, pos: parseTimecode(r[COLS.position]) + offset }))
+            ].sort((a, b) => a.pos - b.pos);
+        }
+
         function drawTimeline(matchName, matchData) {
             const canvas = document.getElementById('timeline-canvas');
             const container = canvas.parentElement;
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
-            
+
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Reconstituer l'évolution du score
-            const actions = matchData.filter(row => row[COLS.resultat] === 'But').sort((a, b) => {
-                const posA = parseInt(a[COLS.position]) || 0;
-                const posB = parseInt(b[COLS.position]) || 0;
-                return posA - posB;
-            });
-            
-            if (actions.length === 0) return;
-            
+
+            const sortedGoals = getSortedGoals(matchData);
+            if (sortedGoals.length === 0) return;
+
             let fenixScore = 0, advScore = 0;
             const scoreHistory = [{ pos: 0, fenix: 0, adv: 0 }];
-            
-            actions.forEach(action => {
-                if (action[COLS.club] === 'FENIX') fenixScore++;
+
+            sortedGoals.forEach(({ row, pos }) => {
+                if (row[COLS.club] === 'FENIX') fenixScore++;
                 else advScore++;
-                scoreHistory.push({
-                    pos: parseInt(action[COLS.position]) || scoreHistory.length,
-                    fenix: fenixScore,
-                    adv: advScore
-                });
+                scoreHistory.push({ pos, fenix: fenixScore, adv: advScore });
             });
             
             const padding = { top: 40, right: 30, bottom: 50, left: 45 };
@@ -305,11 +325,7 @@
         }
 
         function findMomentsCles(matchName, matchData) {
-            const actions = matchData.filter(row => row[COLS.resultat] === 'But').sort((a, b) => {
-                const posA = parseInt(a[COLS.position]) || 0;
-                const posB = parseInt(b[COLS.position]) || 0;
-                return posA - posB;
-            });
+            const actions = getSortedGoals(matchData).map(g => g.row);
             
             if (actions.length < 3) {
                 document.getElementById('moments-cles').innerHTML = '<p style="color:#6B7280;font-size:0.85rem;">Pas assez de données pour identifier des séquences.</p>';
