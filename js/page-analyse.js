@@ -213,23 +213,34 @@
             const sortedGoals = getSortedGoals(matchData);
             if (sortedGoals.length === 0) return;
 
+            // Normalisation 0-60 min : MT1 → 0-30, MT2 → 30-60
+            const g1Pos  = sortedGoals.filter(g => getPeriodeNum(g.row) === 1).map(g => g.pos);
+            const g2Pos  = sortedGoals.filter(g => getPeriodeNum(g.row) === 2).map(g => g.pos);
+            const max1   = g1Pos.length ? Math.max(...g1Pos) : 0;
+            const maxAll = Math.max(...sortedGoals.map(g => g.pos), 1);
+            const hasTwo = g1Pos.length > 0 && g2Pos.length > 0;
+
+            function normPos(pos) {
+                if (!hasTwo) return (pos / maxAll) * 60;
+                if (pos <= max1) return max1 > 0 ? (pos / max1) * 30 : 0;
+                return 30 + ((pos - max1) / Math.max(maxAll - max1, 1)) * 30;
+            }
+
             let fenixScore = 0, advScore = 0;
             const scoreHistory = [{ pos: 0, fenix: 0, adv: 0 }];
-
             sortedGoals.forEach(({ row, pos }) => {
                 if (row[COLS.club] === 'FENIX') fenixScore++;
                 else advScore++;
-                scoreHistory.push({ pos, fenix: fenixScore, adv: advScore });
+                scoreHistory.push({ pos: normPos(pos), fenix: fenixScore, adv: advScore });
             });
-            
-            const padding = { top: 40, right: 30, bottom: 50, left: 45 };
-            const graphWidth = canvas.width - padding.left - padding.right;
-            const graphHeight = canvas.height - padding.top - padding.bottom;
-            
-            const maxScore = Math.max(fenixScore, advScore, 5);
-            const roundedMax = Math.ceil(maxScore / 5) * 5; // Arrondir à 5
-            const maxPos = scoreHistory[scoreHistory.length - 1].pos || scoreHistory.length;
-            
+
+            const padding = { top: 40, right: 30, bottom: 40, left: 45 };
+            const graphWidth  = canvas.width  - padding.left - padding.right;
+            const graphHeight = canvas.height - padding.top  - padding.bottom;
+            const maxScore   = Math.max(fenixScore, advScore, 5);
+            const roundedMax = Math.ceil(maxScore / 5) * 5;
+            const maxPos     = 60;
+
             // Grille horizontale
             ctx.strokeStyle = '#E5E7EB';
             ctx.lineWidth = 1;
@@ -240,88 +251,100 @@
                 ctx.lineTo(canvas.width - padding.right, y);
                 ctx.stroke();
             }
-            
+
+            // Ligne de mi-temps (30')
+            if (hasTwo) {
+                const xHalf = padding.left + (30 / maxPos) * graphWidth;
+                ctx.save();
+                ctx.strokeStyle = '#94A3B8';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 4]);
+                ctx.beginPath();
+                ctx.moveTo(xHalf, padding.top);
+                ctx.lineTo(xHalf, padding.top + graphHeight);
+                ctx.stroke();
+                ctx.restore();
+                ctx.fillStyle = '#94A3B8';
+                ctx.font = '10px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('MI-TEMPS', xHalf, padding.top - 6);
+            }
+
             // Axe Y labels
             ctx.fillStyle = '#6B7280';
             ctx.font = '11px Inter';
             ctx.textAlign = 'right';
             for (let i = 0; i <= 5; i++) {
                 const y = padding.top + (graphHeight * (5 - i) / 5);
-                const val = Math.round(roundedMax * i / 5);
-                ctx.fillText(val.toString(), padding.left - 8, y + 4);
+                ctx.fillText(Math.round(roundedMax * i / 5), padding.left - 8, y + 4);
             }
-            
-            // Dessiner la courbe FENIX (bleu)
+
+            // Axe X labels (minutes)
+            ctx.fillStyle = '#6B7280';
+            ctx.font = '10px Inter';
+            ctx.textAlign = 'center';
+            [0, 15, 30, 45, 60].forEach(min => {
+                const x = padding.left + (min / maxPos) * graphWidth;
+                ctx.fillText(min + "'", x, padding.top + graphHeight + 14);
+            });
+
+            // Courbe FENIX
             ctx.strokeStyle = '#0A2463';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            scoreHistory.forEach((point, i) => {
-                const x = padding.left + (point.pos / maxPos) * graphWidth;
-                const y = padding.top + graphHeight - (point.fenix / roundedMax * graphHeight);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+            scoreHistory.forEach((p, i) => {
+                const x = padding.left + (p.pos / maxPos) * graphWidth;
+                const y = padding.top + graphHeight - (p.fenix / roundedMax * graphHeight);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             });
             ctx.stroke();
-            
-            // Points FENIX
-            scoreHistory.forEach((point, i) => {
+            scoreHistory.forEach((p, i) => {
                 if (i === 0) return;
-                const x = padding.left + (point.pos / maxPos) * graphWidth;
-                const y = padding.top + graphHeight - (point.fenix / roundedMax * graphHeight);
-                ctx.beginPath();
-                ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = '#0A2463';
-                ctx.fill();
+                const x = padding.left + (p.pos / maxPos) * graphWidth;
+                const y = padding.top + graphHeight - (p.fenix / roundedMax * graphHeight);
+                ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = '#0A2463'; ctx.fill();
             });
-            
-            // Dessiner la courbe Adversaire (rouge)
+
+            // Courbe Adversaire
             ctx.strokeStyle = '#DC2626';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            scoreHistory.forEach((point, i) => {
-                const x = padding.left + (point.pos / maxPos) * graphWidth;
-                const y = padding.top + graphHeight - (point.adv / roundedMax * graphHeight);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+            scoreHistory.forEach((p, i) => {
+                const x = padding.left + (p.pos / maxPos) * graphWidth;
+                const y = padding.top + graphHeight - (p.adv / roundedMax * graphHeight);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             });
             ctx.stroke();
-            
-            // Points Adversaire
-            scoreHistory.forEach((point, i) => {
+            scoreHistory.forEach((p, i) => {
                 if (i === 0) return;
-                const x = padding.left + (point.pos / maxPos) * graphWidth;
-                const y = padding.top + graphHeight - (point.adv / roundedMax * graphHeight);
-                ctx.beginPath();
-                ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = '#DC2626';
-                ctx.fill();
+                const x = padding.left + (p.pos / maxPos) * graphWidth;
+                const y = padding.top + graphHeight - (p.adv / roundedMax * graphHeight);
+                ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = '#DC2626'; ctx.fill();
             });
-            
-            // Score final en haut à droite
+
+            // Score final
             ctx.font = 'bold 16px Inter';
             ctx.textAlign = 'right';
             ctx.fillStyle = '#0A2463';
-            ctx.fillText(fenixScore.toString(), canvas.width - padding.right - 30, padding.top - 15);
+            ctx.fillText(fenixScore, canvas.width - padding.right - 30, padding.top - 15);
             ctx.fillStyle = '#6B7280';
-            ctx.fillText(' - ', canvas.width - padding.right - 20, padding.top - 15);
+            ctx.fillText('-', canvas.width - padding.right - 20, padding.top - 15);
             ctx.fillStyle = '#DC2626';
-            ctx.fillText(advScore.toString(), canvas.width - padding.right, padding.top - 15);
-            
-            // Légende en bas
+            ctx.fillText(advScore, canvas.width - padding.right, padding.top - 15);
+
+            // Légende
             ctx.font = '12px Inter';
             ctx.textAlign = 'left';
-            
-            // Carré bleu + texte FENIX
             ctx.fillStyle = '#0A2463';
-            ctx.fillRect(padding.left, canvas.height - 20, 12, 12);
+            ctx.fillRect(padding.left, canvas.height - 18, 12, 12);
             ctx.fillStyle = '#333';
-            ctx.fillText('FENIX', padding.left + 18, canvas.height - 10);
-            
-            // Carré rouge + texte Adversaire
+            ctx.fillText('FENIX', padding.left + 18, canvas.height - 8);
             ctx.fillStyle = '#DC2626';
-            ctx.fillRect(padding.left + 80, canvas.height - 20, 12, 12);
+            ctx.fillRect(padding.left + 80, canvas.height - 18, 12, 12);
             ctx.fillStyle = '#333';
-            ctx.fillText('Adversaire', padding.left + 98, canvas.height - 10);
+            ctx.fillText('Adversaire', padding.left + 98, canvas.height - 8);
         }
 
         function findMomentsCles(matchName, matchData) {
