@@ -785,7 +785,7 @@
         .zr-cell.zr-eff-rouge  { background: #fef2f2 !important; color: #b91c1c !important; border: 1.5px solid #fca5a5; }
         .zr-cell.zr-eff-grey   { background: #f8fafc !important; color: #94a3b8 !important; border: 1.5px solid #e2e8f0; }
         .zr-cell.zr-selected   { background: #2563eb !important; color: white !important; border-color: #2563eb !important; }
-        .zr-cell .zr-pct       { display: block; font-size: 0.82em; font-weight: 800; margin-top: 1px; }
+        .zr-cell .zr-pct       { display: inline; font-size: 1em; font-weight: 800; }
 
         /* Bouton info efficacité */
         .eff-info-btn {

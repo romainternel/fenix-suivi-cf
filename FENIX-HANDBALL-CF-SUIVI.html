@@ -2572,7 +2572,7 @@ let _effInfoPoste = null;
                 const pct  = Math.round(buts / rows.length * 100);
                 const s    = ZONE_SEUILS[cat];
                 c.classList.add(pct >= s.vert ? 'zr-eff-vert' : pct >= s.orange ? 'zr-eff-orange' : 'zr-eff-rouge');
-                c.innerHTML = `${c.dataset.label}<span class="zr-pct">${pct}%</span>`;
+                c.innerHTML = `${c.dataset.label} <span class="zr-pct">${pct}%</span>`;
             });
         }
 
