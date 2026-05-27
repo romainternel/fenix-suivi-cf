@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=36">
-    <script src="js/utils.js?v=36"></script>
-    <script src="js/impact-images.js?v=36"></script>
-    <script src="js/player-mode.js?v=36"></script>
-    <script src="js/page-joueurs.js?v=36"></script>
-    <script src="js/page-notes-graph.js?v=36"></script>
-    <script src="js/page-analyse.js?v=36"></script>
+    <link rel="stylesheet" href="css/style.css?v=37">
+    <script src="js/utils.js?v=37"></script>
+    <script src="js/impact-images.js?v=37"></script>
+    <script src="js/player-mode.js?v=37"></script>
+    <script src="js/page-joueurs.js?v=37"></script>
+    <script src="js/page-notes-graph.js?v=37"></script>
+    <script src="js/page-analyse.js?v=37"></script>
 </head>
 <body>
 
@@ -853,6 +853,7 @@
             <div class="section">
                 <div class="section-header">
                     <h2 class="section-title">🎯 Impact au Shoot</h2>
+                    <button id="btn-efficacite" class="btn-comparer btn-comparer-dark" onclick="toggleEfficaciteMode(this)">🎨 Efficacité</button>
                     <button class="btn-comparer btn-comparer-dark" onclick="toggleCompare('impact-filters', this)">🔀 Comparer</button>
                 </div>
 
@@ -952,6 +953,7 @@
         let GARDIENS_FENIX = []; // Dérivé de JOUEURS_TERRAIN (poste GB) au chargement des données
         let FIELD_POSITIONS = [];
         let impactZoneFilter = '';
+        let impactEfficaciteMode = false;
         let gardienZoneFilter = '';
         const IMPACT_DOTS  = { alg: [], face: [], ald: [] };
         const GARDIEN_DOTS = { alg: [], face: [], ald: [] };
@@ -2525,6 +2527,55 @@ let _effInfoPoste = null;
             if (btn)   btn.style.display = impactZoneFilter ? 'inline' : 'none';
         }
 
+        function getZoneCategory(zone) {
+            if (zone === '7m') return '7m';
+            if (/^6m/.test(zone))  return '6m';
+            if (/^6-9/.test(zone)) return '6-9';
+            if (/^9m/.test(zone))  return '9m';
+            return null;
+        }
+
+        const ZONE_SEUILS = {
+            '6m':  { vert: 70, orange: 60 },
+            '6-9': { vert: 60, orange: 50 },
+            '9m':  { vert: 55, orange: 45 },
+            '7m':  { vert: 80, orange: 70 }
+        };
+
+        function toggleEfficaciteMode(btn) {
+            impactEfficaciteMode = !impactEfficaciteMode;
+            btn.classList.toggle('btn-comparer-active', impactEfficaciteMode);
+            btn.textContent = impactEfficaciteMode ? '✕ Efficacité' : '🎨 Efficacité';
+            updateZoneEfficacite();
+        }
+
+        function updateZoneEfficacite() {
+            const joueurFilter    = document.getElementById('filter-impact-joueur')?.value || '';
+            const selectedMatches = getSelectedMatches();
+            document.querySelectorAll('#zone-rect-selector .zr-cell').forEach(c => {
+                c.classList.remove('zr-eff-vert', 'zr-eff-orange', 'zr-eff-rouge', 'zr-eff-grey');
+                if (!c.dataset.label) c.dataset.label = c.textContent.trim();
+                c.innerHTML = c.dataset.label;
+                if (!impactEfficaciteMode) return;
+                const zone = c.dataset.zone;
+                const cat  = getZoneCategory(zone);
+                if (!cat) return;
+                const rows = DATA.filter(r =>
+                    r[COLS.club] === 'FENIX' &&
+                    ['But', 'Tir raté'].includes(r[COLS.resultat]) &&
+                    r[COLS.field_position] === zone &&
+                    (!joueurFilter || r[COLS.joueur] === joueurFilter) &&
+                    (!selectedMatches.length || selectedMatches.includes(r[COLS.rencontre]))
+                );
+                if (rows.length === 0) { c.classList.add('zr-eff-grey'); return; }
+                const buts = rows.filter(r => r[COLS.resultat] === 'But').length;
+                const pct  = Math.round(buts / rows.length * 100);
+                const s    = ZONE_SEUILS[cat];
+                c.classList.add(pct >= s.vert ? 'zr-eff-vert' : pct >= s.orange ? 'zr-eff-orange' : 'zr-eff-rouge');
+                c.innerHTML = `${c.dataset.label}<span class="zr-pct">${pct}%</span>`;
+            });
+        }
+
         function getImpactView(row) {
             const fp = (row[COLS.field_position] || '').toString().trim();
             if (IMPACT_VIEW_ALG.includes(fp)) return 'alg';
@@ -2577,6 +2628,7 @@ let _effInfoPoste = null;
             document.querySelectorAll('#zone-rect-selector .zr-cell').forEach(c => {
                 c.classList.toggle('zr-empty', !!zonesAvecDonnees && !zonesAvecDonnees.has(c.dataset.zone));
             });
+            updateZoneEfficacite();
         }
 
         function drawImpactCanvas(canvasId, img, data) {

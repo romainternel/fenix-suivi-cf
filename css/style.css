@@ -780,6 +780,12 @@
         .zr-cell.zr-selected { background: #2563eb !important; color: white; }
         .zr-7m { font-weight: 800; }
         .zr-cell.zr-empty { opacity: 0.3; cursor: default; pointer-events: none; }
+        .zr-cell.zr-eff-vert   { background: #dcfce7 !important; color: #15803d !important; border: 1.5px solid #86efac; }
+        .zr-cell.zr-eff-orange { background: #fff7ed !important; color: #c2410c !important; border: 1.5px solid #fdba74; }
+        .zr-cell.zr-eff-rouge  { background: #fef2f2 !important; color: #b91c1c !important; border: 1.5px solid #fca5a5; }
+        .zr-cell.zr-eff-grey   { background: #f8fafc !important; color: #94a3b8 !important; border: 1.5px solid #e2e8f0; }
+        .zr-cell.zr-selected   { background: #2563eb !important; color: white !important; border-color: #2563eb !important; }
+        .zr-cell .zr-pct       { display: block; font-size: 0.82em; font-weight: 800; margin-top: 1px; }
 
         /* Bouton info efficacité */
         .eff-info-btn {
