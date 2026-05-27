@@ -1042,7 +1042,7 @@
                 </div>`;
         }
 
-        // ── Bannière résumé match (timeline SVG inline) ──────────────────────────
+        // ── Bannière résumé match (même style que page Analyse) ─────────────────
         function renderMatchSummaryBanner(matchFilter) {
             const el = document.getElementById('pm-match-banner');
             if (!el) return;
@@ -1051,49 +1051,124 @@
             const matchData = DATA.filter(r => r[COLS.rencontre] === matchFilter);
             if (!matchData.length) { el.innerHTML = ''; return; }
 
-            const goals = getSortedGoals(matchData);
-            if (!goals.length) { el.innerHTML = ''; return; }
-
-            const maxPos = goals[goals.length - 1].pos || 1;
-            const W = 400, H = 70, pad = 16;
-            const yF = 22, yA = 50;
-            const cx = pos => pad + (pos / maxPos) * (W - 2 * pad);
-
-            let fenixScore = 0, advScore = 0;
-            const fenixDots = [], advDots = [];
-            goals.forEach(g => {
-                const isFenix = g.row[COLS.club] === 'FENIX';
-                if (isFenix) fenixScore++; else advScore++;
-                const x = Math.round(cx(g.pos));
-                const min = Math.round(g.pos / 60);
-                const tip = `${isFenix ? 'FENIX' : 'ADV'} ${fenixScore}-${advScore} (${min}')`;
-                if (isFenix) {
-                    fenixDots.push(`<circle cx="${x}" cy="${yF}" r="6" fill="#0A2463"><title>${tip}</title></circle>`);
-                } else {
-                    advDots.push(`<circle cx="${x}" cy="${yA}" r="6" fill="#EF4444"><title>${tip}</title></circle>`);
-                }
-            });
-
-            const resultColor = fenixScore > advScore ? '#10B981' : fenixScore < advScore ? '#EF4444' : '#64748B';
-            const advName = [...new Set(matchData.filter(r => r[COLS.club] !== 'FENIX').map(r => r[COLS.club]).filter(Boolean))][0] || 'ADV';
+            const sortedGoals = getSortedGoals(matchData);
+            if (!sortedGoals.length) { el.innerHTML = ''; return; }
 
             el.innerHTML = `
                 <div class="pmf-card" style="padding:12px 16px">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-                        <span style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:1.5px;color:#0A2463">RÉSUMÉ DU MATCH</span>
-                        <span style="font-size:1.4rem;font-weight:700;color:${resultColor}">${fenixScore} – ${advScore}</span>
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:1.5px;color:#0A2463;margin-bottom:4px">
+                        📈 ÉVOLUTION DU SCORE
                     </div>
-                    <svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible">
-                        <text x="${pad - 4}" y="${yF + 4}" font-size="9" fill="#0A2463" font-weight="700" font-family="sans-serif">FENIX</text>
-                        <line x1="${pad + 34}" y1="${yF}" x2="${W - pad}" y2="${yF}" stroke="#BFDBFE" stroke-width="2"/>
-                        ${fenixDots.join('')}
-                        <text x="${pad - 4}" y="${yA + 4}" font-size="9" fill="#EF4444" font-weight="700" font-family="sans-serif">${advName.substring(0,5)}</text>
-                        <line x1="${pad + 34}" y1="${yA}" x2="${W - pad}" y2="${yA}" stroke="#FECACA" stroke-width="2"/>
-                        ${advDots.join('')}
-                        <text x="${pad + 36}" y="${H - 2}" font-size="8" fill="#94a3b8" font-family="sans-serif">0'</text>
-                        <text x="${W - pad - 10}" y="${H - 2}" font-size="8" fill="#94a3b8" font-family="sans-serif">fin</text>
-                    </svg>
+                    <div id="pm-timeline-scores" style="text-align:center;font-size:0.82rem;color:#64748B;margin-bottom:6px"></div>
+                    <div style="position:relative;height:220px">
+                        <canvas id="pm-timeline-canvas"></canvas>
+                    </div>
                 </div>`;
+
+            // Dessiner après que le DOM est mis à jour
+            requestAnimationFrame(() => _drawPmTimeline(matchData, sortedGoals));
+        }
+
+        function _drawPmTimeline(matchData, sortedGoals) {
+            const canvas = document.getElementById('pm-timeline-canvas');
+            if (!canvas) return;
+            const container = canvas.parentElement;
+            canvas.width  = container.clientWidth;
+            canvas.height = container.clientHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const g1Pos  = sortedGoals.filter(g => getPeriodeNum(g.row) === 1).map(g => g.pos);
+            const g2Pos  = sortedGoals.filter(g => getPeriodeNum(g.row) === 2).map(g => g.pos);
+            const max1   = g1Pos.length ? Math.max(...g1Pos) : 0;
+            const maxAll = Math.max(...sortedGoals.map(g => g.pos), 1);
+            const hasTwo = g1Pos.length > 0 && g2Pos.length > 0;
+
+            function normPos(pos) {
+                if (!hasTwo) return (pos / maxAll) * 60;
+                if (pos <= max1) return max1 > 0 ? (pos / max1) * 30 : 0;
+                return 30 + ((pos - max1) / Math.max(maxAll - max1, 1)) * 30;
+            }
+
+            let fenixScore = 0, advScore = 0;
+            const scoreHistory = [{ pos: 0, fenix: 0, adv: 0 }];
+            sortedGoals.forEach(({ row, pos }) => {
+                if (row[COLS.club] === 'FENIX') fenixScore++; else advScore++;
+                scoreHistory.push({ pos: normPos(pos), fenix: fenixScore, adv: advScore });
+            });
+
+            const fenixMT1 = sortedGoals.filter(g => getPeriodeNum(g.row) === 1 && g.row[COLS.club] === 'FENIX').length;
+            const advMT1   = sortedGoals.filter(g => getPeriodeNum(g.row) === 1 && g.row[COLS.club] !== 'FENIX').length;
+            const scoresEl = document.getElementById('pm-timeline-scores');
+            if (scoresEl) {
+                scoresEl.textContent = hasTwo
+                    ? `MT1 : ${fenixMT1}-${advMT1} · Final : ${fenixScore}-${advScore}`
+                    : `Score final : ${fenixScore}-${advScore}`;
+            }
+
+            const pad = { top: 36, right: 32, bottom: 38, left: 42 };
+            const gW  = canvas.width  - pad.left - pad.right;
+            const gH  = canvas.height - pad.top  - pad.bottom;
+            const maxScore  = Math.max(fenixScore, advScore, 5);
+            const roundedMax = Math.ceil(maxScore / 5) * 5;
+            const maxPos = 60;
+            const px = pos => pad.left + (pos / maxPos) * gW;
+            const py = (score, max) => pad.top + gH - (score / max * gH);
+
+            // Grille
+            ctx.strokeStyle = '#E5E7EB'; ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = pad.top + (gH * (5 - i) / 5);
+                ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(canvas.width - pad.right, y); ctx.stroke();
+            }
+
+            // Mi-temps
+            if (hasTwo) {
+                const xH = px(30);
+                ctx.save(); ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
+                ctx.beginPath(); ctx.moveTo(xH, pad.top); ctx.lineTo(xH, pad.top + gH); ctx.stroke();
+                ctx.restore();
+                ctx.fillStyle = '#94A3B8'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
+                ctx.fillText('MI-TEMPS', xH, pad.top - 6);
+            }
+
+            // Axes
+            ctx.fillStyle = '#6B7280'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                ctx.fillText(Math.round(roundedMax * i / 5), pad.left - 8, pad.top + gH * (5 - i) / 5 + 4);
+            }
+            ctx.font = '10px Inter'; ctx.textAlign = 'center';
+            [0, 15, 30, 45, 60].forEach(min => ctx.fillText(min + "'", px(min), pad.top + gH + 14));
+
+            // Courbe + points FENIX
+            const drawLine = (color, key) => {
+                ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.beginPath();
+                scoreHistory.forEach((p, i) => {
+                    const x = px(p.pos), y = py(p[key], roundedMax);
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                scoreHistory.forEach((p, i) => {
+                    if (i === 0) return;
+                    ctx.beginPath(); ctx.arc(px(p.pos), py(p[key], roundedMax), 4, 0, Math.PI * 2);
+                    ctx.fillStyle = color; ctx.fill();
+                });
+            };
+            drawLine('#0A2463', 'fenix');
+            drawLine('#DC2626', 'adv');
+
+            // Score final
+            ctx.font = 'bold 16px Inter'; ctx.textAlign = 'right';
+            ctx.fillStyle = '#0A2463'; ctx.fillText(fenixScore, canvas.width - pad.right - 30, pad.top - 14);
+            ctx.fillStyle = '#6B7280'; ctx.fillText('-', canvas.width - pad.right - 20, pad.top - 14);
+            ctx.fillStyle = '#DC2626'; ctx.fillText(advScore, canvas.width - pad.right, pad.top - 14);
+
+            // Légende
+            ctx.font = '12px Inter'; ctx.textAlign = 'left';
+            ctx.fillStyle = '#0A2463'; ctx.fillRect(pad.left, canvas.height - 16, 12, 12);
+            ctx.fillStyle = '#333'; ctx.fillText('FENIX', pad.left + 18, canvas.height - 6);
+            ctx.fillStyle = '#DC2626'; ctx.fillRect(pad.left + 80, canvas.height - 16, 12, 12);
+            ctx.fillStyle = '#333'; ctx.fillText('Adversaire', pad.left + 98, canvas.height - 6);
         }
 
         // ── Gestion comptes joueurs (staff only) ─────────────────────────────────
