@@ -726,7 +726,48 @@
             _drawMatchExtrasImpact(rows);
         }
 
-        // ── Extras Stats Match : impact + actions/zones ─────────────────────────
+        // ── Canvas terrain vu du dessus (positions de tir sur le terrain) ─────────
+        function _drawPmTerrain(rows) {
+            const canvas = document.getElementById('pmm-terrain-canvas');
+            if (!canvas) return;
+            const container = canvas.parentElement;
+            canvas.width  = container.clientWidth  || 400;
+            canvas.height = container.clientHeight || 220;
+            const W = canvas.width, H = canvas.height;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, W, H);
+            rows.forEach(row => {
+                const posStr = (row[COLS.position_terrain] || '').toString();
+                if (!posStr.includes(';')) return;
+                const [xs, ys] = posStr.split(';');
+                const x = parseFloat(xs), y = parseFloat(ys);
+                if (isNaN(x) || isNaN(y)) return;
+                const cx = (x / 100) * W, cy = (y / 100) * H, s = Math.max(6, W * 0.018);
+                const res = row[COLS.resultat];
+                ctx.save(); ctx.lineCap = 'round';
+                if (res === 'But') {
+                    ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+                    ctx.fillStyle = '#10B981'; ctx.fill();
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+                } else if (res === 'Tir raté') {
+                    ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(cx - s, cy - s); ctx.lineTo(cx + s, cy + s);
+                    ctx.moveTo(cx + s, cy - s); ctx.lineTo(cx - s, cy + s);
+                    ctx.stroke();
+                } else if (res === 'PB') {
+                    ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 2;
+                    const sp = s * 0.6;
+                    ctx.beginPath();
+                    ctx.moveTo(cx - sp, cy - sp); ctx.lineTo(cx + sp, cy + sp);
+                    ctx.moveTo(cx + sp, cy - sp); ctx.lineTo(cx - sp, cy + sp);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            });
+        }
+
+        // ── Extras Stats Match : terrain vu du dessus + impact but + actions ──────
         function renderPlayerMatchExtras(nom, isGB, matchFilter) {
             const wrap = document.getElementById('pm-match-extras');
             if (!wrap) return;
@@ -737,7 +778,15 @@
                 ? DATA.filter(r => r[COLS.club] !== 'FENIX' && (!matchFilter || r[COLS.rencontre] === matchFilter) && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
                 : DATA.filter(r => r[COLS.club] === 'FENIX'  && (!matchFilter || r[COLS.rencontre] === matchFilter) && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom)   && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
 
-            const impactTitle  = isGB ? 'ARRÊTS ET BUTS CONCÉDÉS' : 'ZONES DE TIR';
+            // Lignes avec position terrain (pour canvas vu du dessus)
+            const terrainRows = isGB ? [] : DATA.filter(r =>
+                r[COLS.club] === 'FENIX' &&
+                (!matchFilter || r[COLS.rencontre] === matchFilter) &&
+                matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom) &&
+                r[COLS.position_terrain] && String(r[COLS.position_terrain]).includes(';')
+            );
+
+            const impactTitle  = isGB ? 'ARRÊTS ET BUTS CONCÉDÉS' : 'ZONES DE TIR SUR LE BUT';
             const impactLegend = isGB
                 ? `<span class="pmf-legend-dot pmf-legend-green">●</span> Tir arrêté <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> But encaissé`
                 : `<span class="pmf-legend-dot pmf-legend-green">●</span> But <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> Tir raté`;
@@ -758,7 +807,21 @@
             const actionsHTML  = isGB ? _buildGbZoneTableHTML(nom, matchFilter) : _buildDetailedActionsHTML(nom, matchFilter);
             const actionsTitle = isGB ? 'STATS PAR ZONE' : 'ACTIONS';
 
+            const terrainSection = (!isGB && terrainRows.length > 0) ? `
+                <div class="pmf-card">
+                    <div class="pmf-card-title">POSITIONS DE TIR SUR LE TERRAIN</div>
+                    <div class="terrain-wrapper-small" id="pmm-terrain-wrapper" style="margin-bottom:8px">
+                        <canvas id="pmm-terrain-canvas" class="terrain-canvas"></canvas>
+                    </div>
+                    <div class="pmf-legend" style="font-size:0.72rem;color:#64748B">
+                        <span style="color:#10B981">●</span> But &nbsp;
+                        <span style="color:#EF4444">✕</span> Tir raté &nbsp;
+                        <span style="color:#8B4513">✕</span> Perte de balle
+                    </div>
+                </div>` : '';
+
             wrap.innerHTML = `
+                ${terrainSection}
                 <div class="pmf-card">
                     <div class="pmf-card-header-row">
                         <div class="pmf-card-title">${impactTitle}</div>
@@ -780,6 +843,9 @@
 
             _updatePmmImpactStats(_pmmImpactRows);
             _drawMatchExtrasImpact(_pmmImpactRows);
+            if (!isGB && terrainRows.length > 0) {
+                requestAnimationFrame(() => _drawPmTerrain(terrainRows));
+            }
         }
 
         // ── Stats Match : équipes ────────────────────────────────────────────────
