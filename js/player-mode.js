@@ -422,7 +422,7 @@
                     </div>
                 </div>
                 <div style="text-align:right;margin-bottom:8px">
-                    <button onclick="_pmToggleActions(this)" style="background:none;border:1px solid #E2E8F0;border-radius:6px;padding:4px 12px;font-size:0.78rem;color:#64748B;cursor:pointer">Voir tout ▼</button>
+                    <button onclick="_pmToggleActions(this)" style="background:#0A2463;border:none;border-radius:8px;padding:7px 16px;font-size:0.82rem;font-weight:700;color:#fff;cursor:pointer;letter-spacing:0.5px">Voir tout ▼</button>
                 </div>`;
 
             return `
