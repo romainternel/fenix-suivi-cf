@@ -55,6 +55,9 @@
             const accountsBtn = document.getElementById('btn-player-accounts');
             if (accountsBtn) accountsBtn.style.display = 'none';
 
+            const subnav = document.getElementById('joueurs-subnav');
+            if (subnav) subnav.style.setProperty('display', 'none', 'important');
+
             const bar = document.getElementById('pm-bar');
             if (bar) {
                 bar.style.display = 'flex';
