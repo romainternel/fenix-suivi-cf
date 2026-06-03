@@ -379,11 +379,6 @@
 
         // ── Détail des actions (style modal photo 1) ─────────────────────────────
         function _buildDetailedActionsHTML(nom, matchFilter, bilanMatchs) {
-            const ATT_PLUS  = (typeof ACTIONS_ATT_PLUS  !== 'undefined') ? ACTIONS_ATT_PLUS  : ['But', 'But DG', 'PD', 'PD DG', 'PO', "2' Obt", 'Duel gagné att', 'Bon choix', 'Bloc', 'Glissement', 'Écran'];
-            const ATT_MOINS = (typeof ACTIONS_ATT_MOINS !== 'undefined') ? ACTIONS_ATT_MOINS : ['Tir raté', 'PB', 'PF', 'Neutralisé', 'Mauvais choix', 'Bloc -'];
-            const DEF_PLUS  = (typeof ACTIONS_DEF_PLUS  !== 'undefined') ? ACTIONS_DEF_PLUS  : ['Duel gagné déf', 'Contre +', 'Récup', 'Intercep', 'Dissua', 'Entraide +', 'Impair +', 'Contournement pivot +'];
-            const DEF_MOINS = (typeof ACTIONS_DEF_MOINS !== 'undefined') ? ACTIONS_DEF_MOINS : ['Duel perdu', '2 min', 'Entraide -', 'Impair -', 'Sortie de bloc -', 'Contre -', 'Inactif', 'Hs/Répart/Changmt', 'Toucher -', 'Contournement pivot -', 'replis -'];
-
             const counts = {};
             const matchSet = new Set();
             DATA.forEach(row => {
@@ -402,19 +397,25 @@
                 });
             });
             const nbM = matchSet.size || 1;
+            const gc = g => g.main.reduce((s, a) => s + (counts[a] || 0), 0);
 
-            const makeSection = (actions, headerColor, bgColor, isPos) => {
-                const rows = actions.map(a => {
-                    const cnt = counts[a] || 0;
-                    const style = cnt === 0 ? 'color:#CBD5E1' : (isPos ? 'color:#059669;font-weight:700' : 'color:#DC2626;font-weight:700');
+            const makeSection = (groups, headerColor, bgColor, title) => {
+                const rows = groups.map(g => {
+                    const total = gc(g);
+                    const sub   = g.sub !== null ? (counts[g.sub] || 0) : null;
+                    const isPos = headerColor === '#059669';
+                    const style = total === 0 ? 'color:#CBD5E1' : (isPos ? 'color:#059669;font-weight:700' : 'color:#DC2626;font-weight:700');
+                    const cTxt  = sub !== null
+                        ? `${total} <span style="color:#94A3B8;font-size:0.82em">(${sub})</span>`
+                        : (total > 0 ? total : '—');
                     return `<tr>
-                        <td style="padding:4px 8px;font-size:0.82rem;${cnt===0?'color:#CBD5E1':''}">${a}</td>
-                        <td style="padding:4px 8px;text-align:right;${style}">${cnt > 0 ? cnt : '—'}</td>
-                        <td style="padding:4px 8px;text-align:right;color:#94A3B8;font-size:0.78rem">${cnt > 0 ? (cnt/nbM).toFixed(1) : '—'}</td>
+                        <td style="padding:4px 8px;font-size:0.82rem;${total===0?'color:#CBD5E1':''}">${g.label}</td>
+                        <td style="padding:4px 8px;text-align:right;${style}">${cTxt}</td>
+                        <td style="padding:4px 8px;text-align:right;color:#94A3B8;font-size:0.78rem">${total > 0 ? (total/nbM).toFixed(1) : '—'}</td>
                     </tr>`;
                 }).join('');
                 return `<div style="flex:1;min-width:0">
-                    <div style="background:${headerColor};color:#fff;padding:5px 10px;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:1px;border-radius:6px 6px 0 0">${isPos ? (actions === ATT_PLUS ? 'ATTAQUE +' : 'DÉFENSE +') : (actions === ATT_MOINS ? 'ATTAQUE −' : 'DÉFENSE −')}</div>
+                    <div style="background:${headerColor};color:#fff;padding:5px 10px;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:1px;border-radius:6px 6px 0 0">${title}</div>
                     <div style="background:${bgColor};border-radius:0 0 6px 6px;overflow:hidden">
                         <table style="width:100%;border-collapse:collapse">
                             <thead><tr style="background:rgba(0,0,0,0.06)">
@@ -428,29 +429,35 @@
                 </div>`;
             };
 
-            const attPlusTotal  = ATT_PLUS.reduce((s,a)  => s+(counts[a]||0), 0);
-            const attMoinsTotal = ATT_MOINS.reduce((s,a) => s+(counts[a]||0), 0);
-            const defPlusTotal  = DEF_PLUS.reduce((s,a)  => s+(counts[a]||0), 0);
-            const defMoinsTotal = DEF_MOINS.reduce((s,a) => s+(counts[a]||0), 0);
-            const totalAtt = attPlusTotal - attMoinsTotal;
-            const totalDef = defPlusTotal - defMoinsTotal;
+            const attPlusTotal  = NOTE_GROUPS.attPlus.reduce((s, g) => s + gc(g), 0);
+            const attMoinsTotal = NOTE_GROUPS.attMoins.reduce((s, g) => s + gc(g), 0);
+            const defPlusTotal  = NOTE_GROUPS.defPlus.reduce((s, g) => s + gc(g), 0);
+            const defMoinsTotal = NOTE_GROUPS.defMoins.reduce((s, g) => s + gc(g), 0);
+            const totalAtt    = attPlusTotal - attMoinsTotal;
+            const totalDef    = defPlusTotal - defMoinsTotal;
             const totalJoueur = totalAtt + totalDef;
-            const sign = v => (v >= 0 ? '+' : '') + v;
+            const sign   = v => (v >= 0 ? '+' : '') + v;
             const vColor = v => v > 0 ? '#059669' : v < 0 ? '#DC2626' : '#64748B';
 
-            const allPlus  = [...ATT_PLUS,  ...DEF_PLUS].filter(a => (counts[a]||0) > 0).sort((a,b) => (counts[b]||0)-(counts[a]||0));
-            const allMoins = [...ATT_MOINS, ...DEF_MOINS].filter(a => (counts[a]||0) > 0).sort((a,b) => (counts[b]||0)-(counts[a]||0));
-            const top3Plus  = allPlus.slice(0,3);
-            const top3Moins = allMoins.slice(0,3);
+            const allPlusGroups  = [...NOTE_GROUPS.attPlus, ...NOTE_GROUPS.defPlus]
+                .map(g => ({ label: g.label, total: gc(g) }))
+                .filter(g => g.total > 0)
+                .sort((a, b) => b.total - a.total);
+            const allMoinsGroups = [...NOTE_GROUPS.attMoins, ...NOTE_GROUPS.defMoins]
+                .map(g => ({ label: g.label, total: gc(g) }))
+                .filter(g => g.total > 0)
+                .sort((a, b) => b.total - a.total);
+            const top3Plus  = allPlusGroups.slice(0, 3);
+            const top3Moins = allMoinsGroups.slice(0, 3);
             const top3HTML = `
                 <div style="display:flex;gap:12px;margin-bottom:10px">
                     <div style="flex:1;background:#F0FDF4;border-radius:8px;padding:8px 10px">
                         <div style="font-size:0.7rem;font-weight:700;color:#059669;text-transform:uppercase;margin-bottom:6px">TOP POINTS FORTS</div>
-                        ${top3Plus.length ? top3Plus.map(a=>`<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:2px 0"><span style="color:#1E293B">${a}</span><span style="font-weight:700;color:#059669">${counts[a]}</span></div>`).join('') : '<div style="font-size:0.8rem;color:#94a3b8">Aucune action</div>'}
+                        ${top3Plus.length ? top3Plus.map(g=>`<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:2px 0"><span style="color:#1E293B">${g.label}</span><span style="font-weight:700;color:#059669">${g.total}</span></div>`).join('') : '<div style="font-size:0.8rem;color:#94a3b8">Aucune action</div>'}
                     </div>
                     <div style="flex:1;background:#FEF2F2;border-radius:8px;padding:8px 10px">
                         <div style="font-size:0.7rem;font-weight:700;color:#DC2626;text-transform:uppercase;margin-bottom:6px">TOP POINTS À CORRIGER</div>
-                        ${top3Moins.length ? top3Moins.map(a=>`<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:2px 0"><span style="color:#1E293B">${a}</span><span style="font-weight:700;color:#DC2626">${counts[a]}</span></div>`).join('') : '<div style="font-size:0.8rem;color:#94a3b8">Aucune action</div>'}
+                        ${top3Moins.length ? top3Moins.map(g=>`<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:2px 0"><span style="color:#1E293B">${g.label}</span><span style="font-weight:700;color:#DC2626">${g.total}</span></div>`).join('') : '<div style="font-size:0.8rem;color:#94a3b8">Aucune action</div>'}
                     </div>
                 </div>
                 <div style="text-align:right;margin-bottom:8px">
@@ -461,12 +468,12 @@
                 ${top3HTML}
                 <div class="pmf-actions-detail" style="display:none">
                     <div class="pmf-actions-2col">
-                        ${makeSection(ATT_PLUS,  '#059669', '#F0FDF4', true)}
-                        ${makeSection(DEF_PLUS,  '#059669', '#EFF6FF', true)}
+                        ${makeSection(NOTE_GROUPS.attPlus,  '#059669', '#F0FDF4', 'ATTAQUE +')}
+                        ${makeSection(NOTE_GROUPS.defPlus,  '#059669', '#EFF6FF', 'DÉFENSE +')}
                     </div>
                     <div class="pmf-actions-2col">
-                        ${makeSection(ATT_MOINS, '#DC2626', '#FEF2F2', false)}
-                        ${makeSection(DEF_MOINS, '#DC2626', '#FEF9E7', false)}
+                        ${makeSection(NOTE_GROUPS.attMoins, '#DC2626', '#FEF2F2', 'ATTAQUE −')}
+                        ${makeSection(NOTE_GROUPS.defMoins, '#DC2626', '#FEF9E7', 'DÉFENSE −')}
                     </div>
                 </div>
                 <div class="pmf-actions-totals">
