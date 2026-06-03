@@ -998,6 +998,7 @@
                 wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>Total</th><th>%</th><th>Champ</th><th>%</th><th>Pen</th><th>%</th><th>But</th><th>PD</th><th>PB</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 
             } else {
+                const _iF = () => ({bc:0,tc:0,bp:0,tp:0,pb:0,po:0,pd:0,ap:0,am:0,dp:0,dm:0});
                 const sbm = {};
                 DATA.forEach(row => {
                     if (row[COLS.club]!=='FENIX') return;
@@ -1005,7 +1006,7 @@
                     if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     if (!matchPlayerName((row[COLS.joueur]||'').toString().trim(), nom)) return;
                     const m=row[COLS.rencontre]; if (!m) return;
-                    if (!sbm[m]) sbm[m]={bc:0,tc:0,bp:0,tp:0,pb:0,po:0,pd:0};
+                    if (!sbm[m]) sbm[m]=_iF();
                     const isPen=(row[COLS.ge]||'').toString().toLowerCase().includes('pen');
                     if (row[COLS.resultat]==='But')       { isPen?sbm[m].bp++:sbm[m].bc++; }
                     else if (row[COLS.resultat]==='Tir raté') { isPen?sbm[m].tp++:sbm[m].tc++; }
@@ -1016,27 +1017,38 @@
                     if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
                     if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     const m=row[COLS.rencontre]; if (!m) return;
-                    (row[COLS.action_joueur]||'').toString().split(';').forEach((j,i)=>{
+                    const joueurs=(row[COLS.action_joueur]||'').toString().split(';');
+                    const atts=(row[COLS.action_att]||'').toString().split(';');
+                    const defs=(row[COLS.action_def]||'').toString().split(';');
+                    joueurs.forEach((j,idx)=>{
                         if (!matchPlayerName(j.trim(),nom)) return;
-                        const act=lastNonEmpty((row[COLS.action_att]||'').toString().split(';'),i);
-                        if (act==='PD'||act==='PD DG') { if(!sbm[m]) sbm[m]={bc:0,tc:0,bp:0,tp:0,pb:0,po:0,pd:0}; sbm[m].pd++; }
+                        if (!sbm[m]) sbm[m]=_iF();
+                        const att=lastNonEmpty(atts,idx), def=lastNonEmpty(defs,idx);
+                        if (att==='PD'||att==='PD DG') sbm[m].pd++;
+                        if (typeof isPositiveATT==='function') {
+                            if (isPositiveATT(att)) sbm[m].ap++; else if (isNegativeATT(att)) sbm[m].am++;
+                            if (isPositiveDEF(def)) sbm[m].dp++; else if (isNegativeDEF(def)) sbm[m].dm++;
+                        }
                     });
                 });
 
-                let tot={bc:0,tc:0,bp:0,tp:0,pb:0,po:0,pd:0}, rows='';
+                const nc=v=>v>0?`<span style="color:#059669;font-weight:700">+${v}</span>`:v<0?`<span style="color:#DC2626;font-weight:700">${v}</span>`:`<span style="color:#64748B">0</span>`;
+                let tot=_iF(), rows='';
                 matchesToShow.forEach(m => {
                     const s=sbm[m]; if(!s) return;
                     const tC=s.bc+s.tc,tP=s.bp+s.tp,tT=tC+tP,tB=s.bc+s.bp;
+                    const nA=s.ap-s.am,nD=s.dp-s.dm,nT=nA+nD;
                     Object.keys(tot).forEach(k=>tot[k]+=s[k]);
                     const jnum=(m.match(/^(J\d+)/i)||[])[1];
                     const tjE=TEMPS_JEU[nom.toLowerCase()];
                     const tjMin=tjE&&jnum&&tjE[jnum]!==undefined?` <span style="color:#94A3B8;font-size:0.8em">(${tjE[jnum]} min)</span>`:'';
-                    rows+=`<tr><td style="color:${matchResultColor(m)}">${m}${tjMin}</td><td>${s.bc}/${tC}</td><td>${tC>0?Math.round(s.bc/tC*100)+'%':'-'}</td><td>${tP>0?s.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(s.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${s.pb}</td><td>${s.po}</td><td>${s.pd}</td></tr>`;
+                    rows+=`<tr><td style="color:${matchResultColor(m)}">${m}${tjMin}</td><td>${s.bc}/${tC}</td><td>${tC>0?Math.round(s.bc/tC*100)+'%':'-'}</td><td>${tP>0?s.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(s.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${s.pb}</td><td>${s.po}</td><td>${s.pd}</td><td>${nc(nA)}</td><td>${nc(nD)}</td><td>${nc(nT)}</td></tr>`;
                 });
                 const tC=tot.bc+tot.tc,tP=tot.bp+tot.tp,tT=tC+tP,tB=tot.bc+tot.bp;
-                rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${tot.bc}/${tC}</td><td>${tC>0?Math.round(tot.bc/tC*100)+'%':'-'}</td><td>${tP>0?tot.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(tot.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${tot.pb}</td><td>${tot.po}</td><td>${tot.pd}</td></tr>`;
+                const tNA=tot.ap-tot.am,tND=tot.dp-tot.dm,tNT=tNA+tND;
+                rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${tot.bc}/${tC}</td><td>${tC>0?Math.round(tot.bc/tC*100)+'%':'-'}</td><td>${tP>0?tot.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(tot.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${tot.pb}</td><td>${tot.po}</td><td>${tot.pd}</td><td>${nc(tNA)}</td><td>${nc(tND)}</td><td>${nc(tNT)}</td></tr>`;
 
-                wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>But/Tir</th><th>% Champ</th><th>Pen (B/T)</th><th>% Pen</th><th>% Total</th><th>PB</th><th>PO</th><th>PD</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+                wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>But/Tir</th><th>% Champ</th><th>Pen (B/T)</th><th>% Pen</th><th>% Total</th><th>PB</th><th>PO</th><th>PD</th><th>⭐⭐ ATT</th><th>⭐ DEF</th><th>⭐ Note</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
             }
         }
 

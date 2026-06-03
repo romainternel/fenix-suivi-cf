@@ -302,12 +302,13 @@
 
             } else {
                 // ── Joueur de champ ───────────────────────────────────────────
+                const initField = () => ({ bc:0, tc:0, bp:0, tp:0, pb:0, po:0, pd:0, ap:0, am:0, dp:0, dm:0 });
                 const sbm = {};
                 DATA.forEach(row => {
                     if (row[COLS.club] !== 'FENIX') return;
                     if (!matchPlayerName((row[COLS.joueur] || '').toString().trim(), nom)) return;
                     const m = row[COLS.rencontre]; if (!m) return;
-                    if (!sbm[m]) sbm[m] = { bc:0, tc:0, bp:0, tp:0, pb:0, po:0, pd:0 };
+                    if (!sbm[m]) sbm[m] = initField();
                     const isPen = (row[COLS.ge] || '').toString().toLowerCase().includes('pen');
                     if (row[COLS.resultat] === 'But')           { isPen ? sbm[m].bp++ : sbm[m].bc++; }
                     else if (row[COLS.resultat] === 'Tir raté') { isPen ? sbm[m].tp++ : sbm[m].tc++; }
@@ -316,20 +317,28 @@
                 });
                 DATA.forEach(row => {
                     const m = row[COLS.rencontre]; if (!m) return;
-                    (row[COLS.action_joueur] || '').toString().split(';').forEach((j, i) => {
+                    const joueurs = (row[COLS.action_joueur] || '').toString().split(';');
+                    const atts = (row[COLS.action_att] || '').toString().split(';');
+                    const defs = (row[COLS.action_def] || '').toString().split(';');
+                    joueurs.forEach((j, idx) => {
                         if (!matchPlayerName(j.trim(), nom)) return;
-                        const act = lastNonEmpty((row[COLS.action_att] || '').toString().split(';'), i);
-                        if (act === 'PD' || act === 'PD DG') {
-                            if (!sbm[m]) sbm[m] = { bc:0, tc:0, bp:0, tp:0, pb:0, po:0, pd:0 };
-                            sbm[m].pd++;
-                        }
+                        if (!sbm[m]) sbm[m] = initField();
+                        const att = lastNonEmpty(atts, idx);
+                        const def = lastNonEmpty(defs, idx);
+                        if (att === 'PD' || att === 'PD DG') sbm[m].pd++;
+                        if (isPositiveATT(att)) sbm[m].ap++;
+                        else if (isNegativeATT(att)) sbm[m].am++;
+                        if (isPositiveDEF(def)) sbm[m].dp++;
+                        else if (isNegativeDEF(def)) sbm[m].dm++;
                     });
                 });
 
-                let tot = { bc:0, tc:0, bp:0, tp:0, pb:0, po:0, pd:0 };
+                const nc = v => v > 0 ? `<span style="color:#059669;font-weight:700">+${v}</span>` : v < 0 ? `<span style="color:#DC2626;font-weight:700">${v}</span>` : `<span style="color:#64748B">0</span>`;
+                let tot = initField();
                 let tbodyHTML = '';
                 Object.entries(sbm).forEach(([m, s]) => {
                     const tC=s.bc+s.tc, tP=s.bp+s.tp, tT=tC+tP, tB=s.bc+s.bp;
+                    const nA=s.ap-s.am, nD=s.dp-s.dm, nT=nA+nD;
                     Object.keys(tot).forEach(k => tot[k] += s[k]);
                     const jnum = (m.match(/^(J\d+)/i)||[])[1];
                     const tjEntry = TEMPS_JEU[nom.toLowerCase()];
@@ -342,9 +351,11 @@
                         <td>${tP>0?Math.round(s.bp/tP*100)+'%':'-'}</td>
                         <td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td>
                         <td>${s.pb}</td><td>${s.po}</td><td>${s.pd}</td>
+                        <td>${nc(nA)}</td><td>${nc(nD)}</td><td>${nc(nT)}</td>
                     </tr>`;
                 });
                 const tC=tot.bc+tot.tc, tP=tot.bp+tot.tp, tT=tC+tP, tB=tot.bc+tot.bp;
+                const tNA=tot.ap-tot.am, tND=tot.dp-tot.dm, tNT=tNA+tND;
                 tbodyHTML += `<tr class="jm-total-row">
                     <td>TOTAL</td>
                     <td>${tot.bc}/${tC}</td>
@@ -353,6 +364,7 @@
                     <td>${tP>0?Math.round(tot.bp/tP*100)+'%':'-'}</td>
                     <td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td>
                     <td>${tot.pb}</td><td>${tot.po}</td><td>${tot.pd}</td>
+                    <td>${nc(tNA)}</td><td>${nc(tND)}</td><td>${nc(tNT)}</td>
                 </tr>`;
 
                 matchesDiv.innerHTML = `
@@ -363,6 +375,7 @@
                             <th>But/Tir</th><th>% Champ</th>
                             <th>Pen (B/T)</th><th>% Pen</th><th>% Total</th>
                             <th>PB</th><th>PO</th><th>PD</th>
+                            <th>⭐⭐ ATT</th><th>⭐ DEF</th><th>⭐ Note</th>
                         </tr></thead>
                         <tbody>${tbodyHTML}</tbody>
                     </table>`;
