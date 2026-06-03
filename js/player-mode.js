@@ -72,11 +72,25 @@
         // ── Navigation tabs ──────────────────────────────────────────────────────
         let _pmActiveTab = 'fiche';
 
+        function updatePmPeriodChip() {
+            const chip = document.getElementById('pm-period-chip');
+            if (!chip) return;
+            if (_pmActiveTab !== 'match') { chip.style.display = 'none'; return; }
+            const bilanVal  = document.getElementById('pm-bilan-sel')?.value || '';
+            const matchVal  = document.getElementById('pm-match-sel')?.value  || '';
+            const bilanLabel = bilanVal ? (BILANS.find(b => b.nom === bilanVal)?.label || bilanVal) : '';
+            const parts = [bilanLabel, matchVal].filter(Boolean);
+            if (!parts.length) { chip.style.display = 'none'; return; }
+            chip.textContent = '📋 ' + parts.join(' · ');
+            chip.style.display = 'inline-block';
+        }
+
         function pmTab(tab) {
             _pmActiveTab = tab;
             document.querySelectorAll('.pm-tab-btn').forEach(b => {
                 b.classList.toggle('active', b.dataset.tab === tab);
             });
+            updatePmPeriodChip();
 
             const mainEl = document.querySelector('.main');
             if (mainEl) mainEl.style.setProperty('display', 'none', 'important');
@@ -788,6 +802,7 @@
             const terrainRows = isGB ? [] : DATA.filter(r =>
                 r[COLS.club] === 'FENIX' &&
                 (!matchFilter || r[COLS.rencontre] === matchFilter) &&
+                (!_bilanMF || _bilanMF.includes(r[COLS.rencontre])) &&
                 matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom) &&
                 r[COLS.position_terrain] && String(r[COLS.position_terrain]).includes(';')
             );
@@ -922,10 +937,10 @@
             const wrap = document.getElementById('pm-match-player-table');
             if (!wrap) return;
 
-            // Matches à afficher
+            const bilanMatchs = _getPmBilanMatchs();
             const matchesToShow = matchFilter
                 ? (DATA.some(r=>r[COLS.rencontre]===matchFilter) ? [matchFilter] : [])
-                : MATCHS;
+                : (bilanMatchs || MATCHS);
 
             if (isGB) {
                 const gbSbm = {};
@@ -934,6 +949,7 @@
                 DATA.forEach(row => {
                     if (row[COLS.club]==='FENIX') return;
                     if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     const g=(row[COLS.gardien]||'').toString().trim();
                     if (!matchPlayerName(g, nom)) return;
                     const m=row[COLS.rencontre]; if (!m) return;
@@ -948,6 +964,7 @@
                 DATA.forEach(row => {
                     if (row[COLS.club]!=='FENIX') return;
                     if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     if (!matchPlayerName((row[COLS.joueur]||'').toString().trim(), nom)) return;
                     const m=row[COLS.rencontre]; if (!m) return;
                     if (!gbSbm[m]) gbSbm[m]=initGb();
@@ -956,6 +973,7 @@
                 });
                 DATA.forEach(row => {
                     if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     const m=row[COLS.rencontre]; if (!m) return;
                     (row[COLS.action_joueur]||'').toString().split(';').forEach((j,i)=>{
                         if (!matchPlayerName(j.trim(),nom)) return;
@@ -984,6 +1002,7 @@
                 DATA.forEach(row => {
                     if (row[COLS.club]!=='FENIX') return;
                     if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     if (!matchPlayerName((row[COLS.joueur]||'').toString().trim(), nom)) return;
                     const m=row[COLS.rencontre]; if (!m) return;
                     if (!sbm[m]) sbm[m]={bc:0,tc:0,bp:0,tp:0,pb:0,po:0,pd:0};
@@ -995,6 +1014,7 @@
                 });
                 DATA.forEach(row => {
                     if (matchFilter && row[COLS.rencontre]!==matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     const m=row[COLS.rencontre]; if (!m) return;
                     (row[COLS.action_joueur]||'').toString().split(';').forEach((j,i)=>{
                         if (!matchPlayerName(j.trim(),nom)) return;
@@ -1046,6 +1066,7 @@
             _pmCurrentMatchIdx = -1;
             const matchSel = document.getElementById('pm-match-sel');
             if (matchSel) matchSel.value = '';
+            updatePmPeriodChip();
             renderPlayerMatchStats();
         }
 
@@ -1058,6 +1079,7 @@
             const sel = document.getElementById('pm-match-sel');
             const val = sel ? sel.value : '';
             _pmCurrentMatchIdx = val ? (MATCHS || []).indexOf(val) : -1;
+            updatePmPeriodChip();
             renderPlayerMatchStats();
         }
 
