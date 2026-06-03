@@ -1494,10 +1494,24 @@ let _effInfoPoste = null;
         function processBilans() {
             BILANS = [];
             if (!_rawBilanRows.length || !MATCHS.length) return;
+            const activeSaison = document.getElementById('filter-saison')?.value || '';
+            // Filtrer les bilans par saison active (si renseignée dans la feuille ET dans le filtre)
+            const rowsToProcess = _rawBilanRows.filter(r => !r.saison || !activeSaison || r.saison === activeSaison);
+            if (!rowsToProcess.length) {
+                ['filter-bilan-joueur-wrap','filter-bilan-notes-wrap'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                return;
+            }
+            // Limiter les matchs à la saison active pour le calcul des plages
+            const saisonMatchs = activeSaison
+                ? [...new Set(DATA.filter(r => r[COLS.saison] === activeSaison).map(r => r[COLS.rencontre]).filter(Boolean))]
+                : MATCHS;
             const getJNum = m => { const x = (m || '').match(/J(\d+)/i); return x ? parseInt(x[1]) : 9999; };
-            const sorted = [...MATCHS].sort((a, b) => getJNum(a) - getJNum(b));
+            const sorted = [...saisonMatchs].sort((a, b) => getJNum(a) - getJNum(b));
             let prevEndIdx = -1;
-            _rawBilanRows.forEach(raw => {
+            rowsToProcess.forEach(raw => {
                 const finNum = parseInt(((raw.journeeFin).match(/(\d+)/) || [])[1] || '0');
                 let endIdx = -1;
                 sorted.forEach((m, i) => { if (getJNum(m) <= finNum) endIdx = i; });
@@ -1783,6 +1797,7 @@ let _effInfoPoste = null;
                 }
             });
 
+            processBilans();
             updateMatchSelection();
         }
 
