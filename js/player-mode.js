@@ -677,7 +677,7 @@
                     const p = String(row[COLS.impact]).split(';');
                     const x = parseFloat(p[0]), y = parseFloat(p[1]);
                     if (isNaN(x) || isNaN(y)) return;
-                    const dotX = (x/100)*W, dotY = (y/100)*H, s = Math.max(5, W*0.022);
+                    const dotX = (x/100)*W, dotY = (y/100)*H, s = Math.max(3, W*0.013);
                     const isPos = isGB ? row[COLS.finalite] === 'Tir arrêté' : row[COLS.resultat] === 'But';
                     ctx.save(); ctx.lineCap = 'round';
                     if (isPos) {
@@ -761,7 +761,7 @@
                 const [xs, ys] = posStr.split(';');
                 const x = parseFloat(xs), y = parseFloat(ys);
                 if (isNaN(x) || isNaN(y)) return;
-                const cx = (x / 100) * W, cy = (y / 100) * H, s = Math.max(6, W * 0.018);
+                const cx = (x / 100) * W, cy = (y / 100) * H, s = Math.max(4, W * 0.011);
                 const res = row[COLS.resultat];
                 ctx.save(); ctx.lineCap = 'round';
                 if (res === 'But') {
