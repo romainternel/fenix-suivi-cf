@@ -376,6 +376,20 @@
         function updateJoueursPage() {
             if (typeof isPlayerMode === 'function' && isPlayerMode()) return;
 
+            // Rebuild match dropdown selon bilan actif
+            const bilanMatchs = _getJoueurBilanMatchs();
+            const matchSel = document.getElementById('filter-joueur-match');
+            if (matchSel) {
+                const currentVal = matchSel.value;
+                const activeSaison = document.getElementById('filter-saison')?.value || '';
+                const allMatchs = bilanMatchs || (activeSaison
+                    ? [...new Set(DATA.filter(r => r[COLS.saison] === activeSaison).map(r => r[COLS.rencontre]).filter(Boolean))]
+                    : MATCHS);
+                matchSel.innerHTML = '<option value="">Tous les matchs</option>';
+                allMatchs.forEach(m => matchSel.innerHTML += `<option value="${m}">${m}</option>`);
+                matchSel.value = (bilanMatchs && currentVal && !bilanMatchs.includes(currentVal)) ? '' : currentVal;
+            }
+
             const warningDiv = document.getElementById('joueur-name-warnings');
             if (warningDiv) {
                 const dupes = checkDuplicateNames();

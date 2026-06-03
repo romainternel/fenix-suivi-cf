@@ -966,6 +966,7 @@
         let TEMPS_JEU = {}; // { nomLower: { 'J01': minutes, 'J02': minutes, ... } }
         let BILANS = [];    // [{ nom, saison, journeeFin, matchs[], label }]
         let _rawBilanRows = [];
+        let _ngBilanMatches = null; // filtre bilan passé au notegraph depuis la page Joueurs
         let GARDIENS_FENIX = []; // Dérivé de JOUEURS_TERRAIN (poste GB) au chargement des données
         let FIELD_POSITIONS = [];
         let impactZoneFilter = '';
@@ -1161,6 +1162,30 @@ let _effInfoPoste = null;
             document.querySelectorAll('.jsub-btn').forEach(b => b.classList.remove('active'));
             const subBtn = document.querySelector(`[data-jsub="${page}"]`);
             if (subBtn) subBtn.classList.add('active');
+
+            if (page === 'notes') {
+                // Sync bilan
+                const bilanVal = document.getElementById('filter-joueur-bilan')?.value || '';
+                const notesBilanSel = document.getElementById('filter-notes-bilan');
+                if (notesBilanSel && bilanVal) notesBilanSel.value = bilanVal;
+                // Sync match
+                const matchVal = document.getElementById('filter-joueur-match')?.value || '';
+                const noteMatchSel = document.getElementById('filter-note-match');
+                if (noteMatchSel) noteMatchSel.value = matchVal;
+                // Sync joueur sélectionné
+                if (typeof currentSelectedJoueur !== 'undefined' && currentSelectedJoueur) {
+                    const noteJoueurSel = document.getElementById('filter-note-joueur');
+                    if (noteJoueurSel) {
+                        for (let i = 0; i < noteJoueurSel.options.length; i++) {
+                            if (typeof matchPlayerName === 'function' && matchPlayerName(noteJoueurSel.options[i].value, currentSelectedJoueur)) {
+                                noteJoueurSel.value = noteJoueurSel.options[i].value;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
             if (DATA.length > 0) refreshPage(page);
         }
 
@@ -1238,7 +1263,8 @@ let _effInfoPoste = null;
                 if (selGB) selGB.value = '';
             }
 
-            // Naviguer directement sans passer par refreshPage (évite le timing race)
+            // Passer le filtre bilan au notegraph
+            _ngBilanMatches = (typeof _getJoueurBilanMatchs === 'function') ? _getJoueurBilanMatchs() : null;
             hideCompareFilters();
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-notegraph').classList.add('active');
@@ -1274,6 +1300,14 @@ let _effInfoPoste = null;
                             break;
                         }
                     }
+                }
+                // Appliquer filtre bilan aux checkboxes match si bilan actif
+                const _impBilanM = (typeof _getJoueurBilanMatchs === 'function') ? _getJoueurBilanMatchs() : null;
+                if (_impBilanM) {
+                    document.querySelectorAll('.match-checkbox').forEach(cb => {
+                        cb.checked = _impBilanM.includes(cb.value);
+                    });
+                    updateMatchSelection();
                 }
                 hideCompareFilters();
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));

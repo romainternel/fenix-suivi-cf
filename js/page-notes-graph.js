@@ -382,7 +382,9 @@
             if (!joueur || DATA.length === 0) return;
 
             const matchData = {};
-            MATCHS.forEach(m => matchData[m] = { ap: 0, am: 0, dp: 0, dm: 0 });
+            const _ngBilan = (typeof _ngBilanMatches !== 'undefined' && _ngBilanMatches) ? _ngBilanMatches : null;
+            const matchsToUse = _ngBilan || MATCHS;
+            matchsToUse.forEach(m => matchData[m] = { ap: 0, am: 0, dp: 0, dm: 0 });
             DATA.forEach(row => {
                 const m = row[COLS.rencontre];
                 if (!matchData[m]) return;
@@ -400,7 +402,7 @@
                 });
             });
 
-            const played = MATCHS.filter(m => {
+            const played = matchsToUse.filter(m => {
                 const d = matchData[m];
                 return d.ap + d.am + d.dp + d.dm > 0;
             });
