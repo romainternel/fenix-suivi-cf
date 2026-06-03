@@ -845,7 +845,7 @@
                     <div class="zr-row">${_zc('9m ext G')}${_zc('9m Int G')}${_zc('9m Int D')}${_zc('9m ext D')}</div>
                 </div>`;
 
-            const actionsHTML  = isGB ? _buildGbZoneTableHTML(nom, matchFilter) : _buildDetailedActionsHTML(nom, matchFilter, _bilanMF);
+            const actionsHTML  = isGB ? _buildGbZoneTableHTML(nom, matchFilter, _bilanMF) : _buildDetailedActionsHTML(nom, matchFilter, _bilanMF);
             const actionsTitle = isGB ? 'STATS PAR ZONE' : 'ACTIONS';
 
             const terrainSection = (!isGB && terrainRows.length > 0) ? `
@@ -1097,7 +1097,13 @@
             _pmBilanFilter = document.getElementById('pm-bilan-sel')?.value || '';
             _pmCurrentMatchIdx = -1;
             const matchSel = document.getElementById('pm-match-sel');
-            if (matchSel) matchSel.value = '';
+            if (matchSel) {
+                const bilanMatchs = _getPmBilanMatchs();
+                const matchesToShow = bilanMatchs || MATCHS || [];
+                matchSel.innerHTML = '<option value="">Tous les matchs</option>'
+                    + matchesToShow.map(m => `<option value="${m}">${m}</option>`).join('');
+                matchSel.value = '';
+            }
             updatePmPeriodChip();
             renderPlayerMatchStats();
         }
