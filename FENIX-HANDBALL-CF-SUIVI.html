@@ -1389,13 +1389,18 @@ let _effInfoPoste = null;
 
                     // Lecture feuille "Bilan"
                     _rawBilanRows = [];
-                    const bilanSheetName = workbook.SheetNames.find(n => /^bilan$/i.test(n.trim()));
+                    console.log('[Bilan] Feuilles disponibles:', workbook.SheetNames);
+                    const bilanSheetName = workbook.SheetNames.find(n => /bilan/i.test(n.trim()));
+                    console.log('[Bilan] Feuille trouvée:', bilanSheetName);
                     if (bilanSheetName) {
                         const bRows = XLSX.utils.sheet_to_json(workbook.Sheets[bilanSheetName], { header: 1, defval: '' });
+                        console.log('[Bilan] Lignes brutes:', bRows);
                         const bHeaders = (bRows[0] || []).map(h => h.toString().toLowerCase().trim());
+                        console.log('[Bilan] Headers:', bHeaders);
                         const iBSaison  = bHeaders.findIndex(h => h.includes('saison'));
                         const iBNom     = bHeaders.findIndex(h => h.includes('nom'));
                         const iBJournee = bHeaders.findIndex(h => h.includes('journ'));
+                        console.log('[Bilan] Colonnes idx → saison:', iBSaison, 'nom:', iBNom, 'journee:', iBJournee);
                         if (iBNom >= 0 && iBJournee >= 0) {
                             bRows.slice(1).forEach(row => {
                                 const nom       = (row[iBNom]     || '').toString().trim();
@@ -1510,11 +1515,14 @@ let _effInfoPoste = null;
                 : MATCHS;
             const getJNum = m => { const x = (m || '').match(/J(\d+)/i); return x ? parseInt(x[1]) : 9999; };
             const sorted = [...saisonMatchs].sort((a, b) => getJNum(a) - getJNum(b));
+            console.log('[Bilan] MATCHS sorted:', sorted.slice(0,5), '... total:', sorted.length);
+            console.log('[Bilan] rowsToProcess:', rowsToProcess);
             let prevEndIdx = -1;
             rowsToProcess.forEach(raw => {
                 const finNum = parseInt(((raw.journeeFin).match(/(\d+)/) || [])[1] || '0');
                 let endIdx = -1;
                 sorted.forEach((m, i) => { if (getJNum(m) <= finNum) endIdx = i; });
+                console.log('[Bilan]', raw.nom, '→ finNum:', finNum, 'endIdx:', endIdx, 'prevEndIdx:', prevEndIdx);
                 if (endIdx < 0 || endIdx <= prevEndIdx) return;
                 const matchs = sorted.slice(prevEndIdx + 1, endIdx + 1);
                 if (!matchs.length) return;
@@ -1523,14 +1531,15 @@ let _effInfoPoste = null;
                 BILANS.push({ nom: raw.nom, saison: raw.saison, journeeFin: raw.journeeFin, matchs, label: `${raw.nom} — J${j1} à J${j2}` });
                 prevEndIdx = endIdx;
             });
+            console.log('[Bilan] BILANS finaux:', BILANS);
             // Peupler les dropdowns bilan (joueurs + notes)
             ['filter-joueur-bilan', 'filter-notes-bilan'].forEach(selId => {
                 const sel = document.getElementById(selId);
-                const wrap = document.getElementById(selId.replace('filter-', 'filter-bilan-').replace('-bilan', '-bilan'));
                 if (sel) sel.innerHTML = '<option value="">Toute la saison</option>' + BILANS.map(b => `<option value="${b.nom}">${b.label}</option>`).join('');
                 const wrapId = selId === 'filter-joueur-bilan' ? 'filter-bilan-joueur-wrap' : 'filter-bilan-notes-wrap';
                 const wrapEl = document.getElementById(wrapId);
-                if (wrapEl) wrapEl.style.display = BILANS.length ? '' : 'none';
+                console.log('[Bilan] wrapEl', wrapId, ':', wrapEl, '→ display:', BILANS.length ? 'flex' : 'none');
+                if (wrapEl) wrapEl.style.display = BILANS.length ? 'flex' : 'none';
             });
         }
 
