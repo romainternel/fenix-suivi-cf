@@ -115,19 +115,19 @@
         var ACTIONS_DEF_MOINS = ['Duel perdu', '2 min', 'Entraide -', 'Impair -', 'Sortie de bloc -', 'Contre -', 'Inactif', 'Hs/Répart/Changmt', 'Toucher -', 'Contournement pivot -', 'replis -'];
 
         function isPositiveATT(action) {
-            return ACTIONS_ATT_PLUS.some(a => action.includes(a));
+            return ACTIONS_ATT_PLUS.includes(action);
         }
 
         function isNegativeATT(action) {
-            return ACTIONS_ATT_MOINS.some(a => action.includes(a));
+            return ACTIONS_ATT_MOINS.includes(action);
         }
 
         function isPositiveDEF(action) {
-            return ACTIONS_DEF_PLUS.some(a => action.includes(a));
+            return ACTIONS_DEF_PLUS.includes(action);
         }
 
         function isNegativeDEF(action) {
-            return ACTIONS_DEF_MOINS.some(a => action.includes(a));
+            return ACTIONS_DEF_MOINS.includes(action);
         }
 
         // ── Fonctions partagées timeline (utilisées par page-analyse.js ET player-mode.js) ──
