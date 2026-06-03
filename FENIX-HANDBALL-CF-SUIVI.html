@@ -952,6 +952,8 @@
         let showMatchCardAvg = false;
         let sortConfig = { col: 'buts', dir: 'desc' };
         let TEMPS_JEU = {}; // { nomLower: { 'J01': minutes, 'J02': minutes, ... } }
+        let BILANS = [];    // [{ nom, saison, journeeFin, matchs[], label }]
+        let _rawBilanRows = [];
         let GARDIENS_FENIX = []; // Dérivé de JOUEURS_TERRAIN (poste GB) au chargement des données
         let FIELD_POSITIONS = [];
         let impactZoneFilter = '';
@@ -1373,7 +1375,27 @@ let _effInfoPoste = null;
                         });
                     }
 
+                    // Lecture feuille "Bilan"
+                    _rawBilanRows = [];
+                    const bilanSheetName = workbook.SheetNames.find(n => /^bilan$/i.test(n.trim()));
+                    if (bilanSheetName) {
+                        const bRows = XLSX.utils.sheet_to_json(workbook.Sheets[bilanSheetName], { header: 1, defval: '' });
+                        const bHeaders = (bRows[0] || []).map(h => h.toString().toLowerCase().trim());
+                        const iBSaison  = bHeaders.findIndex(h => h.includes('saison'));
+                        const iBNom     = bHeaders.findIndex(h => h.includes('nom'));
+                        const iBJournee = bHeaders.findIndex(h => h.includes('journ'));
+                        if (iBNom >= 0 && iBJournee >= 0) {
+                            bRows.slice(1).forEach(row => {
+                                const nom       = (row[iBNom]     || '').toString().trim();
+                                const saison    = iBSaison >= 0 ? (row[iBSaison] || '').toString().trim() : '';
+                                const journeeFin = (row[iBJournee] || '').toString().trim().toUpperCase();
+                                if (nom && journeeFin) _rawBilanRows.push({ nom, saison, journeeFin });
+                            });
+                        }
+                    }
+
                     extractUniqueValues();
+                    processBilans();
                     populateFilters();
                     updateMatchSelection();
                     showDataLoaded();
@@ -1455,6 +1477,26 @@ let _effInfoPoste = null;
             FIELD_POSITIONS = [...new Set(DATA.map(row => row[COLS.field_position]).filter(Boolean))].sort();
             // Gardiens dérivés de JOUEURS_TERRAIN — seule source de vérité
             GARDIENS_FENIX = JOUEURS_TERRAIN.filter(p => p.poste === 'GB').map(p => p.nom);
+        }
+
+        function processBilans() {
+            BILANS = [];
+            if (!_rawBilanRows.length || !MATCHS.length) return;
+            const getJNum = m => { const x = (m || '').match(/J(\d+)/i); return x ? parseInt(x[1]) : 9999; };
+            const sorted = [...MATCHS].sort((a, b) => getJNum(a) - getJNum(b));
+            let prevEndIdx = -1;
+            _rawBilanRows.forEach(raw => {
+                const finNum = parseInt(((raw.journeeFin).match(/(\d+)/) || [])[1] || '0');
+                let endIdx = -1;
+                sorted.forEach((m, i) => { if (getJNum(m) <= finNum) endIdx = i; });
+                if (endIdx < 0 || endIdx <= prevEndIdx) return;
+                const matchs = sorted.slice(prevEndIdx + 1, endIdx + 1);
+                if (!matchs.length) return;
+                const j1 = String((matchs[0].match(/J(\d+)/i) || [])[1] || '?').padStart(2, '0');
+                const j2 = String((matchs[matchs.length - 1].match(/J(\d+)/i) || [])[1] || '?').padStart(2, '0');
+                BILANS.push({ nom: raw.nom, saison: raw.saison, journeeFin: raw.journeeFin, matchs, label: `${raw.nom} — J${j1} à J${j2}` });
+                prevEndIdx = endIdx;
+            });
         }
 
         function populateFilters() {
