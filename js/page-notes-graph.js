@@ -730,12 +730,21 @@
 
         function updateNotesPage() {
             const joueurFilter = document.getElementById('filter-note-joueur').value;
-            const matchFilter = document.getElementById('filter-note-match').value;
+            const matchFilter  = document.getElementById('filter-note-match').value;
+            const bilanVal     = document.getElementById('filter-notes-bilan')?.value || '';
+            const bilanMatchs  = (bilanVal && typeof BILANS !== 'undefined') ? (BILANS.find(b => b.nom === bilanVal)?.matchs || null) : null;
 
-            const playerNotes = calculatePlayerNotes(matchFilter, joueurFilter);
+            let effectiveFilter = matchFilter;
+            if (bilanMatchs) {
+                effectiveFilter = matchFilter
+                    ? (bilanMatchs.includes(matchFilter) ? matchFilter : '__none__')
+                    : bilanMatchs.join(',');
+            }
+
+            const playerNotes = calculatePlayerNotes(effectiveFilter, joueurFilter);
             renderNotesTable(playerNotes, 'notes-table');
 
-            const gbNotes = calculateGardienNotes(matchFilter);
+            const gbNotes = calculateGardienNotes(effectiveFilter);
             renderGardienNotesTable(gbNotes, 'notes-gb-table');
         }
 

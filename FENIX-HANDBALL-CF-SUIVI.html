@@ -492,6 +492,12 @@
                 <!-- Titre + filtre sur la même ligne -->
                 <div class="joueurs-topbar">
                     <h2 class="section-title">👥 Statistiques Joueurs</h2>
+                    <div id="filter-bilan-joueur-wrap" class="filter-group" style="display:none">
+                        <label>Période</label>
+                        <select id="filter-joueur-bilan" onchange="updateJoueursPage()">
+                            <option value="">Toute la saison</option>
+                        </select>
+                    </div>
                     <div class="filter-group">
                         <label>Match</label>
                         <select id="filter-joueur-match" onchange="updateJoueursPage()">
@@ -653,6 +659,12 @@
                 </div>
                 
                 <div class="filters">
+                    <div id="filter-bilan-notes-wrap" class="filter-group" style="display:none">
+                        <label>Période</label>
+                        <select id="filter-notes-bilan" onchange="updateNotesPage()">
+                            <option value="">Toute la saison</option>
+                        </select>
+                    </div>
                     <div class="filter-group">
                         <label>Joueur</label>
                         <select id="filter-note-joueur">
@@ -1496,6 +1508,15 @@ let _effInfoPoste = null;
                 const j2 = String((matchs[matchs.length - 1].match(/J(\d+)/i) || [])[1] || '?').padStart(2, '0');
                 BILANS.push({ nom: raw.nom, saison: raw.saison, journeeFin: raw.journeeFin, matchs, label: `${raw.nom} — J${j1} à J${j2}` });
                 prevEndIdx = endIdx;
+            });
+            // Peupler les dropdowns bilan (joueurs + notes)
+            ['filter-joueur-bilan', 'filter-notes-bilan'].forEach(selId => {
+                const sel = document.getElementById(selId);
+                const wrap = document.getElementById(selId.replace('filter-', 'filter-bilan-').replace('-bilan', '-bilan'));
+                if (sel) sel.innerHTML = '<option value="">Toute la saison</option>' + BILANS.map(b => `<option value="${b.nom}">${b.label}</option>`).join('');
+                const wrapId = selId === 'filter-joueur-bilan' ? 'filter-bilan-joueur-wrap' : 'filter-bilan-notes-wrap';
+                const wrapEl = document.getElementById(wrapId);
+                if (wrapEl) wrapEl.style.display = BILANS.length ? '' : 'none';
             });
         }
 
@@ -3172,7 +3193,15 @@ let _effInfoPoste = null;
             <span style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#0A2463;letter-spacing:2px">
                 🏆 STATS DU MATCH
             </span>
-            <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+            <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <div id="pm-bilan-wrap" style="display:none;align-items:center;gap:8px">
+                    <label style="font-size:0.8rem;font-weight:600;color:#64748B">PÉRIODE</label>
+                    <select id="pm-bilan-sel" onchange="pmBilanSelect()"
+                            style="border:1px solid #E2E8F0;border-radius:8px;padding:6px 12px;
+                                   font-size:0.85rem;color:#1E293B;background:white;max-width:200px">
+                        <option value="">Toute la saison</option>
+                    </select>
+                </div>
                 <label style="font-size:0.8rem;font-weight:600;color:#64748B">MATCH</label>
                 <select id="pm-match-sel" onchange="pmMatchSelect()"
                         style="border:1px solid #E2E8F0;border-radius:8px;padding:6px 12px;

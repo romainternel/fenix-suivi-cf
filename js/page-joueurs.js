@@ -1,10 +1,17 @@
-﻿        function renderCourtPlayers(activeNames) {
+﻿        function _getJoueurBilanMatchs() {
+            const val = document.getElementById('filter-joueur-bilan')?.value || '';
+            if (!val || typeof BILANS === 'undefined') return null;
+            return BILANS.find(b => b.nom === val)?.matchs || null;
+        }
+
+        function renderCourtPlayers(activeNames) {
             const g = document.getElementById('court-players');
             if (!g) return;
             g.innerHTML = '';
 
             // Calcul efficacité par joueur pour la bordure colorée
             const matchFilter = document.getElementById('filter-joueur-match')?.value || '';
+            const bilanMatchs = _getJoueurBilanMatchs();
             const playerEff = {};
             JOUEURS_TERRAIN.forEach(p => {
                 if (p.poste === 'GB') {
@@ -12,6 +19,7 @@
                     const gbRows = DATA.filter(row => {
                         if (row[COLS.club] === 'FENIX') return false;
                         if (matchFilter && row[COLS.rencontre] !== matchFilter) return false;
+                        if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return false;
                         const g = (row[COLS.gardien] || '').toString().trim();
                         if (!matchPlayerName(g, p.nom)) return false;
                         return row[COLS.resultat] === 'But' || row[COLS.finalite] === 'Tir arrêté';
@@ -24,6 +32,7 @@
                     const rows = DATA.filter(row => {
                         if (row[COLS.club] !== 'FENIX') return false;
                         if (matchFilter && row[COLS.rencontre] !== matchFilter) return false;
+                        if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return false;
                         return matchPlayerName((row[COLS.joueur] || '').toString().trim(), p.nom);
                     });
                     const buts  = rows.filter(r => r[COLS.resultat] === 'But').length;
@@ -74,11 +83,13 @@
             const posteLabel = posteName[posteCode] || posteCode;
             const initials   = nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
 
-            // Stats globales filtrées par le filtre match actif
+            // Stats globales filtrées par le filtre match actif + bilan
             const matchFilter = document.getElementById('filter-joueur-match').value;
+            const bilanMatchs = _getJoueurBilanMatchs();
             const rowsFiltered = DATA.filter(row => {
                 if (row[COLS.club] !== 'FENIX') return false;
                 if (matchFilter && row[COLS.rencontre] !== matchFilter) return false;
+                if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return false;
                 return matchPlayerName((row[COLS.joueur] || '').toString().trim(), nom);
             });
             const buts  = rowsFiltered.filter(r => r[COLS.resultat] === 'But').length;
@@ -92,6 +103,7 @@
             let pd = 0;
             DATA.forEach(row => {
                 if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                 (row[COLS.action_joueur] || '').toString().split(';').forEach((j, i) => {
                     if (!matchPlayerName(j.trim(), nom)) return;
                     const act = lastNonEmpty((row[COLS.action_att] || '').toString().split(';'), i);
@@ -99,10 +111,11 @@
                 });
             });
 
-            // Note — somme actions att + def (filtré match)
+            // Note — somme actions att + def (filtré match + bilan)
             let attPlus = 0, attMoins = 0, defPlus = 0, defMoins = 0;
             DATA.forEach(row => {
                 if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                 const joueurs = (row[COLS.action_joueur] || '').toString().split(';');
                 const atts   = (row[COLS.action_att]    || '').toString().split(';');
                 const defs   = (row[COLS.action_def]    || '').toString().split(';');
@@ -526,6 +539,7 @@
 
             const isGB = (typeof detectIsGB === 'function') ? detectIsGB(nom) : (JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) || {}).poste === 'GB';
             const matchFilter   = document.getElementById('filter-joueur-match').value;
+            const bilanMatchs   = _getJoueurBilanMatchs();
 
             // === 1. Détail actions (joueur de champ) ou Zones % (GB) ===
             let actionCardHTML;
@@ -536,6 +550,7 @@
                 DATA.forEach(row => {
                     if (row[COLS.club] === 'FENIX') return;
                     if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     const g = (row[COLS.gardien]||'').toString().trim();
                     if (!matchPlayerName(g, nom)) return;
                     const isArret = row[COLS.finalite] === 'Tir arrêté';

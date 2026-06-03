@@ -4,6 +4,7 @@
         let _pmmZoneFilter = '';
         let _pmmImpactRows = [];
         let _pmmIsGB = false;
+        let _pmBilanFilter = '';
         let _cachedSeasonStats = null;
 
         function getPlayerSeasonStats(nom) {
@@ -350,7 +351,7 @@
         }
 
         // ── Détail des actions (style modal photo 1) ─────────────────────────────
-        function _buildDetailedActionsHTML(nom, matchFilter) {
+        function _buildDetailedActionsHTML(nom, matchFilter, bilanMatchs) {
             const ATT_PLUS  = (typeof ACTIONS_ATT_PLUS  !== 'undefined') ? ACTIONS_ATT_PLUS  : ['But', 'But DG', 'PD', 'PD DG', 'PO', "2' Obt", 'Duel gagné att', 'Bon choix', 'Bloc', 'Glissement', 'Écran'];
             const ATT_MOINS = (typeof ACTIONS_ATT_MOINS !== 'undefined') ? ACTIONS_ATT_MOINS : ['Tir raté', 'PB', 'PF', 'Neutralisé', 'Mauvais choix', 'Bloc -'];
             const DEF_PLUS  = (typeof ACTIONS_DEF_PLUS  !== 'undefined') ? ACTIONS_DEF_PLUS  : ['Duel gagné déf', 'Contre +', 'Récup', 'Intercep', 'Dissua', 'Entraide +', 'Impair +', 'Contournement pivot +'];
@@ -360,6 +361,7 @@
             const matchSet = new Set();
             DATA.forEach(row => {
                 if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                 const joueurs = (row[COLS.action_joueur]||'').toString().split(';');
                 const atts   = (row[COLS.action_att]||'').toString().split(';');
                 const defs   = (row[COLS.action_def]||'').toString().split(';');
@@ -777,9 +779,10 @@
 
             _pmmZoneFilter = '';
             _pmmIsGB = isGB;
+            const _bilanMF = _getPmBilanMatchs();
             _pmmImpactRows = isGB
-                ? DATA.filter(r => r[COLS.club] !== 'FENIX' && (!matchFilter || r[COLS.rencontre] === matchFilter) && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
-                : DATA.filter(r => r[COLS.club] === 'FENIX'  && (!matchFilter || r[COLS.rencontre] === matchFilter) && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom)   && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
+                ? DATA.filter(r => r[COLS.club] !== 'FENIX' && (!matchFilter || r[COLS.rencontre] === matchFilter) && (!_bilanMF || _bilanMF.includes(r[COLS.rencontre])) && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
+                : DATA.filter(r => r[COLS.club] === 'FENIX'  && (!matchFilter || r[COLS.rencontre] === matchFilter) && (!_bilanMF || _bilanMF.includes(r[COLS.rencontre])) && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom)   && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
 
             // Lignes avec position terrain (pour canvas vu du dessus)
             const terrainRows = isGB ? [] : DATA.filter(r =>
@@ -807,7 +810,7 @@
                     <div class="zr-row">${_zc('9m ext G')}${_zc('9m Int G')}${_zc('9m Int D')}${_zc('9m ext D')}</div>
                 </div>`;
 
-            const actionsHTML  = isGB ? _buildGbZoneTableHTML(nom, matchFilter) : _buildDetailedActionsHTML(nom, matchFilter);
+            const actionsHTML  = isGB ? _buildGbZoneTableHTML(nom, matchFilter) : _buildDetailedActionsHTML(nom, matchFilter, _bilanMF);
             const actionsTitle = isGB ? 'STATS PAR ZONE' : 'ACTIONS';
 
             const terrainSection = (!isGB && terrainRows.length > 0) ? `
@@ -854,7 +857,12 @@
         // ── Stats Match : équipes ────────────────────────────────────────────────
         function renderPlayerMatchStats() {
             const matchFilter = _pmCurrentMatchIdx >= 0 ? (MATCHS[_pmCurrentMatchIdx] || '') : '';
-            const filtered   = matchFilter ? DATA.filter(r=>r[COLS.rencontre]===matchFilter) : DATA;
+            const bilanMatchs = _getPmBilanMatchs();
+            const filtered = DATA.filter(r => {
+                if (matchFilter && r[COLS.rencontre] !== matchFilter) return false;
+                if (bilanMatchs && !bilanMatchs.includes(r[COLS.rencontre])) return false;
+                return true;
+            });
             const uniq       = [...new Set(filtered.map(r=>r[COLS.rencontre]).filter(Boolean))];
             const matchCount = uniq.length || 1;
             const showAvg    = matchCount > 1;
@@ -1022,7 +1030,28 @@
                 + (MATCHS || []).map(m => `<option value="${m}">${m}</option>`).join('');
             sel.value = '';
             _pmCurrentMatchIdx = -1;
+            _pmBilanFilter = '';
+            // Peupler bilan dropdown
+            const bilanSel  = document.getElementById('pm-bilan-sel');
+            const bilanWrap = document.getElementById('pm-bilan-wrap');
+            if (bilanSel && typeof BILANS !== 'undefined') {
+                bilanSel.innerHTML = '<option value="">Toute la saison</option>' + BILANS.map(b => `<option value="${b.nom}">${b.label}</option>`).join('');
+                if (bilanWrap) bilanWrap.style.display = BILANS.length ? 'flex' : 'none';
+            }
             renderPlayerMatchStats();
+        }
+
+        function pmBilanSelect() {
+            _pmBilanFilter = document.getElementById('pm-bilan-sel')?.value || '';
+            _pmCurrentMatchIdx = -1;
+            const matchSel = document.getElementById('pm-match-sel');
+            if (matchSel) matchSel.value = '';
+            renderPlayerMatchStats();
+        }
+
+        function _getPmBilanMatchs() {
+            if (!_pmBilanFilter || typeof BILANS === 'undefined') return null;
+            return BILANS.find(b => b.nom === _pmBilanFilter)?.matchs || null;
         }
 
         function pmMatchSelect() {
