@@ -1,3 +1,12 @@
+        function syncBilanFilters(sourceId) {
+            const BILAN_PAIR = { 'filter-joueur-bilan': 'filter-notes-bilan', 'filter-notes-bilan': 'filter-joueur-bilan' };
+            const targetId = BILAN_PAIR[sourceId];
+            if (!targetId) return;
+            const src = document.getElementById(sourceId);
+            const tgt = document.getElementById(targetId);
+            if (src && tgt) tgt.value = src.value;
+        }
+
         function getEffColor(pct, poste) {
             if (pct === null) return '#94a3b8';
             const s = EFF_SEUILS[poste] || { hi: 55, mid: 38 };

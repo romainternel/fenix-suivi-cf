@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=42">
-    <script src="js/utils.js?v=42"></script>
-    <script src="js/impact-images.js?v=42"></script>
-    <script src="js/player-mode.js?v=42"></script>
-    <script src="js/page-joueurs.js?v=42"></script>
-    <script src="js/page-notes-graph.js?v=42"></script>
-    <script src="js/page-analyse.js?v=42"></script>
+    <link rel="stylesheet" href="css/style.css?v=43">
+    <script src="js/utils.js?v=43"></script>
+    <script src="js/impact-images.js?v=43"></script>
+    <script src="js/player-mode.js?v=43"></script>
+    <script src="js/page-joueurs.js?v=43"></script>
+    <script src="js/page-notes-graph.js?v=43"></script>
+    <script src="js/page-analyse.js?v=43"></script>
 </head>
 <body>
 
@@ -494,7 +494,7 @@
                     <h2 class="section-title">👥 Statistiques Joueurs</h2>
                     <div id="filter-bilan-joueur-wrap" class="filter-group" style="display:none">
                         <label>Période</label>
-                        <select id="filter-joueur-bilan" onchange="updateJoueursPage()">
+                        <select id="filter-joueur-bilan" onchange="syncBilanFilters('filter-joueur-bilan');updateJoueursPage()">
                             <option value="">Toute la saison</option>
                         </select>
                     </div>
@@ -661,7 +661,7 @@
                 <div class="filters">
                     <div id="filter-bilan-notes-wrap" class="filter-group" style="display:none">
                         <label>Période</label>
-                        <select id="filter-notes-bilan" onchange="updateNotesPage()">
+                        <select id="filter-notes-bilan" onchange="syncBilanFilters('filter-notes-bilan');updateNotesPage()">
                             <option value="">Toute la saison</option>
                         </select>
                     </div>
