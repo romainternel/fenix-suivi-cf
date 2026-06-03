@@ -139,7 +139,12 @@
             const tjStr  = tjNom.matchs ? `<span class="pmf-meta-item">⏱ ${tjNom.matchs} match${tjNom.matchs > 1 ? 's' : ''}</span><span class="pmf-meta-item">⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>` : '';
 
             // ── Stats KPI ──
-            const fenixRows = DATA.filter(r => r[COLS.club] === 'FENIX' && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom));
+            const bilanMatchs = _getPmBilanMatchs();
+            const fenixRows = DATA.filter(r =>
+                r[COLS.club] === 'FENIX' &&
+                (!bilanMatchs || bilanMatchs.includes(r[COLS.rencontre])) &&
+                matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom)
+            );
             const buts  = fenixRows.filter(r => r[COLS.resultat] === 'But').length;
             const tirs  = fenixRows.filter(r => r[COLS.resultat] === 'Tir raté').length;
             const pb    = fenixRows.filter(r => r[COLS.resultat] === 'PB').length;
@@ -150,6 +155,7 @@
 
             let pd = 0;
             DATA.forEach(row => {
+                if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                 (row[COLS.action_joueur]||'').toString().split(';').forEach((j, i) => {
                     if (!matchPlayerName(j.trim(), nom)) return;
                     const act = (typeof lastNonEmpty === 'function') ? lastNonEmpty((row[COLS.action_att]||'').toString().split(';'), i) : '';
@@ -159,6 +165,7 @@
 
             let attPlus = 0, attMoins = 0, defPlus = 0, defMoins = 0;
             DATA.forEach(row => {
+                if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                 const joueurs = (row[COLS.action_joueur]||'').toString().split(';');
                 const atts   = (row[COLS.action_att]||'').toString().split(';');
                 const defs   = (row[COLS.action_def]||'').toString().split(';');
@@ -179,7 +186,12 @@
             // GB stats
             let gbArrets = 0, gbButs = 0, gbEff = 0, gbEffColor = '#64748B';
             if (isGB) {
-                const gbRows = DATA.filter(r => r[COLS.club] !== 'FENIX' && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && (r[COLS.resultat] === 'But' || r[COLS.finalite] === 'Tir arrêté'));
+                const gbRows = DATA.filter(r =>
+                    r[COLS.club] !== 'FENIX' &&
+                    (!bilanMatchs || bilanMatchs.includes(r[COLS.rencontre])) &&
+                    matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) &&
+                    (r[COLS.resultat] === 'But' || r[COLS.finalite] === 'Tir arrêté')
+                );
                 gbArrets = gbRows.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
                 gbButs   = gbRows.filter(r => r[COLS.resultat]  === 'But').length;
                 const gbTot = gbArrets + gbButs;
@@ -206,7 +218,7 @@
                 </div>`;
 
             // ── Encart 2 : Actions (joueur de champ) ou Zones % (GB) ──
-            const actionsHTML = isGB ? _buildGbZoneTableHTML(nom) : _buildDetailedActionsHTML(nom);
+            const actionsHTML = isGB ? _buildGbZoneTableHTML(nom, '', bilanMatchs) : _buildDetailedActionsHTML(nom, '', bilanMatchs);
 
             // ── Assemblage ──
             if (!page) return;
@@ -295,7 +307,7 @@
         }
 
         // ── Tableau zones de tir GB (remplace ACTIONS pour les gardiens) ────────
-        function _buildGbZoneTableHTML(nom, matchFilter) {
+        function _buildGbZoneTableHTML(nom, matchFilter, bilanMatchs) {
             const DIFF_ORDER = ['Très difficile', 'Difficile', 'Moyen', 'Facile', 'Très facile', null];
             const DIFF_COLOR = {
                 'Très difficile': '#FEE2E2',
@@ -309,6 +321,7 @@
             DATA.forEach(row => {
                 if (row[COLS.club] === 'FENIX') return;
                 if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                 const g = (row[COLS.gardien]||'').toString().trim();
                 if (!matchPlayerName(g, nom)) return;
                 const isArret = row[COLS.finalite] === 'Tir arrêté';

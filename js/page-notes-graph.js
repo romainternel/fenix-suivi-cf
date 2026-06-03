@@ -42,11 +42,15 @@
 
         function openNotesDetail(joueur, filter = 'all') {
             const matchFilter = document.getElementById('filter-note-match')?.value || '';
+            const bilanVal = document.getElementById('filter-notes-bilan')?.value || '';
+            const bilanMatchs = bilanVal && typeof BILANS !== 'undefined'
+                ? (BILANS.find(b => b.nom === bilanVal)?.matchs || null) : null;
             const counts = {};
             const matchSet = new Set();
 
             DATA.forEach(row => {
                 if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                 const joueurs = (row[COLS.action_joueur] || '').toString().split(';');
                 const atts    = (row[COLS.action_att]    || '').toString().split(';');
                 const defs    = (row[COLS.action_def]    || '').toString().split(';');
