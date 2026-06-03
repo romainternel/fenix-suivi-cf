@@ -369,16 +369,16 @@
 
                 matchesDiv.innerHTML = `
                     <div class="jm-header">📊 DÉTAIL PAR MATCH — ${nom}</div>
-                    <table class="jm-table">
+                    <div style="overflow-x:auto"><table class="jm-table">
                         <thead><tr>
                             <th>Match</th>
-                            <th>But/Tir</th><th>% Champ</th>
-                            <th>Pen (B/T)</th><th>% Pen</th><th>% Total</th>
+                            <th>B/T</th><th>%Ch</th>
+                            <th>Pen</th><th>%Pen</th><th>%Tot</th>
                             <th>PB</th><th>PO</th><th>PD</th>
-                            <th>⭐⭐ ATT</th><th>⭐ DEF</th><th>⭐ Note</th>
+                            <th class="jm-note-col">⭐⭐ATT</th><th class="jm-note-col">⭐DEF</th><th class="jm-note-col">★Tot</th>
                         </tr></thead>
                         <tbody>${tbodyHTML}</tbody>
-                    </table>`;
+                    </table></div>`;
             }
 
             renderCourtPlayers(getPlayersInData());

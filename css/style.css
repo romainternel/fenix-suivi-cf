@@ -936,13 +936,14 @@
         /* Tableau matchs — sous la carte, même largeur colonne droite */
         #joueur-matches { background: var(--fenix-white); border-radius: 16px; box-shadow: var(--shadow-md); padding: 1.1rem 1.25rem; display: none; }
         .jm-header { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--fenix-blue); letter-spacing: 1px; margin-bottom: 0.75rem; padding-bottom: 0.6rem; border-bottom: 2px solid #E8EFF5; }
-        .jm-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-        .jm-table th { padding: 0.45rem 0.6rem; text-align: center; background: #F8FAFC; border-bottom: 2px solid #E8EFF5; color: #64748B; font-weight: 700; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.3px; }
-        .jm-table th:first-child { text-align: left; }
-        .jm-table td { padding: 0.42rem 0.6rem; text-align: center; border-bottom: 1px solid #F1F5F9; color: #334155; }
+        .jm-table { width: 100%; border-collapse: collapse; font-size: 0.73rem; }
+        .jm-table th { padding: 0.35rem 0.35rem; text-align: center; background: #F8FAFC; border-bottom: 2px solid #E8EFF5; color: #64748B; font-weight: 700; font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.2px; white-space: nowrap; }
+        .jm-table th:first-child { text-align: left; min-width: 120px; }
+        .jm-table td { padding: 0.32rem 0.35rem; text-align: center; border-bottom: 1px solid #F1F5F9; color: #334155; }
         .jm-table td:first-child { text-align: left; font-weight: 600; color: var(--fenix-blue); white-space: nowrap; }
         .jm-table tbody tr:hover { background: #F8FAFC; }
         .jm-total-row td { background: #EEF2FF; font-weight: 700; color: var(--fenix-blue) !important; border-top: 2px solid #CBD5E1; }
+        .jm-note-col { min-width: 38px; }
 
         .no-data { text-align: center; padding: 3rem; color: #64748B; }
         .no-data-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }

@@ -1048,7 +1048,7 @@
                 const tNA=tot.ap-tot.am,tND=tot.dp-tot.dm,tNT=tNA+tND;
                 rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${tot.bc}/${tC}</td><td>${tC>0?Math.round(tot.bc/tC*100)+'%':'-'}</td><td>${tP>0?tot.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(tot.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${tot.pb}</td><td>${tot.po}</td><td>${tot.pd}</td><td>${nc(tNA)}</td><td>${nc(tND)}</td><td>${nc(tNT)}</td></tr>`;
 
-                wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>But/Tir</th><th>% Champ</th><th>Pen (B/T)</th><th>% Pen</th><th>% Total</th><th>PB</th><th>PO</th><th>PD</th><th>⭐⭐ ATT</th><th>⭐ DEF</th><th>⭐ Note</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+                wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>B/T</th><th>%Ch</th><th>Pen</th><th>%Pen</th><th>%Tot</th><th>PB</th><th>PO</th><th>PD</th><th class="jm-note-col">⭐⭐ATT</th><th class="jm-note-col">⭐DEF</th><th class="jm-note-col">★Tot</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
             }
         }
 
