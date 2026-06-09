@@ -221,7 +221,7 @@
                     </div>`;
             }
 
-            // ── Tableau détail par match (toute la saison) ───────────────────
+            // ── Tableau détail par match (filtré bilan + match) ──────────────
             const matchesDiv = document.getElementById('joueur-matches');
             matchesDiv.style.display = 'block';
 
@@ -232,6 +232,8 @@
                 // Tirs adverses → arrêts et buts concédés (lignes adverses, gardien=GB)
                 DATA.forEach(row => {
                     if (row[COLS.club] === 'FENIX') return;
+                    if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     const g = (row[COLS.gardien] || '').toString().trim();
                     if (!matchPlayerName(g, nom)) return;
                     const m = row[COLS.rencontre]; if (!m) return;
@@ -247,6 +249,8 @@
                 // Buts marqués + PB du GB → lignes FENIX, joueur=GB
                 DATA.forEach(row => {
                     if (row[COLS.club] !== 'FENIX') return;
+                    if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     if (!matchPlayerName((row[COLS.joueur] || '').toString().trim(), nom)) return;
                     const m = row[COLS.rencontre]; if (!m) return;
                     if (!gbSbm[m]) gbSbm[m] = initGb();
@@ -256,6 +260,8 @@
 
                 // PD → action_joueur (GB) + action_att
                 DATA.forEach(row => {
+                    if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     const m = row[COLS.rencontre]; if (!m) return;
                     (row[COLS.action_joueur] || '').toString().split(';').forEach((j, i) => {
                         if (!matchPlayerName(j.trim(), nom)) return;
@@ -312,6 +318,8 @@
                 const sbm = {};
                 DATA.forEach(row => {
                     if (row[COLS.club] !== 'FENIX') return;
+                    if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     if (!matchPlayerName((row[COLS.joueur] || '').toString().trim(), nom)) return;
                     const m = row[COLS.rencontre]; if (!m) return;
                     if (!sbm[m]) sbm[m] = initField();
@@ -322,6 +330,8 @@
                     else if (row[COLS.resultat] === 'PO')  sbm[m].po++;
                 });
                 DATA.forEach(row => {
+                    if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     const m = row[COLS.rencontre]; if (!m) return;
                     const joueurs = (row[COLS.action_joueur] || '').toString().split(';');
                     const atts = (row[COLS.action_att] || '').toString().split(';');
