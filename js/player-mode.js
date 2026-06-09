@@ -833,7 +833,19 @@
                 : `<span class="pmf-legend-dot pmf-legend-green">●</span> But <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> Tir raté`;
 
             const zones = [...new Set(_pmmImpactRows.map(r => (r[COLS.field_position]||'').toString().trim()).filter(Boolean))];
-            const _zc = z => `<div class="zr-cell${zones.includes(z) ? '' : ' zr-empty'}" data-zone="${z}" onclick="onPmmZoneClick('${z}')">${z}</div>`;
+            const zonePct = {};
+            _pmmImpactRows.forEach(r => {
+                const z = (r[COLS.field_position]||'').toString().trim();
+                if (!z) return;
+                if (!zonePct[z]) zonePct[z] = { pos: 0, tot: 0 };
+                zonePct[z].tot++;
+                if (isGB ? r[COLS.finalite] === 'Tir arrêté' : r[COLS.resultat] === 'But') zonePct[z].pos++;
+            });
+            const _zc = z => {
+                const zd = zonePct[z];
+                const pctStr = zd && zd.tot > 0 ? `<span class="zr-pct">${Math.round(zd.pos/zd.tot*100)}%</span>` : '';
+                return `<div class="zr-cell${zones.includes(z) ? '' : ' zr-empty'}" data-zone="${z}" onclick="onPmmZoneClick('${z}')"><span>${z}</span>${pctStr}</div>`;
+            };
             const zoneGridHTML = `
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                     <span style="font-size:0.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px">Zone</span>

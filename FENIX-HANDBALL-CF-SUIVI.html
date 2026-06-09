@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=48">
-    <script src="js/utils.js?v=48"></script>
-    <script src="js/impact-images.js?v=48"></script>
-    <script src="js/player-mode.js?v=48"></script>
-    <script src="js/page-joueurs.js?v=48"></script>
-    <script src="js/page-notes-graph.js?v=48"></script>
-    <script src="js/page-analyse.js?v=48"></script>
+    <link rel="stylesheet" href="css/style.css?v=49">
+    <script src="js/utils.js?v=49"></script>
+    <script src="js/impact-images.js?v=49"></script>
+    <script src="js/player-mode.js?v=49"></script>
+    <script src="js/page-joueurs.js?v=49"></script>
+    <script src="js/page-notes-graph.js?v=49"></script>
+    <script src="js/page-analyse.js?v=49"></script>
 </head>
 <body>
 
@@ -2679,6 +2679,9 @@ let _effInfoPoste = null;
             const joueurFilter    = document.getElementById('filter-impact-joueur')?.value || '';
             const selectedMatches = getSelectedMatches();
             const bilanMZ = impactBilanFilter ? BILANS.find(b => b.nom === impactBilanFilter)?.matchs : null;
+            const isGbSelected = joueurFilter && typeof JOUEURS_TERRAIN !== 'undefined'
+                ? JOUEURS_TERRAIN.some(p => matchPlayerName(p.nom, joueurFilter) && p.poste === 'GB')
+                : false;
             document.querySelectorAll('#zone-rect-selector .zr-cell').forEach(c => {
                 c.classList.remove('zr-eff-vert', 'zr-eff-orange', 'zr-eff-rouge', 'zr-eff-grey');
                 if (!c.dataset.label) c.dataset.label = c.textContent.trim();
@@ -2687,20 +2690,33 @@ let _effInfoPoste = null;
                 const zone = c.dataset.zone;
                 const cat  = getZoneCategory(zone);
                 if (!cat) return;
-                const rows = DATA.filter(r =>
-                    r[COLS.club] === 'FENIX' &&
-                    ['But', 'Tir raté'].includes(r[COLS.resultat]) &&
-                    r[COLS.field_position] === zone &&
-                    (!joueurFilter || r[COLS.joueur] === joueurFilter) &&
-                    (!selectedMatches.length || selectedMatches.includes(r[COLS.rencontre])) &&
-                    (!bilanMZ || bilanMZ.includes(r[COLS.rencontre]))
-                );
+                let rows, positifs;
+                if (isGbSelected) {
+                    rows = DATA.filter(r =>
+                        r[COLS.club] !== 'FENIX' &&
+                        (r[COLS.finalite] === 'Tir arrêté' || r[COLS.resultat] === 'But') &&
+                        r[COLS.field_position] === zone &&
+                        matchPlayerName((r[COLS.gardien] || '').toString().trim(), joueurFilter) &&
+                        (!selectedMatches.length || selectedMatches.includes(r[COLS.rencontre])) &&
+                        (!bilanMZ || bilanMZ.includes(r[COLS.rencontre]))
+                    );
+                    positifs = rows.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
+                } else {
+                    rows = DATA.filter(r =>
+                        r[COLS.club] === 'FENIX' &&
+                        ['But', 'Tir raté'].includes(r[COLS.resultat]) &&
+                        r[COLS.field_position] === zone &&
+                        (!joueurFilter || matchPlayerName((r[COLS.joueur] || '').toString().trim(), joueurFilter)) &&
+                        (!selectedMatches.length || selectedMatches.includes(r[COLS.rencontre])) &&
+                        (!bilanMZ || bilanMZ.includes(r[COLS.rencontre]))
+                    );
+                    positifs = rows.filter(r => r[COLS.resultat] === 'But').length;
+                }
                 if (rows.length === 0) { c.classList.add('zr-eff-grey'); return; }
-                const buts = rows.filter(r => r[COLS.resultat] === 'But').length;
-                const pct  = Math.round(buts / rows.length * 100);
-                const s    = ZONE_SEUILS[cat];
+                const pct = Math.round(positifs / rows.length * 100);
+                const s   = ZONE_SEUILS[cat];
                 c.classList.add(pct >= s.vert ? 'zr-eff-vert' : pct >= s.orange ? 'zr-eff-orange' : 'zr-eff-rouge');
-                c.innerHTML = `${c.dataset.label} <span class="zr-pct">${pct}%</span>`;
+                c.innerHTML = `<span>${c.dataset.label}</span><span class="zr-pct">${pct}%</span>`;
             });
         }
 

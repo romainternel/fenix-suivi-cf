@@ -771,7 +771,7 @@
             font-size: 0.71rem; font-weight: 600; color: #334155;
             border-radius: 5px; cursor: pointer; user-select: none;
             transition: background 0.12s, color 0.12s;
-            display: flex; align-items: center; justify-content: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
         }
         .zr-row:nth-child(1) .zr-cell { background: #dbeafe; }
         .zr-row:nth-child(2) .zr-cell { background: #ede9fe; }
@@ -785,7 +785,7 @@
         .zr-cell.zr-eff-rouge  { background: #fef2f2 !important; color: #b91c1c !important; border: 1.5px solid #fca5a5; }
         .zr-cell.zr-eff-grey   { background: #f8fafc !important; color: #94a3b8 !important; border: 1.5px solid #e2e8f0; }
         .zr-cell.zr-selected   { background: #2563eb !important; color: white !important; border-color: #2563eb !important; }
-        .zr-cell .zr-pct       { display: inline; font-size: 1em; font-weight: 800; }
+        .zr-cell .zr-pct       { display: block; font-size: 0.88em; font-weight: 800; line-height: 1; }
 
         /* Bouton info efficacité */
         .eff-info-btn {
