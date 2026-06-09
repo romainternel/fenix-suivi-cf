@@ -1,44 +1,4 @@
-﻿        // Actions positives et négatives
-        const NOTE_GROUPS = {
-            attPlus: [
-                { label: 'But (But DG)',       main: ['But', 'But DG'],          sub: 'But DG'  },
-                { label: 'PD (PD DG)',         main: ['PD', 'PD DG'],            sub: 'PD DG'   },
-                { label: 'PO',                 main: ['PO'],                      sub: null       },
-                { label: "2' Obt",             main: ["2' Obt"],                  sub: null       },
-                { label: 'Duel gagné att',     main: ['Duel gagné att'],          sub: null       },
-                { label: 'Bon choix',          main: ['Bon choix'],               sub: null       },
-                { label: 'Bloc',               main: ['Bloc'],                    sub: null       },
-                { label: 'Glissement',         main: ['Glissement'],              sub: null       },
-                { label: 'Écran',              main: ['Écran'],                   sub: null       },
-            ],
-            attMoins: [
-                { label: 'Tir raté',           main: ['Tir raté'],                sub: null       },
-                { label: 'PB (PF)',            main: ['PB', 'PF'],               sub: 'PF'       },
-                { label: 'Neutralisé',         main: ['Neutralisé'],              sub: null       },
-                { label: 'Mauvais choix',      main: ['Mauvais choix'],           sub: null       },
-                { label: 'Bloc -',             main: ['Bloc -'],                  sub: null       },
-            ],
-            defPlus: [
-                { label: 'Duel gagné déf',     main: ['Duel gagné déf'],          sub: null       },
-                { label: 'Toucher +',          main: ['Toucher +'],               sub: null       },
-                { label: 'Récup/Intercep/Dissua', main: ['Récup','Intercep','Dissua'], sub: null  },
-                { label: 'Entraide +',         main: ['Entraide +'],              sub: null       },
-                { label: 'Contournement pivot +', main: ['Contournement pivot +'], sub: null      },
-                { label: 'Impair +',           main: ['Impair +'],                sub: null       },
-                { label: 'Contre +',           main: ['Contre +'],                sub: null       },
-            ],
-            defMoins: [
-                { label: 'Duel perdu (2 min)', main: ['Duel perdu','2 min'],      sub: '2 min'   },
-                { label: 'Toucher -',          main: ['Toucher -'],               sub: null       },
-                { label: 'Hs/Répart/Changmt',  main: ['Hs/Répart/Changmt'],       sub: null       },
-                { label: 'Entraide -',         main: ['Entraide -'],              sub: null       },
-                { label: 'Contournement pivot -', main: ['Contournement pivot -'], sub: null      },
-                { label: 'Sortie de bloc -',   main: ['Sortie de bloc -'],        sub: null       },
-                { label: 'Impair -',           main: ['Impair -'],                sub: null       },
-                { label: 'Contre -',           main: ['Contre -'],                sub: null       },
-                { label: 'Inactif (Replis -)', main: ['Inactif','replis -'],      sub: 'replis -' },
-            ],
-        };
+﻿        // NOTE_GROUPS défini dans utils.js (chargé en premier)
 
         function openNotesDetail(joueur, filter = 'all') {
             const matchFilter = document.getElementById('filter-note-match')?.value || '';
@@ -740,12 +700,7 @@
             const bilanVal     = document.getElementById('filter-notes-bilan')?.value || '';
             const bilanMatchs  = (bilanVal && typeof BILANS !== 'undefined') ? (BILANS.find(b => b.nom === bilanVal)?.matchs || null) : null;
 
-            let effectiveFilter = matchFilter;
-            if (bilanMatchs) {
-                effectiveFilter = matchFilter
-                    ? (bilanMatchs.includes(matchFilter) ? matchFilter : '__none__')
-                    : bilanMatchs.join(',');
-            }
+            const effectiveFilter = buildEffectiveMatchFilter(matchFilter, bilanMatchs);
 
             const playerNotes = calculatePlayerNotes(effectiveFilter, joueurFilter);
             renderNotesTable(playerNotes, 'notes-table');

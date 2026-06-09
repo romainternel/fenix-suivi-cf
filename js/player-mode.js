@@ -200,8 +200,7 @@
                 gbEffColor = (typeof getEffColor === 'function') ? getEffColor(gbEff, 'GB') : '#0A2463';
                 // Note GB zone-weighted (même système que vue staff)
                 if (typeof calculateGardienNotes === 'function') {
-                    const gbEffFilter = bilanMatchs ? bilanMatchs.join(',') : '';
-                    const gbAllNotes  = calculateGardienNotes(gbEffFilter);
+                    const gbAllNotes = calculateGardienNotes(buildEffectiveMatchFilter('', bilanMatchs));
                     const gbEntry = Object.entries(gbAllNotes).find(([k]) => matchPlayerName(k, nom));
                     gbNoteTotal = gbEntry ? (gbEntry[1].scoreArrets + gbEntry[1].scoreButs + gbEntry[1].bonus) : 0;
                 }

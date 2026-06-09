@@ -227,10 +227,7 @@
                 ).length;
 
                 // Note GB : utiliser le système de scoring gardien (zone-weighted)
-                const gbEffectiveFilter = matchFilter
-                    ? matchFilter
-                    : (bilanMatchs ? bilanMatchs.join(',') : '');
-                const gbAllNotes = calculateGardienNotes(gbEffectiveFilter);
+                const gbAllNotes = calculateGardienNotes(buildEffectiveMatchFilter(matchFilter, bilanMatchs));
                 const gbNoteEntry = Object.entries(gbAllNotes).find(([k]) => matchPlayerName(k, nom));
                 const gbNoteTotal = gbNoteEntry
                     ? (gbNoteEntry[1].scoreArrets + gbNoteEntry[1].scoreButs + gbNoteEntry[1].bonus)

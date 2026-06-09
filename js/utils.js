@@ -109,10 +109,60 @@
             return new Set(rows.map(r => (r[COLS.joueur] || '').toString().trim()).filter(Boolean));
         }
 
-        var ACTIONS_ATT_PLUS  = ['But', 'But DG', 'PD', 'PD DG', 'PO', "2' Obt", 'Duel gagné att', 'Bon choix', 'Bloc', 'Glissement', 'Écran'];
-        var ACTIONS_ATT_MOINS = ['Tir raté', 'PB', 'PF', 'Neutralisé', 'Mauvais choix', 'Bloc -'];
-        var ACTIONS_DEF_PLUS  = ['Duel gagné déf', 'Toucher +', 'Contre +', 'Récup', 'Intercep', 'Dissua', 'Entraide +', 'Impair +', 'Contournement pivot +'];
-        var ACTIONS_DEF_MOINS = ['Duel perdu', '2 min', 'Entraide -', 'Impair -', 'Sortie de bloc -', 'Contre -', 'Inactif', 'Hs/Répart/Changmt', 'Toucher -', 'Contournement pivot -', 'replis -'];
+        // ── Référence unique des groupes d'actions (source of truth) ────────────
+        const NOTE_GROUPS = {
+            attPlus: [
+                { label: 'But (But DG)',          main: ['But', 'But DG'],               sub: 'But DG'  },
+                { label: 'PD (PD DG)',            main: ['PD', 'PD DG'],                 sub: 'PD DG'   },
+                { label: 'PO',                    main: ['PO'],                           sub: null       },
+                { label: "2' Obt",                main: ["2' Obt"],                       sub: null       },
+                { label: 'Duel gagné att',        main: ['Duel gagné att'],               sub: null       },
+                { label: 'Bon choix',             main: ['Bon choix'],                    sub: null       },
+                { label: 'Bloc',                  main: ['Bloc'],                         sub: null       },
+                { label: 'Glissement',            main: ['Glissement'],                   sub: null       },
+                { label: 'Écran',                 main: ['Écran'],                        sub: null       },
+            ],
+            attMoins: [
+                { label: 'Tir raté',              main: ['Tir raté'],                     sub: null       },
+                { label: 'PB (PF)',               main: ['PB', 'PF'],                    sub: 'PF'       },
+                { label: 'Neutralisé',            main: ['Neutralisé'],                   sub: null       },
+                { label: 'Mauvais choix',         main: ['Mauvais choix'],                sub: null       },
+                { label: 'Bloc -',                main: ['Bloc -'],                       sub: null       },
+            ],
+            defPlus: [
+                { label: 'Duel gagné déf',        main: ['Duel gagné déf'],               sub: null       },
+                { label: 'Toucher +',             main: ['Toucher +'],                    sub: null       },
+                { label: 'Récup/Intercep/Dissua', main: ['Récup', 'Intercep', 'Dissua'], sub: null       },
+                { label: 'Entraide +',            main: ['Entraide +'],                   sub: null       },
+                { label: 'Contournement pivot +', main: ['Contournement pivot +'],        sub: null       },
+                { label: 'Impair +',              main: ['Impair +'],                     sub: null       },
+                { label: 'Contre +',              main: ['Contre +'],                     sub: null       },
+            ],
+            defMoins: [
+                { label: 'Duel perdu (2 min)',    main: ['Duel perdu', '2 min'],          sub: '2 min'   },
+                { label: 'Toucher -',             main: ['Toucher -'],                    sub: null       },
+                { label: 'Hs/Répart/Changmt',     main: ['Hs/Répart/Changmt'],            sub: null       },
+                { label: 'Entraide -',            main: ['Entraide -'],                   sub: null       },
+                { label: 'Contournement pivot -', main: ['Contournement pivot -'],        sub: null       },
+                { label: 'Sortie de bloc -',      main: ['Sortie de bloc -'],             sub: null       },
+                { label: 'Impair -',              main: ['Impair -'],                     sub: null       },
+                { label: 'Contre -',              main: ['Contre -'],                     sub: null       },
+                { label: 'Inactif (Replis -)',    main: ['Inactif', 'replis -'],          sub: 'replis -' },
+            ],
+        };
+
+        // Dérivés automatiquement — ne jamais modifier directement
+        var ACTIONS_ATT_PLUS  = NOTE_GROUPS.attPlus.flatMap(g => g.main);
+        var ACTIONS_ATT_MOINS = NOTE_GROUPS.attMoins.flatMap(g => g.main);
+        var ACTIONS_DEF_PLUS  = NOTE_GROUPS.defPlus.flatMap(g => g.main);
+        var ACTIONS_DEF_MOINS = NOTE_GROUPS.defMoins.flatMap(g => g.main);
+
+        // Combine filtre match + filtre bilan en un seul filtre CSV pour calculatePlayerNotes / calculateGardienNotes
+        function buildEffectiveMatchFilter(matchFilter, bilanMatchs) {
+            if (!bilanMatchs) return matchFilter || '';
+            if (matchFilter) return bilanMatchs.includes(matchFilter) ? matchFilter : '__none__';
+            return bilanMatchs.join(',');
+        }
 
         function isPositiveATT(action) {
             return ACTIONS_ATT_PLUS.includes(action);
