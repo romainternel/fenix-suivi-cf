@@ -157,6 +157,7 @@
                 const gbRows = DATA.filter(row => {
                     if (row[COLS.club] === 'FENIX') return false;
                     if (matchFilter && row[COLS.rencontre] !== matchFilter) return false;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return false;
                     const g = (row[COLS.gardien] || '').toString().trim();
                     if (!matchPlayerName(g, nom)) return false;
                     return row[COLS.resultat] === 'But' || row[COLS.finalite] === 'Tir arrêté';
@@ -171,6 +172,7 @@
                 let gbPd = 0;
                 DATA.forEach(row => {
                     if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     (row[COLS.action_joueur] || '').toString().split(';').forEach((j, i) => {
                         if (!matchPlayerName(j.trim(), nom)) return;
                         const act = lastNonEmpty((row[COLS.action_att] || '').toString().split(';'), i);
@@ -181,13 +183,17 @@
                 // Buts marqués par le GB → lignes FENIX, joueur=GB
                 const gbButs = DATA.filter(row =>
                     row[COLS.club] === 'FENIX' &&
-                    (matchFilter ? row[COLS.rencontre] === matchFilter : true) &&
+                    (!matchFilter || row[COLS.rencontre] === matchFilter) &&
+                    (!bilanMatchs || bilanMatchs.includes(row[COLS.rencontre])) &&
                     matchPlayerName((row[COLS.joueur] || '').toString().trim(), nom) &&
                     row[COLS.resultat] === 'But'
                 ).length;
 
                 // Note GB : utiliser le système de scoring gardien (zone-weighted)
-                const gbAllNotes = calculateGardienNotes(matchFilter);
+                const gbEffectiveFilter = matchFilter
+                    ? matchFilter
+                    : (bilanMatchs ? bilanMatchs.join(',') : '');
+                const gbAllNotes = calculateGardienNotes(gbEffectiveFilter);
                 const gbNoteEntry = Object.entries(gbAllNotes).find(([k]) => matchPlayerName(k, nom));
                 const gbNoteTotal = gbNoteEntry
                     ? (gbNoteEntry[1].scoreArrets + gbNoteEntry[1].scoreButs + gbNoteEntry[1].bonus)
@@ -434,7 +440,7 @@
             // Stats depuis colonne Joueur + Resultat
             DATA.forEach(row => {
                 if (row[COLS.club] !== 'FENIX') return;
-                if (row[COLS.joueur] !== joueur) return;
+                if (!matchPlayerName((row[COLS.joueur] || '').toString().trim(), joueur)) return;
                 
                 const match = row[COLS.rencontre];
                 if (!match) return;
@@ -471,7 +477,7 @@
                 const actionsAtt = (row[COLS.action_att] || '').toString().split(';');
                 
                 actionJoueurs.forEach((j, idx) => {
-                    if (j.trim() === joueur) {
+                    if (matchPlayerName(j.trim(), joueur)) {
                         const action = lastNonEmpty(actionsAtt, idx);
                         if (action === 'PD' || action === 'PD DG') {
                             if (!statsByMatch[match]) {
@@ -631,6 +637,7 @@
                 const matchSet = new Set();
                 DATA.forEach(row => {
                     if (matchFilter && row[COLS.rencontre] !== matchFilter) return;
+                    if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                     const joueurs = (row[COLS.action_joueur] || '').toString().split(';');
                     const atts    = (row[COLS.action_att]    || '').toString().split(';');
                     const defs    = (row[COLS.action_def]    || '').toString().split(';');
