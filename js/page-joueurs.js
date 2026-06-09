@@ -152,6 +152,43 @@
                     </div>
                 </div>`;
 
+            // ── Badges (rang note, top att/def, rang TJ, progression) ──────────
+            const staffBadges = [];
+            if (typeof computePlayerRank === 'function' && posteCode) {
+                const rnk = computePlayerRank(nom, posteCode);
+                if (rnk && rnk.total > 1) {
+                    const m = rnk.rank === 1 ? '🥇' : rnk.rank === 2 ? '🥈' : rnk.rank === 3 ? '🥉' : null;
+                    if (m) staffBadges.push(`${m} #${rnk.rank} au poste`);
+                }
+            }
+            if (typeof _computeNoteScore === 'function' && posteCode && posteCode !== 'GB' && JOUEURS_TERRAIN) {
+                const tms = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
+                if (tms.length > 0) {
+                    const mn = _computeNoteScore(nom, posteCode);
+                    if (mn.att > 0 && tms.every(p => _computeNoteScore(p.nom, posteCode).att <= mn.att)) staffBadges.push('⚡ Top ATT au poste');
+                    if (mn.def > 0 && tms.every(p => _computeNoteScore(p.nom, posteCode).def <= mn.def)) staffBadges.push('🛡️ Top DEF au poste');
+                }
+            }
+            if (posteCode && typeof JOUEURS_TERRAIN !== 'undefined') {
+                const tms = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
+                if (tms.length > 0) {
+                    const myTJ = getTJData(nom, MATCHS).total || 0;
+                    let tjRank = 1;
+                    tms.forEach(p => { if ((getTJData(p.nom, MATCHS).total || 0) > myTJ) tjRank++; });
+                    const tjM = tjRank === 1 ? '🥇' : tjRank === 2 ? '🥈' : tjRank === 3 ? '🥉' : null;
+                    if (tjM) staffBadges.push(`${tjM} #${tjRank} TJ au poste`);
+                }
+            }
+            if (typeof computeStreak === 'function') {
+                const str = computeStreak(nom);
+                if (str.dir === 1 && str.streak >= 2) staffBadges.push(`↑ En progression (${str.streak} matchs)`);
+                else if (str.dir === -1 && str.streak >= 2) staffBadges.push(`↓ En baisse (${str.streak} matchs)`);
+            }
+            const badgesHTML = staffBadges.length
+                ? `<div style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;border-bottom:1px solid #F1F5F9">
+                    ${staffBadges.map(b => `<span style="background:#EFF6FF;color:#1E3A8A;border:1px solid #BFDBFE;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700">${b}</span>`).join('')}
+                   </div>` : '';
+
             if (posteCode === 'GB') {
                 // Stats gardien : tirs adverses sur lignes club≠FENIX, filtrées sur gardien
                 const gbRows = DATA.filter(row => {
@@ -201,7 +238,7 @@
                 const gbNoteColor   = gbNoteTotal > 0 ? 'var(--fenix-success)' : gbNoteTotal < 0 ? 'var(--fenix-danger)' : '#64748B';
                 const gbNoteDisplay = (gbNoteTotal > 0 ? '+' : '') + gbNoteTotal;
 
-                document.getElementById('joueur-panel').innerHTML = jpHeader + `
+                document.getElementById('joueur-panel').innerHTML = jpHeader + badgesHTML + `
                     <div class="jp-stats-grid" style="grid-template-columns:repeat(5,1fr)">
                         <div class="jp-stat"><div class="jp-val">${arrets}/${totalFaced}</div><div class="jp-lbl">Arrêts / Tirs</div></div>
                         <div class="jp-stat"><div class="jp-val" style="color:${gbEffColor}">${gbEff}%</div><div class="jp-lbl">Efficacité</div></div>
@@ -210,7 +247,7 @@
                         <div class="jp-stat"><div class="jp-val" style="color:${gbNoteColor}">${gbNoteDisplay}</div><div class="jp-lbl">Note GB</div></div>
                     </div>`;
             } else {
-                document.getElementById('joueur-panel').innerHTML = jpHeader + `
+                document.getElementById('joueur-panel').innerHTML = jpHeader + badgesHTML + `
                     <div class="jp-stats-grid">
                         <div class="jp-stat"><div class="jp-val">${buts}/${total}</div><div class="jp-lbl">But / Tir</div></div>
                         <div class="jp-stat"><div class="jp-val" style="color:${effColor(posteCode, eff, total)}">${eff}%</div><div class="jp-lbl" style="display:flex;align-items:center;justify-content:center;gap:2px;">Efficacité<span class="eff-info-btn" onclick="openEffInfoModal(event,'${posteCode}')">i</span></div></div>
