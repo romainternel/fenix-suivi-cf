@@ -185,6 +185,7 @@
 
             // GB stats
             let gbArrets = 0, gbButs = 0, gbEff = 0, gbEffColor = '#64748B';
+            let gbNoteTotal = 0, gbNoteColor = '#64748B', gbNoteDisplay = '0';
             if (isGB) {
                 const gbRows = DATA.filter(r =>
                     r[COLS.club] !== 'FENIX' &&
@@ -197,6 +198,15 @@
                 const gbTot = gbArrets + gbButs;
                 gbEff = gbTot > 0 ? Math.round(gbArrets / gbTot * 100) : 0;
                 gbEffColor = (typeof getEffColor === 'function') ? getEffColor(gbEff, 'GB') : '#0A2463';
+                // Note GB zone-weighted (même système que vue staff)
+                if (typeof calculateGardienNotes === 'function') {
+                    const gbEffFilter = bilanMatchs ? bilanMatchs.join(',') : '';
+                    const gbAllNotes  = calculateGardienNotes(gbEffFilter);
+                    const gbEntry = Object.entries(gbAllNotes).find(([k]) => matchPlayerName(k, nom));
+                    gbNoteTotal = gbEntry ? (gbEntry[1].scoreArrets + gbEntry[1].scoreButs + gbEntry[1].bonus) : 0;
+                }
+                gbNoteColor   = gbNoteTotal > 0 ? '#10B981' : gbNoteTotal < 0 ? '#EF4444' : '#64748B';
+                gbNoteDisplay = (gbNoteTotal > 0 ? '+' : '') + gbNoteTotal;
             }
 
             // ── Encart 1 : Stats KPI ──
@@ -206,7 +216,7 @@
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${gbEffColor}">${gbEff}%</div><div class="pmf-kpi-lbl">% ARRÊTS</div></div>
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:#EF4444">${gbButs}</div><div class="pmf-kpi-lbl">BUTS CONCÉDÉS</div></div>
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val">${pd}</div><div class="pmf-kpi-lbl">PD</div></div>
-                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div><div class="pmf-kpi-lbl">NOTE</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${gbNoteColor}">${gbNoteDisplay}</div><div class="pmf-kpi-lbl">NOTE GB</div></div>
                 </div>` : `
                 <div class="pmf-kpi-grid">
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val">${buts}/${total}</div><div class="pmf-kpi-lbl">BUT / TIR</div></div>
