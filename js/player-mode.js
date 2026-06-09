@@ -298,25 +298,36 @@
         }
 
         function computeStreak(nom) {
+            // Note ATT+DEF par match (uniquement matchs où le joueur a eu des actions)
             const matchStats = MATCHS.map(m => {
-                const rows = DATA.filter(r => r[COLS.club] === 'FENIX' && r[COLS.rencontre] === m && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom));
-                if (!rows.length) return null;
-                const buts = rows.filter(r => r[COLS.resultat] === 'But').length;
-                const tirs = rows.filter(r => r[COLS.resultat] === 'Tir raté').length;
-                const total = buts + tirs;
-                return total > 0 ? Math.round(buts / total * 100) : null;
+                let ap = 0, am = 0, dp = 0, dm = 0;
+                DATA.forEach(row => {
+                    if (row[COLS.rencontre] !== m) return;
+                    const js = (row[COLS.action_joueur]||'').toString().split(';');
+                    const as = (row[COLS.action_att]||'').toString().split(';');
+                    const ds = (row[COLS.action_def]||'').toString().split(';');
+                    js.forEach((j, idx) => {
+                        if (!matchPlayerName(j.trim(), nom)) return;
+                        const att = lastNonEmpty(as, idx), def = lastNonEmpty(ds, idx);
+                        if (isPositiveATT(att)) ap++; else if (isNegativeATT(att)) am++;
+                        if (isPositiveDEF(def)) dp++; else if (isNegativeDEF(def)) dm++;
+                    });
+                });
+                return ap + am + dp + dm > 0 ? (ap - am) + (dp - dm) : null;
             }).filter(v => v !== null);
+
             if (matchStats.length < 2) return { streak: 0, dir: 0 };
             const last = matchStats[matchStats.length - 1];
             const prev = matchStats[matchStats.length - 2];
+            if (last === prev) return { streak: 0, dir: 0 };
+            const dir = last > prev ? 1 : -1;
             let streak = 1;
-            const dir = last >= prev ? 1 : -1;
-            for (let i = matchStats.length - 2; i >= 0; i--) {
-                if (dir === 1 && matchStats[i] <= (i > 0 ? matchStats[i-1] : -1)) { if (i < matchStats.length-2) break; }
-                streak++;
-                if (streak >= 3) break;
+            for (let i = matchStats.length - 2; i >= 1; i--) {
+                if (dir === 1 && matchStats[i] > matchStats[i - 1]) streak++;
+                else if (dir === -1 && matchStats[i] < matchStats[i - 1]) streak++;
+                else break;
             }
-            return { streak: Math.min(streak, matchStats.length), dir, last, prev };
+            return { streak, dir, last, prev };
         }
 
         function renderBadges(nom, posteCode) {
