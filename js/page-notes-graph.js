@@ -55,7 +55,7 @@
                 const atts    = (row[COLS.action_att]    || '').toString().split(';');
                 const defs    = (row[COLS.action_def]    || '').toString().split(';');
                 joueurs.forEach((j, idx) => {
-                    if (j.trim() !== joueur) return;
+                    if (!matchPlayerName(j.trim(), joueur)) return;
                     if (row[COLS.rencontre]) matchSet.add(row[COLS.rencontre]);
                     const att = lastNonEmpty(atts, idx);
                     const def = lastNonEmpty(defs, idx);
@@ -183,7 +183,7 @@
                 actionJoueurs.forEach((joueur, idx) => {
                     joueur = joueur.trim();
                     if (!joueur) return;
-                    if (joueurFilter && joueur !== joueurFilter) return;
+                    if (joueurFilter && !matchPlayerName(joueur, joueurFilter)) return;
                     
                     if (!playerNotes[joueur]) {
                         playerNotes[joueur] = { attPlus: 0, attMoins: 0, defPlus: 0, defMoins: 0 };
@@ -396,7 +396,7 @@
                 const atts    = (row[COLS.action_att]    || '').toString().split(';');
                 const defs    = (row[COLS.action_def]    || '').toString().split(';');
                 joueurs.forEach((j, idx) => {
-                    if (j.trim() !== joueur) return;
+                    if (!matchPlayerName(j.trim(), joueur)) return;
                     const att = lastNonEmpty(atts, idx);
                     const def = lastNonEmpty(defs, idx);
                     if (isPositiveATT(att)) matchData[m].ap++;

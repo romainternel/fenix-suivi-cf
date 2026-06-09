@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=54">
-    <script src="js/utils.js?v=54"></script>
-    <script src="js/impact-images.js?v=54"></script>
-    <script src="js/player-mode.js?v=54"></script>
-    <script src="js/page-joueurs.js?v=54"></script>
-    <script src="js/page-notes-graph.js?v=54"></script>
-    <script src="js/page-analyse.js?v=54"></script>
+    <link rel="stylesheet" href="css/style.css?v=55">
+    <script src="js/utils.js?v=55"></script>
+    <script src="js/impact-images.js?v=55"></script>
+    <script src="js/player-mode.js?v=55"></script>
+    <script src="js/page-joueurs.js?v=55"></script>
+    <script src="js/page-notes-graph.js?v=55"></script>
+    <script src="js/page-analyse.js?v=55"></script>
 </head>
 <body>
 
@@ -2736,7 +2736,7 @@ let _effInfoPoste = null;
                 if (row[COLS.club] !== 'FENIX') return false;
                 if (!['But', 'Tir raté'].includes(row[COLS.resultat])) return false;
                 if (!row[COLS.impact] || !String(row[COLS.impact]).includes(';')) return false;
-                if (joueurFilter && row[COLS.joueur] !== joueurFilter) return false;
+                if (joueurFilter && !matchPlayerName((row[COLS.joueur]||'').toString().trim(), joueurFilter)) return false;
                 if (impactZoneFilter && row[COLS.field_position] !== impactZoneFilter) return false;
                 if (resultatFilter && row[COLS.resultat] !== resultatFilter) return false;
                 if (bilanM && !bilanM.includes(row[COLS.rencontre])) return false;
@@ -2767,7 +2767,7 @@ let _effInfoPoste = null;
                 ? new Set(DATA.filter(r =>
                     r[COLS.club] === 'FENIX' &&
                     ['But', 'Tir raté'].includes(r[COLS.resultat]) &&
-                    r[COLS.joueur] === joueurFilter &&
+                    matchPlayerName((r[COLS.joueur]||'').toString().trim(), joueurFilter) &&
                     r[COLS.field_position]
                   ).map(r => r[COLS.field_position]))
                 : null;
