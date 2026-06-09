@@ -267,15 +267,33 @@
         }
 
         // ── Badges joueur ────────────────────────────────────────────────────────
+        function _computeNoteScore(nom, posteCode) {
+            if (posteCode === 'GB' && typeof calculateGardienNotes === 'function') {
+                const all = calculateGardienNotes('');
+                const e = Object.entries(all).find(([k]) => matchPlayerName(k, nom));
+                return { total: e ? (e[1].scoreArrets + e[1].scoreButs + e[1].bonus) : 0, att: 0, def: 0 };
+            }
+            let ap = 0, am = 0, dp = 0, dm = 0;
+            DATA.forEach(row => {
+                const js = (row[COLS.action_joueur]||'').toString().split(';');
+                const as = (row[COLS.action_att]||'').toString().split(';');
+                const ds = (row[COLS.action_def]||'').toString().split(';');
+                js.forEach((j, idx) => {
+                    if (!matchPlayerName(j.trim(), nom)) return;
+                    const att = lastNonEmpty(as, idx), def = lastNonEmpty(ds, idx);
+                    if (isPositiveATT(att)) ap++; else if (isNegativeATT(att)) am++;
+                    if (isPositiveDEF(def)) dp++; else if (isNegativeDEF(def)) dm++;
+                });
+            });
+            return { att: ap - am, def: dp - dm, total: (ap - am) + (dp - dm) };
+        }
+
         function computePlayerRank(nom, posteCode) {
             if (!posteCode || !JOUEURS_TERRAIN) return null;
             const teammates = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
+            const myNote = _computeNoteScore(nom, posteCode).total;
             let rank = 1;
-            const myEff = getPlayerSeasonStats(nom).eff;
-            teammates.forEach(p => {
-                const s = getPlayerSeasonStats(p.nom);
-                if (s.eff > myEff) rank++;
-            });
+            teammates.forEach(p => { if (_computeNoteScore(p.nom, posteCode).total > myNote) rank++; });
             return { rank, total: teammates.length + 1 };
         }
 
@@ -309,6 +327,17 @@
             if (rank && rank.total > 1) {
                 const medal = rank.rank === 1 ? '🥇' : rank.rank === 2 ? '🥈' : rank.rank === 3 ? '🥉' : null;
                 if (medal) badges.push(`<span class="pmf-badge pmf-badge-rank">${medal} #${rank.rank} au poste</span>`);
+            }
+            // Top ATT / Top DEF parmi coéquipiers du même poste (joueurs de champ uniquement)
+            if (posteCode && posteCode !== 'GB' && JOUEURS_TERRAIN) {
+                const teammates = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
+                if (teammates.length > 0) {
+                    const myNote = _computeNoteScore(nom, posteCode);
+                    const topAtt = myNote.att > 0 && teammates.every(p => _computeNoteScore(p.nom, posteCode).att <= myNote.att);
+                    const topDef = myNote.def > 0 && teammates.every(p => _computeNoteScore(p.nom, posteCode).def <= myNote.def);
+                    if (topAtt) badges.push(`<span class="pmf-badge pmf-badge-rank">⚡ Top ATT au poste</span>`);
+                    if (topDef) badges.push(`<span class="pmf-badge pmf-badge-rank">🛡️ Top DEF au poste</span>`);
+                }
             }
             const str = computeStreak(nom);
             if (str.dir === 1 && str.streak >= 2) badges.push(`<span class="pmf-badge pmf-badge-up">↑ En progression (${str.streak} matchs)</span>`);
