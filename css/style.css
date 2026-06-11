@@ -57,12 +57,12 @@
             background: rgba(255,255,255,0.1);
             border: none;
             color: var(--fenix-white);
-            padding: 0.3rem 0.75rem;
+            padding: 0.3rem 1.1rem;
             border-radius: 6px;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
-            font-weight: 500;
-            font-size: 0.75rem;
+            font-weight: 600;
+            font-size: 0.85rem;
             transition: all 0.3s ease;
             white-space: nowrap;
         }
