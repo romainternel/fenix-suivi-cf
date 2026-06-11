@@ -170,10 +170,11 @@
             return playerNotes;
         }
 
-        function renderNotesTable(playerNotes, tbodyId) {
+        function renderNotesTable(playerNotes, tbodyId, bilanMatchs) {
             const tbody = document.getElementById(tbodyId);
             tbody.innerHTML = '';
-            
+            const bilanArg = bilanMatchs ? `'${bilanMatchs.join(',')}'` : 'null';
+
             Object.entries(playerNotes)
                 .filter(([joueur]) => {
                     if (typeof GARDIENS_FENIX === 'undefined' || !GARDIENS_FENIX.length) return true;
@@ -188,11 +189,11 @@
                     const noteAtt = notes.attPlus - notes.attMoins;
                     const noteDef = notes.defPlus - notes.defMoins;
                     const noteTotal = noteAtt + noteDef;
-                    
+
                     const tr = document.createElement('tr');
                     const j = joueur.replace(/'/g, "\\'");
                     tr.innerHTML = `
-                        <td><strong class="nd-clickable" onclick="openNotesDetail('${j}')">${joueur}</strong><button class="ng-shortcut" onclick="goToNoteGraph('${j}')" title="Voir le graphe">📈</button></td>
+                        <td><strong class="nd-clickable" onclick="openNotesDetail('${j}')">${joueur}</strong><button class="ng-shortcut" onclick="goToNoteGraph('${j}',${bilanArg})" title="Voir le graphe">📈</button></td>
                         <td class="nd-clickable" style="color:var(--fenix-success)" onclick="openNotesDetail('${j}','attPlus')">+${notes.attPlus}</td>
                         <td class="nd-clickable" style="color:var(--fenix-danger)" onclick="openNotesDetail('${j}','attMoins')">-${notes.attMoins}</td>
                         <td class="nd-clickable" onclick="openNotesDetail('${j}','att')"><strong>${noteAtt >= 0 ? '+' : ''}${noteAtt}</strong></td>
@@ -312,8 +313,11 @@
         let noteGraphChart = null;
         let _ngFromDetail = null;
 
-        function goToNoteGraph(joueur) {
+        function goToNoteGraph(joueur, bilanCsv) {
             _ngFromDetail = joueur;
+            // bilanCsv peut être une chaîne CSV de matchs ou null
+            if (typeof _ngBilanMatches !== 'undefined')
+                _ngBilanMatches = bilanCsv ? bilanCsv.split(',') : null;
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-notegraph').classList.add('active');
             document.getElementById('ng-joueur').value = joueur;
@@ -727,7 +731,7 @@
                     const block = document.createElement('div');
                     block.innerHTML = `${headerHTML}<div class="table-container"><table>${thead}<tbody id="${tbodyId}"></tbody></table></div>`;
                     container.appendChild(block);
-                    renderNotesTable(playerNotes, tbodyId);
+                    renderNotesTable(playerNotes, tbodyId, period.matchs);
                 });
             }
 
