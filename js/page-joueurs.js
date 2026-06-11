@@ -41,14 +41,20 @@
                 }
             });
 
+            // Calcul TJ pour le seuil d'activation de la couleur (≥6 matchs ET ≥20 min/match)
+            const effectiveMatchList = matchFilter ? [matchFilter] : (bilanMatchs || MATCHS || []);
+
             JOUEURS_TERRAIN.forEach(p => {
                 const isActive   = activeNames.size === 0 || [...activeNames].some(n => matchPlayerName(n, p.nom));
                 const isSelected = p.nom === currentSelectedJoueur;
                 const opacity    = isActive ? 1 : 0.28;
                 const r          = isSelected ? 4.5 : 3.5;
 
-                const eff      = playerEff[p.nom];
-                const ringClr  = eff !== null ? getEffColor(eff, p.poste) : '#94a3b8';
+                const eff        = playerEff[p.nom];
+                const tjData     = getTJData(p.nom, effectiveMatchList);
+                const tjAvg      = tjData.matchs > 0 ? tjData.total / tjData.matchs : 0;
+                const qualified  = tjData.matchs >= 6 && tjAvg >= 20;
+                const ringClr    = qualified && eff !== null ? getEffColor(eff, p.poste) : '#e2e8f0';
                 const initials = p.nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
                 const safeName = p.nom.replace(/'/g, "\\'");
 
