@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=59">
-    <script src="js/utils.js?v=59"></script>
-    <script src="js/impact-images.js?v=59"></script>
-    <script src="js/player-mode.js?v=59"></script>
-    <script src="js/page-joueurs.js?v=59"></script>
-    <script src="js/page-notes-graph.js?v=59"></script>
-    <script src="js/page-analyse.js?v=59"></script>
+    <link rel="stylesheet" href="css/style.css?v=60">
+    <script src="js/utils.js?v=60"></script>
+    <script src="js/impact-images.js?v=60"></script>
+    <script src="js/player-mode.js?v=60"></script>
+    <script src="js/page-joueurs.js?v=60"></script>
+    <script src="js/page-notes-graph.js?v=60"></script>
+    <script src="js/page-analyse.js?v=60"></script>
 </head>
 <body>
 
@@ -1006,13 +1006,13 @@
 let _effInfoPoste = null;
 
         const EFF_TABLE_DATA = [
-            { poste: 'PIV',  moyD1: '77,1%', np: '< 74%',  proj: '74–78%', sol: '≥ 79%' },
-            { poste: 'AD',   moyD1: '73,0%', np: '< 69%',  proj: '69–73%', sol: '≥ 74%' },
-            { poste: 'AG',   moyD1: '72,4%', np: '< 69%',  proj: '69–73%', sol: '≥ 74%' },
-            { poste: 'DC',   moyD1: '61,9%', np: '< 59%',  proj: '59–63%', sol: '≥ 64%' },
-            { poste: 'ARD',  moyD1: '59,1%', np: '< 58%',  proj: '58–62%', sol: '≥ 63%' },
-            { poste: 'ARG',  moyD1: '57,7%', np: '< 55%',  proj: '55–59%', sol: '≥ 60%' },
-            { poste: 'GB',   moyD1: '~30%',  np: '< 30%',  proj: '30–34%', sol: '≥ 35%' },
+            { poste: 'PIV',  moyD1: '77,1%', np: '< 44%',  proj: '44–57%', sol: '≥ 58%' },
+            { poste: 'AD',   moyD1: '73,0%', np: '< 38%',  proj: '38–51%', sol: '≥ 52%' },
+            { poste: 'AG',   moyD1: '72,4%', np: '< 38%',  proj: '38–51%', sol: '≥ 52%' },
+            { poste: 'DC',   moyD1: '61,9%', np: '< 38%',  proj: '38–51%', sol: '≥ 52%' },
+            { poste: 'ARD',  moyD1: '59,1%', np: '< 34%',  proj: '34–47%', sol: '≥ 48%' },
+            { poste: 'ARG',  moyD1: '57,7%', np: '< 34%',  proj: '34–47%', sol: '≥ 48%' },
+            { poste: 'GB',   moyD1: '~30%',  np: '< 28%',  proj: '28–37%', sol: '≥ 38%' },
         ];
 
         function openEffInfoModal(event, posteCode) {
@@ -3182,7 +3182,7 @@ let _effInfoPoste = null;
         <div class="eff-info-panel">
             <button class="eff-info-close" onclick="closeEffInfoModal()">✕</button>
             <h3>% Efficacité au tir — Référence par poste</h3>
-            <div class="eff-subtitle">Réf. LiquiMoly Starligue 2024-25 · Tirs hors penalty · Standards D1</div>
+            <div class="eff-subtitle">Seuils calibrés CF Proligue · La colonne "Moy. D1" est fournie comme référence externe</div>
             <div class="eff-legend">
                 <div class="eff-legend-item"><span style="color:#dc2626;font-size:1rem;">●</span> Rouge — Non projetable</div>
                 <div class="eff-legend-item"><span style="color:#2563eb;font-size:1rem;">●</span> Bleu — Projetable</div>
@@ -3201,7 +3201,7 @@ let _effInfoPoste = null;
                 <tbody id="eff-info-tbody"></tbody>
             </table>
             <div style="margin-top:0.9rem;font-size:0.68rem;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:0.6rem;">
-                n=11 joueurs/poste · source Starligue.com · tirs hors penalty
+                Seuils CF Proligue · Moy. D1 = référence Starligue 2024-25 (source Starligue.com)
             </div>
         </div>
     </div>
