@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=65">
-    <script src="js/utils.js?v=65"></script>
-    <script src="js/impact-images.js?v=65"></script>
-    <script src="js/player-mode.js?v=65"></script>
-    <script src="js/page-joueurs.js?v=65"></script>
-    <script src="js/page-notes-graph.js?v=65"></script>
-    <script src="js/page-analyse.js?v=65"></script>
+    <link rel="stylesheet" href="css/style.css?v=66">
+    <script src="js/utils.js?v=66"></script>
+    <script src="js/impact-images.js?v=66"></script>
+    <script src="js/player-mode.js?v=66"></script>
+    <script src="js/page-joueurs.js?v=66"></script>
+    <script src="js/page-notes-graph.js?v=66"></script>
+    <script src="js/page-analyse.js?v=66"></script>
 </head>
 <body>
 
@@ -2829,19 +2829,22 @@ let _effInfoPoste = null;
         let currentGraphStats = ['possessions']; // Tableau des stats sélectionnées
         let currentPeriode = 'all'; // 'all', '1', '2'
         const STAT_COLORS = {
-            'possessions': '#0A2463',
-            'buts_mis': '#10B981',
-            'buts_pris': '#EF4444',
-            'efficacite': '#F59E0B',
-            'neutralise': '#8B5CF6'
+            'possessions':   '#0A2463',
+            'buts_mis':      '#10B981',
+            'buts_pris':     '#EF4444',
+            'efficacite':    '#F59E0B',
+            'neutralise':    '#8B5CF6',
+            'pertes_balle':  '#F97316'
         };
         const STAT_LABELS = {
-            'possessions': 'Possessions',
-            'buts_mis': 'Buts marqués',
-            'buts_pris': 'Buts encaissés',
-            'efficacite': '% Réussite',
-            'neutralise': 'Neutralisé'
+            'possessions':   'Possessions',
+            'buts_mis':      'Buts marqués',
+            'buts_pris':     'Buts encaissés',
+            'efficacite':    '% Réussite',
+            'neutralise':    'Neutralisé',
+            'pertes_balle':  'PB'
         };
+        let _graphPoints = null; // stocke coordonnées canvas pour hover
 
         function openGraphModal(team) {
             currentGraphTeam = team;
@@ -2931,6 +2934,8 @@ let _effInfoPoste = null;
                     return tirs > 0 ? Math.round(buts / tirs * 100) : 0;
                 case 'neutralise':
                     return teamData.filter(row => row[COLS.resultat] === 'Jet franc').length;
+                case 'pertes_balle':
+                    return teamData.filter(row => row[COLS.resultat] === 'PB').length;
                 default:
                     return 0;
             }
@@ -3071,19 +3076,66 @@ let _effInfoPoste = null;
             currentGraphStats.forEach(stat => {
                 const color = STAT_COLORS[stat];
                 const label = STAT_LABELS[stat];
-                
-                // Petit carré de couleur
                 ctx.fillStyle = color;
                 ctx.fillRect(legendX, 15, 14, 14);
-                
-                // Texte
                 ctx.fillStyle = '#333';
                 ctx.textAlign = 'left';
                 ctx.fillText(label, legendX + 20, 26);
-                
                 legendX += ctx.measureText(label).width + 40;
             });
+
+            // Sauvegarder les points pour le hover
+            _graphPoints = {
+                matches: selectedMatches,
+                pointSpacing,
+                padding,
+                graphHeight,
+                allData
+            };
         }
+
+        // ── Hover tooltip ────────────────────────────────────────────────────────
+        (function() {
+            const canvas = document.getElementById('graph-canvas');
+            const tooltip = document.getElementById('graph-tooltip');
+            if (!canvas || !tooltip) return;
+
+            canvas.addEventListener('mousemove', function(e) {
+                if (!_graphPoints) { tooltip.style.display = 'none'; return; }
+                const { matches, pointSpacing, padding, allData } = _graphPoints;
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+
+                let nearestIdx = -1, minDist = Infinity;
+                matches.forEach((m, i) => {
+                    const x = padding.left + pointSpacing * (i + 1);
+                    const d = Math.abs(mouseX - x);
+                    if (d < minDist && d < pointSpacing * 0.55) { minDist = d; nearestIdx = i; }
+                });
+
+                if (nearestIdx === -1) { tooltip.style.display = 'none'; return; }
+
+                const match = matches[nearestIdx];
+                const { result, color: rColor, score } = getMatchResult(match);
+                let html = `<div style="font-weight:700;margin-bottom:4px;color:${rColor}">${match} — ${result} ${score}</div>`;
+                currentGraphStats.forEach(stat => {
+                    const val = allData[stat]?.[nearestIdx]?.value ?? '—';
+                    html += `<div style="display:flex;align-items:center;gap:5px"><span style="color:${STAT_COLORS[stat]};font-size:1rem">●</span><span>${STAT_LABELS[stat]}</span><strong style="margin-left:auto;padding-left:10px">${val}${stat === 'efficacite' ? '%' : ''}</strong></div>`;
+                });
+                tooltip.innerHTML = html;
+                tooltip.style.display = 'block';
+
+                const container = document.getElementById('graph-container');
+                const cr = container.getBoundingClientRect();
+                let tx = e.clientX - cr.left + 14, ty = e.clientY - cr.top - 10;
+                if (tx + 190 > cr.width)  tx -= 200;
+                if (ty + 120 > cr.height) ty -= 120;
+                tooltip.style.left = tx + 'px';
+                tooltip.style.top  = ty + 'px';
+            });
+
+            canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+        })();
 
 
         document.addEventListener('click', e => {
@@ -3144,6 +3196,7 @@ let _effInfoPoste = null;
                     <button class="graph-filter-btn" data-stat="buts_pris" onclick="toggleGraphStat('buts_pris', this)">Buts encaissés</button>
                     <button class="graph-filter-btn" data-stat="efficacite" onclick="toggleGraphStat('efficacite', this)">% Réussite</button>
                     <button class="graph-filter-btn" data-stat="neutralise" onclick="toggleGraphStat('neutralise', this)">Neutralisé</button>
+                    <button class="graph-filter-btn" data-stat="pertes_balle" onclick="toggleGraphStat('pertes_balle', this)">PB</button>
                 </div>
                 <div class="filter-row">
                     <span class="filter-label">Période:</span>
@@ -3152,8 +3205,9 @@ let _effInfoPoste = null;
                     <button class="periode-filter-btn" data-periode="2" onclick="changePeriode('2', this)">2ème Mi-temps</button>
                 </div>
             </div>
-            <div class="graph-container" id="graph-container">
+            <div class="graph-container" id="graph-container" style="position:relative;">
                 <canvas id="graph-canvas"></canvas>
+                <div id="graph-tooltip" style="display:none;position:absolute;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;font-size:0.78rem;box-shadow:0 4px 12px rgba(0,0,0,0.12);pointer-events:none;min-width:160px;z-index:10;line-height:1.6"></div>
             </div>
         </div>
     </div>
