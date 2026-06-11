@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=56">
-    <script src="js/utils.js?v=56"></script>
-    <script src="js/impact-images.js?v=56"></script>
-    <script src="js/player-mode.js?v=56"></script>
-    <script src="js/page-joueurs.js?v=56"></script>
-    <script src="js/page-notes-graph.js?v=56"></script>
-    <script src="js/page-analyse.js?v=56"></script>
+    <link rel="stylesheet" href="css/style.css?v=57">
+    <script src="js/utils.js?v=57"></script>
+    <script src="js/impact-images.js?v=57"></script>
+    <script src="js/player-mode.js?v=57"></script>
+    <script src="js/page-joueurs.js?v=57"></script>
+    <script src="js/page-notes-graph.js?v=57"></script>
+    <script src="js/page-analyse.js?v=57"></script>
 </head>
 <body>
 
@@ -983,16 +983,16 @@
         const IMPACT_DOTS  = { alg: [], face: [], ald: [] };
         const GARDIEN_DOTS = { alg: [], face: [], ald: [] };
 
-        // Seuils d'efficacité par poste — standards D1 Starligue 2024-25 (hors penalty)
-        // Vert ≥ hi% = Solide, Bleu ≥ mid% = Projetable, Rouge < mid% = Non projetable
+        // Seuils d'efficacité par poste — calibrés CF Proligue 18-22 ans
+        // Vert ≥ hi% = Solide, Bleu ≥ mid% = Projetable, Rouge < mid% = À développer
         const EFF_SEUILS = {
-            PIV: { hi: 79, mid: 74 }, // Pivot — moy D1 77,1%
-            AG:  { hi: 74, mid: 69 }, // Ailier G — moy D1 72,4%
-            AD:  { hi: 74, mid: 69 }, // Ailier D — moy D1 73,0%
-            DC:  { hi: 64, mid: 59 }, // Demi-Centre — moy D1 61,9%
-            ARD: { hi: 63, mid: 58 }, // Arrière D — moy D1 59,1%
-            ARG: { hi: 60, mid: 55 }, // Arrière G — moy D1 57,7%
-            GB:  { hi: 35, mid: 30 }, // Gardien — % arrêts : moy monde 30%, top Starligue 36%
+            PIV: { hi: 58, mid: 44 }, // Pivot — référence CF Proligue
+            AG:  { hi: 52, mid: 38 }, // Ailier G
+            AD:  { hi: 52, mid: 38 }, // Ailier D
+            DC:  { hi: 52, mid: 38 }, // Demi-Centre
+            ARD: { hi: 48, mid: 34 }, // Arrière D
+            ARG: { hi: 48, mid: 34 }, // Arrière G
+            GB:  { hi: 38, mid: 28 }, // Gardien — % arrêts
         };
 
 

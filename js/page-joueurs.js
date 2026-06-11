@@ -172,17 +172,22 @@
             if (posteCode && typeof JOUEURS_TERRAIN !== 'undefined') {
                 const tms = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
                 if (tms.length > 0) {
-                    const myTJ = getTJData(nom, MATCHS).total || 0;
+                    const myTJData = getTJData(nom, MATCHS);
+                    const myTJAvg = myTJData.matchs > 0 ? myTJData.total / myTJData.matchs : 0;
                     let tjRank = 1;
-                    tms.forEach(p => { if ((getTJData(p.nom, MATCHS).total || 0) > myTJ) tjRank++; });
+                    tms.forEach(p => {
+                        const d = getTJData(p.nom, MATCHS);
+                        const avg = d.matchs > 0 ? d.total / d.matchs : 0;
+                        if (avg > myTJAvg) tjRank++;
+                    });
                     const tjM = tjRank === 1 ? '🥇' : tjRank === 2 ? '🥈' : tjRank === 3 ? '🥉' : null;
                     if (tjM) staffBadges.push(`${tjM} #${tjRank} TJ au poste`);
                 }
             }
             if (typeof computeStreak === 'function') {
                 const str = computeStreak(nom);
-                if (str.dir === 1 && str.streak >= 2) staffBadges.push(`↑ En progression (${str.streak} matchs)`);
-                else if (str.dir === -1 && str.streak >= 2) staffBadges.push(`↓ En baisse (${str.streak} matchs)`);
+                if (str.dir === 1 && str.streak >= 3) staffBadges.push(`↑ En progression (${str.streak} matchs)`);
+                else if (str.dir === -1 && str.streak >= 3) staffBadges.push(`↓ En baisse (${str.streak} matchs)`);
             }
             const badgesHTML = staffBadges.length
                 ? `<div style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;border-bottom:1px solid #F1F5F9">
@@ -241,7 +246,7 @@
                         <div class="jp-stat"><div class="jp-val" style="color:${gbEffColor}">${gbEff}%</div><div class="jp-lbl">Efficacité</div></div>
                         <div class="jp-stat"><div class="jp-val" style="color:var(--fenix-accent)">${gbPd}</div><div class="jp-lbl">PD</div></div>
                         <div class="jp-stat"><div class="jp-val" style="color:var(--fenix-success)">${gbButs}</div><div class="jp-lbl">Buts marqués</div></div>
-                        <div class="jp-stat"><div class="jp-val" style="color:${gbNoteColor}">${gbNoteDisplay}</div><div class="jp-lbl">Note GB</div></div>
+                        <div class="jp-stat"><div class="jp-val" style="color:${gbNoteColor}">${gbNoteDisplay}</div><div class="jp-lbl" style="display:flex;align-items:center;justify-content:center;gap:2px;">Note GB<span title="Score pondéré par zone : arrêt difficile = +3 pts, arrêt moyen = +2 pts, arrêt facile = +1 pt, but concédé = -1 pt" style="cursor:help;background:#CBD5E1;color:#1E293B;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0">i</span></div></div>
                     </div>`;
             } else {
                 document.getElementById('joueur-panel').innerHTML = jpHeader + badgesHTML + `

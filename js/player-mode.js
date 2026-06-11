@@ -215,7 +215,7 @@
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${gbEffColor}">${gbEff}%</div><div class="pmf-kpi-lbl">% ARRÊTS</div></div>
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:#EF4444">${gbButs}</div><div class="pmf-kpi-lbl">BUTS CONCÉDÉS</div></div>
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val">${pd}</div><div class="pmf-kpi-lbl">PD</div></div>
-                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${gbNoteColor}">${gbNoteDisplay}</div><div class="pmf-kpi-lbl">NOTE GB</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${gbNoteColor}">${gbNoteDisplay}</div><div class="pmf-kpi-lbl" style="display:flex;align-items:center;justify-content:center;gap:2px;">NOTE GB<span title="Score pondéré par zone : arrêt difficile = +3 pts, arrêt moyen = +2 pts, arrêt facile = +1 pt, but concédé = -1 pt" style="cursor:help;background:#CBD5E1;color:#1E293B;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0">i</span></div></div>
                 </div>` : `
                 <div class="pmf-kpi-grid">
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val">${buts}/${total}</div><div class="pmf-kpi-lbl">BUT / TIR</div></div>
@@ -350,8 +350,8 @@
                 }
             }
             const str = computeStreak(nom);
-            if (str.dir === 1 && str.streak >= 2) badges.push(`<span class="pmf-badge pmf-badge-up">↑ En progression (${str.streak} matchs)</span>`);
-            else if (str.dir === -1 && str.streak >= 2) badges.push(`<span class="pmf-badge pmf-badge-down">↓ En baisse (${str.streak} matchs)</span>`);
+            if (str.dir === 1 && str.streak >= 3) badges.push(`<span class="pmf-badge pmf-badge-up">↑ En progression (${str.streak} matchs)</span>`);
+            else if (str.dir === -1 && str.streak >= 3) badges.push(`<span class="pmf-badge pmf-badge-down">↓ En baisse (${str.streak} matchs)</span>`);
             el.innerHTML = badges.length ? `<div class="pmf-badges-row">${badges.join('')}</div>` : '';
         }
 
@@ -1167,6 +1167,7 @@
             }
             updatePmPeriodChip();
             renderPlayerMatchStats();
+            if (_pmActiveTab === 'fiche') renderPlayerFiche();
         }
 
         function _getPmBilanMatchs() {

@@ -144,6 +144,9 @@
                     joueur = joueur.trim();
                     if (!joueur) return;
                     if (joueurFilter && !matchPlayerName(joueur, joueurFilter)) return;
+                    // Exclure les gardiens — leur score est calculé via calculateGardienNotes
+                    if (!joueurFilter && typeof GARDIENS_FENIX !== 'undefined' && GARDIENS_FENIX.length &&
+                        GARDIENS_FENIX.some(g => matchPlayerName(g, joueur))) return;
                     
                     if (!playerNotes[joueur]) {
                         playerNotes[joueur] = { attPlus: 0, attMoins: 0, defPlus: 0, defMoins: 0 };

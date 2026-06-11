@@ -173,7 +173,7 @@
                     buts, tirs,
                     eff:  tirs > 0 ? Math.round(buts / tirs * 100) : null,
                     pb:   data.filter(r => r[COLS.resultat] === 'PB').length,
-                    poss: data.filter(r => r[COLS.possession]).length
+                    poss: data.filter(r => r[COLS.possession] && String(r[COLS.possession]).trim()).length
                 };
             }
 
