@@ -53,7 +53,7 @@
                 const eff        = playerEff[p.nom];
                 const tjData     = getTJData(p.nom, effectiveMatchList);
                 const tjAvg      = tjData.matchs > 0 ? tjData.total / tjData.matchs : 0;
-                const qualified  = tjData.matchs >= 6 && tjAvg >= 20;
+                const qualified  = tjData.matchs >= 6 && tjAvg >= 30;
                 const ringClr    = qualified && eff !== null ? getEffColor(eff, p.poste) : '#e2e8f0';
                 const initials = p.nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
                 const safeName = p.nom.replace(/'/g, "\\'");

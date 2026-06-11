@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=61">
-    <script src="js/utils.js?v=61"></script>
-    <script src="js/impact-images.js?v=61"></script>
-    <script src="js/player-mode.js?v=61"></script>
-    <script src="js/page-joueurs.js?v=61"></script>
-    <script src="js/page-notes-graph.js?v=61"></script>
-    <script src="js/page-analyse.js?v=61"></script>
+    <link rel="stylesheet" href="css/style.css?v=62">
+    <script src="js/utils.js?v=62"></script>
+    <script src="js/impact-images.js?v=62"></script>
+    <script src="js/player-mode.js?v=62"></script>
+    <script src="js/page-joueurs.js?v=62"></script>
+    <script src="js/page-notes-graph.js?v=62"></script>
+    <script src="js/page-analyse.js?v=62"></script>
 </head>
 <body>
 
@@ -89,14 +89,11 @@
     </header>
 
     <div id="joueurs-subnav" class="joueurs-subnav" style="display:none;">
-        <div class="jsub-tabs">
-            <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
-            <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">⭐ Notes</button>
-        </div>
-        <div class="jsub-actions">
-            <button id="btn-joueur-graph" class="btn-joueur-context" disabled onclick="openGraphiqueForSelected()">📈 Graphique</button>
-            <button id="btn-joueur-impact" class="btn-joueur-context" disabled onclick="openImpactForSelected()">🎯 Impact</button>
-        </div>
+        <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
+        <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">⭐ Notes</button>
+        <span class="jsub-sep"></span>
+        <button id="btn-joueur-graph" class="btn-joueur-context" disabled onclick="openGraphiqueForSelected()">📈 Graphique</button>
+        <button id="btn-joueur-impact" class="btn-joueur-context" disabled onclick="openImpactForSelected()">🎯 Impact</button>
     </div>
 
     <main class="main">
@@ -984,16 +981,16 @@
         const IMPACT_DOTS  = { alg: [], face: [], ald: [] };
         const GARDIEN_DOTS = { alg: [], face: [], ald: [] };
 
-        // Seuils d'efficacité par poste — calibrés CF Proligue 18-22 ans
-        // Vert ≥ hi% = Solide, Bleu ≥ mid% = Projetable, Rouge < mid% = À développer
+        // Seuils d'efficacité par poste — standards D1 Starligue 2024-25 (hors penalty)
+        // Vert ≥ hi% = Solide, Bleu ≥ mid% = Projetable, Rouge < mid% = Non projetable
         const EFF_SEUILS = {
-            PIV: { hi: 58, mid: 44 }, // Pivot — référence CF Proligue
-            AG:  { hi: 52, mid: 38 }, // Ailier G
-            AD:  { hi: 52, mid: 38 }, // Ailier D
-            DC:  { hi: 52, mid: 38 }, // Demi-Centre
-            ARD: { hi: 48, mid: 34 }, // Arrière D
-            ARG: { hi: 48, mid: 34 }, // Arrière G
-            GB:  { hi: 38, mid: 28 }, // Gardien — % arrêts
+            PIV: { hi: 79, mid: 74 }, // Pivot — moy D1 77,1%
+            AG:  { hi: 74, mid: 69 }, // Ailier G — moy D1 72,4%
+            AD:  { hi: 74, mid: 69 }, // Ailier D — moy D1 73,0%
+            DC:  { hi: 64, mid: 59 }, // Demi-Centre — moy D1 61,9%
+            ARD: { hi: 63, mid: 58 }, // Arrière D — moy D1 59,1%
+            ARG: { hi: 60, mid: 55 }, // Arrière G — moy D1 57,7%
+            GB:  { hi: 35, mid: 30 }, // Gardien — % arrêts : moy monde 30%, top Starligue 36%
         };
 
 
@@ -1006,13 +1003,13 @@
 let _effInfoPoste = null;
 
         const EFF_TABLE_DATA = [
-            { poste: 'PIV',  moyD1: '77,1%', np: '< 44%',  proj: '44–57%', sol: '≥ 58%' },
-            { poste: 'AD',   moyD1: '73,0%', np: '< 38%',  proj: '38–51%', sol: '≥ 52%' },
-            { poste: 'AG',   moyD1: '72,4%', np: '< 38%',  proj: '38–51%', sol: '≥ 52%' },
-            { poste: 'DC',   moyD1: '61,9%', np: '< 38%',  proj: '38–51%', sol: '≥ 52%' },
-            { poste: 'ARD',  moyD1: '59,1%', np: '< 34%',  proj: '34–47%', sol: '≥ 48%' },
-            { poste: 'ARG',  moyD1: '57,7%', np: '< 34%',  proj: '34–47%', sol: '≥ 48%' },
-            { poste: 'GB',   moyD1: '~30%',  np: '< 28%',  proj: '28–37%', sol: '≥ 38%' },
+            { poste: 'PIV',  moyD1: '77,1%', np: '< 74%',  proj: '74–78%', sol: '≥ 79%' },
+            { poste: 'AD',   moyD1: '73,0%', np: '< 69%',  proj: '69–73%', sol: '≥ 74%' },
+            { poste: 'AG',   moyD1: '72,4%', np: '< 69%',  proj: '69–73%', sol: '≥ 74%' },
+            { poste: 'DC',   moyD1: '61,9%', np: '< 59%',  proj: '59–63%', sol: '≥ 64%' },
+            { poste: 'ARD',  moyD1: '59,1%', np: '< 58%',  proj: '58–62%', sol: '≥ 63%' },
+            { poste: 'ARG',  moyD1: '57,7%', np: '< 55%',  proj: '55–59%', sol: '≥ 60%' },
+            { poste: 'GB',   moyD1: '~30%',  np: '< 30%',  proj: '30–34%', sol: '≥ 35%' },
         ];
 
         function openEffInfoModal(event, posteCode) {
@@ -3182,7 +3179,7 @@ let _effInfoPoste = null;
         <div class="eff-info-panel">
             <button class="eff-info-close" onclick="closeEffInfoModal()">✕</button>
             <h3>% Efficacité au tir — Référence par poste</h3>
-            <div class="eff-subtitle">Seuils calibrés CF Proligue · La colonne "Moy. D1" est fournie comme référence externe</div>
+            <div class="eff-subtitle">Réf. LiquiMoly Starligue 2024-25 · Tirs hors penalty · Standards D1</div>
             <div class="eff-legend">
                 <div class="eff-legend-item"><span style="color:#dc2626;font-size:1rem;">●</span> Rouge — Non projetable</div>
                 <div class="eff-legend-item"><span style="color:#2563eb;font-size:1rem;">●</span> Bleu — Projetable</div>
@@ -3201,7 +3198,7 @@ let _effInfoPoste = null;
                 <tbody id="eff-info-tbody"></tbody>
             </table>
             <div style="margin-top:0.9rem;font-size:0.68rem;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:0.6rem;">
-                Seuils CF Proligue · Moy. D1 = référence Starligue 2024-25<br>⚠️ La couleur terrain n'est activée que si le joueur a joué ≥ 6 matchs et ≥ 20 min/match en moyenne
+                n=11 joueurs/poste · source Starligue.com · tirs hors penalty<br>⚠️ Couleur terrain activée uniquement si ≥ 6 matchs ET ≥ 30 min/match en moyenne
             </div>
         </div>
     </div>
