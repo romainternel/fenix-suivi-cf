@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=67">
-    <script src="js/utils.js?v=67"></script>
-    <script src="js/impact-images.js?v=67"></script>
-    <script src="js/player-mode.js?v=67"></script>
-    <script src="js/page-joueurs.js?v=67"></script>
-    <script src="js/page-notes-graph.js?v=67"></script>
-    <script src="js/page-analyse.js?v=67"></script>
+    <link rel="stylesheet" href="css/style.css?v=68">
+    <script src="js/utils.js?v=68"></script>
+    <script src="js/impact-images.js?v=68"></script>
+    <script src="js/player-mode.js?v=68"></script>
+    <script src="js/page-joueurs.js?v=68"></script>
+    <script src="js/page-notes-graph.js?v=68"></script>
+    <script src="js/page-analyse.js?v=68"></script>
 </head>
 <body>
 
@@ -482,9 +482,12 @@
                     </div>
                 </div>
 
-                <div id="analyse-empty" class="no-data">
-                    <div class="no-data-icon">🔍</div>
-                    <p>Sélectionne un match pour voir l'analyse détaillée</p>
+                <div id="analyse-empty">
+                    <div id="saison-correlations"></div>
+                    <div class="no-data" style="margin-top:1.5rem">
+                        <div class="no-data-icon">🔍</div>
+                        <p>Sélectionne un match pour voir l'analyse détaillée</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2829,20 +2832,22 @@ let _effInfoPoste = null;
         let currentGraphStats = ['possessions']; // Tableau des stats sélectionnées
         let currentPeriode = 'all'; // 'all', '1', '2'
         const STAT_COLORS = {
-            'possessions':   '#0A2463',
-            'buts_mis':      '#10B981',
-            'buts_pris':     '#EF4444',
-            'efficacite':    '#F59E0B',
-            'neutralise':    '#8B5CF6',
-            'pertes_balle':  '#F97316'
+            'possessions':    '#0A2463',
+            'buts_mis':       '#10B981',
+            'buts_pris':      '#EF4444',
+            'efficacite':     '#F59E0B',
+            'neutralise':     '#8B5CF6',
+            'pertes_balle':   '#F97316',
+            'pct_arrets_gb':  '#06B6D4'
         };
         const STAT_LABELS = {
-            'possessions':   'Possessions',
-            'buts_mis':      'Buts marqués',
-            'buts_pris':     'Buts encaissés',
-            'efficacite':    '% Réussite',
-            'neutralise':    'Neutralisé',
-            'pertes_balle':  'PB'
+            'possessions':    'Possessions',
+            'buts_mis':       'Buts marqués',
+            'buts_pris':      'Buts encaissés',
+            'efficacite':     '% Réussite',
+            'neutralise':     'Neutralisé',
+            'pertes_balle':   'PB',
+            'pct_arrets_gb':  '% Arrêts GB'
         };
         let _graphPoints = null; // stocke coordonnées canvas pour hover
 
@@ -2936,6 +2941,16 @@ let _effInfoPoste = null;
                     return teamData.filter(row => row[COLS.resultat] === 'Jet franc').length;
                 case 'pertes_balle':
                     return teamData.filter(row => row[COLS.resultat] === 'PB').length;
+                case 'pct_arrets_gb': {
+                    // Tirs sur le gardien de l'équipe choisie = lignes de l'équipe adverse
+                    const shooters = team === 'fenix'
+                        ? matchData.filter(row => row[COLS.club] !== 'FENIX')
+                        : matchData.filter(row => row[COLS.club] === 'FENIX');
+                    const gbButs   = shooters.filter(row => row[COLS.resultat] === 'But').length;
+                    const gbArrets = shooters.filter(row => row[COLS.finalite] === 'Tir arrêté').length;
+                    const gbTotal  = gbButs + gbArrets;
+                    return gbTotal > 0 ? Math.round(gbArrets / gbTotal * 100) : 0;
+                }
                 default:
                     return 0;
             }
@@ -3197,6 +3212,7 @@ let _effInfoPoste = null;
                     <button class="graph-filter-btn" data-stat="efficacite" onclick="toggleGraphStat('efficacite', this)">% Réussite</button>
                     <button class="graph-filter-btn" data-stat="neutralise" onclick="toggleGraphStat('neutralise', this)">Neutralisé</button>
                     <button class="graph-filter-btn" data-stat="pertes_balle" onclick="toggleGraphStat('pertes_balle', this)">PB</button>
+                    <button class="graph-filter-btn" data-stat="pct_arrets_gb" onclick="toggleGraphStat('pct_arrets_gb', this)">% Arrêts GB</button>
                 </div>
                 <div class="filter-row">
                     <span class="filter-label">Période:</span>

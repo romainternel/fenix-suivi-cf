@@ -2105,3 +2105,38 @@
             border-radius: 2px;
             opacity: 0.3;
         }
+
+        /* ── Corrélations saison (Analyse page) ─────────────────────────────── */
+        .corr-block {
+            background: #fff;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .corr-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--fenix-blue);
+            margin-bottom: 0.3rem;
+        }
+        .corr-legend {
+            font-size: 0.72rem;
+            color: #64748B;
+            margin-bottom: 0.75rem;
+        }
+        .corr-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        .corr-table thead th {
+            border-bottom: 2px solid #E2E8F0;
+            font-weight: 700;
+            padding: 6px 10px;
+        }
+        .corr-table tbody tr:nth-child(even) { background: #F8FAFC; }
+        .corr-table tbody tr:hover { background: #EFF6FF; }
+        .corr-table td { padding: 6px 10px; border-bottom: 1px solid #F1F5F9; }
+        .corr-label { color: #334155; font-weight: 500; white-space: nowrap; }

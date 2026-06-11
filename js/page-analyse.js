@@ -15,6 +15,7 @@
             if (!matchFilter) {
                 document.getElementById('analyse-content').style.display = 'none';
                 document.getElementById('analyse-empty').style.display = 'block';
+                generateSeasonCorrelations();
                 return;
             }
 
@@ -631,4 +632,112 @@
             
             // Réponse par défaut avec suggestions
             return `Pour ce match (${matchName}), voici les stats clés : Score ${fenixButs}-${advButs}, Efficacité ${fenixEff}%, ${fenixPB} pertes de balle.<br><br><strong>Tu peux me demander :</strong><br>• "Enclenchements" - comment on a marqué<br>• "Supériorités" - bilan des + et -<br>• "Meilleur buteur"<br>• "Gardien"`;
+        }
+
+        function generateSeasonCorrelations() {
+            const container = document.getElementById('saison-correlations');
+            if (!container) return;
+
+            if (typeof MATCHS === 'undefined' || !MATCHS || MATCHS.length < 3) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const groups = { V: [], D: [], N: [] };
+
+            MATCHS.forEach(matchName => {
+                const matchData = DATA.filter(row => row[COLS.rencontre] === matchName);
+                if (matchData.length === 0) return;
+
+                const fenixData = matchData.filter(row => row[COLS.club] === 'FENIX');
+                const advData   = matchData.filter(row => row[COLS.club] !== 'FENIX');
+
+                const fenixButs = fenixData.filter(r => r[COLS.resultat] === 'But').length;
+                const advButs   = advData.filter(r => r[COLS.resultat] === 'But').length;
+
+                let result;
+                if (fenixButs > advButs) result = 'V';
+                else if (fenixButs < advButs) result = 'D';
+                else result = 'N';
+
+                const fenixTirs = fenixButs + fenixData.filter(r => r[COLS.resultat] === 'Tir raté').length;
+                const fenixEff  = fenixTirs > 0 ? Math.round(fenixButs / fenixTirs * 100) : 0;
+                const fenixPB   = fenixData.filter(r => r[COLS.resultat] === 'PB').length;
+                const fenixPoss = fenixData.filter(r => r[COLS.possession] && r[COLS.possession].toString().trim() !== '').length;
+
+                const gbArrets  = advData.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
+                const advShots  = advButs + gbArrets;
+                const pctArrets = advShots > 0 ? Math.round(gbArrets / advShots * 100) : 0;
+
+                groups[result].push({ matchName, fenixButs, advButs, fenixEff, fenixPB, fenixPoss, pctArrets });
+            });
+
+            const avg = (arr, key) => arr.length > 0
+                ? arr.reduce((s, x) => s + x[key], 0) / arr.length
+                : null;
+
+            const statsDef = [
+                { key: 'fenixButs', label: 'Buts marqués',    unit: '',  higherBetter: true  },
+                { key: 'advButs',   label: 'Buts encaissés',  unit: '',  higherBetter: false },
+                { key: 'fenixEff',  label: 'Efficacité',      unit: '%', higherBetter: true  },
+                { key: 'fenixPB',   label: 'Pertes de balle', unit: '',  higherBetter: false },
+                { key: 'fenixPoss', label: 'Possessions',     unit: '',  higherBetter: true  },
+                { key: 'pctArrets', label: '% Arrêts GB',     unit: '%', higherBetter: true  },
+            ];
+
+            const colHeaders = [];
+            if (groups.V.length > 0) colHeaders.push({ key: 'V', label: `Victoires (${groups.V.length})`, color: '#10B981' });
+            if (groups.D.length > 0) colHeaders.push({ key: 'D', label: `Défaites (${groups.D.length})`,  color: '#EF4444' });
+            if (groups.N.length > 0) colHeaders.push({ key: 'N', label: `Nuls (${groups.N.length})`,      color: '#6B7280' });
+
+            if (colHeaders.length < 2) { container.innerHTML = ''; return; }
+
+            let rows = '';
+            statsDef.forEach(stat => {
+                const avgs = {};
+                colHeaders.forEach(col => { avgs[col.key] = avg(groups[col.key], stat.key); });
+
+                let sigV = '', sigD = '';
+                if (avgs.V !== null && avgs.D !== null) {
+                    const base    = (avgs.V + avgs.D) / 2;
+                    const relDiff = base > 0 ? Math.abs(avgs.V - avgs.D) / base : 0;
+                    const vBetter = stat.higherBetter ? avgs.V > avgs.D : avgs.V < avgs.D;
+                    if (relDiff >= 0.15) {
+                        sigV = vBetter ? ' 🔑' : ' ⚠️';
+                        sigD = vBetter ? ' ⚠️' : ' 🔑';
+                    } else if (relDiff >= 0.07) {
+                        sigV = vBetter ? ' ↑' : ' ↓';
+                        sigD = vBetter ? ' ↓' : ' ↑';
+                    }
+                }
+
+                let cells = `<td class="corr-label">${stat.label}</td>`;
+                colHeaders.forEach(col => {
+                    const val = avgs[col.key];
+                    const sig = col.key === 'V' ? sigV : (col.key === 'D' ? sigD : '');
+                    const display = val !== null
+                        ? (Number.isInteger(Math.round(val * 10) / 10) ? val.toFixed(0) : val.toFixed(1)) + stat.unit + sig
+                        : '—';
+                    cells += `<td style="text-align:center;font-weight:600;color:${col.color}">${display}</td>`;
+                });
+                rows += `<tr>${cells}</tr>`;
+            });
+
+            let headerCells = '<th style="text-align:left;padding:6px 10px">KPI</th>';
+            colHeaders.forEach(col => {
+                headerCells += `<th style="text-align:center;padding:6px 10px;color:${col.color}">${col.label}</th>`;
+            });
+
+            container.innerHTML = `
+                <div class="corr-block">
+                    <div class="corr-title">📊 Tendances saison — selon résultat</div>
+                    <div class="corr-legend">🔑 Signal fort (&gt;15% d'écart) &nbsp;|&nbsp; ↑↓ Signal modéré (7-15%)</div>
+                    <div style="overflow-x:auto">
+                        <table class="corr-table">
+                            <thead><tr>${headerCells}</tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
         }
