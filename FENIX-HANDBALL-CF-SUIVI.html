@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=64">
-    <script src="js/utils.js?v=64"></script>
-    <script src="js/impact-images.js?v=64"></script>
-    <script src="js/player-mode.js?v=64"></script>
-    <script src="js/page-joueurs.js?v=64"></script>
-    <script src="js/page-notes-graph.js?v=64"></script>
-    <script src="js/page-analyse.js?v=64"></script>
+    <link rel="stylesheet" href="css/style.css?v=65">
+    <script src="js/utils.js?v=65"></script>
+    <script src="js/impact-images.js?v=65"></script>
+    <script src="js/player-mode.js?v=65"></script>
+    <script src="js/page-joueurs.js?v=65"></script>
+    <script src="js/page-notes-graph.js?v=65"></script>
+    <script src="js/page-analyse.js?v=65"></script>
 </head>
 <body>
 
@@ -655,50 +655,33 @@
                 <div class="section-header">
                     <h2 class="section-title">⭐ Notes & Actions Joueurs</h2>
                 </div>
-                
+
                 <div class="filters">
-                    <div id="filter-bilan-notes-wrap" class="filter-group" style="display:none">
-                        <label>Période</label>
-                        <select id="filter-notes-bilan" onchange="syncBilanFilters('filter-notes-bilan');updateNotesPage()">
-                            <option value="">Toute la saison</option>
-                        </select>
-                    </div>
                     <div class="filter-group">
                         <label>Joueur</label>
-                        <select id="filter-note-joueur">
+                        <select id="filter-note-joueur" onchange="updateNotesPage()">
                             <option value="">Tous les joueurs</option>
                         </select>
                     </div>
                     <div class="filter-group">
                         <label>Match</label>
-                        <select id="filter-note-match">
+                        <select id="filter-note-match" onchange="updateNotesPage()">
                             <option value="">Tous les matchs</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Joueur</th>
-                                <th>Actions ATT +</th>
-                                <th>Actions ATT -</th>
-                                <th>Note ATT</th>
-                                <th>Actions DEF +</th>
-                                <th>Actions DEF -</th>
-                                <th>Note DEF</th>
-                                <th>Note Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="notes-table">
-                        </tbody>
-                    </table>
-                </div>
+                <!-- Rendu dynamique : une section par bilan + Toute la saison -->
+                <div id="notes-periods-container"></div>
+
+                <!-- Champ caché conservé pour compatibilité syncBilanFilters -->
+                <select id="filter-notes-bilan" style="display:none">
+                    <option value="">Toute la saison</option>
+                </select>
             </div>
 
-            <!-- Section Notes Gardiens -->
-            <div class="section" style="margin-top:1.5rem;">
+            <!-- Section Notes Gardiens — visible uniquement si GB sélectionné -->
+            <div id="section-notes-gb" class="section" style="margin-top:1.5rem;display:none;">
                 <div class="section-header">
                     <h2 class="section-title">🧤 Notes Gardiens</h2>
                 </div>

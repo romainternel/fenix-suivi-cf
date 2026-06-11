@@ -700,16 +700,49 @@
         function updateNotesPage() {
             const joueurFilter = document.getElementById('filter-note-joueur').value;
             const matchFilter  = document.getElementById('filter-note-match').value;
-            const bilanVal     = document.getElementById('filter-notes-bilan')?.value || '';
-            const bilanMatchs  = (bilanVal && typeof BILANS !== 'undefined') ? (BILANS.find(b => b.nom === bilanVal)?.matchs || null) : null;
 
-            const effectiveFilter = buildEffectiveMatchFilter(matchFilter, bilanMatchs);
+            // Périodes à afficher : bilans disponibles + Toute la saison
+            const hasBilans = typeof BILANS !== 'undefined' && BILANS && BILANS.length > 0;
+            const periods = hasBilans
+                ? [...BILANS.map(b => ({ label: b.label, matchs: b.matchs })), { label: 'Toute la saison', matchs: null }]
+                : [{ label: 'Toute la saison', matchs: null }];
 
-            const playerNotes = calculatePlayerNotes(effectiveFilter, joueurFilter);
-            renderNotesTable(playerNotes, 'notes-table');
+            const container = document.getElementById('notes-periods-container');
+            if (container) {
+                container.innerHTML = '';
+                const thead = `<thead><tr>
+                    <th>Joueur</th><th>Actions ATT +</th><th>Actions ATT -</th><th>Note ATT</th>
+                    <th>Actions DEF +</th><th>Actions DEF -</th><th>Note DEF</th><th>Note Total</th>
+                </tr></thead>`;
 
-            const gbNotes = calculateGardienNotes(effectiveFilter);
-            renderGardienNotesTable(gbNotes, 'notes-gb-table');
+                periods.forEach((period, i) => {
+                    const effectiveFilter = buildEffectiveMatchFilter(matchFilter, period.matchs);
+                    const playerNotes = calculatePlayerNotes(effectiveFilter, joueurFilter);
+                    const tbodyId = `notes-table-${i}`;
+
+                    const headerHTML = hasBilans
+                        ? `<div style="font-size:0.8rem;font-weight:700;color:#1E3A8A;margin:${i > 0 ? '1.2rem' : '0'} 0 0.4rem;text-transform:uppercase;letter-spacing:0.05em;border-left:3px solid var(--fenix-accent);padding-left:8px;">${period.label}</div>`
+                        : '';
+
+                    const block = document.createElement('div');
+                    block.innerHTML = `${headerHTML}<div class="table-container"><table>${thead}<tbody id="${tbodyId}"></tbody></table></div>`;
+                    container.appendChild(block);
+                    renderNotesTable(playerNotes, tbodyId);
+                });
+            }
+
+            // Section GB : visible uniquement si le joueur sélectionné est gardien
+            const isGB = joueurFilter
+                && typeof GARDIENS_FENIX !== 'undefined' && GARDIENS_FENIX.length > 0
+                && GARDIENS_FENIX.some(g => matchPlayerName(g, joueurFilter));
+            const gbSection = document.getElementById('section-notes-gb');
+            if (gbSection) {
+                gbSection.style.display = isGB ? '' : 'none';
+                if (isGB) {
+                    const gbNotes = calculateGardienNotes(buildEffectiveMatchFilter(matchFilter, null));
+                    renderGardienNotesTable(gbNotes, 'notes-gb-table');
+                }
+            }
         }
 
         function updateNotesRecapTable() {
