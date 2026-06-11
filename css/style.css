@@ -905,8 +905,8 @@
         .joueurs-topbar label { font-size: 0.8rem; font-weight: 600; color: #64748B; white-space: nowrap; }
         .joueurs-context-bar { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; padding: 0.5rem 0.75rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; }
         .joueurs-context-label { font-size: 0.78rem; font-weight: 600; color: #94A3B8; flex: 1; }
-        .btn-joueur-context { background: var(--fenix-blue); color: #fff; border: none; border-radius: 8px; padding: 7px 16px; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-        .btn-joueur-context:disabled { background: #fff; color: #CBD5E1; border: 1.5px dashed #CBD5E1; cursor: not-allowed; }
+        .btn-joueur-context { background: var(--fenix-blue); color: #fff; border: none; border-radius: 20px; padding: 5px 14px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-joueur-context:disabled { background: #F1F5F9; color: #CBD5E1; border: 1.5px dashed #CBD5E1; cursor: not-allowed; }
         .btn-comparer { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; padding: 5px 14px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .btn-comparer:hover { background: rgba(255,255,255,0.25); }
         .btn-comparer-active { background: rgba(255,255,255,0.3) !important; }
@@ -2026,21 +2026,26 @@
 
         /* ── Sous-navigation Joueurs (barre contenu) ────────────────────────── */
         .joueurs-subnav {
+            position: sticky;
+            top: 82px;
+            z-index: 99;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 8px;
-            padding: 10px 1.5rem;
+            padding: 5px 1.5rem;
             background: #fff;
             border-bottom: 1px solid #E2E8F0;
             box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-            flex-wrap: wrap;
         }
+        .jsub-tabs { display: flex; align-items: center; gap: 6px; }
+        .jsub-actions { display: flex; align-items: center; gap: 6px; }
         .jsub-btn {
             background: #F1F5F9;
             border: 1px solid #E2E8F0;
-            border-radius: 8px;
-            padding: 8px 18px;
-            font-size: 0.82rem;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.78rem;
             font-weight: 600;
             color: #475569;
             cursor: pointer;

@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=58">
-    <script src="js/utils.js?v=58"></script>
-    <script src="js/impact-images.js?v=58"></script>
-    <script src="js/player-mode.js?v=58"></script>
-    <script src="js/page-joueurs.js?v=58"></script>
-    <script src="js/page-notes-graph.js?v=58"></script>
-    <script src="js/page-analyse.js?v=58"></script>
+    <link rel="stylesheet" href="css/style.css?v=59">
+    <script src="js/utils.js?v=59"></script>
+    <script src="js/impact-images.js?v=59"></script>
+    <script src="js/player-mode.js?v=59"></script>
+    <script src="js/page-joueurs.js?v=59"></script>
+    <script src="js/page-notes-graph.js?v=59"></script>
+    <script src="js/page-analyse.js?v=59"></script>
 </head>
 <body>
 
@@ -88,6 +88,16 @@
         </nav>
     </header>
 
+    <div id="joueurs-subnav" class="joueurs-subnav" style="display:none;">
+        <div class="jsub-tabs">
+            <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
+            <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">⭐ Notes</button>
+        </div>
+        <div class="jsub-actions">
+            <button id="btn-joueur-graph" class="btn-joueur-context" disabled onclick="openGraphiqueForSelected()">📈 Graphique</button>
+            <button id="btn-joueur-impact" class="btn-joueur-context" disabled onclick="openImpactForSelected()">🎯 Impact</button>
+        </div>
+    </div>
 
     <main class="main">
         <!-- Dashboard Page -->
@@ -500,13 +510,6 @@
                             <option value="">Tous les matchs</option>
                         </select>
                     </div>
-                </div>
-                <div class="joueurs-context-bar">
-                    <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
-                    <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">⭐ Notes</button>
-                    <span style="width:1px;height:24px;background:#E2E8F0;margin:0 4px;flex-shrink:0"></span>
-                    <button id="btn-joueur-graph" class="btn-joueur-context" disabled onclick="openGraphiqueForSelected()">📈 Graphique</button>
-                    <button id="btn-joueur-impact" class="btn-joueur-context" disabled onclick="openImpactForSelected()">🎯 Impact</button>
                 </div>
 
                 <!-- Warnings noms ambigus -->
@@ -1333,9 +1336,13 @@ let _effInfoPoste = null;
                     this.classList.add('active');
                     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                     document.getElementById('page-' + this.dataset.page).classList.add('active');
+                    const subnav = document.getElementById('joueurs-subnav');
                     if (this.dataset.page === 'joueurs') {
+                        subnav.style.display = 'flex';
                         document.querySelectorAll('.jsub-btn').forEach(b => b.classList.remove('active'));
                         document.querySelector('[data-jsub="joueurs"]').classList.add('active');
+                    } else {
+                        subnav.style.display = 'none';
                     }
                     if (DATA.length > 0) refreshPage(this.dataset.page);
                 });
