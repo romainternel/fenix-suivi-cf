@@ -140,7 +140,8 @@
             const noteDisplay = (note > 0 ? '+' : '') + note;
 
             // ── Carte joueur (droite du terrain) ──────────────────────────────
-            const tjNom = getTJData(nom, MATCHS);
+            const effectiveTJMatchs = matchFilter ? [matchFilter] : (bilanMatchs || MATCHS);
+            const tjNom = getTJData(nom, effectiveTJMatchs);
             const tjHeaderStr = tjNom.matchs
                 ? `<div style="display:flex;gap:1rem;margin-top:0.35rem;font-size:0.75rem;opacity:0.9;">
                     <span>⏱ ${tjNom.matchs} matchs</span>
@@ -178,11 +179,11 @@
             if (posteCode && typeof JOUEURS_TERRAIN !== 'undefined') {
                 const tms = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
                 if (tms.length > 0) {
-                    const myTJData = getTJData(nom, MATCHS);
+                    const myTJData = getTJData(nom, effectiveTJMatchs);
                     const myTJAvg = myTJData.matchs > 0 ? myTJData.total / myTJData.matchs : 0;
                     let tjRank = 1;
                     tms.forEach(p => {
-                        const d = getTJData(p.nom, MATCHS);
+                        const d = getTJData(p.nom, effectiveTJMatchs);
                         const avg = d.matchs > 0 ? d.total / d.matchs : 0;
                         if (avg > myTJAvg) tjRank++;
                     });
@@ -960,131 +961,18 @@
                 }
             }
 
-            // === 3. Impact — canvas DOM direct avec image de fond base64 ===
-            let impactCanvases = null;
-            let impactTitre = '';
-            {
-                // Précharger les 3 images de but (base64 embarqué → pas de CORS)
-                const loadImg = b64 => new Promise(res => {
-                    const img = new Image();
-                    img.onload = () => res(img);
-                    img.onerror = () => res(null);
-                    img.src = b64;
-                });
-                const [imgALG, imgFace, imgALD] = await Promise.all([
-                    loadImg(IMPACT_B64.alg),
-                    loadImg(IMPACT_B64.face),
-                    loadImg(IMPACT_B64.ald),
-                ]);
-
-                const inPeriod = row => {
-                    if (matchFilter) return row[COLS.rencontre] === matchFilter;
-                    if (bilanMatchs) return bilanMatchs.includes(row[COLS.rencontre]);
-                    return true;
-                };
-                const impactRows = isGB
-                    ? DATA.filter(row =>
-                        row[COLS.club] !== 'FENIX' &&
-                        (row[COLS.finalite]==='Tir arrêté' || row[COLS.resultat]==='But') &&
-                        row[COLS.impact] && String(row[COLS.impact]).includes(';') &&
-                        matchPlayerName((row[COLS.gardien]||'').toString().trim(), nom) &&
-                        inPeriod(row)
-                    )
-                    : DATA.filter(row =>
-                        row[COLS.club] === 'FENIX' &&
-                        ['But','Tir raté'].includes(row[COLS.resultat]) &&
-                        row[COLS.impact] && String(row[COLS.impact]).includes(';') &&
-                        matchPlayerName((row[COLS.joueur]||'').toString().trim(), nom) &&
-                        inPeriod(row)
-                    );
-
-                const drawOS = (data, W, H, bgImg) => {
-                    const c=document.createElement('canvas'); c.width=W; c.height=H;
-                    c.style.cssText='width:100%;display:block;border-radius:6px;border:1px solid #E2E8F0';
-                    const ctx=c.getContext('2d');
-                    if (bgImg) {
-                        ctx.drawImage(bgImg, 0, 0, W, H);
-                    } else {
-                        // Fallback : cadre du but dessiné
-                        ctx.fillStyle='#DBEAFE'; ctx.fillRect(0,0,W,H);
-                        const gX=10,gY=8,gW=W-20,gH=H-24;
-                        ctx.fillStyle='#FFFFFF'; ctx.fillRect(gX,gY,gW,gH);
-                        ctx.strokeStyle='#CBD5E1'; ctx.lineWidth=0.5;
-                        for(let i=1;i<6;i++){ctx.beginPath();ctx.moveTo(gX+gW*i/6,gY);ctx.lineTo(gX+gW*i/6,gY+gH);ctx.stroke();}
-                        for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(gX,gY+gH*i/4);ctx.lineTo(gX+gW,gY+gH*i/4);ctx.stroke();}
-                        ctx.strokeStyle='#1E293B'; ctx.lineWidth=4;
-                        ctx.beginPath(); ctx.moveTo(gX,gY+gH); ctx.lineTo(gX,gY); ctx.lineTo(gX+gW,gY); ctx.lineTo(gX+gW,gY+gH); ctx.stroke();
-                        ctx.strokeStyle='#64748B'; ctx.lineWidth=2;
-                        ctx.beginPath(); ctx.moveTo(gX-5,gY+gH); ctx.lineTo(gX+gW+5,gY+gH); ctx.stroke();
-                    }
-                    data.forEach(row => {
-                        const p=String(row[COLS.impact]).split(';');
-                        const x=parseFloat(p[0]), y=parseFloat(p[1]);
-                        if(isNaN(x)||isNaN(y)) return;
-                        const dotX=(x/100)*W, dotY=(y/100)*H, s=7;
-                        ctx.save();
-                        const isPos = isGB ? row[COLS.finalite]==='Tir arrêté' : row[COLS.resultat]==='But';
-                        if(isPos){
-                            ctx.beginPath(); ctx.arc(dotX,dotY,s,0,Math.PI*2);
-                            ctx.fillStyle='#10B981'; ctx.fill();
-                            ctx.strokeStyle='white'; ctx.lineWidth=1.5; ctx.stroke();
-                        } else {
-                            const sc=s/Math.SQRT2; ctx.strokeStyle='#EF4444'; ctx.lineWidth=2.5;
-                            ctx.beginPath(); ctx.moveTo(dotX-sc,dotY-sc); ctx.lineTo(dotX+sc,dotY+sc);
-                            ctx.moveTo(dotX+sc,dotY-sc); ctx.lineTo(dotX-sc,dotY+sc); ctx.stroke();
-                        }
-                        ctx.restore();
-                    });
-                    return c;
-                };
-
-                const total = impactRows.length;
-                if (total > 0) {
-                    const positifs = isGB
-                        ? impactRows.filter(r=>r[COLS.finalite]==='Tir arrêté').length
-                        : impactRows.filter(r=>r[COLS.resultat]==='But').length;
-                    const pct = Math.round(positifs/total*100);
-                    impactTitre = isGB
-                        ? `ZONES D'ARRÊT — ${positifs} arrêts / ${total} tirs (${pct}%)`
-                        : `ZONES DE TIR — ${positifs} buts / ${total} tirs (${pct}%)`;
-                    impactCanvases = {
-                        alg:  drawOS(impactRows.filter(r=>getImpactView(r)==='alg'),  320, 200, imgALG),
-                        face: drawOS(impactRows.filter(r=>getImpactView(r)==='face'), 320, 200, imgFace),
-                        ald:  drawOS(impactRows.filter(r=>getImpactView(r)==='ald'),  320, 200, imgALD),
-                    };
-                }
-            }
-
-            // Convertir les canvas en data URL AVANT de construire le HTML
-            // (évite le problème d'img non décodée dans un container display:none)
-            const graphDataUrl   = graphCanvas ? graphCanvas.toDataURL('image/png') : null;
-            const impactDataUrls = impactCanvases ? {
-                alg:  impactCanvases.alg.toDataURL('image/png'),
-                face: impactCanvases.face.toDataURL('image/png'),
-                ald:  impactCanvases.ald.toDataURL('image/png'),
-            } : null;
+            // Convertir le graphique en data URL AVANT de construire le HTML
+            const graphDataUrl = graphCanvas ? graphCanvas.toDataURL('image/png') : null;
 
             const ph = '<div class="print-fenix-header">FENIX HANDBALL — Centre de Formation</div>';
             const graphLabel = isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION DES NOTES';
-            const noImpact   = `<div style="color:#94a3b8;text-align:center;padding:60px 0;font-size:0.9rem">Aucune donnée de tir avec coordonnées d'impact</div>`;
             const imgStyle   = 'width:100%;display:block;border-radius:8px;border:1px solid #E2E8F0';
-            const imgStyleImpact = 'width:100%;display:block;border-radius:6px;border:1px solid #E2E8F0';
 
             const graphBlock = graphDataUrl ? `
                 <div style="page-break-inside:avoid;margin-bottom:20px">
                     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#0A2463;margin-bottom:8px;letter-spacing:1.5px;border-bottom:2px solid #0A2463;padding-bottom:4px">${graphLabel}</div>
                     <img src="${graphDataUrl}" style="${imgStyle}">
                 </div>` : '';
-
-            const impactBlock = impactDataUrls ? `
-                <div style="page-break-inside:avoid">
-                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#0A2463;margin-bottom:10px;letter-spacing:1.5px;border-bottom:2px solid #0A2463;padding-bottom:4px">${impactTitre}</div>
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-                        <div style="text-align:center"><img src="${impactDataUrls.alg}" style="${imgStyleImpact}"><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">EXT GAUCHE</div></div>
-                        <div style="text-align:center"><img src="${impactDataUrls.face}" style="${imgStyleImpact}"><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">CENTRAL</div></div>
-                        <div style="text-align:center"><img src="${impactDataUrls.ald}" style="${imgStyleImpact}"><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">EXT DROIT</div></div>
-                    </div>
-                </div>` : noImpact;
 
             const printZone = document.getElementById('joueur-print-zone');
             printZone.innerHTML = `
@@ -1100,11 +988,7 @@
                     ${ph}
                     ${matches.outerHTML}
                 </div>
-                <div style="padding:20px 28px">
-                    ${ph}
-                    ${graphBlock}
-                    ${impactBlock}
-                </div>`;
+                ${graphBlock ? `<div style="padding:20px 28px">${ph}${graphBlock}</div>` : ''}`;
 
             // Attendre que toutes les <img> soient décodées avant d'imprimer
             const imgEls = Array.from(printZone.querySelectorAll('img'));
