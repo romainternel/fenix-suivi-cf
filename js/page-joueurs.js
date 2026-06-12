@@ -764,10 +764,11 @@
             }
 
             // === 2. Graph — GB : performances (arrêts/score/%) | Joueur : notes ===
+            const effectiveMatchs = matchFilter ? [matchFilter] : (bilanMatchs || MATCHS);
             let graphCanvas = null;
             if (isGB) {
                 const gbMd = {};
-                MATCHS.forEach(m => gbMd[m] = { arrets:0, buts:0, score:0 });
+                effectiveMatchs.forEach(m => gbMd[m] = { arrets:0, buts:0, score:0 });
                 DATA.forEach(row => {
                     if (row[COLS.club] === 'FENIX') return;
                     const g = (row[COLS.gardien]||'').toString().trim();
@@ -781,7 +782,7 @@
                     if (isArret) { gbMd[m].arrets++; gbMd[m].score += wz.arret; }
                     if (isBut)   { gbMd[m].buts++;   gbMd[m].score += wz.but; }
                 });
-                const gbPlayed = MATCHS.filter(m => gbMd[m].arrets + gbMd[m].buts > 0);
+                const gbPlayed = effectiveMatchs.filter(m => gbMd[m] && gbMd[m].arrets + gbMd[m].buts > 0);
                 if (gbPlayed.length > 0) {
                     const arrArr = gbPlayed.map(m => gbMd[m].arrets);
                     const scrArr = gbPlayed.map(m => gbMd[m].score);
@@ -878,7 +879,7 @@
                 }
             } else {
                 const matchData = {};
-                MATCHS.forEach(m => matchData[m] = { ap:0, am:0, dp:0, dm:0 });
+                effectiveMatchs.forEach(m => matchData[m] = { ap:0, am:0, dp:0, dm:0 });
                 DATA.forEach(row => {
                     const m = row[COLS.rencontre];
                     if (!matchData[m]) return;
@@ -892,7 +893,7 @@
                         if (isNegativeDEF(def)) matchData[m].dm++;
                     });
                 });
-                const played = MATCHS.filter(m => { const d=matchData[m]; return d.ap+d.am+d.dp+d.dm>0; });
+                const played = effectiveMatchs.filter(m => { const d=matchData[m]; return d && d.ap+d.am+d.dp+d.dm>0; });
                 if (played.length > 0) {
                     const noteA = played.map(m => matchData[m].ap - matchData[m].am);
                     const noteD = played.map(m => matchData[m].dp - matchData[m].dm);
@@ -976,18 +977,25 @@
                     loadImg(IMPACT_B64.ald),
                 ]);
 
+                const inPeriod = row => {
+                    if (matchFilter) return row[COLS.rencontre] === matchFilter;
+                    if (bilanMatchs) return bilanMatchs.includes(row[COLS.rencontre]);
+                    return true;
+                };
                 const impactRows = isGB
                     ? DATA.filter(row =>
                         row[COLS.club] !== 'FENIX' &&
                         (row[COLS.finalite]==='Tir arrêté' || row[COLS.resultat]==='But') &&
                         row[COLS.impact] && String(row[COLS.impact]).includes(';') &&
-                        matchPlayerName((row[COLS.gardien]||'').toString().trim(), nom)
+                        matchPlayerName((row[COLS.gardien]||'').toString().trim(), nom) &&
+                        inPeriod(row)
                     )
                     : DATA.filter(row =>
                         row[COLS.club] === 'FENIX' &&
                         ['But','Tir raté'].includes(row[COLS.resultat]) &&
                         row[COLS.impact] && String(row[COLS.impact]).includes(';') &&
-                        matchPlayerName((row[COLS.joueur]||'').toString().trim(), nom)
+                        matchPlayerName((row[COLS.joueur]||'').toString().trim(), nom) &&
+                        inPeriod(row)
                     );
 
                 const drawOS = (data, W, H, bgImg) => {
