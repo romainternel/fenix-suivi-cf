@@ -987,12 +987,15 @@
                 r[COLS.impact] && String(r[COLS.impact]).includes(';')
             );
 
-            const buildImpactSVG = rows => {
+            const buildImpactSVG = (rows, viewKey) => {
+                const bgSrc = (typeof IMPACT_B64 !== 'undefined' && IMPACT_B64[viewKey]) ? IMPACT_B64[viewKey] : null;
+                const bgEl = bgSrc
+                    ? `<image href="${bgSrc}" x="3" y="5" width="94" height="50" preserveAspectRatio="xMidYMid slice"/>`
+                    : `<rect x="3" y="5" width="94" height="50" fill="white" stroke="#1E293B" stroke-width="1.5" rx="1"/>`;
                 const dots = rows.map(row => {
                     const p = String(row[COLS.impact]).split(';');
                     const rx = parseFloat(p[0]), ry = parseFloat(p[1]);
                     if (isNaN(rx) || isNaN(ry)) return '';
-                    // viewBox: 0 0 100 65 — goal frame: x=3,y=5,w=94,h=50
                     const cx = 3 + rx * 0.94;
                     const cy = 5 + ry * 0.50;
                     const isPos = isGB ? row[COLS.finalite]==='Tir arrêté' : row[COLS.resultat]==='But';
@@ -1004,11 +1007,8 @@
                                 <line x1="${(cx+s).toFixed(1)}" y1="${(cy-s).toFixed(1)}" x2="${(cx-s).toFixed(1)}" y2="${(cy+s).toFixed(1)}" stroke="#EF4444" stroke-width="1.8"/>`;
                     }
                 }).join('');
-                return `<svg viewBox="0 0 100 65" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:5px;border:1px solid #E2E8F0;background:#EFF6FF">
-                    <rect x="3" y="5" width="94" height="50" fill="white" stroke="#1E293B" stroke-width="1.5" rx="1"/>
-                    <line x1="36" y1="5" x2="36" y2="55" stroke="#CBD5E1" stroke-width="0.5"/>
-                    <line x1="64" y1="5" x2="64" y2="55" stroke="#CBD5E1" stroke-width="0.5"/>
-                    <line x1="3" y1="30" x2="97" y2="30" stroke="#CBD5E1" stroke-width="0.5"/>
+                return `<svg viewBox="0 0 100 65" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:5px;border:1px solid #E2E8F0">
+                    ${bgEl}
                     ${dots}
                 </svg>`;
             };
@@ -1023,9 +1023,9 @@
                 const impactTitre = isGB
                     ? `ZONES D'ARRÊT — ${positifs} arrêts / ${totalI} tirs (${pct}%)`
                     : `ZONES DE TIR — ${positifs} buts / ${totalI} tirs (${pct}%)`;
-                const svgAlg  = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='alg'));
-                const svgFace = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='face'));
-                const svgAld  = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='ald'));
+                const svgAlg  = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='alg'), 'alg');
+                const svgFace = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='face'), 'face');
+                const svgAld  = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='ald'), 'ald');
                 impactBlock = `
                     <div style="page-break-inside:avoid;margin-top:16px">
                         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#0A2463;margin-bottom:10px;letter-spacing:1.5px;border-bottom:2px solid #0A2463;padding-bottom:4px">${impactTitre}</div>
