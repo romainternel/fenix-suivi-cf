@@ -155,7 +155,10 @@
                         <div class="jp-name">${nom}</div>
                         <div class="jp-poste-label">${posteCode} — ${posteLabel}</div>
                         ${tjHeaderStr}
-                        <button class="jp-print-btn" onclick="printFicheJoueur()">🖨️ Imprimer fiche PDF</button>
+                        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+                            <button class="jp-print-btn" onclick="printFicheJoueur()">🖨️ PDF</button>
+                            <button class="jp-print-btn" onclick="exportJoueurPPT()" style="background:rgba(255,255,255,0.25)">📊 PowerPoint</button>
+                        </div>
                     </div>
                 </div>`;
 
@@ -1085,5 +1088,349 @@
                 window.removeEventListener('afterprint', cleanup);
             });
             window.print();
+        }
+
+        async function exportJoueurPPT() {
+            if (typeof PptxGenJS === 'undefined') { alert('PptxGenJS non chargé'); return; }
+            const nom = currentSelectedJoueur;
+            if (!nom) return;
+
+            const isGB = (typeof detectIsGB === 'function') ? detectIsGB(nom) : (JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) || {}).poste === 'GB';
+            const matchFilter = document.getElementById('filter-joueur-match')?.value || '';
+            const bilanMatchs = _getJoueurBilanMatchs();
+            const effectiveMatchs = matchFilter ? [matchFilter] : (bilanMatchs || MATCHS);
+            const inPeriod = row => {
+                if (matchFilter) return row[COLS.rencontre] === matchFilter;
+                if (bilanMatchs) return bilanMatchs.includes(row[COLS.rencontre]);
+                return true;
+            };
+
+            const joueurInfo = JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) || {};
+            const posteCode  = joueurInfo.poste || '';
+            const posteName  = { GB:'Gardien de But', AG:'Ailier Gauche', AD:'Ailier Droit', ARG:'Arrière Gauche', ARD:'Arrière Droit', DC:'Demi-Centre', PIV:'Pivot' };
+            const posteLabel = posteName[posteCode] || posteCode;
+            const filterBilanEl = document.getElementById('filter-joueur-bilan');
+            const periodLabel = matchFilter ? `Match : ${matchFilter}` : (filterBilanEl?.value ? filterBilanEl.value : 'Saison complète');
+            const tjNom = getTJData(nom, effectiveMatchs);
+            const tjStr = tjNom.matchs > 0 ? `${tjNom.matchs} matchs  ·  ⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match` : '';
+
+            // ── Stats ──────────────────────────────────────────────────────────
+            let statVals = {};
+            let attPlus = 0, attMoins = 0, defPlus = 0, defMoins = 0;
+            if (!isGB) {
+                const rows = DATA.filter(row => {
+                    if (row[COLS.club] !== 'FENIX') return false;
+                    if (!inPeriod(row)) return false;
+                    return matchPlayerName((row[COLS.joueur] || '').toString().trim(), nom);
+                });
+                const buts  = rows.filter(r => r[COLS.resultat] === 'But').length;
+                const tirs  = rows.filter(r => r[COLS.resultat] === 'Tir raté').length;
+                const pb    = rows.filter(r => r[COLS.resultat] === 'PB').length;
+                const po    = rows.filter(r => r[COLS.resultat] === 'PO').length;
+                const total = buts + tirs;
+                const eff   = total > 0 ? Math.round(buts / total * 100) : 0;
+                let pd = 0;
+                DATA.forEach(row => {
+                    if (!inPeriod(row)) return;
+                    (row[COLS.action_joueur] || '').toString().split(';').forEach((j, i) => {
+                        if (!matchPlayerName(j.trim(), nom)) return;
+                        const att = lastNonEmpty((row[COLS.action_att] || '').toString().split(';'), i);
+                        const def = lastNonEmpty((row[COLS.action_def] || '').toString().split(';'), i);
+                        if (att === 'PD' || att === 'PD DG') pd++;
+                        if (isPositiveATT(att)) attPlus++; else if (isNegativeATT(att)) attMoins++;
+                        if (isPositiveDEF(def)) defPlus++; else if (isNegativeDEF(def)) defMoins++;
+                    });
+                });
+                const note = (attPlus - attMoins) + (defPlus - defMoins);
+                statVals = { buts, total, eff, pd, po, pb, note };
+            } else {
+                const gbRows = DATA.filter(row => {
+                    if (row[COLS.club] === 'FENIX') return false;
+                    if (!inPeriod(row)) return false;
+                    const g = (row[COLS.gardien] || '').toString().trim();
+                    if (!matchPlayerName(g, nom)) return false;
+                    return row[COLS.resultat] === 'But' || row[COLS.finalite] === 'Tir arrêté';
+                });
+                const arrets = gbRows.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
+                const butsC  = gbRows.filter(r => r[COLS.resultat] === 'But').length;
+                const totalF = arrets + butsC;
+                const gbEff  = totalF > 0 ? Math.round(arrets / totalF * 100) : 0;
+                const gbButs = DATA.filter(row =>
+                    row[COLS.club] === 'FENIX' && inPeriod(row) &&
+                    matchPlayerName((row[COLS.joueur] || '').toString().trim(), nom) &&
+                    row[COLS.resultat] === 'But'
+                ).length;
+                let gbPd = 0;
+                DATA.forEach(row => {
+                    if (!inPeriod(row)) return;
+                    (row[COLS.action_joueur] || '').toString().split(';').forEach((j, i) => {
+                        if (!matchPlayerName(j.trim(), nom)) return;
+                        const att = lastNonEmpty((row[COLS.action_att] || '').toString().split(';'), i);
+                        if (att === 'PD' || att === 'PD DG') gbPd++;
+                    });
+                });
+                statVals = { arrets, butsC, totalF, gbEff, gbButs, gbPd };
+            }
+
+            // ── Match-by-match ─────────────────────────────────────────────────
+            const initF = () => ({ bc:0, tc:0, bp:0, tp:0, pb:0, po:0, pd:0, ap:0, am:0, dp:0, dm:0 });
+            const sbm = {};
+            DATA.forEach(row => {
+                if (row[COLS.club] !== 'FENIX') return;
+                if (!inPeriod(row)) return;
+                if (!matchPlayerName((row[COLS.joueur] || '').toString().trim(), nom)) return;
+                const m = row[COLS.rencontre]; if (!m) return;
+                if (!sbm[m]) sbm[m] = initF();
+                const isPen = (row[COLS.ge] || '').toString().toLowerCase().includes('pen');
+                if (row[COLS.resultat] === 'But')           { isPen ? sbm[m].bp++ : sbm[m].bc++; }
+                else if (row[COLS.resultat] === 'Tir raté') { isPen ? sbm[m].tp++ : sbm[m].tc++; }
+                else if (row[COLS.resultat] === 'PB')  sbm[m].pb++;
+                else if (row[COLS.resultat] === 'PO')  sbm[m].po++;
+            });
+            DATA.forEach(row => {
+                if (!inPeriod(row)) return;
+                const m = row[COLS.rencontre]; if (!m) return;
+                (row[COLS.action_joueur] || '').toString().split(';').forEach((j, idx) => {
+                    if (!matchPlayerName(j.trim(), nom)) return;
+                    if (!sbm[m]) sbm[m] = initF();
+                    const att = lastNonEmpty((row[COLS.action_att] || '').toString().split(';'), idx);
+                    const def = lastNonEmpty((row[COLS.action_def] || '').toString().split(';'), idx);
+                    if (att === 'PD' || att === 'PD DG') sbm[m].pd++;
+                    if (isPositiveATT(att)) sbm[m].ap++; else if (isNegativeATT(att)) sbm[m].am++;
+                    if (isPositiveDEF(def)) sbm[m].dp++; else if (isNegativeDEF(def)) sbm[m].dm++;
+                });
+            });
+
+            // ── Impact zones (canvas) ──────────────────────────────────────────
+            const impactAll = DATA.filter(row => {
+                if (!inPeriod(row)) return false;
+                if (isGB) {
+                    if (row[COLS.club] === 'FENIX') return false;
+                    if (!matchPlayerName((row[COLS.gardien] || '').toString().trim(), nom)) return false;
+                    return row[COLS.resultat] === 'But' || row[COLS.finalite] === 'Tir arrêté';
+                }
+                if (row[COLS.club] !== 'FENIX') return false;
+                if (!['But','Tir raté'].includes(row[COLS.resultat])) return false;
+                return matchPlayerName((row[COLS.joueur] || '').toString().trim(), nom);
+            });
+            const impactCoords = impactAll.filter(r => r[COLS.impact] && String(r[COLS.impact]).includes(';'));
+
+            const renderZone = (viewKey, rows) => new Promise(resolve => {
+                const W = 480, H = 288;
+                const cv = document.createElement('canvas');
+                cv.width = W; cv.height = H;
+                const ctx = cv.getContext('2d');
+                const drawDots = () => {
+                    rows.forEach(row => {
+                        const p = String(row[COLS.impact]).split(';');
+                        const rx = parseFloat(p[0]), ry = parseFloat(p[1]);
+                        if (isNaN(rx) || isNaN(ry)) return;
+                        const cx = rx/100*W, cy = ry/100*H;
+                        const isPos = isGB ? row[COLS.finalite]==='Tir arrêté' : row[COLS.resultat]==='But';
+                        if (isPos) {
+                            ctx.beginPath(); ctx.arc(cx, cy, 11, 0, Math.PI*2);
+                            ctx.fillStyle = '#10B981'; ctx.fill();
+                            ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.stroke();
+                        } else {
+                            ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 5;
+                            const s = 9;
+                            ctx.beginPath();
+                            ctx.moveTo(cx-s,cy-s); ctx.lineTo(cx+s,cy+s);
+                            ctx.moveTo(cx+s,cy-s); ctx.lineTo(cx-s,cy+s);
+                            ctx.stroke();
+                        }
+                    });
+                    resolve(cv.toDataURL('image/png'));
+                };
+                const bgSrc = (typeof IMPACT_B64 !== 'undefined' && IMPACT_B64[viewKey]) ? IMPACT_B64[viewKey] : null;
+                if (bgSrc) {
+                    const img = new Image();
+                    img.onload  = () => { ctx.drawImage(img, 0, 0, W, H); drawDots(); };
+                    img.onerror = () => { ctx.fillStyle='#EFF6FF'; ctx.fillRect(0,0,W,H); drawDots(); };
+                    img.src = bgSrc;
+                } else { ctx.fillStyle='#EFF6FF'; ctx.fillRect(0,0,W,H); drawDots(); }
+            });
+
+            const [imgAlg, imgFace, imgAld] = await Promise.all([
+                renderZone('alg',  impactCoords.filter(r => getImpactView(r) === 'alg')),
+                renderZone('face', impactCoords.filter(r => getImpactView(r) === 'face')),
+                renderZone('ald',  impactCoords.filter(r => getImpactView(r) === 'ald')),
+            ]);
+
+            const graphCanvas  = document.getElementById('joueur-graph-canvas');
+            const graphDataUrl = graphCanvas ? graphCanvas.toDataURL('image/png') : null;
+
+            // ── PptxGenJS ──────────────────────────────────────────────────────
+            const pptx = new PptxGenJS();
+            pptx.layout = 'LAYOUT_16x9';
+            pptx.author = 'FENIX Handball CF';
+
+            const NAVY='0A2463', WHITE='FFFFFF', GREEN='10B981', RED='DC2626', GOLD='D97706', LGRAY='F8FAFC', DGRAY='475569';
+
+            const addHeader = (sl, title) => {
+                sl.addShape(pptx.ShapeType.rect, { x:0, y:0, w:10, h:0.85, fill:{ color:NAVY } });
+                sl.addText(title, { x:0.3, y:0.1, w:7, h:0.65, fontSize:20, color:WHITE, fontFace:'Arial', bold:true, valign:'middle' });
+                sl.addText(nom + (periodLabel !== 'Saison complète' ? '  ·  ' + periodLabel : ''), { x:7.2, y:0.1, w:2.65, h:0.65, fontSize:8, color:'BFDBFE', fontFace:'Arial', align:'right', valign:'middle' });
+            };
+
+            // SLIDE 1 — COVER
+            const s1 = pptx.addSlide();
+            s1.background = { color: NAVY };
+            s1.addText('FENIX HANDBALL', { x:0.5, y:0.45, w:9, h:0.45, fontSize:13, color:WHITE, fontFace:'Arial', align:'center', charSpacing:6 });
+            s1.addShape(pptx.ShapeType.rect, { x:2.5, y:1.05, w:5, h:0.03, fill:{ color:'BFDBFE' } });
+            s1.addText('SUIVI HANDBALL', { x:0.5, y:1.15, w:9, h:0.65, fontSize:26, color:WHITE, fontFace:'Arial', align:'center', charSpacing:3 });
+            s1.addText(nom, { x:0.5, y:1.9, w:9, h:1.35, fontSize:52, color:WHITE, fontFace:'Arial', bold:true, align:'center' });
+            s1.addText(posteLabel.toUpperCase(), { x:0.5, y:3.35, w:9, h:0.4, fontSize:15, color:'BFDBFE', fontFace:'Arial', align:'center', charSpacing:3 });
+            s1.addShape(pptx.ShapeType.rect, { x:2.5, y:3.85, w:5, h:0.03, fill:{ color:'BFDBFE' } });
+            s1.addText(periodLabel, { x:0.5, y:3.95, w:9, h:0.35, fontSize:12, color:'7EA0C4', fontFace:'Arial', align:'center' });
+            if (tjStr) s1.addText(tjStr, { x:0.5, y:4.38, w:9, h:0.3, fontSize:10, color:'7EA0C4', fontFace:'Arial', align:'center' });
+            s1.addText('Centre de Formation', { x:0.35, y:5.22, w:4, h:0.3, fontSize:9, color:'4A6FA5', fontFace:'Arial' });
+
+            // SLIDE 2 — STATS FICHE
+            const s2 = pptx.addSlide();
+            addHeader(s2, 'FICHE JOUEUR');
+            s2.addText(nom + (posteLabel ? '  —  ' + posteLabel : ''), { x:0.3, y:0.9, w:9.4, h:0.38, fontSize:13, color:NAVY, fontFace:'Arial', bold:true, valign:'middle' });
+            if (tjStr) s2.addText(tjStr, { x:0.3, y:1.28, w:9, h:0.28, fontSize:10, color:DGRAY, fontFace:'Arial' });
+            const sY=1.65, sH=1.55;
+            if (!isGB) {
+                const { buts, total, eff, pd, po, pb, note } = statVals;
+                const ns = (note>0?'+':'')+note;
+                const boxes = [
+                    { val:`${buts}/${total}`, lbl:'BUTS / TIRS',  col:NAVY },
+                    { val:`${eff}%`,          lbl:'EFFICACITÉ',    col:eff>=50?GREEN:eff>=35?GOLD:RED },
+                    { val:`${pd}`,            lbl:'PASSES DÉC.',   col:NAVY },
+                    { val:`${po}`,            lbl:'PÉN. OBTENUS',  col:NAVY },
+                    { val:`${pb}`,            lbl:'PERTES BALLE',  col:pb>0?RED:NAVY },
+                    { val:ns,                 lbl:'NOTE TOTALE',   col:note>0?GREEN:note<0?RED:DGRAY },
+                ];
+                boxes.forEach((b, i) => {
+                    const x=0.2+(i%3)*3.2, y=sY+Math.floor(i/3)*1.7;
+                    s2.addShape(pptx.ShapeType.rect, { x, y, w:3.1, h:sH, fill:{ color:LGRAY }, line:{ color:'E2E8F0', width:1 } });
+                    s2.addText(b.val, { x:x+0.1, y:y+0.12, w:2.9, h:1.0, fontSize:34, color:b.col, fontFace:'Arial', bold:true, align:'center', valign:'middle' });
+                    s2.addText(b.lbl, { x:x+0.1, y:y+1.18, w:2.9, h:0.28, fontSize:8, color:DGRAY, fontFace:'Arial', align:'center', charSpacing:1 });
+                });
+            } else {
+                const { arrets, butsC, totalF, gbEff, gbButs, gbPd } = statVals;
+                const boxes = [
+                    { val:`${arrets}/${totalF}`, lbl:'ARRÊTS / TIRS', col:NAVY },
+                    { val:`${gbEff}%`,           lbl:'EFFICACITÉ',     col:gbEff>=40?GREEN:gbEff>=30?GOLD:RED },
+                    { val:`${gbPd}`,             lbl:'PASSES DÉC.',    col:NAVY },
+                    { val:`${gbButs}`,           lbl:'BUTS MARQUÉS',   col:gbButs>0?GREEN:NAVY },
+                ];
+                boxes.forEach((b, i) => {
+                    const x=0.4+i*2.35;
+                    s2.addShape(pptx.ShapeType.rect, { x, y:sY, w:2.2, h:sH, fill:{ color:LGRAY }, line:{ color:'E2E8F0', width:1 } });
+                    s2.addText(b.val, { x:x+0.05, y:sY+0.12, w:2.1, h:1.0, fontSize:30, color:b.col, fontFace:'Arial', bold:true, align:'center', valign:'middle' });
+                    s2.addText(b.lbl, { x:x+0.05, y:sY+1.18, w:2.1, h:0.28, fontSize:8, color:DGRAY, fontFace:'Arial', align:'center', charSpacing:1 });
+                });
+            }
+
+            // SLIDE 3 — ACTIONS ATT / DEF
+            if (!isGB) {
+                const s3 = pptx.addSlide();
+                addHeader(s3, 'ACTIONS ATT / DEF');
+                const nm = effectiveMatchs.length;
+                const fmt1 = n => nm>0?(n/nm).toFixed(1)+'/match':'—';
+                const quads = [
+                    { val:attPlus,  lbl:'ATT +', sub:fmt1(attPlus),  col:GREEN, x:0.2,  y:1.0 },
+                    { val:attMoins, lbl:'ATT −', sub:fmt1(attMoins), col:RED,   x:5.15, y:1.0 },
+                    { val:defPlus,  lbl:'DEF +', sub:fmt1(defPlus),  col:GREEN, x:0.2,  y:3.1 },
+                    { val:defMoins, lbl:'DEF −', sub:fmt1(defMoins), col:RED,   x:5.15, y:3.1 },
+                ];
+                quads.forEach(q => {
+                    s3.addShape(pptx.ShapeType.rect, { x:q.x, y:q.y, w:4.7, h:1.95, fill:{ color:LGRAY }, line:{ color:'E2E8F0', width:1 } });
+                    s3.addText(q.val.toString(), { x:q.x+0.1, y:q.y+0.1, w:2.0, h:1.35, fontSize:56, color:q.col, fontFace:'Arial', bold:true, align:'center', valign:'middle' });
+                    s3.addText(q.lbl, { x:q.x+2.2, y:q.y+0.22, w:2.35, h:0.55, fontSize:22, color:q.col, fontFace:'Arial', bold:true });
+                    s3.addText(q.sub, { x:q.x+2.2, y:q.y+0.9,  w:2.35, h:0.4,  fontSize:13, color:DGRAY, fontFace:'Arial' });
+                });
+            }
+
+            // SLIDE 4 — ZONES DE TIR / ARRÊT
+            if (impactAll.length > 0) {
+                const totalI   = impactAll.length;
+                const positifs = isGB ? impactAll.filter(r=>r[COLS.finalite]==='Tir arrêté').length : impactAll.filter(r=>r[COLS.resultat]==='But').length;
+                const pctI     = Math.round(positifs/totalI*100);
+                const zTitle   = isGB ? `ZONES D'ARRÊT — ${positifs} arrêts / ${totalI} tirs (${pctI}%)` : `ZONES DE TIR — ${positifs} buts / ${totalI} tirs (${pctI}%)`;
+                const s4 = pptx.addSlide();
+                addHeader(s4, zTitle);
+                const iW=2.9, iH=1.74, iY=1.0;
+                s4.addImage({ data:imgAlg,  x:0.2,  y:iY, w:iW, h:iH });
+                s4.addImage({ data:imgFace, x:3.55, y:iY, w:iW, h:iH });
+                s4.addImage({ data:imgAld,  x:6.9,  y:iY, w:iW, h:iH });
+                [['EXT GAUCHE',0.2],['CENTRAL',3.55],['EXT DROIT',6.9]].forEach(([l,x]) =>
+                    s4.addText(l, { x, y:iY+iH+0.08, w:iW, h:0.22, fontSize:8, color:DGRAY, fontFace:'Arial', align:'center', bold:true, charSpacing:1 })
+                );
+                const legY = iY+iH+0.42;
+                s4.addShape(pptx.ShapeType.ellipse, { x:0.2, y:legY, w:0.18, h:0.18, fill:{ color:GREEN } });
+                s4.addText(isGB?'Arrêt':'But', { x:0.45, y:legY-0.02, w:1.5, h:0.22, fontSize:9, color:DGRAY, fontFace:'Arial' });
+                s4.addShape(pptx.ShapeType.rect, { x:2.1, y:legY, w:0.18, h:0.18, fill:{ color:RED } });
+                s4.addText(isGB?'But encaissé':'Tir raté', { x:2.36, y:legY-0.02, w:2, h:0.22, fontSize:9, color:DGRAY, fontFace:'Arial' });
+                const sans = totalI - impactCoords.length;
+                if (sans>0) s4.addText(`${sans} tir(s) sans coordonnées`, { x:5, y:legY-0.02, w:4.8, h:0.22, fontSize:8, color:'94A3B8', fontFace:'Arial', align:'right' });
+            }
+
+            // SLIDE 5 — GRAPHIQUE
+            if (graphDataUrl) {
+                const s5 = pptx.addSlide();
+                addHeader(s5, isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION DES NOTES');
+                s5.addImage({ data:graphDataUrl, x:0.3, y:0.95, w:9.4, h:4.5 });
+            }
+
+            // SLIDE 6 — TABLEAU DES MATCHS
+            const matchEntries = Object.entries(sbm);
+            if (matchEntries.length > 0) {
+                const s6 = pptx.addSlide();
+                addHeader(s6, 'DÉTAIL PAR MATCH');
+                const hF = { color:WHITE, bold:true, fontSize:7, fontFace:'Arial' };
+                const cF = { fontSize:7, fontFace:'Arial' };
+                const hFill = { color:NAVY };
+                const colW = [1.55,0.58,0.52,0.52,0.52,0.52,0.38,0.38,0.38,0.46,0.46,0.46];
+                const mkCell = (text, opts) => ({ text, options: { ...opts, valign:'middle', border:{ pt:0.5, color:'E2E8F0' } } });
+                const fmtN = n => n>0?'+'+n:n.toString();
+                const colN = n => ({ color:n>0?GREEN:n<0?RED:DGRAY, bold:n!==0 });
+                let tot = initF();
+                const hdr = ['MATCH','B/T','%CH','PEN','%PEN','%TOT','PB','PO','PD','ATT','DEF','TOT'].map((h,i) =>
+                    mkCell(h, { ...hF, fill:hFill, align:i===0?'left':'center' })
+                );
+                const trows = [hdr];
+                matchEntries.forEach(([m, s]) => {
+                    const tC=s.bc+s.tc, tP=s.bp+s.tp, tT=tC+tP, tB=s.bc+s.bp;
+                    const nA=s.ap-s.am, nD=s.dp-s.dm, nT=nA+nD;
+                    Object.keys(tot).forEach(k => tot[k]+=s[k]);
+                    trows.push([
+                        mkCell(m, { ...cF, align:'left', bold:true, color:NAVY }),
+                        mkCell(`${s.bc}/${tC}`, { ...cF, align:'center' }),
+                        mkCell(tC>0?Math.round(s.bc/tC*100)+'%':'-', { ...cF, align:'center' }),
+                        mkCell(tP>0?`${s.bp}/${tP}`:'-', { ...cF, align:'center' }),
+                        mkCell(tP>0?Math.round(s.bp/tP*100)+'%':'-', { ...cF, align:'center' }),
+                        mkCell(tT>0?Math.round(tB/tT*100)+'%':'-', { ...cF, align:'center' }),
+                        mkCell(s.pb.toString(), { ...cF, align:'center', color:s.pb>0?RED:DGRAY }),
+                        mkCell(s.po.toString(), { ...cF, align:'center' }),
+                        mkCell(s.pd.toString(), { ...cF, align:'center' }),
+                        mkCell(fmtN(nA), { ...cF, align:'center', ...colN(nA) }),
+                        mkCell(fmtN(nD), { ...cF, align:'center', ...colN(nD) }),
+                        mkCell(fmtN(nT), { ...cF, align:'center', ...colN(nT) }),
+                    ]);
+                });
+                const tC=tot.bc+tot.tc, tP=tot.bp+tot.tp, tT=tC+tP, tB=tot.bc+tot.bp;
+                const tNA=tot.ap-tot.am, tND=tot.dp-tot.dm, tNT=tNA+tND;
+                trows.push([
+                    mkCell('TOTAL', { ...hF, fill:hFill, align:'left' }),
+                    mkCell(`${tot.bc}/${tC}`, { ...hF, fill:hFill, align:'center' }),
+                    mkCell(tC>0?Math.round(tot.bc/tC*100)+'%':'-', { ...hF, fill:hFill, align:'center' }),
+                    mkCell(tP>0?`${tot.bp}/${tP}`:'-', { ...hF, fill:hFill, align:'center' }),
+                    mkCell(tP>0?Math.round(tot.bp/tP*100)+'%':'-', { ...hF, fill:hFill, align:'center' }),
+                    mkCell(tT>0?Math.round(tB/tT*100)+'%':'-', { ...hF, fill:hFill, align:'center' }),
+                    mkCell(tot.pb.toString(), { ...hF, fill:hFill, align:'center' }),
+                    mkCell(tot.po.toString(), { ...hF, fill:hFill, align:'center' }),
+                    mkCell(tot.pd.toString(), { ...hF, fill:hFill, align:'center' }),
+                    mkCell(fmtN(tNA), { ...hF, fill:hFill, align:'center' }),
+                    mkCell(fmtN(tND), { ...hF, fill:hFill, align:'center' }),
+                    mkCell(fmtN(tNT), { ...hF, fill:hFill, align:'center' }),
+                ]);
+                s6.addTable(trows, { x:0.2, y:0.95, w:9.6, colW, rowH:0.22, border:{ pt:0.5, color:'E2E8F0' } });
+            }
+
+            await pptx.writeFile({ fileName: `${nom.replace(/\s+/g,'_')}_suivi_CF.pptx` });
         }
 
