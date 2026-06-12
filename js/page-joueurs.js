@@ -1087,11 +1087,17 @@
                     ${impactBlock}
                 </div>`;
 
-            if (graphCanvas)    document.getElementById('pdf-graph-slot').appendChild(graphCanvas);
+            const canvasToImg = c => {
+                const img = document.createElement('img');
+                img.src = c.toDataURL('image/png');
+                img.style.cssText = c.style.cssText;
+                return img;
+            };
+            if (graphCanvas)    document.getElementById('pdf-graph-slot').appendChild(canvasToImg(graphCanvas));
             if (impactCanvases) {
-                document.getElementById('pdf-alg-slot').appendChild(impactCanvases.alg);
-                document.getElementById('pdf-face-slot').appendChild(impactCanvases.face);
-                document.getElementById('pdf-ald-slot').appendChild(impactCanvases.ald);
+                document.getElementById('pdf-alg-slot').appendChild(canvasToImg(impactCanvases.alg));
+                document.getElementById('pdf-face-slot').appendChild(canvasToImg(impactCanvases.face));
+                document.getElementById('pdf-ald-slot').appendChild(canvasToImg(impactCanvases.ald));
             }
 
             window.addEventListener('afterprint', function cleanup() {
