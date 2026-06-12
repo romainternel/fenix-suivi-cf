@@ -964,6 +964,84 @@
             // Convertir le graphique en data URL AVANT de construire le HTML
             const graphDataUrl = graphCanvas ? graphCanvas.toDataURL('image/png') : null;
 
+            // === 3. Impact — SVG inline (fiable à l'impression, sans canvas/toDataURL) ===
+            const inPeriod = row => {
+                if (matchFilter) return row[COLS.rencontre] === matchFilter;
+                if (bilanMatchs) return bilanMatchs.includes(row[COLS.rencontre]);
+                return true;
+            };
+            const impactRowsAll = isGB
+                ? DATA.filter(row =>
+                    row[COLS.club] !== 'FENIX' &&
+                    (row[COLS.finalite]==='Tir arrêté' || row[COLS.resultat]==='But') &&
+                    inPeriod(row) &&
+                    matchPlayerName((row[COLS.gardien]||'').toString().trim(), nom)
+                )
+                : DATA.filter(row =>
+                    row[COLS.club] === 'FENIX' &&
+                    ['But','Tir raté'].includes(row[COLS.resultat]) &&
+                    inPeriod(row) &&
+                    matchPlayerName((row[COLS.joueur]||'').toString().trim(), nom)
+                );
+            const impactRowsWithCoords = impactRowsAll.filter(r =>
+                r[COLS.impact] && String(r[COLS.impact]).includes(';')
+            );
+
+            const buildImpactSVG = rows => {
+                const dots = rows.map(row => {
+                    const p = String(row[COLS.impact]).split(';');
+                    const rx = parseFloat(p[0]), ry = parseFloat(p[1]);
+                    if (isNaN(rx) || isNaN(ry)) return '';
+                    // viewBox: 0 0 100 65 — goal frame: x=3,y=5,w=94,h=50
+                    const cx = 3 + rx * 0.94;
+                    const cy = 5 + ry * 0.50;
+                    const isPos = isGB ? row[COLS.finalite]==='Tir arrêté' : row[COLS.resultat]==='But';
+                    if (isPos) {
+                        return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.8" fill="#10B981" stroke="white" stroke-width="0.8"/>`;
+                    } else {
+                        const s = 2.2;
+                        return `<line x1="${(cx-s).toFixed(1)}" y1="${(cy-s).toFixed(1)}" x2="${(cx+s).toFixed(1)}" y2="${(cy+s).toFixed(1)}" stroke="#EF4444" stroke-width="1.8"/>
+                                <line x1="${(cx+s).toFixed(1)}" y1="${(cy-s).toFixed(1)}" x2="${(cx-s).toFixed(1)}" y2="${(cy+s).toFixed(1)}" stroke="#EF4444" stroke-width="1.8"/>`;
+                    }
+                }).join('');
+                return `<svg viewBox="0 0 100 65" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:5px;border:1px solid #E2E8F0;background:#EFF6FF">
+                    <rect x="3" y="5" width="94" height="50" fill="white" stroke="#1E293B" stroke-width="1.5" rx="1"/>
+                    <line x1="36" y1="5" x2="36" y2="55" stroke="#CBD5E1" stroke-width="0.5"/>
+                    <line x1="64" y1="5" x2="64" y2="55" stroke="#CBD5E1" stroke-width="0.5"/>
+                    <line x1="3" y1="30" x2="97" y2="30" stroke="#CBD5E1" stroke-width="0.5"/>
+                    ${dots}
+                </svg>`;
+            };
+
+            let impactBlock = '';
+            if (impactRowsAll.length > 0) {
+                const totalI  = impactRowsAll.length;
+                const positifs = isGB
+                    ? impactRowsAll.filter(r=>r[COLS.finalite]==='Tir arrêté').length
+                    : impactRowsAll.filter(r=>r[COLS.resultat]==='But').length;
+                const pct = Math.round(positifs / totalI * 100);
+                const impactTitre = isGB
+                    ? `ZONES D'ARRÊT — ${positifs} arrêts / ${totalI} tirs (${pct}%)`
+                    : `ZONES DE TIR — ${positifs} buts / ${totalI} tirs (${pct}%)`;
+                const svgAlg  = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='alg'));
+                const svgFace = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='face'));
+                const svgAld  = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='ald'));
+                impactBlock = `
+                    <div style="page-break-inside:avoid;margin-top:16px">
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#0A2463;margin-bottom:10px;letter-spacing:1.5px;border-bottom:2px solid #0A2463;padding-bottom:4px">${impactTitre}</div>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                            <div style="text-align:center">${svgAlg}<div style="font-size:0.68rem;color:#64748B;margin-top:4px;font-weight:700;letter-spacing:1px">EXT GAUCHE</div></div>
+                            <div style="text-align:center">${svgFace}<div style="font-size:0.68rem;color:#64748B;margin-top:4px;font-weight:700;letter-spacing:1px">CENTRAL</div></div>
+                            <div style="text-align:center">${svgAld}<div style="font-size:0.68rem;color:#64748B;margin-top:4px;font-weight:700;letter-spacing:1px">EXT DROIT</div></div>
+                        </div>
+                        <div style="margin-top:6px;font-size:0.68rem;color:#64748B">
+                            ● <span style="color:#10B981">${isGB ? 'Arrêt' : 'But'}</span> &nbsp;
+                            ✕ <span style="color:#EF4444">${isGB ? 'But encaissé' : 'Tir raté'}</span> &nbsp;
+                            (${impactRowsAll.length - impactRowsWithCoords.length} tir(s) sans coordonnées non représenté(s))
+                        </div>
+                    </div>`;
+            }
+
             const ph = '<div class="print-fenix-header">FENIX HANDBALL — Centre de Formation</div>';
             const graphLabel = isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION DES NOTES';
             const imgStyle   = 'width:100%;display:block;border-radius:8px;border:1px solid #E2E8F0';
@@ -988,7 +1066,11 @@
                     ${ph}
                     ${matches.outerHTML}
                 </div>
-                ${graphBlock ? `<div style="padding:20px 28px">${ph}${graphBlock}</div>` : ''}`;
+                <div style="padding:20px 28px">
+                    ${ph}
+                    ${graphBlock}
+                    ${impactBlock}
+                </div>`;
 
             // Attendre que toutes les <img> soient décodées avant d'imprimer
             const imgEls = Array.from(printZone.querySelectorAll('img'));

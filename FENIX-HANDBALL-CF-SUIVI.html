@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=73">
-    <script src="js/utils.js?v=73"></script>
-    <script src="js/impact-images.js?v=73"></script>
-    <script src="js/player-mode.js?v=73"></script>
-    <script src="js/page-joueurs.js?v=73"></script>
-    <script src="js/page-notes-graph.js?v=73"></script>
-    <script src="js/page-analyse.js?v=73"></script>
+    <link rel="stylesheet" href="css/style.css?v=74">
+    <script src="js/utils.js?v=74"></script>
+    <script src="js/impact-images.js?v=74"></script>
+    <script src="js/player-mode.js?v=74"></script>
+    <script src="js/page-joueurs.js?v=74"></script>
+    <script src="js/page-notes-graph.js?v=74"></script>
+    <script src="js/page-analyse.js?v=74"></script>
 </head>
 <body>
 
@@ -2715,6 +2715,15 @@ let _effInfoPoste = null;
             const resultatFilter = document.getElementById('filter-impact-resultat').value;
             const bilanM = impactBilanFilter ? BILANS.find(b => b.nom === impactBilanFilter)?.matchs : null;
 
+            // Stats générales : tous les tirs (avec ou sans coordonnées d'impact)
+            const filteredAll = DATA.filter(row => {
+                if (row[COLS.club] !== 'FENIX') return false;
+                if (!['But', 'Tir raté'].includes(row[COLS.resultat])) return false;
+                if (joueurFilter && !matchPlayerName((row[COLS.joueur]||'').toString().trim(), joueurFilter)) return false;
+                if (bilanM && !bilanM.includes(row[COLS.rencontre])) return false;
+                return true;
+            });
+            // Canvas / zones : uniquement les tirs avec coordonnées d'impact
             const filtered = DATA.filter(row => {
                 if (row[COLS.club] !== 'FENIX') return false;
                 if (!['But', 'Tir raté'].includes(row[COLS.resultat])) return false;
@@ -2726,8 +2735,8 @@ let _effInfoPoste = null;
                 return true;
             });
 
-            const total = filtered.length;
-            const buts  = filtered.filter(row => row[COLS.resultat] === 'But').length;
+            const total = filteredAll.length;
+            const buts  = filteredAll.filter(row => row[COLS.resultat] === 'But').length;
             const pct   = total > 0 ? Math.round(buts / total * 100) : null;
             document.getElementById('impact-total').textContent = total;
             document.getElementById('impact-buts').textContent  = buts;
