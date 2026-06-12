@@ -1016,6 +1016,8 @@
                 </svg>`;
             };
 
+            let impactTitle = '';
+            let impactStatSub = '';
             let impactBlock = '';
             if (impactRowsAll.length > 0) {
                 const totalI  = impactRowsAll.length;
@@ -1023,15 +1025,13 @@
                     ? impactRowsAll.filter(r=>r[COLS.finalite]==='Tir arrêté').length
                     : impactRowsAll.filter(r=>r[COLS.resultat]==='But').length;
                 const pct = Math.round(positifs / totalI * 100);
-                const impactTitre = isGB
-                    ? `ZONES D'ARRÊT — ${positifs} arrêts / ${totalI} tirs (${pct}%)`
-                    : `ZONES DE TIR — ${positifs} buts / ${totalI} tirs (${pct}%)`;
+                impactTitle = isGB ? "ZONES D'ARRÊT" : 'ZONES DE TIR';
+                impactStatSub = `${positifs} ${isGB?'arrêts':'buts'} / ${totalI} tirs (${pct}%)`;
                 const svgAlg  = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='alg'), 'alg');
                 const svgFace = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='face'), 'face');
                 const svgAld  = buildImpactSVG(impactRowsWithCoords.filter(r=>getImpactView(r)==='ald'), 'ald');
                 impactBlock = `
-                    <div style="page-break-inside:avoid;margin-top:16px">
-                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#0A2463;margin-bottom:10px;letter-spacing:1.5px;border-bottom:2px solid #0A2463;padding-bottom:4px">${impactTitre}</div>
+                    <div>
                         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
                             <div style="text-align:center">${svgAlg}<div style="font-size:0.68rem;color:#64748B;margin-top:4px;font-weight:700;letter-spacing:1px">EXT GAUCHE</div></div>
                             <div style="text-align:center">${svgFace}<div style="font-size:0.68rem;color:#64748B;margin-top:4px;font-weight:700;letter-spacing:1px">CENTRAL</div></div>
@@ -1040,40 +1040,54 @@
                         <div style="margin-top:6px;font-size:0.68rem;color:#64748B">
                             ● <span style="color:#10B981">${isGB ? 'Arrêt' : 'But'}</span> &nbsp;
                             ✕ <span style="color:#EF4444">${isGB ? 'But encaissé' : 'Tir raté'}</span> &nbsp;
-                            (${impactRowsAll.length - impactRowsWithCoords.length} tir(s) sans coordonnées non représenté(s))
+                            (${totalI - impactRowsWithCoords.length} tir(s) sans coordonnées non représenté(s))
                         </div>
                     </div>`;
             }
 
-            const ph = '<div class="print-fenix-header">FENIX HANDBALL — Centre de Formation</div>';
             const graphLabel = isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION DES NOTES';
             const imgStyle   = 'width:100%;display:block;border-radius:8px;border:1px solid #E2E8F0';
+            const graphBlock = graphDataUrl ? `<img src="${graphDataUrl}" style="${imgStyle}">` : '';
 
-            const graphBlock = graphDataUrl ? `
-                <div style="page-break-inside:avoid;margin-bottom:20px">
-                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#0A2463;margin-bottom:8px;letter-spacing:1.5px;border-bottom:2px solid #0A2463;padding-bottom:4px">${graphLabel}</div>
-                    <img src="${graphDataUrl}" style="${imgStyle}">
-                </div>` : '';
+            // Cover slide data
+            const _jpInfo = (typeof JOUEURS_TERRAIN !== 'undefined') ? (JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) || {}) : {};
+            const _posteCode = _jpInfo.poste || '';
+            const _posteLblMap = { GB:'Gardien de But', AG:'Ailier Gauche', AD:'Ailier Droit', ARG:'Arrière Gauche', ARD:'Arrière Droit', DC:'Demi-Centre', PIV:'Pivot' };
+            const _posteLabel = _posteLblMap[_posteCode] || _posteCode;
+            const _filterBilanEl = document.getElementById('filter-joueur-bilan');
+            const _periodLabel = matchFilter ? ('Match : ' + matchFilter) : (_filterBilanEl?.value || 'Saison complète');
+            const _tjD = (typeof getTJData === 'function') ? getTJData(nom, effectiveMatchs) : { matchs: 0, total: 0 };
+            const _tjStr = (_tjD.matchs > 0) ? `${_tjD.matchs} match${_tjD.matchs > 1 ? 's' : ''}  ·  ⌀ ${Math.round(_tjD.total / _tjD.matchs)} min/match` : '';
+            const _subHdr = nom + (_periodLabel !== 'Saison complète' ? '  ·  ' + _periodLabel : '');
+            const _pptHdr = (title, statLine) => `<div style="background:#0A2463;padding:7px 16px;display:flex;justify-content:space-between;align-items:center"><span style="font-family:Arial,sans-serif;font-size:12pt;font-weight:700;color:white;letter-spacing:0.5px">${title}</span><span style="font-family:Arial,sans-serif;font-size:7pt;color:#BFDBFE">${statLine || _subHdr}</span></div>`;
 
             const printZone = document.getElementById('joueur-print-zone');
             printZone.innerHTML = `
-                <div class="pdf-page" style="padding:20px 28px">
-                    ${ph}
-                    ${panel.outerHTML}
+                <div class="pdf-page pdf-slide-cover">
+                    <div style="font-family:Arial,sans-serif;font-size:10pt;color:white;letter-spacing:4px;margin-bottom:10px;text-align:center">FENIX HANDBALL</div>
+                    <div style="width:50%;border-top:1px solid rgba(191,219,254,0.5);margin:0 auto 10px"></div>
+                    <div style="font-family:Arial,sans-serif;font-size:17pt;color:white;letter-spacing:2px;margin-bottom:8px;text-align:center">SUIVI HANDBALL</div>
+                    <div style="font-family:Arial,sans-serif;font-size:36pt;font-weight:700;color:white;text-align:center">${nom}</div>
+                    <div style="font-family:Arial,sans-serif;font-size:11pt;color:#BFDBFE;letter-spacing:2px;margin-top:8px;text-align:center">${_posteLabel.toUpperCase()}</div>
+                    <div style="width:50%;border-top:1px solid rgba(191,219,254,0.5);margin:10px auto 8px"></div>
+                    <div style="font-family:Arial,sans-serif;font-size:9pt;color:#7EA0C4;text-align:center">${_periodLabel}</div>
+                    ${_tjStr ? `<div style="font-family:Arial,sans-serif;font-size:8pt;color:#7EA0C4;margin-top:4px;text-align:center">${_tjStr}</div>` : ''}
+                    <div style="position:absolute;bottom:12px;left:18px;font-family:Arial,sans-serif;font-size:8pt;color:#4A6FA5">Centre de Formation</div>
                 </div>
-                <div class="pdf-page" style="padding:20px 28px">
-                    ${ph}
-                    ${actionCardHTML}
+                <div class="pdf-page" style="padding:0;overflow:hidden">
+                    ${_pptHdr('FICHE JOUEUR')}
+                    <div style="padding:10px 18px">${panel.outerHTML}</div>
                 </div>
-                <div class="pdf-page" style="padding:20px 28px">
-                    ${ph}
-                    ${matches.outerHTML}
+                <div class="pdf-page" style="padding:0;overflow:hidden">
+                    ${_pptHdr(isGB ? 'STATS PAR ZONE' : 'ACTIONS ATT / DEF')}
+                    <div style="padding:10px 18px">${actionCardHTML}</div>
                 </div>
-                <div style="padding:20px 28px">
-                    ${ph}
-                    ${graphBlock}
-                    ${impactBlock}
-                </div>`;
+                <div class="pdf-page" style="padding:0;overflow:hidden">
+                    ${_pptHdr('DÉTAIL PAR MATCH')}
+                    <div style="padding:10px 18px">${matches.outerHTML}</div>
+                </div>
+                ${graphBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden">${_pptHdr(graphLabel)}<div style="padding:10px 18px">${graphBlock}</div></div>` : ''}
+                ${impactBlock ? `<div style="padding:0;overflow:hidden">${_pptHdr(impactTitle, impactStatSub)}<div style="padding:10px 18px">${impactBlock}</div></div>` : ''}`;
 
             // Attendre que toutes les <img> soient décodées avant d'imprimer
             const imgEls = Array.from(printZone.querySelectorAll('img'));
@@ -1408,31 +1422,6 @@
                 s4.addText(isGB?'But encaissé':'Tir raté', { x:2.36, y:legY-0.02, w:2, h:0.22, fontSize:9, color:DGRAY, fontFace:'Arial' });
                 const sans = totalI - impactCoords.length;
                 if (sans>0) s4.addText(`${sans} tir(s) sans coordonnées`, { x:5, y:legY-0.02, w:4.8, h:0.22, fontSize:8, color:'94A3B8', fontFace:'Arial', align:'right' });
-
-                // Tableau % par zone
-                const zEntries = Object.entries(zoneStats).filter(([,v])=>v.total>0).sort((a,b)=>b[1].total-a[1].total);
-                if (zEntries.length > 0) {
-                    const zY = legY + 0.32;
-                    const zF = { fontSize:8, fontFace:'Arial', valign:'middle' };
-                    const zHF = { ...zF, bold:true, color:WHITE, fill:{ color:NAVY }, align:'center' };
-                    const zHdr = [
-                        { text:'ZONE',    options:{ ...zHF, align:'left' } },
-                        { text:'BUTS/TIRS', options:{ ...zHF } },
-                        { text:'EFFICACITÉ', options:{ ...zHF } },
-                    ];
-                    const zRows = [zHdr, ...zEntries.map(([z, v]) => {
-                        const pct = Math.round(v.buts/v.total*100);
-                        const pctCol = pct>=65?GREEN:pct>=45?GOLD:RED;
-                        return [
-                            { text:z, options:{ ...zF, align:'left', color:'1E293B', fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } },
-                            { text:`${v.buts}/${v.total}`, options:{ ...zF, align:'center', color:'1E293B', fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } },
-                            { text:`${pct}%`, options:{ ...zF, align:'center', bold:true, color:pctCol, fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } },
-                        ];
-                    })];
-                    const zW = 9.6, zCols = [4.8, 2.4, 2.4];
-                    const rH = Math.min(0.26, (5.625 - zY - 0.1) / zRows.length);
-                    s4.addTable(zRows, { x:0.2, y:zY, w:zW, colW:zCols, rowH:rH, border:{ pt:0.3, color:'E2E8F0' } });
-                }
             }
 
             // SLIDE 5 — GRAPHIQUE

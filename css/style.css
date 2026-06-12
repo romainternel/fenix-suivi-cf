@@ -1550,6 +1550,16 @@
             @bottom-right  { content: none; }
         }
 
+        .pdf-slide-cover {
+            background: #0A2463;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 175mm;
+            position: relative;
+        }
+
         @media print {
             body > *:not(#joueur-print-zone) { display: none !important; }
             #joueur-print-zone {
@@ -1564,6 +1574,7 @@
             .jp-header { border-radius: 8px !important; }
             .jm-table-wrap { overflow: visible !important; }
             .pdf-page { break-after: page; page-break-after: always; }
+            .pdf-slide-cover { background: #0A2463 !important; }
         }
 
         /* ── Player Mode ─────────────────────────────────────────────────────── */
