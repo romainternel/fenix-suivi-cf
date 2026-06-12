@@ -1106,6 +1106,14 @@
                     ${impactBlock}
                 </div>`;
 
+            // Attendre que toutes les <img> soient décodées avant d'imprimer
+            const imgEls = Array.from(printZone.querySelectorAll('img'));
+            await Promise.all(imgEls.map(img =>
+                typeof img.decode === 'function'
+                    ? img.decode().catch(() => {})
+                    : new Promise(r => { img.onload = r; img.onerror = r; if (img.complete) r(); })
+            ));
+
             window.addEventListener('afterprint', function cleanup() {
                 printZone.innerHTML = '';
                 window.removeEventListener('afterprint', cleanup);
