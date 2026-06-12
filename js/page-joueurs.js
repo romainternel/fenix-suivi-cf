@@ -1117,6 +1117,7 @@
             // ── Stats ──────────────────────────────────────────────────────────
             let statVals = {};
             let attPlus = 0, attMoins = 0, defPlus = 0, defMoins = 0;
+            const attPlusDetail = {}, attMoinsDetail = {}, defPlusDetail = {}, defMoinsDetail = {};
             if (!isGB) {
                 const rows = DATA.filter(row => {
                     if (row[COLS.club] !== 'FENIX') return false;
@@ -1137,8 +1138,10 @@
                         const att = lastNonEmpty((row[COLS.action_att] || '').toString().split(';'), i);
                         const def = lastNonEmpty((row[COLS.action_def] || '').toString().split(';'), i);
                         if (att === 'PD' || att === 'PD DG') pd++;
-                        if (isPositiveATT(att)) attPlus++; else if (isNegativeATT(att)) attMoins++;
-                        if (isPositiveDEF(def)) defPlus++; else if (isNegativeDEF(def)) defMoins++;
+                        if (isPositiveATT(att)) { attPlus++; for (const g of NOTE_GROUPS.attPlus)  { if (g.main.includes(att)) { attPlusDetail[g.label]  = (attPlusDetail[g.label]  || 0) + 1; break; } } }
+                        else if (isNegativeATT(att)) { attMoins++; for (const g of NOTE_GROUPS.attMoins) { if (g.main.includes(att)) { attMoinsDetail[g.label] = (attMoinsDetail[g.label] || 0) + 1; break; } } }
+                        if (isPositiveDEF(def)) { defPlus++; for (const g of NOTE_GROUPS.defPlus)  { if (g.main.includes(def)) { defPlusDetail[g.label]  = (defPlusDetail[g.label]  || 0) + 1; break; } } }
+                        else if (isNegativeDEF(def)) { defMoins++; for (const g of NOTE_GROUPS.defMoins) { if (g.main.includes(def)) { defMoinsDetail[g.label] = (defMoinsDetail[g.label] || 0) + 1; break; } } }
                     });
                 });
                 const note = (attPlus - attMoins) + (defPlus - defMoins);
@@ -1214,6 +1217,17 @@
                 return matchPlayerName((row[COLS.joueur] || '').toString().trim(), nom);
             });
             const impactCoords = impactAll.filter(r => r[COLS.impact] && String(r[COLS.impact]).includes(';'));
+
+            // Stats par zone de terrain
+            const zoneStats = {};
+            impactAll.forEach(row => {
+                const z = (row[COLS.field_position] || '').toString().trim();
+                if (!z) return;
+                if (!zoneStats[z]) zoneStats[z] = { buts: 0, total: 0 };
+                zoneStats[z].total++;
+                const isPos = isGB ? row[COLS.finalite]==='Tir arrêté' : row[COLS.resultat]==='But';
+                if (isPos) zoneStats[z].buts++;
+            });
 
             const renderZone = (viewKey, rows) => new Promise(resolve => {
                 const W = 480, H = 288;
@@ -1325,24 +1339,51 @@
                 });
             }
 
-            // SLIDE 3 — ACTIONS ATT / DEF
+            // SLIDES 3a & 3b — ACTIONS DÉTAILLÉES ATT puis DEF
             if (!isGB) {
-                const s3 = pptx.addSlide();
-                addHeader(s3, 'ACTIONS ATT / DEF');
                 const nm = effectiveMatchs.length;
-                const fmt1 = n => nm>0?(n/nm).toFixed(1)+'/match':'—';
-                const quads = [
-                    { val:attPlus,  lbl:'ATT +', sub:fmt1(attPlus),  col:GREEN, x:0.2,  y:1.0 },
-                    { val:attMoins, lbl:'ATT −', sub:fmt1(attMoins), col:RED,   x:5.15, y:1.0 },
-                    { val:defPlus,  lbl:'DEF +', sub:fmt1(defPlus),  col:GREEN, x:0.2,  y:3.1 },
-                    { val:defMoins, lbl:'DEF −', sub:fmt1(defMoins), col:RED,   x:5.15, y:3.1 },
-                ];
-                quads.forEach(q => {
-                    s3.addShape(pptx.ShapeType.rect, { x:q.x, y:q.y, w:4.7, h:1.95, fill:{ color:LGRAY }, line:{ color:'E2E8F0', width:1 } });
-                    s3.addText(q.val.toString(), { x:q.x+0.1, y:q.y+0.1, w:2.0, h:1.35, fontSize:56, color:q.col, fontFace:'Arial', bold:true, align:'center', valign:'middle' });
-                    s3.addText(q.lbl, { x:q.x+2.2, y:q.y+0.22, w:2.35, h:0.55, fontSize:22, color:q.col, fontFace:'Arial', bold:true });
-                    s3.addText(q.sub, { x:q.x+2.2, y:q.y+0.9,  w:2.35, h:0.4,  fontSize:13, color:DGRAY, fontFace:'Arial' });
-                });
+                const fmtR = n => nm>0?(n/nm).toFixed(1)+'/m':'—';
+
+                const makeActionSlide = (sl, titleLeft, countLeft, detailLeft, colorLeft, titleRight, countRight, detailRight, colorRight) => {
+                    const colF = { fontSize:9, fontFace:'Arial', valign:'middle' };
+                    const mkHdr = (txt, col) => ({ text:txt, options:{ ...colF, bold:true, color:'FFFFFF', fill:{ color:col }, align:'center', border:{ pt:0 } } });
+                    const mkLbl = txt => ({ text:txt, options:{ ...colF, align:'left', color:'1E293B', fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
+                    const mkVal = (n, col) => ({ text:n.toString(), options:{ ...colF, bold:true, align:'center', color:col, fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
+                    const mkSub = txt => ({ text:txt, options:{ ...colF, align:'center', color:DGRAY, fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
+
+                    const buildRows = (detail, col) => {
+                        const sorted = Object.entries(detail).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+                        return sorted.map(([lbl,cnt]) => [mkLbl(lbl), mkVal(cnt, col), mkSub(fmtR(cnt))]);
+                    };
+
+                    const rowsL = buildRows(detailLeft,  colorLeft);
+                    const rowsR = buildRows(detailRight, colorRight);
+                    const maxR  = Math.max(rowsL.length, rowsR.length);
+
+                    // Headers
+                    sl.addShape(pptx.ShapeType.rect, { x:0.2, y:0.95, w:4.7, h:0.38, fill:{ color:colorLeft } });
+                    sl.addText(`${titleLeft}  ·  Total : ${countLeft}  ·  ${fmtR(countLeft)}`, { x:0.2, y:0.95, w:4.7, h:0.38, fontSize:11, color:WHITE, fontFace:'Arial', bold:true, align:'center', valign:'middle' });
+                    sl.addShape(pptx.ShapeType.rect, { x:5.1, y:0.95, w:4.7, h:0.38, fill:{ color:colorRight } });
+                    sl.addText(`${titleRight}  ·  Total : ${countRight}  ·  ${fmtR(countRight)}`, { x:5.1, y:0.95, w:4.7, h:0.38, fontSize:11, color:WHITE, fontFace:'Arial', bold:true, align:'center', valign:'middle' });
+
+                    if (maxR > 0) {
+                        const pad = [...Array(Math.max(0, maxR - rowsL.length))].map(() => [mkLbl(''), mkVal(0, DGRAY), mkSub('')].map((c,ci) => ({...c, options:{...c.options, color:'F8FAFC', fill:{color:LGRAY}}})));
+                        const padR = [...Array(Math.max(0, maxR - rowsR.length))].map(() => [mkLbl(''), mkVal(0, DGRAY), mkSub('')].map(c => ({...c, options:{...c.options, color:'F8FAFC', fill:{color:LGRAY}}})));
+                        const tblL = [...rowsL, ...pad];
+                        const tblR = [...rowsR, ...padR];
+                        const rH = Math.min(0.32, (4.3 - 0.38) / maxR);
+                        sl.addTable(tblL, { x:0.2, y:1.38, w:4.7, colW:[2.9,0.9,0.9], rowH:rH, border:{ pt:0.3, color:'E2E8F0' } });
+                        sl.addTable(tblR, { x:5.1, y:1.38, w:4.7, colW:[2.9,0.9,0.9], rowH:rH, border:{ pt:0.3, color:'E2E8F0' } });
+                    }
+                };
+
+                const s3a = pptx.addSlide();
+                addHeader(s3a, 'ACTIONS OFFENSIVES');
+                makeActionSlide(s3a, 'ATT +', attPlus, attPlusDetail, GREEN, 'ATT −', attMoins, attMoinsDetail, RED);
+
+                const s3b = pptx.addSlide();
+                addHeader(s3b, 'ACTIONS DÉFENSIVES');
+                makeActionSlide(s3b, 'DEF +', defPlus, defPlusDetail, GREEN, 'DEF −', defMoins, defMoinsDetail, RED);
             }
 
             // SLIDE 4 — ZONES DE TIR / ARRÊT
@@ -1367,6 +1408,31 @@
                 s4.addText(isGB?'But encaissé':'Tir raté', { x:2.36, y:legY-0.02, w:2, h:0.22, fontSize:9, color:DGRAY, fontFace:'Arial' });
                 const sans = totalI - impactCoords.length;
                 if (sans>0) s4.addText(`${sans} tir(s) sans coordonnées`, { x:5, y:legY-0.02, w:4.8, h:0.22, fontSize:8, color:'94A3B8', fontFace:'Arial', align:'right' });
+
+                // Tableau % par zone
+                const zEntries = Object.entries(zoneStats).filter(([,v])=>v.total>0).sort((a,b)=>b[1].total-a[1].total);
+                if (zEntries.length > 0) {
+                    const zY = legY + 0.32;
+                    const zF = { fontSize:8, fontFace:'Arial', valign:'middle' };
+                    const zHF = { ...zF, bold:true, color:WHITE, fill:{ color:NAVY }, align:'center' };
+                    const zHdr = [
+                        { text:'ZONE',    options:{ ...zHF, align:'left' } },
+                        { text:'BUTS/TIRS', options:{ ...zHF } },
+                        { text:'EFFICACITÉ', options:{ ...zHF } },
+                    ];
+                    const zRows = [zHdr, ...zEntries.map(([z, v]) => {
+                        const pct = Math.round(v.buts/v.total*100);
+                        const pctCol = pct>=65?GREEN:pct>=45?GOLD:RED;
+                        return [
+                            { text:z, options:{ ...zF, align:'left', color:'1E293B', fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } },
+                            { text:`${v.buts}/${v.total}`, options:{ ...zF, align:'center', color:'1E293B', fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } },
+                            { text:`${pct}%`, options:{ ...zF, align:'center', bold:true, color:pctCol, fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } },
+                        ];
+                    })];
+                    const zW = 9.6, zCols = [4.8, 2.4, 2.4];
+                    const rH = Math.min(0.26, (5.625 - zY - 0.1) / zRows.length);
+                    s4.addTable(zRows, { x:0.2, y:zY, w:zW, colW:zCols, rowH:rH, border:{ pt:0.3, color:'E2E8F0' } });
+                }
             }
 
             // SLIDE 5 — GRAPHIQUE
@@ -1398,7 +1464,7 @@
                     const nA=s.ap-s.am, nD=s.dp-s.dm, nT=nA+nD;
                     Object.keys(tot).forEach(k => tot[k]+=s[k]);
                     trows.push([
-                        mkCell(m, { ...cF, align:'left', bold:true, color:NAVY }),
+                        mkCell(m, { ...cF, align:'center', bold:true, color:NAVY }),
                         mkCell(`${s.bc}/${tC}`, { ...cF, align:'center' }),
                         mkCell(tC>0?Math.round(s.bc/tC*100)+'%':'-', { ...cF, align:'center' }),
                         mkCell(tP>0?`${s.bp}/${tP}`:'-', { ...cF, align:'center' }),
@@ -1415,7 +1481,7 @@
                 const tC=tot.bc+tot.tc, tP=tot.bp+tot.tp, tT=tC+tP, tB=tot.bc+tot.bp;
                 const tNA=tot.ap-tot.am, tND=tot.dp-tot.dm, tNT=tNA+tND;
                 trows.push([
-                    mkCell('TOTAL', { ...hF, fill:hFill, align:'left' }),
+                    mkCell('TOTAL', { ...hF, fill:hFill, align:'center' }),
                     mkCell(`${tot.bc}/${tC}`, { ...hF, fill:hFill, align:'center' }),
                     mkCell(tC>0?Math.round(tot.bc/tC*100)+'%':'-', { ...hF, fill:hFill, align:'center' }),
                     mkCell(tP>0?`${tot.bp}/${tP}`:'-', { ...hF, fill:hFill, align:'center' }),
@@ -1428,7 +1494,7 @@
                     mkCell(fmtN(tND), { ...hF, fill:hFill, align:'center' }),
                     mkCell(fmtN(tNT), { ...hF, fill:hFill, align:'center' }),
                 ]);
-                s6.addTable(trows, { x:0.2, y:0.95, w:9.6, colW, rowH:0.22, border:{ pt:0.5, color:'E2E8F0' } });
+                s6.addTable(trows, { x:0.25, y:1.0, w:9.5, colW, rowH:0.22, border:{ pt:0.5, color:'E2E8F0' } });
             }
 
             await pptx.writeFile({ fileName: `${nom.replace(/\s+/g,'_')}_suivi_CF.pptx` });
