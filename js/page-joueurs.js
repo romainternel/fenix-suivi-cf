@@ -1055,23 +1055,34 @@
                 }
             }
 
+            // Convertir les canvas en data URL AVANT de construire le HTML
+            // (évite le problème d'img non décodée dans un container display:none)
+            const graphDataUrl   = graphCanvas ? graphCanvas.toDataURL('image/png') : null;
+            const impactDataUrls = impactCanvases ? {
+                alg:  impactCanvases.alg.toDataURL('image/png'),
+                face: impactCanvases.face.toDataURL('image/png'),
+                ald:  impactCanvases.ald.toDataURL('image/png'),
+            } : null;
+
             const ph = '<div class="print-fenix-header">FENIX HANDBALL — Centre de Formation</div>';
             const graphLabel = isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION DES NOTES';
             const noImpact   = `<div style="color:#94a3b8;text-align:center;padding:60px 0;font-size:0.9rem">Aucune donnée de tir avec coordonnées d'impact</div>`;
+            const imgStyle   = 'width:100%;display:block;border-radius:8px;border:1px solid #E2E8F0';
+            const imgStyleImpact = 'width:100%;display:block;border-radius:6px;border:1px solid #E2E8F0';
 
-            const graphBlock = graphCanvas ? `
+            const graphBlock = graphDataUrl ? `
                 <div style="page-break-inside:avoid;margin-bottom:20px">
                     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#0A2463;margin-bottom:8px;letter-spacing:1.5px;border-bottom:2px solid #0A2463;padding-bottom:4px">${graphLabel}</div>
-                    <div id="pdf-graph-slot"></div>
+                    <img src="${graphDataUrl}" style="${imgStyle}">
                 </div>` : '';
 
-            const impactBlock = impactCanvases ? `
+            const impactBlock = impactDataUrls ? `
                 <div style="page-break-inside:avoid">
                     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#0A2463;margin-bottom:10px;letter-spacing:1.5px;border-bottom:2px solid #0A2463;padding-bottom:4px">${impactTitre}</div>
                     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-                        <div style="text-align:center"><div id="pdf-alg-slot"></div><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">EXT GAUCHE</div></div>
-                        <div style="text-align:center"><div id="pdf-face-slot"></div><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">CENTRAL</div></div>
-                        <div style="text-align:center"><div id="pdf-ald-slot"></div><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">EXT DROIT</div></div>
+                        <div style="text-align:center"><img src="${impactDataUrls.alg}" style="${imgStyleImpact}"><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">EXT GAUCHE</div></div>
+                        <div style="text-align:center"><img src="${impactDataUrls.face}" style="${imgStyleImpact}"><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">CENTRAL</div></div>
+                        <div style="text-align:center"><img src="${impactDataUrls.ald}" style="${imgStyleImpact}"><div style="font-size:0.72rem;color:#64748B;margin-top:5px;font-weight:700;letter-spacing:1px">EXT DROIT</div></div>
                     </div>
                 </div>` : noImpact;
 
@@ -1094,19 +1105,6 @@
                     ${graphBlock}
                     ${impactBlock}
                 </div>`;
-
-            const canvasToImg = c => {
-                const img = document.createElement('img');
-                img.src = c.toDataURL('image/png');
-                img.style.cssText = c.style.cssText;
-                return img;
-            };
-            if (graphCanvas)    document.getElementById('pdf-graph-slot').appendChild(canvasToImg(graphCanvas));
-            if (impactCanvases) {
-                document.getElementById('pdf-alg-slot').appendChild(canvasToImg(impactCanvases.alg));
-                document.getElementById('pdf-face-slot').appendChild(canvasToImg(impactCanvases.face));
-                document.getElementById('pdf-ald-slot').appendChild(canvasToImg(impactCanvases.ald));
-            }
 
             window.addEventListener('afterprint', function cleanup() {
                 printZone.innerHTML = '';
