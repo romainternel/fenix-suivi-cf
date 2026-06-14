@@ -1561,6 +1561,13 @@
         }
 
         @media print {
+            .pdf-merged-cols .jp-stats-grid { grid-template-columns: repeat(3, 1fr) !important; }
+            .pdf-merged-cols .jp-val        { font-size: 1.35rem !important; }
+            .pdf-merged-cols .jp-stat       { padding: 0.5rem 0.25rem !important; }
+            .pdf-merged-cols .jp-header     { padding: 0.6rem 0.8rem !important; }
+            .pdf-merged-cols .jp-avatar     { width: 40px !important; height: 40px !important; font-size: 1rem !important; }
+            .pdf-merged-cols .jp-name       { font-size: 1.2rem !important; }
+            .pdf-merged-cols .jp-print-btn  { display: none !important; }
             body > *:not(#joueur-print-zone) { display: none !important; }
             #joueur-print-zone {
                 position: static !important;

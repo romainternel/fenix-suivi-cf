@@ -1075,12 +1075,11 @@
                     <div style="position:absolute;bottom:12px;left:18px;font-family:Arial,sans-serif;font-size:8pt;color:#4A6FA5">Centre de Formation</div>
                 </div>
                 <div class="pdf-page" style="padding:0;overflow:hidden">
-                    ${_pptHdr('FICHE JOUEUR')}
-                    <div style="padding:10px 18px">${panel.outerHTML}</div>
-                </div>
-                <div class="pdf-page" style="padding:0;overflow:hidden">
-                    ${_pptHdr(isGB ? 'STATS PAR ZONE' : 'ACTIONS ATT / DEF')}
-                    <div style="padding:10px 18px">${actionCardHTML}</div>
+                    ${_pptHdr(isGB ? 'FICHE JOUEUR' : 'FICHE JOUEUR  ·  ACTIONS ATT / DEF')}
+                    <div class="pdf-merged-cols" style="display:flex;gap:10px;padding:8px 16px;align-items:start">
+                        <div style="flex:0 0 40%">${panel.outerHTML}</div>
+                        <div style="flex:1">${actionCardHTML}</div>
+                    </div>
                 </div>
                 <div class="pdf-page" style="padding:0;overflow:hidden">
                     ${_pptHdr('DÉTAIL PAR MATCH')}
@@ -1127,6 +1126,40 @@
             const periodLabel = matchFilter ? `Match : ${matchFilter}` : (filterBilanEl?.value ? filterBilanEl.value : 'Saison complète');
             const tjNom = getTJData(nom, effectiveMatchs);
             const tjStr = tjNom.matchs > 0 ? `${tjNom.matchs} matchs  ·  ⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match` : '';
+
+            // ── Badges ─────────────────────────────────────────────────────────
+            const pptBadges = [];
+            if (typeof computePlayerRank === 'function' && posteCode) {
+                const rnk = computePlayerRank(nom, posteCode);
+                if (rnk && rnk.total > 1) {
+                    const bm = rnk.rank===1?'🥇':rnk.rank===2?'🥈':rnk.rank===3?'🥉':null;
+                    if (bm) pptBadges.push(`${bm} #${rnk.rank} au poste`);
+                }
+            }
+            if (typeof _computeNoteScore === 'function' && posteCode && posteCode !== 'GB' && JOUEURS_TERRAIN) {
+                const btms = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
+                if (btms.length > 0) {
+                    const mn = _computeNoteScore(nom, posteCode);
+                    if (mn.att > 0 && btms.every(p => _computeNoteScore(p.nom, posteCode).att <= mn.att)) pptBadges.push('⚡ Top ATT au poste');
+                    if (mn.def > 0 && btms.every(p => _computeNoteScore(p.nom, posteCode).def <= mn.def)) pptBadges.push('🛡️ Top DEF au poste');
+                }
+            }
+            if (posteCode && typeof JOUEURS_TERRAIN !== 'undefined') {
+                const btms2 = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
+                if (btms2.length > 0) {
+                    const myTJD = getTJData(nom, effectiveMatchs);
+                    const myTJAvg = myTJD.matchs > 0 ? myTJD.total / myTJD.matchs : 0;
+                    let tjRank = 1;
+                    btms2.forEach(p => { const d=getTJData(p.nom, effectiveMatchs); if (d.matchs>0 && d.total/d.matchs>myTJAvg) tjRank++; });
+                    const tjM2 = tjRank===1?'🥇':tjRank===2?'🥈':tjRank===3?'🥉':null;
+                    if (tjM2) pptBadges.push(`${tjM2} #${tjRank} TJ au poste`);
+                }
+            }
+            if (typeof computeStreak === 'function') {
+                const str = computeStreak(nom);
+                if (str.dir===1 && str.streak>=3) pptBadges.push(`↑ En progression (${str.streak} matchs)`);
+                else if (str.dir===-1 && str.streak>=3) pptBadges.push(`↓ En baisse (${str.streak} matchs)`);
+            }
 
             // ── Stats ──────────────────────────────────────────────────────────
             let statVals = {};
@@ -1318,8 +1351,14 @@
             const s2 = pptx.addSlide();
             addHeader(s2, 'FICHE JOUEUR');
             s2.addText(nom + (posteLabel ? '  —  ' + posteLabel : ''), { x:0.3, y:0.9, w:9.4, h:0.38, fontSize:13, color:NAVY, fontFace:'Arial', bold:true, valign:'middle' });
-            if (tjStr) s2.addText(tjStr, { x:0.3, y:1.28, w:9, h:0.28, fontSize:10, color:DGRAY, fontFace:'Arial' });
-            const sY=1.65, sH=1.55;
+            let s2InfoY = 1.28;
+            if (tjStr) { s2.addText(tjStr, { x:0.3, y:s2InfoY, w:9, h:0.28, fontSize:10, color:DGRAY, fontFace:'Arial' }); s2InfoY += 0.28; }
+            if (pptBadges.length > 0) {
+                s2.addShape(pptx.ShapeType.roundRect, { x:0.3, y:s2InfoY, w:9.4, h:0.3, fill:{ color:'EFF6FF' }, line:{ color:'BFDBFE', width:0.5 } });
+                s2.addText(pptBadges.join('   '), { x:0.3, y:s2InfoY, w:9.4, h:0.3, fontSize:9, color:'1E3A8A', fontFace:'Arial', bold:true, align:'center', valign:'middle' });
+                s2InfoY += 0.35;
+            }
+            const sY = Math.max(1.65, s2InfoY + 0.07), sH = 1.55;
             if (!isGB) {
                 const { buts, total, eff, pd, po, pb, note } = statVals;
                 const ns = (note>0?'+':'')+note;
@@ -1353,51 +1392,58 @@
                 });
             }
 
-            // SLIDES 3a & 3b — ACTIONS DÉTAILLÉES ATT puis DEF
+            // SLIDE 3 — ACTIONS ATT + DEF (4 colonnes sur 1 slide)
             if (!isGB) {
                 const nm = effectiveMatchs.length;
                 const fmtR = n => nm>0?(n/nm).toFixed(1)+'/m':'—';
+                const s3 = pptx.addSlide();
+                addHeader(s3, 'ACTIONS ATT / DEF');
 
-                const makeActionSlide = (sl, titleLeft, countLeft, detailLeft, colorLeft, titleRight, countRight, detailRight, colorRight) => {
-                    const colF = { fontSize:9, fontFace:'Arial', valign:'middle' };
-                    const mkHdr = (txt, col) => ({ text:txt, options:{ ...colF, bold:true, color:'FFFFFF', fill:{ color:col }, align:'center', border:{ pt:0 } } });
-                    const mkLbl = txt => ({ text:txt, options:{ ...colF, align:'left', color:'1E293B', fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
-                    const mkVal = (n, col) => ({ text:n.toString(), options:{ ...colF, bold:true, align:'center', color:col, fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
-                    const mkSub = txt => ({ text:txt, options:{ ...colF, align:'center', color:DGRAY, fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
+                const colF = { fontSize:7.5, fontFace:'Arial', valign:'middle' };
+                const mkLbl = txt => ({ text:txt, options:{ ...colF, align:'left', color:'1E293B', fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
+                const mkVal = (n, col) => ({ text:n.toString(), options:{ ...colF, bold:true, align:'center', color:col, fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
+                const mkSub = txt => ({ text:txt, options:{ ...colF, align:'center', color:DGRAY, fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
+                const buildR = (detail, col) => Object.entries(detail).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([lbl,cnt]) => [mkLbl(lbl), mkVal(cnt, col), mkSub(fmtR(cnt))]);
 
-                    const buildRows = (detail, col) => {
-                        const sorted = Object.entries(detail).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
-                        return sorted.map(([lbl,cnt]) => [mkLbl(lbl), mkVal(cnt, col), mkSub(fmtR(cnt))]);
-                    };
+                const cols4 = [
+                    { title:'ATT +', count:attPlus,  detail:attPlusDetail,  color:GREEN, x:0.15 },
+                    { title:'ATT −', count:attMoins, detail:attMoinsDetail, color:RED,   x:2.6  },
+                    { title:'DEF +', count:defPlus,  detail:defPlusDetail,  color:GREEN, x:5.05 },
+                    { title:'DEF −', count:defMoins, detail:defMoinsDetail, color:RED,   x:7.5  },
+                ];
+                const CW = 2.35;
+                const allR = cols4.map(d => buildR(d.detail, d.color));
+                const maxR = Math.max(1, ...allR.map(r => r.length));
+                const rH   = Math.min(0.28, 3.5 / maxR);
 
-                    const rowsL = buildRows(detailLeft,  colorLeft);
-                    const rowsR = buildRows(detailRight, colorRight);
-                    const maxR  = Math.max(rowsL.length, rowsR.length);
+                // Bandeau section ATT / DEF
+                s3.addShape(pptx.ShapeType.rect, { x:0.15, y:0.9, w:4.7, h:0.22, fill:{ color:'DBEAFE' } });
+                s3.addText('ATTAQUE', { x:0.15, y:0.9, w:4.7, h:0.22, fontSize:7, color:'1E40AF', fontFace:'Arial', bold:true, align:'center', valign:'middle', charSpacing:2 });
+                s3.addShape(pptx.ShapeType.rect, { x:5.05, y:0.9, w:4.8, h:0.22, fill:{ color:'DCFCE7' } });
+                s3.addText('DÉFENSE', { x:5.05, y:0.9, w:4.8, h:0.22, fontSize:7, color:'166534', fontFace:'Arial', bold:true, align:'center', valign:'middle', charSpacing:2 });
 
-                    // Headers
-                    sl.addShape(pptx.ShapeType.rect, { x:0.2, y:0.95, w:4.7, h:0.38, fill:{ color:colorLeft } });
-                    sl.addText(`${titleLeft}  ·  Total : ${countLeft}  ·  ${fmtR(countLeft)}`, { x:0.2, y:0.95, w:4.7, h:0.38, fontSize:11, color:WHITE, fontFace:'Arial', bold:true, align:'center', valign:'middle' });
-                    sl.addShape(pptx.ShapeType.rect, { x:5.1, y:0.95, w:4.7, h:0.38, fill:{ color:colorRight } });
-                    sl.addText(`${titleRight}  ·  Total : ${countRight}  ·  ${fmtR(countRight)}`, { x:5.1, y:0.95, w:4.7, h:0.38, fontSize:11, color:WHITE, fontFace:'Arial', bold:true, align:'center', valign:'middle' });
-
-                    if (maxR > 0) {
-                        const pad = [...Array(Math.max(0, maxR - rowsL.length))].map(() => [mkLbl(''), mkVal(0, DGRAY), mkSub('')].map((c,ci) => ({...c, options:{...c.options, color:'F8FAFC', fill:{color:LGRAY}}})));
-                        const padR = [...Array(Math.max(0, maxR - rowsR.length))].map(() => [mkLbl(''), mkVal(0, DGRAY), mkSub('')].map(c => ({...c, options:{...c.options, color:'F8FAFC', fill:{color:LGRAY}}})));
-                        const tblL = [...rowsL, ...pad];
-                        const tblR = [...rowsR, ...padR];
-                        const rH = Math.min(0.32, (4.3 - 0.38) / maxR);
-                        sl.addTable(tblL, { x:0.2, y:1.38, w:4.7, colW:[2.9,0.9,0.9], rowH:rH, border:{ pt:0.3, color:'E2E8F0' } });
-                        sl.addTable(tblR, { x:5.1, y:1.38, w:4.7, colW:[2.9,0.9,0.9], rowH:rH, border:{ pt:0.3, color:'E2E8F0' } });
+                cols4.forEach((d, i) => {
+                    const rows = allR[i];
+                    s3.addShape(pptx.ShapeType.rect, { x:d.x, y:1.15, w:CW, h:0.32, fill:{ color:d.color } });
+                    s3.addText(`${d.title}  ·  ${d.count}  ·  ${fmtR(d.count)}`, { x:d.x, y:1.15, w:CW, h:0.32, fontSize:8.5, color:WHITE, fontFace:'Arial', bold:true, align:'center', valign:'middle' });
+                    if (rows.length > 0) {
+                        const padded = [...rows, ...Array(Math.max(0, maxR-rows.length)).fill(null).map(() => [
+                            {text:'', options:{...colF, fill:{color:LGRAY}, border:{pt:0}}},
+                            {text:'', options:{...colF, fill:{color:LGRAY}, border:{pt:0}}},
+                            {text:'', options:{...colF, fill:{color:LGRAY}, border:{pt:0}}}
+                        ])];
+                        s3.addTable(padded, { x:d.x, y:1.5, w:CW, colW:[1.5, 0.45, 0.4], rowH:rH, border:{ pt:0.3, color:'E2E8F0' } });
                     }
-                };
+                });
 
-                const s3a = pptx.addSlide();
-                addHeader(s3a, 'ACTIONS OFFENSIVES');
-                makeActionSlide(s3a, 'ATT +', attPlus, attPlusDetail, GREEN, 'ATT −', attMoins, attMoinsDetail, RED);
-
-                const s3b = pptx.addSlide();
-                addHeader(s3b, 'ACTIONS DÉFENSIVES');
-                makeActionSlide(s3b, 'DEF +', defPlus, defPlusDetail, GREEN, 'DEF −', defMoins, defMoinsDetail, RED);
+                // Notes résumé en bas
+                const noteA=attPlus-attMoins, noteD=defPlus-defMoins, noteT=noteA+noteD;
+                const sg = v => (v>=0?'+':'')+v;
+                const nc = v => v>0?GREEN:v<0?RED:DGRAY;
+                [[sg(noteA),nc(noteA),'NOTE ATT',0.5],[sg(noteD),nc(noteD),'NOTE DEF',3.9],[sg(noteT),nc(noteT),'NOTE TOTALE',7.2]].forEach(([v,col,lbl,x]) => {
+                    s3.addText(v,   { x, y:4.95, w:2.5, h:0.35, fontSize:20, color:col, fontFace:'Arial', bold:true, align:'center' });
+                    s3.addText(lbl, { x, y:5.3,  w:2.5, h:0.2,  fontSize:7, color:DGRAY, fontFace:'Arial', align:'center', charSpacing:1 });
+                });
             }
 
             // SLIDE 4 — ZONES DE TIR / ARRÊT
