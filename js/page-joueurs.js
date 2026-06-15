@@ -1328,23 +1328,33 @@
 
             const NAVY='0A2463', WHITE='FFFFFF', GREEN='10B981', RED='DC2626', GOLD='D97706', LGRAY='F8FAFC', DGRAY='475569';
 
+            // Logo FENIX (filigrane / branding)
+            const logoB64 = await new Promise(res => {
+                const li = new Image();
+                li.onload = () => { const lc=document.createElement('canvas'); lc.width=256; lc.height=256; lc.getContext('2d').drawImage(li,0,0,256,256); res(lc.toDataURL('image/png')); };
+                li.onerror = () => res(null);
+                li.src = 'favicon.png';
+            });
+
             const addHeader = (sl, title) => {
                 sl.addShape(pptx.ShapeType.rect, { x:0, y:0, w:10, h:0.85, fill:{ color:NAVY } });
                 sl.addText(title, { x:0.3, y:0.1, w:7, h:0.65, fontSize:20, color:WHITE, fontFace:'Arial', bold:true, valign:'middle' });
-                sl.addText(nom + (periodLabel !== 'Saison complète' ? '  ·  ' + periodLabel : ''), { x:7.2, y:0.1, w:2.65, h:0.65, fontSize:8, color:'BFDBFE', fontFace:'Arial', align:'right', valign:'middle' });
+                sl.addText(nom + (periodLabel !== 'Saison complète' ? '  ·  ' + periodLabel : ''), { x:7.2, y:0.1, w:logoB64?1.85:2.65, h:0.65, fontSize:8, color:'BFDBFE', fontFace:'Arial', align:'right', valign:'middle' });
+                if (logoB64) sl.addImage({ data:logoB64, x:9.27, y:0.09, w:0.67, h:0.67 });
             };
 
             // SLIDE 1 — COVER
             const s1 = pptx.addSlide();
             s1.background = { color: NAVY };
-            s1.addText('FENIX HANDBALL', { x:0.5, y:0.45, w:9, h:0.45, fontSize:13, color:WHITE, fontFace:'Arial', align:'center', charSpacing:6 });
-            s1.addShape(pptx.ShapeType.rect, { x:2.5, y:1.05, w:5, h:0.03, fill:{ color:'BFDBFE' } });
-            s1.addText('SUIVI HANDBALL', { x:0.5, y:1.15, w:9, h:0.65, fontSize:26, color:WHITE, fontFace:'Arial', align:'center', charSpacing:3 });
-            s1.addText(nom, { x:0.5, y:1.9, w:9, h:1.35, fontSize:52, color:WHITE, fontFace:'Arial', bold:true, align:'center' });
-            s1.addText(posteLabel.toUpperCase(), { x:0.5, y:3.35, w:9, h:0.4, fontSize:15, color:'BFDBFE', fontFace:'Arial', align:'center', charSpacing:3 });
-            s1.addShape(pptx.ShapeType.rect, { x:2.5, y:3.85, w:5, h:0.03, fill:{ color:'BFDBFE' } });
-            s1.addText(periodLabel, { x:0.5, y:3.95, w:9, h:0.35, fontSize:12, color:'7EA0C4', fontFace:'Arial', align:'center' });
-            if (tjStr) s1.addText(tjStr, { x:0.5, y:4.38, w:9, h:0.3, fontSize:10, color:'7EA0C4', fontFace:'Arial', align:'center' });
+            if (logoB64) s1.addImage({ data:logoB64, x:4.4, y:0.08, w:1.2, h:1.2 });
+            s1.addText('FENIX HANDBALL', { x:0.5, y:1.38, w:9, h:0.42, fontSize:13, color:WHITE, fontFace:'Arial', align:'center', charSpacing:6 });
+            s1.addShape(pptx.ShapeType.rect, { x:2.5, y:1.86, w:5, h:0.03, fill:{ color:'BFDBFE' } });
+            s1.addText('SUIVI HANDBALL', { x:0.5, y:1.96, w:9, h:0.55, fontSize:24, color:WHITE, fontFace:'Arial', align:'center', charSpacing:3 });
+            s1.addText(nom, { x:0.5, y:2.55, w:9, h:1.1, fontSize:46, color:WHITE, fontFace:'Arial', bold:true, align:'center' });
+            s1.addText(posteLabel.toUpperCase(), { x:0.5, y:3.75, w:9, h:0.38, fontSize:14, color:'BFDBFE', fontFace:'Arial', align:'center', charSpacing:3 });
+            s1.addShape(pptx.ShapeType.rect, { x:2.5, y:4.2, w:5, h:0.03, fill:{ color:'BFDBFE' } });
+            s1.addText(periodLabel, { x:0.5, y:4.28, w:9, h:0.32, fontSize:11, color:'7EA0C4', fontFace:'Arial', align:'center' });
+            if (tjStr) s1.addText(tjStr, { x:0.5, y:4.65, w:9, h:0.28, fontSize:9.5, color:'7EA0C4', fontFace:'Arial', align:'center' });
             s1.addText('Centre de Formation', { x:0.35, y:5.22, w:4, h:0.3, fontSize:9, color:'4A6FA5', fontFace:'Arial' });
 
             // SLIDE 2 — STATS FICHE
@@ -1454,20 +1464,48 @@
                 const zTitle   = isGB ? `ZONES D'ARRÊT — ${positifs} arrêts / ${totalI} tirs (${pctI}%)` : `ZONES DE TIR — ${positifs} buts / ${totalI} tirs (${pctI}%)`;
                 const s4 = pptx.addSlide();
                 addHeader(s4, zTitle);
-                const iW=2.9, iH=1.74, iY=1.0;
+
+                // Images but (compactes pour laisser place à la grille zones)
+                const iW=2.9, iH=1.5, iY=0.92;
                 s4.addImage({ data:imgAlg,  x:0.2,  y:iY, w:iW, h:iH });
                 s4.addImage({ data:imgFace, x:3.55, y:iY, w:iW, h:iH });
                 s4.addImage({ data:imgAld,  x:6.9,  y:iY, w:iW, h:iH });
                 [['EXT GAUCHE',0.2],['CENTRAL',3.55],['EXT DROIT',6.9]].forEach(([l,x]) =>
-                    s4.addText(l, { x, y:iY+iH+0.08, w:iW, h:0.22, fontSize:8, color:DGRAY, fontFace:'Arial', align:'center', bold:true, charSpacing:1 })
+                    s4.addText(l, { x, y:iY+iH+0.06, w:iW, h:0.2, fontSize:7.5, color:DGRAY, fontFace:'Arial', align:'center', bold:true, charSpacing:1 })
                 );
-                const legY = iY+iH+0.42;
-                s4.addShape(pptx.ShapeType.ellipse, { x:0.2, y:legY, w:0.18, h:0.18, fill:{ color:GREEN } });
-                s4.addText(isGB?'Arrêt':'But', { x:0.45, y:legY-0.02, w:1.5, h:0.22, fontSize:9, color:DGRAY, fontFace:'Arial' });
-                s4.addShape(pptx.ShapeType.rect, { x:2.1, y:legY, w:0.18, h:0.18, fill:{ color:RED } });
-                s4.addText(isGB?'But encaissé':'Tir raté', { x:2.36, y:legY-0.02, w:2, h:0.22, fontSize:9, color:DGRAY, fontFace:'Arial' });
+                const legY = iY+iH+0.32;
+                s4.addShape(pptx.ShapeType.ellipse, { x:0.2,  y:legY+0.02, w:0.16, h:0.16, fill:{ color:GREEN } });
+                s4.addText(isGB?'Arrêt':'But', { x:0.42, y:legY, w:1.4, h:0.2, fontSize:8, color:DGRAY, fontFace:'Arial' });
+                s4.addShape(pptx.ShapeType.rect,   { x:2.0,  y:legY+0.02, w:0.16, h:0.16, fill:{ color:RED } });
+                s4.addText(isGB?'But encaissé':'Tir raté', { x:2.22, y:legY, w:1.8, h:0.2, fontSize:8, color:DGRAY, fontFace:'Arial' });
                 const sans = totalI - impactCoords.length;
-                if (sans>0) s4.addText(`${sans} tir(s) sans coordonnées`, { x:5, y:legY-0.02, w:4.8, h:0.22, fontSize:8, color:'94A3B8', fontFace:'Arial', align:'right' });
+                if (sans>0) s4.addText(`${sans} tir(s) sans coordonnées`, { x:5, y:legY, w:4.8, h:0.2, fontSize:7.5, color:'94A3B8', fontFace:'Arial', align:'right' });
+
+                // Grille efficacité par zone (comme page Impact > Efficacité)
+                const ZONE_POS = {
+                    '6m ail G':[0,0], '6m ext G':[1,0], '6m central G':[2,0], '6m central D':[3,0], '6m ext D':[4,0], '6m ail D':[5,0],
+                    '6-9 ext G':[0,1], '6-9 central G':[2,1], '7m':[3,1], '6-9 central D':[4,1], '6-9 ext D':[5,1],
+                    '9m ext G':[0,2], '9m Int G':[2,2], '9m Int D':[4,2], '9m ext D':[5,2],
+                };
+                const gX0=0.25, gY0=3.25, gCW=1.5, gCH=0.52, gGap=0.05;
+                s4.addText('EFFICACITÉ PAR ZONE', { x:gX0, y:2.96, w:9.5, h:0.22, fontSize:8, color:NAVY, fontFace:'Arial', bold:true, charSpacing:1 });
+                Object.entries(ZONE_POS).forEach(([zone, [col, row]]) => {
+                    const zd = zoneStats[zone];
+                    const gx = gX0 + col * (gCW + gGap);
+                    const gy = gY0 + row * (gCH + gGap);
+                    if (!zd || zd.total === 0) {
+                        s4.addShape(pptx.ShapeType.roundRect, { x:gx, y:gy, w:gCW, h:gCH, fill:{ color:'F1F5F9' }, line:{ color:'E2E8F0', width:0.5 } });
+                        s4.addText(zone, { x:gx+0.05, y:gy, w:gCW-0.1, h:gCH, fontSize:6.5, color:'CBD5E1', fontFace:'Arial', align:'center', valign:'middle' });
+                    } else {
+                        const pct = Math.round(zd.buts / zd.total * 100);
+                        const [bg, tx] = pct>=65?['D1FAE5','065F46']:pct>=45?['FEF3C7','92400E']:['FEE2E2','991B1B'];
+                        s4.addShape(pptx.ShapeType.roundRect, { x:gx, y:gy, w:gCW, h:gCH, fill:{ color:bg }, line:{ color:bg, width:0 } });
+                        s4.addText([
+                            { text:zone,      options:{ fontSize:6.5, color:tx, fontFace:'Arial', align:'center', breakLine:true } },
+                            { text:`${pct}%`, options:{ fontSize:13,  color:tx, fontFace:'Arial', bold:true, align:'center' } },
+                        ], { x:gx+0.05, y:gy, w:gCW-0.1, h:gCH, align:'center', valign:'middle' });
+                    }
+                });
             }
 
             // SLIDE 5 — GRAPHIQUE
