@@ -1094,7 +1094,7 @@
             }
 
             const graphLabel = isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION DES NOTES';
-            const imgStyle   = 'max-width:100%;height:auto;display:block;border-radius:8px;border:1px solid #E2E8F0';
+            const imgStyle   = 'width:100%;display:block;border-radius:8px;border:1px solid #E2E8F0';
             const graphBlock = graphDataUrl ? `<img src="${graphDataUrl}" style="${imgStyle}">` : '';
 
             // Cover slide data
@@ -1143,8 +1143,8 @@
                     ${_pptHdr('DÉTAIL PAR MATCH')}
                     <div style="padding:10px 18px">${matches.outerHTML}</div>
                 </div>
-                ${graphBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden">${_pptHdr(graphLabel)}<div style="min-height:230mm;display:flex;align-items:center;justify-content:center;padding:10px 18px">${graphBlock}</div></div>` : ''}
-                ${impactBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden">${_pptHdr(impactTitle, impactStatSub)}<div style="min-height:230mm;display:flex;align-items:center;justify-content:center;padding:10px 18px">${impactBlock}</div></div>` : ''}`;
+                ${graphBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden">${_pptHdr(graphLabel)}<div style="padding:10px 18px">${graphBlock}</div></div>` : ''}
+                ${impactBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden">${_pptHdr(impactTitle, impactStatSub)}<div style="padding:10px 18px">${impactBlock}</div></div>` : ''}`;
 
             // Attendre que toutes les <img> soient décodées avant d'imprimer
             const imgEls = Array.from(printZone.querySelectorAll('img'));
