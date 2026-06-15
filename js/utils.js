@@ -56,7 +56,7 @@
             return getEffColor(eff, posteCode);
         }
 
-        function matchPlayerName(excelName, terrainName) {
+        function _matchPlayerNameCore(excelName, terrainName) {
             const en = excelName.toLowerCase().trim();
             const tn = terrainName.toLowerCase().trim();
             if (en === tn) return true;
@@ -67,6 +67,15 @@
             if (en.startsWith(tn + ' ')) return true;
             return false;
         }
+        // Cache : same (excelName, terrainName) pairs called thousands of times per player selection
+        const _mpnCache = new Map();
+        function matchPlayerName(excelName, terrainName) {
+            const k = excelName + '\x01' + terrainName;
+            let r = _mpnCache.get(k);
+            if (r === undefined) { r = _matchPlayerNameCore(excelName, terrainName); _mpnCache.set(k, r); }
+            return r;
+        }
+        function clearMatchPlayerNameCache() { _mpnCache.clear(); }
 
         function detectIsGB(nom) {
             // 1. Depuis la feuille Joueurs (si chargée)

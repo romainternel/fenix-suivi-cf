@@ -7,21 +7,19 @@
         function renderCourtPlayers(activeNames) {
             const g = document.getElementById('court-players');
             if (!g) return;
-            g.innerHTML = '';
 
-            // Calcul efficacité par joueur pour la bordure colorée
+            // ── Calculs AVANT de toucher au DOM (évite fenêtre vide si le navigateur force un repaint) ──
             const matchFilter = document.getElementById('filter-joueur-match')?.value || '';
             const bilanMatchs = _getJoueurBilanMatchs();
             const playerEff = {};
             JOUEURS_TERRAIN.forEach(p => {
                 if (p.poste === 'GB') {
-                    // GB : % arrêts sur tirs adverses
                     const gbRows = DATA.filter(row => {
                         if (row[COLS.club] === 'FENIX') return false;
                         if (matchFilter && row[COLS.rencontre] !== matchFilter) return false;
                         if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return false;
-                        const g = (row[COLS.gardien] || '').toString().trim();
-                        if (!matchPlayerName(g, p.nom)) return false;
+                        const gn = (row[COLS.gardien] || '').toString().trim();
+                        if (!matchPlayerName(gn, p.nom)) return false;
                         return row[COLS.resultat] === 'But' || row[COLS.finalite] === 'Tir arrêté';
                     });
                     const arrets     = gbRows.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
@@ -41,9 +39,10 @@
                 }
             });
 
-            // Calcul TJ pour le seuil d'activation de la couleur (≥6 matchs ET ≥20 min/match)
             const effectiveMatchList = matchFilter ? [matchFilter] : (bilanMatchs || MATCHS || []);
 
+            // ── Construction dans un fragment off-DOM ──
+            const frag = document.createDocumentFragment();
             JOUEURS_TERRAIN.forEach(p => {
                 const isActive   = activeNames.size === 0 || [...activeNames].some(n => matchPlayerName(n, p.nom));
                 const isSelected = p.nom === currentSelectedJoueur;
@@ -55,8 +54,8 @@
                 const tjAvg      = tjData.matchs > 0 ? tjData.total / tjData.matchs : 0;
                 const qualified  = tjData.matchs >= 6 && tjAvg >= 20;
                 const ringClr    = qualified && eff !== null ? getEffColor(eff, p.poste) : '#e2e8f0';
-                const initials = p.nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
-                const safeName = p.nom.replace(/'/g, "\\'");
+                const initials   = p.nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+                const safeName   = p.nom.replace(/'/g, "\\'");
 
                 const elem = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 elem.setAttribute('class', 'court-player');
@@ -64,17 +63,19 @@
                 elem.setAttribute('opacity', opacity);
 
                 let inner = '';
-                // Cercle gris clair + bordure efficacité
                 inner += `<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="#e2e8f0" stroke="${ringClr}" stroke-width="1.5"/>`;
                 if (isSelected) {
                     inner += `<circle cx="${p.x}" cy="${p.y}" r="${r + 2}" fill="none" stroke="#FCD34D" stroke-width="1.2"/>`;
                 }
-                // Initiales foncées (fond clair)
                 inner += `<text x="${p.x}" y="${p.y + 0.3}" text-anchor="middle" dominant-baseline="middle"
                     font-family="Inter,sans-serif" font-size="2.0" font-weight="700" fill="#0f172a">${initials}</text>`;
                 elem.innerHTML = inner;
-                g.appendChild(elem);
+                frag.appendChild(elem);
             });
+
+            // ── Swap atomique : clear puis insert en une seule opération ──
+            g.innerHTML = '';
+            g.appendChild(frag);
         }
 
         function selectJoueur(nom) {
