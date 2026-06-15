@@ -66,7 +66,7 @@
                 if (nameEl) nameEl.textContent = PLAYER_SESSION.nom;
             }
 
-            if (typeof DATA !== 'undefined' && DATA.length > 0) pmTab('fiche');
+            if (typeof DATA !== 'undefined' && DATA.length > 0) pmTab(sessionStorage.getItem('pm_active_tab') || 'fiche');
         }
 
         // ── Navigation tabs ──────────────────────────────────────────────────────
@@ -87,6 +87,7 @@
 
         function pmTab(tab) {
             _pmActiveTab = tab;
+            sessionStorage.setItem('pm_active_tab', tab);
             document.querySelectorAll('.pm-tab-btn').forEach(b => {
                 b.classList.toggle('active', b.dataset.tab === tab);
             });
@@ -235,7 +236,7 @@
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val">${pd}</div><div class="pmf-kpi-lbl">PD</div></div>
                     ${po > 0 ? `<div class="pmf-kpi-box"><div class="pmf-kpi-val">${po}</div><div class="pmf-kpi-lbl">PÉN. OBTENUS</div></div>` : ''}
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:#EF4444">${pb}</div><div class="pmf-kpi-lbl">PERTES BALLE</div></div>
-                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div><div class="pmf-kpi-lbl">NOTE</div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div><div class="pmf-kpi-lbl" style="display:flex;align-items:center;justify-content:center;gap:2px;">NOTE<span title="Score global saison : actions positives (ATT+, DEF+) moins actions négatives (ATT-, DEF-)" style="cursor:help;background:#CBD5E1;color:#1E293B;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0">i</span></div></div>
                 </div>`;
 
             // ── Encart 2 : Actions (joueur de champ) ou Zones % (GB) ──

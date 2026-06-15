@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=95">
-    <script src="js/utils.js?v=95"></script>
-    <script src="js/impact-images.js?v=95"></script>
-    <script src="js/player-mode.js?v=95"></script>
-    <script src="js/page-joueurs.js?v=95"></script>
-    <script src="js/page-notes-graph.js?v=95"></script>
-    <script src="js/page-analyse.js?v=95"></script>
+    <link rel="stylesheet" href="css/style.css?v=96">
+    <script src="js/utils.js?v=96"></script>
+    <script src="js/impact-images.js?v=96"></script>
+    <script src="js/player-mode.js?v=96"></script>
+    <script src="js/page-joueurs.js?v=96"></script>
+    <script src="js/page-notes-graph.js?v=96"></script>
+    <script src="js/page-analyse.js?v=96"></script>
 </head>
 <body>
 
@@ -3384,7 +3384,7 @@ let _effInfoPoste = null;
 
     <!-- ── MODE JOUEUR ── page stats match ────────────────────────────────── -->
     <div id="pm-match-page" style="display:none;padding:76px 24px 24px;max-width:1100px;margin:0 auto">
-        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+        <div class="pm-stats-header" style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
             <span style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#0A2463;letter-spacing:2px">
                 🏆 STATS DU MATCH
             </span>
@@ -3406,10 +3406,10 @@ let _effInfoPoste = null;
             </div>
         </div>
         <div id="pm-match-banner" style="margin-bottom:1rem"></div>
-        <div id="pm-ai-card" style="margin-bottom:1rem"></div>
-        <div id="pm-match-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:20px"></div>
         <div id="pm-match-player-table" style="margin-top:1.2rem"></div>
         <div id="pm-match-extras" style="margin-top:1.2rem"></div>
+        <div id="pm-ai-card" style="margin-top:1.2rem;margin-bottom:1rem"></div>
+        <div id="pm-match-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:20px"></div>
     </div>
 
     <!-- ── MODE JOUEUR ── page zones de tir (saison) ─────────────────────── -->
