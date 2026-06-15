@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=88">
-    <script src="js/utils.js?v=88"></script>
-    <script src="js/impact-images.js?v=88"></script>
-    <script src="js/player-mode.js?v=88"></script>
-    <script src="js/page-joueurs.js?v=88"></script>
-    <script src="js/page-notes-graph.js?v=88"></script>
-    <script src="js/page-analyse.js?v=88"></script>
+    <link rel="stylesheet" href="css/style.css?v=89">
+    <script src="js/utils.js?v=89"></script>
+    <script src="js/impact-images.js?v=89"></script>
+    <script src="js/player-mode.js?v=89"></script>
+    <script src="js/page-joueurs.js?v=89"></script>
+    <script src="js/page-notes-graph.js?v=89"></script>
+    <script src="js/page-analyse.js?v=89"></script>
 </head>
 <body>
 
@@ -970,7 +970,7 @@
         const GARDIEN_DOTS = { alg: [], face: [], ald: [] };
 
         // Seuils d'efficacité par poste — standards D1 Starligue 2024-25 (hors penalty)
-        // Vert ≥ hi% = Solide, Bleu ≥ mid% = Projetable, Rouge < mid% = Non projetable
+        // Violet ≥ hi% = Solide, Vert ≥ mid% = Projetable, Rouge < mid% = Non projetable
         const EFF_SEUILS = {
             PIV: { hi: 79, mid: 74 }, // Pivot — moy D1 77,1%
             AG:  { hi: 74, mid: 69 }, // Ailier G — moy D1 72,4%
@@ -3247,8 +3247,8 @@ let _effInfoPoste = null;
             <div class="eff-subtitle">Réf. LiquiMoly Starligue 2024-25 · Tirs hors penalty · Standards D1</div>
             <div class="eff-legend">
                 <div class="eff-legend-item"><span style="color:#dc2626;font-size:1rem;">●</span> Rouge — Non projetable</div>
-                <div class="eff-legend-item"><span style="color:#2563eb;font-size:1rem;">●</span> Bleu — Projetable</div>
-                <div class="eff-legend-item"><span style="color:#16a34a;font-size:1rem;">●</span> Vert — Solide</div>
+                <div class="eff-legend-item"><span style="color:#16a34a;font-size:1rem;">●</span> Vert — Projetable</div>
+                <div class="eff-legend-item"><span style="color:#7C3AED;font-size:1rem;">●</span> Violet — Solide</div>
             </div>
             <table class="eff-table" id="eff-info-table">
                 <thead>
@@ -3256,8 +3256,8 @@ let _effInfoPoste = null;
                         <th style="text-align:left;">Poste</th>
                         <th>Moy. D1</th>
                         <th style="color:#dc2626;">Non proj.</th>
-                        <th style="color:#2563eb;">Projetable</th>
-                        <th style="color:#16a34a;">Solide</th>
+                        <th style="color:#16a34a;">Projetable</th>
+                        <th style="color:#7C3AED;">Solide</th>
                     </tr>
                 </thead>
                 <tbody id="eff-info-tbody"></tbody>

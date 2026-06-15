@@ -10,7 +10,7 @@
         function getEffColor(pct, poste) {
             if (pct === null) return '#94a3b8';
             const s = EFF_SEUILS[poste] || { hi: 55, mid: 38 };
-            return pct >= s.hi ? '#16a34a' : pct >= s.mid ? '#2563eb' : '#dc2626';
+            return pct >= s.hi ? '#7C3AED' : pct >= s.mid ? '#16a34a' : '#dc2626';
         }
 
         function getMatchPageSelected() {
