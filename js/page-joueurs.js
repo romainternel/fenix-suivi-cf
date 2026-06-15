@@ -1143,8 +1143,8 @@
                     ${_pptHdr('DÉTAIL PAR MATCH')}
                     <div style="padding:10px 18px">${matches.outerHTML}</div>
                 </div>
-                ${graphBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden;display:flex;flex-direction:column">${_pptHdr(graphLabel)}<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px 18px">${graphBlock}</div></div>` : ''}
-                ${impactBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden;display:flex;flex-direction:column">${_pptHdr(impactTitle, impactStatSub)}<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px 18px">${impactBlock}</div></div>` : ''}`;
+                ${graphBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden;display:flex;flex-direction:column;height:265mm">${_pptHdr(graphLabel)}<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px 18px">${graphBlock}</div></div>` : ''}
+                ${impactBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden;display:flex;flex-direction:column;height:265mm">${_pptHdr(impactTitle, impactStatSub)}<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px 18px">${impactBlock}</div></div>` : ''}`;
 
             // Attendre que toutes les <img> soient décodées avant d'imprimer
             const imgEls = Array.from(printZone.querySelectorAll('img'));
