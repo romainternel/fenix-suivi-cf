@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=89">
-    <script src="js/utils.js?v=89"></script>
-    <script src="js/impact-images.js?v=89"></script>
-    <script src="js/player-mode.js?v=89"></script>
-    <script src="js/page-joueurs.js?v=89"></script>
-    <script src="js/page-notes-graph.js?v=89"></script>
-    <script src="js/page-analyse.js?v=89"></script>
+    <link rel="stylesheet" href="css/style.css?v=90">
+    <script src="js/utils.js?v=90"></script>
+    <script src="js/impact-images.js?v=90"></script>
+    <script src="js/player-mode.js?v=90"></script>
+    <script src="js/page-joueurs.js?v=90"></script>
+    <script src="js/page-notes-graph.js?v=90"></script>
+    <script src="js/page-analyse.js?v=90"></script>
 </head>
 <body>
 
@@ -730,13 +730,13 @@
                 <div class="ng-header">
                     <button class="btn-comparer" onclick="toggleCompare('ng-filters', this)">🔀 Comparer</button>
                     <div id="ng-filters" style="display:none;" class="compare-filters">
-                        <div class="filter-group" style="margin:0">
+                        <div id="ng-compare-joueur-wrap" class="filter-group" style="margin:0">
                             <label style="color:white;font-weight:600;">Joueur</label>
                             <select id="ng-joueur" onchange="updateNoteGraph()">
                                 <option value="">— Joueur —</option>
                             </select>
                         </div>
-                        <div class="filter-group" style="margin:0">
+                        <div id="ng-compare-gardien-wrap" class="filter-group" style="margin:0">
                             <label style="color:white;font-weight:600;">Gardien</label>
                             <select id="gbg-gardien" onchange="updateGbGraph()">
                                 <option value="">— Gardien —</option>
@@ -1187,9 +1187,17 @@ let _effInfoPoste = null;
             const el = document.getElementById(filterId);
             if (!el) return;
             const visible = el.style.display !== 'none' && el.style.display !== '';
-            el.style.display = visible ? 'none' : (filterId === 'ng-filters' ? 'flex' : 'flex');
+            el.style.display = visible ? 'none' : 'flex';
             btn.classList.toggle('btn-comparer-active', !visible);
             btn.textContent = visible ? '🔀 Comparer' : '✕ Fermer';
+            // Pour ng-filters : n'afficher que le dropdown correspondant au type de joueur courant
+            if (filterId === 'ng-filters' && !visible) {
+                const isGB = document.getElementById('ng-section-gb')?.style.display !== 'none';
+                const jw = document.getElementById('ng-compare-joueur-wrap');
+                const gw = document.getElementById('ng-compare-gardien-wrap');
+                if (jw) jw.style.display = isGB ? 'none' : '';
+                if (gw) gw.style.display = isGB ? '' : 'none';
+            }
         }
 
         function hideCompareFilters() {
