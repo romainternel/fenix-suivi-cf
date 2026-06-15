@@ -807,9 +807,10 @@
                     const toYR = p => pl.t + cH - (p/100)*cH;
                     const slotW=cW/gbPlayed.length, bW=slotW*0.52;
                     const cx = i => pl.l+(i+0.5)*slotW;
-                    const c=document.createElement('canvas'); c.width=W; c.height=H;
+                    const c=document.createElement('canvas'); c.width=W*2; c.height=H*2;
                     c.style.cssText='width:100%;display:block;border-radius:8px;border:1px solid #E2E8F0';
                     const ctx=c.getContext('2d');
+                    ctx.scale(2, 2);
                     ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
                     // Grid + left axis
                     const lStep = lRng>20?5:lRng>10?2:1;
@@ -912,9 +913,10 @@
                     const slotW = cW/played.length;
                     const bW = slotW*0.28;
                     const cx = i => pl.l + (i+0.5)*slotW;
-                    const c=document.createElement('canvas'); c.width=W; c.height=H;
+                    const c=document.createElement('canvas'); c.width=W*2; c.height=H*2;
                     c.style.cssText='width:100%;display:block;border-radius:8px;border:1px solid #E2E8F0';
                     const ctx=c.getContext('2d');
+                    ctx.scale(2, 2);
                     ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
                     for(let v=Math.ceil(minV);v<=Math.floor(maxV);v++){
                         if(v%2!==0) continue;
@@ -1089,11 +1091,21 @@
             const _tjD = (typeof getTJData === 'function') ? getTJData(nom, effectiveMatchs) : { matchs: 0, total: 0 };
             const _tjStr = (_tjD.matchs > 0) ? `${_tjD.matchs} match${_tjD.matchs > 1 ? 's' : ''}  ·  ⌀ ${Math.round(_tjD.total / _tjD.matchs)} min/match` : '';
             const _subHdr = nom + (_periodLabel !== 'Saison complète' ? '  ·  ' + _periodLabel : '');
-            const _pptHdr = (title, statLine) => `<div style="background:#0A2463;padding:7px 16px;display:flex;justify-content:space-between;align-items:center"><span style="font-family:Arial,sans-serif;font-size:12pt;font-weight:700;color:white;letter-spacing:0.5px">${title}</span><span style="font-family:Arial,sans-serif;font-size:7pt;color:#BFDBFE">${statLine || _subHdr}</span></div>`;
+
+            // Logo FENIX en data URL (fiable pour html2canvas + impression)
+            const _logoUrl = await new Promise(res => {
+                const li = new Image();
+                li.onload = () => { const lc=document.createElement('canvas'); lc.width=128; lc.height=128; lc.getContext('2d').drawImage(li,0,0,128,128); res(lc.toDataURL('image/png')); };
+                li.onerror = () => res(null);
+                li.src = 'favicon.png';
+            });
+
+            const _pptHdr = (title, statLine) => `<div style="background:#0A2463;padding:7px 16px;display:flex;justify-content:space-between;align-items:center"><span style="font-family:Arial,sans-serif;font-size:12pt;font-weight:700;color:white;letter-spacing:0.5px">${title}</span><div style="display:flex;align-items:center;gap:8px"><span style="font-family:Arial,sans-serif;font-size:7pt;color:#BFDBFE">${statLine || _subHdr}</span>${_logoUrl?`<img src="${_logoUrl}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">`:''}</div></div>`;
 
             const printZone = document.getElementById('joueur-print-zone');
             printZone.innerHTML = `
                 <div class="pdf-page pdf-slide-cover">
+                    ${_logoUrl ? `<img src="${_logoUrl}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:16px">` : ''}
                     <div style="font-family:Arial,sans-serif;font-size:10pt;color:white;letter-spacing:4px;margin-bottom:10px;text-align:center">FENIX HANDBALL</div>
                     <div style="width:50%;border-top:1px solid rgba(191,219,254,0.5);margin:0 auto 10px"></div>
                     <div style="font-family:Arial,sans-serif;font-size:17pt;color:white;letter-spacing:2px;margin-bottom:8px;text-align:center">SUIVI HANDBALL</div>
@@ -1165,7 +1177,7 @@
                 const pages = pz.querySelectorAll('.pdf-page');
                 for (const page of pages) {
                     const canvas = await html2canvas(page, {
-                        scale: 2,
+                        scale: 1.5,
                         useCORS: true,
                         allowTaint: true,
                         backgroundColor: '#ffffff',
