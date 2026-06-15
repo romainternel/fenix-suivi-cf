@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=94">
-    <script src="js/utils.js?v=94"></script>
-    <script src="js/impact-images.js?v=94"></script>
-    <script src="js/player-mode.js?v=94"></script>
-    <script src="js/page-joueurs.js?v=94"></script>
-    <script src="js/page-notes-graph.js?v=94"></script>
-    <script src="js/page-analyse.js?v=94"></script>
+    <link rel="stylesheet" href="css/style.css?v=95">
+    <script src="js/utils.js?v=95"></script>
+    <script src="js/impact-images.js?v=95"></script>
+    <script src="js/player-mode.js?v=95"></script>
+    <script src="js/page-joueurs.js?v=95"></script>
+    <script src="js/page-notes-graph.js?v=95"></script>
+    <script src="js/page-analyse.js?v=95"></script>
 </head>
 <body>
 
@@ -1194,6 +1194,27 @@ let _effInfoPoste = null;
 
             if (DATA.length > 0) refreshPage(page);
         }
+
+        function togglePmMenu() {
+            const drop = document.getElementById('pm-menu-dropdown');
+            if (!drop) return;
+            const open = drop.style.display !== 'none';
+            if (!open) {
+                const dateEl = document.getElementById('pm-menu-import-date');
+                if (dateEl) {
+                    const dt = localStorage.getItem('fenix_data_date') || '';
+                    dateEl.textContent = dt ? 'Données du ' + dt : 'Date import inconnue';
+                }
+            }
+            drop.style.display = open ? 'none' : 'block';
+        }
+        document.addEventListener('click', function(e) {
+            const btn  = document.getElementById('pm-menu-btn');
+            const drop = document.getElementById('pm-menu-dropdown');
+            if (drop && drop.style.display !== 'none' && !drop.contains(e.target) && !(btn && btn.contains(e.target))) {
+                drop.style.display = 'none';
+            }
+        });
 
         function toggleCompare(filterId, btn) {
             const el = document.getElementById(filterId);
@@ -3297,33 +3318,36 @@ let _effInfoPoste = null;
     <div id="joueur-print-zone"></div>
 
     <!-- ── MODE JOUEUR ── barre de navigation ─────────────────────────────── -->
-    <div id="pm-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:1100;
-         background:#0A2463;color:white;height:56px;align-items:center;
-         padding:0 20px;gap:16px;box-shadow:0 2px 8px rgba(0,0,0,.3)">
-        <div style="display:flex;align-items:center;gap:10px;flex:1">
-            <img src="favicon.png" style="width:32px;height:32px;border-radius:50%">
-            <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px">FENIX Stats</span>
-            <span style="background:rgba(255,255,255,.15);border-radius:20px;padding:2px 12px;
-                  font-size:0.78rem;font-weight:600" id="pm-player-name"></span>
-            <span id="pm-period-chip" style="display:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
-                  border-radius:12px;padding:3px 12px;font-size:0.73rem;font-weight:600;color:rgba(255,255,255,.9);
-                  max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    <div id="pm-bar" style="display:none">
+        <div class="pm-bar-left">
+            <img src="favicon.png" style="width:28px;height:28px;border-radius:50%;flex-shrink:0">
+            <span class="pm-bar-brand">FENIX</span>
+            <span id="pm-player-name" style="background:rgba(255,255,255,.15);border-radius:20px;
+                  padding:2px 10px;font-size:0.75rem;font-weight:600;white-space:nowrap;
+                  overflow:hidden;text-overflow:ellipsis;max-width:130px"></span>
+            <span id="pm-period-chip" style="display:none;background:rgba(255,255,255,.12);
+                  border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:3px 10px;
+                  font-size:0.7rem;font-weight:600;color:rgba(255,255,255,.9);
+                  max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
         </div>
-        <button class="pm-tab-btn active" data-tab="fiche" onclick="pmTab('fiche')"
-                style="background:rgba(255,255,255,.15);border:none;color:white;padding:6px 18px;
-                       border-radius:20px;cursor:pointer;font-weight:600;font-size:0.85rem">
-            👤 Ma Fiche
-        </button>
-        <button class="pm-tab-btn" data-tab="match" onclick="pmTab('match')"
-                style="background:transparent;border:1.5px solid rgba(255,255,255,.4);color:white;
-                       padding:6px 18px;border-radius:20px;cursor:pointer;font-weight:600;font-size:0.85rem">
-            📊 Stats Match
-        </button>
-        <button onclick="playerLogout()"
-                style="background:rgba(239,68,68,.2);border:1px solid #EF4444;color:#FCA5A5;
-                       padding:6px 14px;border-radius:20px;cursor:pointer;font-size:0.8rem;margin-left:8px">
-            🚪 Déconnexion
-        </button>
+        <div class="pm-tabs">
+            <button class="pm-tab-btn active" data-tab="fiche" onclick="pmTab('fiche')">
+                👤 <span class="pm-tab-label">Ma Fiche</span>
+            </button>
+            <button class="pm-tab-btn" data-tab="match" onclick="pmTab('match')">
+                📊 <span class="pm-tab-label">Stats Match</span>
+            </button>
+            <button class="pm-tab-btn" data-tab="zones" onclick="pmTab('zones')">
+                🎯 <span class="pm-tab-label">Zones</span>
+            </button>
+        </div>
+        <div style="position:relative;margin-left:6px">
+            <button id="pm-menu-btn" class="pm-menu-btn" onclick="togglePmMenu()">⋯</button>
+            <div id="pm-menu-dropdown" class="pm-menu-dropdown" style="display:none">
+                <div class="pm-menu-item pm-menu-date" id="pm-menu-import-date">Chargement…</div>
+                <button class="pm-menu-item pm-menu-logout" onclick="playerLogout()">🚪 Déconnexion</button>
+            </div>
+        </div>
     </div>
 
     <!-- ── MODE JOUEUR ── page fiche joueur ─────────────────────────────────── -->
@@ -3386,6 +3410,11 @@ let _effInfoPoste = null;
         <div id="pm-match-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:20px"></div>
         <div id="pm-match-player-table" style="margin-top:1.2rem"></div>
         <div id="pm-match-extras" style="margin-top:1.2rem"></div>
+    </div>
+
+    <!-- ── MODE JOUEUR ── page zones de tir (saison) ─────────────────────── -->
+    <div id="pm-zones-page" style="display:none;padding:72px 16px 24px;max-width:900px;margin:0 auto">
+        <div id="pm-zones-content"></div>
     </div>
 
     <!-- ── STAFF ── modal gestion comptes joueurs ──────────────────────────── -->

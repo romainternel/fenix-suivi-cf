@@ -1652,6 +1652,45 @@
             color: #fff;
         }
 
+        /* pm-bar layout helpers */
+        .pm-bar-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; overflow: hidden; }
+        .pm-bar-brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.05rem; letter-spacing: 2px; color: white; white-space: nowrap; }
+
+        /* pm-bar ⋯ menu */
+        .pm-menu-btn {
+            background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: white;
+            width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            font-family: inherit; letter-spacing: 1px;
+        }
+        .pm-menu-dropdown {
+            position: absolute; right: 0; top: 42px; background: white; border-radius: 12px;
+            box-shadow: 0 8px 28px rgba(0,0,0,.18); min-width: 190px; overflow: hidden; z-index: 1300;
+        }
+        .pm-menu-item {
+            display: block; width: 100%; padding: 11px 16px; background: none; border: none;
+            text-align: left; cursor: pointer; font-size: 0.85rem; font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+        }
+        .pm-menu-logout { color: #DC2626; font-weight: 600; }
+        .pm-menu-logout:hover { background: #FEF2F2; }
+        .pm-menu-date { color: #64748B; font-size: 0.72rem; border-bottom: 1px solid #E2E8F0; cursor: default; padding: 8px 16px; }
+
+        /* Responsive pm-bar : masque texte sur petit écran */
+        @media (max-width: 500px) {
+            .pm-bar-brand { display: none; }
+            .pm-tab-label { display: none; }
+        }
+
+        /* Empty state (player mode) */
+        .pm-empty-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 60px 20px; text-align: center;
+        }
+        .pm-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+        .pm-empty-title { font-size: 1.1rem; font-weight: 700; color: #1E293B; margin-bottom: 8px; }
+        .pm-empty-msg { font-size: 0.85rem; color: #64748B; line-height: 1.6; max-width: 280px; }
+
         /* Player mode main content offset when bar visible */
         body.player-mode { padding-top: 56px; }
 

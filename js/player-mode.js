@@ -97,14 +97,22 @@
 
             const ficheEl = document.getElementById('pm-fiche-page');
             const matchEl = document.getElementById('pm-match-page');
+            const zonesEl = document.getElementById('pm-zones-page');
 
             if (tab === 'fiche') {
                 if (matchEl) matchEl.style.display = 'none';
+                if (zonesEl) zonesEl.style.display = 'none';
                 if (ficheEl) ficheEl.style.display = 'block';
                 if (typeof DATA !== 'undefined' && DATA.length > 0) renderPlayerFiche();
+            } else if (tab === 'zones') {
+                if (_pmfChart) { _pmfChart.destroy(); _pmfChart = null; }
+                if (ficheEl) ficheEl.style.display = 'none';
+                if (matchEl) matchEl.style.display = 'none';
+                if (zonesEl) { zonesEl.style.display = 'block'; renderPlayerZones(); }
             } else {
                 if (_pmfChart) { _pmfChart.destroy(); _pmfChart = null; }
                 if (ficheEl) ficheEl.style.display = 'none';
+                if (zonesEl) zonesEl.style.display = 'none';
                 if (matchEl) matchEl.style.display = 'block';
                 renderPlayerMatchStats();
             }
@@ -115,7 +123,11 @@
             const nom = getSessionPlayerNom();
             const page = document.getElementById('pm-fiche-page');
             if (!nom || !DATA.length) {
-                if (page) page.innerHTML = '<div style="padding:40px;text-align:center;color:#64748B">Aucune donnée — veuillez réimporter le fichier Excel.</div>';
+                if (page) page.innerHTML = `<div class="pm-empty-state">
+                    <div class="pm-empty-icon">📊</div>
+                    <div class="pm-empty-title">Données non disponibles</div>
+                    <div class="pm-empty-msg">Le staff n'a pas encore importé les données. Reviens bientôt !</div>
+                </div>`;
                 return;
             }
             try {
@@ -948,6 +960,82 @@
             if (!isGB && terrainRows.length > 0) {
                 requestAnimationFrame(() => _drawPmTerrain(terrainRows));
             }
+        }
+
+        // ── Page Zones de tir (saison) ───────────────────────────────────────────
+        function renderPlayerZones() {
+            const nom = getSessionPlayerNom();
+            const content = document.getElementById('pm-zones-content');
+            if (!content) return;
+
+            const emptyHTML = (icon, title, msg) => `<div class="pm-empty-state">
+                <div class="pm-empty-icon">${icon}</div>
+                <div class="pm-empty-title">${title}</div>
+                <div class="pm-empty-msg">${msg}</div>
+            </div>`;
+
+            if (!nom || !DATA.length) {
+                content.innerHTML = emptyHTML('🎯', 'Aucune donnée', 'Le staff n\'a pas encore importé les données.');
+                return;
+            }
+
+            const isGB = detectIsGB(nom);
+            const bilanMF = _getPmBilanMatchs();
+
+            const impactRows = isGB
+                ? DATA.filter(r =>
+                    r[COLS.club] !== 'FENIX' &&
+                    (!bilanMF || bilanMF.includes(r[COLS.rencontre])) &&
+                    matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) &&
+                    r[COLS.impact] && String(r[COLS.impact]).includes(';'))
+                : DATA.filter(r =>
+                    r[COLS.club] === 'FENIX' &&
+                    (!bilanMF || bilanMF.includes(r[COLS.rencontre])) &&
+                    matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom) &&
+                    r[COLS.impact] && String(r[COLS.impact]).includes(';'));
+
+            if (impactRows.length === 0) {
+                content.innerHTML = emptyHTML('🎯', 'Pas encore de zones enregistrées', 'Les coordonnées de tir s\'afficheront ici dès qu\'elles seront saisies.');
+                return;
+            }
+
+            const b64 = (typeof IMPACT_B64 !== 'undefined') ? IMPACT_B64 : {};
+            const title  = isGB ? 'ARRÊTS & BUTS CONCÉDÉS — SAISON' : 'ZONES DE TIR SUR LE BUT — SAISON';
+            const legend = isGB
+                ? `<span class="pmf-legend-dot pmf-legend-green">●</span> Tir arrêté <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> But encaissé`
+                : `<span class="pmf-legend-dot pmf-legend-green">●</span> But <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> Tir raté`;
+
+            const pos   = isGB ? impactRows.filter(r => r[COLS.finalite] === 'Tir arrêté').length : impactRows.filter(r => r[COLS.resultat] === 'But').length;
+            const total = impactRows.length;
+            const eff   = total > 0 ? Math.round(pos / total * 100) : 0;
+            const tp    = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) : null;
+            const ec    = (typeof getEffColor === 'function') ? getEffColor(eff, tp ? tp.poste : '') : '#64748B';
+            const matchCount = new Set(impactRows.map(r => r[COLS.rencontre]).filter(Boolean)).size;
+            const statStr = isGB
+                ? `${pos} arrêt${pos>1?'s':''} / ${total} tir${total>1?'s':''}`
+                : `${pos} but${pos>1?'s':''} / ${total} tir${total>1?'s':''}`;
+
+            content.innerHTML = `
+                <div class="pmf-card">
+                    <div class="pmf-card-header-row">
+                        <div class="pmf-card-title">${title}</div>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                            <span style="font-size:0.75rem;color:#64748B">${statStr}</span>
+                            <span style="font-size:1rem;font-weight:800;color:${ec}">${eff}%</span>
+                            <span style="font-size:0.72rem;color:#94A3B8">${matchCount} match${matchCount>1?'s':''}</span>
+                        </div>
+                    </div>
+                    <div class="pmf-canvases">
+                        <div class="pmf-canvas-wrap"><canvas id="pmz-canvas-alg"></canvas><div class="pmf-canvas-lbl">EXT GAUCHE</div></div>
+                        <div class="pmf-canvas-wrap"><canvas id="pmz-canvas-face"></canvas><div class="pmf-canvas-lbl">CENTRAL</div></div>
+                        <div class="pmf-canvas-wrap"><canvas id="pmz-canvas-ald"></canvas><div class="pmf-canvas-lbl">EXT DROIT</div></div>
+                    </div>
+                    <div class="pmf-legend" style="margin-top:8px">${legend}</div>
+                </div>`;
+
+            _drawImpactCanvas('pmz-canvas-alg',  b64.alg,  impactRows.filter(r => getImpactView(r) === 'alg'),  isGB);
+            _drawImpactCanvas('pmz-canvas-face', b64.face, impactRows.filter(r => getImpactView(r) === 'face'), isGB);
+            _drawImpactCanvas('pmz-canvas-ald',  b64.ald,  impactRows.filter(r => getImpactView(r) === 'ald'),  isGB);
         }
 
         // ── Stats Match : équipes ────────────────────────────────────────────────
