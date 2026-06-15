@@ -62,14 +62,29 @@
                 elem.setAttribute('onclick', `selectJoueur('${safeName}')`);
                 elem.setAttribute('opacity', opacity);
 
-                let inner = '';
-                inner += `<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="#e2e8f0" stroke="${ringClr}" stroke-width="1.5"/>`;
+                // createElementNS évite le flash noir : innerHTML SVG applique fill="black" par défaut avant les attributs explicites
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', p.x); circle.setAttribute('cy', p.y);
+                circle.setAttribute('r', r); circle.setAttribute('fill', '#e2e8f0');
+                circle.setAttribute('stroke', ringClr); circle.setAttribute('stroke-width', '1.5');
+                elem.appendChild(circle);
+
                 if (isSelected) {
-                    inner += `<circle cx="${p.x}" cy="${p.y}" r="${r + 2}" fill="none" stroke="#FCD34D" stroke-width="1.2"/>`;
+                    const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    ring.setAttribute('cx', p.x); ring.setAttribute('cy', p.y);
+                    ring.setAttribute('r', r + 2); ring.setAttribute('fill', 'none');
+                    ring.setAttribute('stroke', '#FCD34D'); ring.setAttribute('stroke-width', '1.2');
+                    elem.appendChild(ring);
                 }
-                inner += `<text x="${p.x}" y="${p.y + 0.3}" text-anchor="middle" dominant-baseline="middle"
-                    font-family="Inter,sans-serif" font-size="2.0" font-weight="700" fill="#0f172a">${initials}</text>`;
-                elem.innerHTML = inner;
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', p.x); text.setAttribute('y', p.y + 0.3);
+                text.setAttribute('text-anchor', 'middle'); text.setAttribute('dominant-baseline', 'middle');
+                text.setAttribute('font-family', 'Inter,sans-serif'); text.setAttribute('font-size', '2.0');
+                text.setAttribute('font-weight', '700'); text.setAttribute('fill', '#0f172a');
+                text.textContent = initials;
+                elem.appendChild(text);
+
                 frag.appendChild(elem);
             });
 
@@ -1079,7 +1094,7 @@
             }
 
             const graphLabel = isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION DES NOTES';
-            const imgStyle   = 'width:100%;display:block;border-radius:8px;border:1px solid #E2E8F0';
+            const imgStyle   = 'max-width:100%;height:auto;display:block;border-radius:8px;border:1px solid #E2E8F0';
             const graphBlock = graphDataUrl ? `<img src="${graphDataUrl}" style="${imgStyle}">` : '';
 
             // Cover slide data
@@ -1096,7 +1111,7 @@
             // Logo FENIX en data URL (fiable pour html2canvas + impression)
             const _logoUrl = await new Promise(res => {
                 const li = new Image();
-                li.onload = () => { const lc=document.createElement('canvas'); lc.width=128; lc.height=128; lc.getContext('2d').drawImage(li,0,0,128,128); res(lc.toDataURL('image/png')); };
+                li.onload = () => { const lc=document.createElement('canvas'); lc.width=512; lc.height=512; lc.getContext('2d').drawImage(li,0,0,512,512); res(lc.toDataURL('image/png')); };
                 li.onerror = () => res(null);
                 li.src = 'favicon.png';
             });
@@ -1106,7 +1121,7 @@
             const printZone = document.getElementById('joueur-print-zone');
             printZone.innerHTML = `
                 <div class="pdf-page pdf-slide-cover">
-                    ${_logoUrl ? `<img src="${_logoUrl}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:16px">` : ''}
+                    ${_logoUrl ? `<img src="${_logoUrl}" style="width:160px;height:160px;border-radius:50%;object-fit:cover;margin-bottom:20px">` : ''}
                     <div style="font-family:Arial,sans-serif;font-size:10pt;color:white;letter-spacing:4px;margin-bottom:10px;text-align:center">FENIX HANDBALL</div>
                     <div style="width:50%;border-top:1px solid rgba(191,219,254,0.5);margin:0 auto 10px"></div>
                     <div style="font-family:Arial,sans-serif;font-size:17pt;color:white;letter-spacing:2px;margin-bottom:8px;text-align:center">SUIVI HANDBALL</div>
@@ -1128,8 +1143,8 @@
                     ${_pptHdr('DÉTAIL PAR MATCH')}
                     <div style="padding:10px 18px">${matches.outerHTML}</div>
                 </div>
-                ${graphBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden">${_pptHdr(graphLabel)}<div style="padding:10px 18px">${graphBlock}</div></div>` : ''}
-                ${impactBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden">${_pptHdr(impactTitle, impactStatSub)}<div style="padding:10px 18px">${impactBlock}</div></div>` : ''}`;
+                ${graphBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden;display:flex;flex-direction:column">${_pptHdr(graphLabel)}<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px 18px">${graphBlock}</div></div>` : ''}
+                ${impactBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden;display:flex;flex-direction:column">${_pptHdr(impactTitle, impactStatSub)}<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px 18px">${impactBlock}</div></div>` : ''}`;
 
             // Attendre que toutes les <img> soient décodées avant d'imprimer
             const imgEls = Array.from(printZone.querySelectorAll('img'));
