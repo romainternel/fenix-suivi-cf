@@ -383,6 +383,27 @@
             const noteDEF = played.map(m => matchData[m].dp - matchData[m].dm);
             const total   = played.map((_, i) => noteATT[i] + noteDEF[i]);
 
+            // Deuxième joueur pour comparaison
+            const joueur2 = document.getElementById('ng-joueur-2')?.value || '';
+            let total2 = null;
+            if (joueur2) {
+                const md2 = {};
+                matchsToUse.forEach(m => md2[m] = { ap: 0, am: 0, dp: 0, dm: 0 });
+                DATA.forEach(row => {
+                    const m = row[COLS.rencontre]; if (!md2[m]) return;
+                    const js = (row[COLS.action_joueur] || '').toString().split(';');
+                    const as = (row[COLS.action_att]    || '').toString().split(';');
+                    const ds = (row[COLS.action_def]    || '').toString().split(';');
+                    js.forEach((j, idx) => {
+                        if (!matchPlayerName(j.trim(), joueur2)) return;
+                        const att = lastNonEmpty(as, idx); const def = lastNonEmpty(ds, idx);
+                        if (isPositiveATT(att)) md2[m].ap++; if (isNegativeATT(att)) md2[m].am++;
+                        if (isPositiveDEF(def)) md2[m].dp++; if (isNegativeDEF(def)) md2[m].dm++;
+                    });
+                });
+                total2 = played.map(m => { const d = md2[m] || {}; return (d.ap-d.am||0) + (d.dp-d.dm||0); });
+            }
+
             // Médiane
             const sorted = [...total].sort((a, b) => a - b);
             const mid = Math.floor(sorted.length / 2);
@@ -412,11 +433,17 @@
                             backgroundColor: 'rgba(245,158,11,0.75)', borderColor: '#F59E0B', borderWidth: 1, order: 5,
                         },
                         {
-                            type: 'line', label: 'TOTAL JOUEUR', data: total,
+                            type: 'line', label: `TOTAL ${joueur}`, data: total,
                             borderColor: '#1E3A5F', backgroundColor: '#1E3A5F',
                             borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: '#1E3A5F',
                             tension: 0.3, order: 1,
                         },
+                        ...(total2 ? [{
+                            type: 'line', label: `TOTAL ${joueur2}`, data: total2,
+                            borderColor: '#E11D48', backgroundColor: '#E11D48',
+                            borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#E11D48',
+                            borderDash: [5, 3], tension: 0.3, order: 0,
+                        }] : []),
                         {
                             type: 'line', label: 'Médiane TOTAL', data: played.map(() => median),
                             borderColor: '#94A3B8', borderWidth: 1.5, borderDash: [6, 4],
@@ -441,7 +468,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `Notes par rencontre — ${joueur}`,
+                            text: joueur2 ? `Notes par rencontre — ${joueur}  vs  ${joueur2}` : `Notes par rencontre — ${joueur}`,
                             font: { size: 18, weight: 'bold', family: 'Bebas Neue' },
                             color: '#1E3A5F', padding: { bottom: 14 },
                         },

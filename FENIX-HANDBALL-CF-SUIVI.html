@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=91">
-    <script src="js/utils.js?v=91"></script>
-    <script src="js/impact-images.js?v=91"></script>
-    <script src="js/player-mode.js?v=91"></script>
-    <script src="js/page-joueurs.js?v=91"></script>
-    <script src="js/page-notes-graph.js?v=91"></script>
-    <script src="js/page-analyse.js?v=91"></script>
+    <link rel="stylesheet" href="css/style.css?v=92">
+    <script src="js/utils.js?v=92"></script>
+    <script src="js/impact-images.js?v=92"></script>
+    <script src="js/player-mode.js?v=92"></script>
+    <script src="js/page-joueurs.js?v=92"></script>
+    <script src="js/page-notes-graph.js?v=92"></script>
+    <script src="js/page-analyse.js?v=92"></script>
 </head>
 <body>
 
@@ -736,10 +736,22 @@
                                 <option value="">— Joueur —</option>
                             </select>
                         </div>
+                        <div id="ng-compare-joueur-2-wrap" class="filter-group" style="margin:0;display:none">
+                            <label style="color:#FCA5A5;font-weight:600;">Joueur 2</label>
+                            <select id="ng-joueur-2" onchange="updateNoteGraph()">
+                                <option value="">— Joueur 2 —</option>
+                            </select>
+                        </div>
                         <div id="ng-compare-gardien-wrap" class="filter-group" style="margin:0">
                             <label style="color:white;font-weight:600;">Gardien</label>
                             <select id="gbg-gardien" onchange="updateGbGraph()">
                                 <option value="">— Gardien —</option>
+                            </select>
+                        </div>
+                        <div id="ng-compare-gardien-2-wrap" class="filter-group" style="margin:0;display:none">
+                            <label style="color:#FCA5A5;font-weight:600;">Gardien 2</label>
+                            <select id="gbg-gardien-2" onchange="updateGbGraph()">
+                                <option value="">— Gardien 2 —</option>
                             </select>
                         </div>
                     </div>
@@ -1190,13 +1202,17 @@ let _effInfoPoste = null;
             el.style.display = visible ? 'none' : 'flex';
             btn.classList.toggle('btn-comparer-active', !visible);
             btn.textContent = visible ? '🔀 Comparer' : '✕ Fermer';
-            // Pour ng-filters : n'afficher que le dropdown correspondant au type de joueur courant
+            // Pour ng-filters : afficher la paire du bon type (joueur×2 ou gardien×2)
             if (filterId === 'ng-filters' && !visible) {
                 const isGB = document.getElementById('ng-section-joueur')?.style.display !== 'block';
-                const jw = document.getElementById('ng-compare-joueur-wrap');
-                const gw = document.getElementById('ng-compare-gardien-wrap');
-                if (jw) jw.style.display = isGB ? 'none' : '';
-                if (gw) gw.style.display = isGB ? '' : 'none';
+                ['ng-compare-joueur-wrap', 'ng-compare-joueur-2-wrap'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = isGB ? 'none' : '';
+                });
+                ['ng-compare-gardien-wrap', 'ng-compare-gardien-2-wrap'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = isGB ? '' : 'none';
+                });
             }
         }
 
@@ -1617,18 +1633,21 @@ let _effInfoPoste = null;
                 }
             });
 
-            // ng-joueur : exclure les gardiens (détectés via tirs adverses + GARDIENS_FENIX)
-            const ngJoueurSel = document.getElementById('ng-joueur');
-            if (ngJoueurSel) {
+            // ng-joueur / ng-joueur-2 : exclure les gardiens
+            {
                 const gardiensData = new Set(
                     DATA.filter(r => r[COLS.club] !== 'FENIX' && r[COLS.gardien])
                         .map(r => (r[COLS.gardien] || '').toString().trim())
                         .filter(Boolean)
                 );
                 GARDIENS_FENIX.forEach(g => gardiensData.add(g));
-                ngJoueurSel.innerHTML = '<option value="">— Joueur —</option>';
-                JOUEURS_FENIX.filter(j => !gardiensData.has(j))
-                    .forEach(j => ngJoueurSel.innerHTML += `<option value="${j}">${j}</option>`);
+                const joueursOptions = JOUEURS_FENIX.filter(j => !gardiensData.has(j));
+                ['ng-joueur', 'ng-joueur-2'].forEach((id, i) => {
+                    const sel = document.getElementById(id);
+                    if (!sel) return;
+                    sel.innerHTML = `<option value="">${i === 0 ? '— Joueur —' : '— Joueur 2 —'}</option>`;
+                    joueursOptions.forEach(j => sel.innerHTML += `<option value="${j}">${j}</option>`);
+                });
             }
             
             const gardienFilter = document.getElementById('filter-gardien');
@@ -1638,20 +1657,18 @@ let _effInfoPoste = null;
             }
 
             // Graph GB : gardiens détectés dans les tirs adverses, filtrés par GARDIENS_FENIX si disponible
-            const gbgSelect = document.getElementById('gbg-gardien');
-            if (gbgSelect) {
-                let gardiensGB;
-                if (GARDIENS_FENIX.length > 0) {
-                    gardiensGB = GARDIENS_FENIX;
-                } else {
-                    gardiensGB = [...new Set(
-                        DATA.filter(r => r[COLS.club] !== 'FENIX' && r[COLS.gardien])
-                            .map(r => (r[COLS.gardien] || '').toString().trim())
-                            .filter(Boolean)
-                    )].sort();
-                }
-                gbgSelect.innerHTML = '<option value="">— Gardien —</option>';
-                gardiensGB.forEach(g => gbgSelect.innerHTML += `<option value="${g}">${g}</option>`);
+            // gbg-gardien / gbg-gardien-2
+            {
+                const gardiensGB = GARDIENS_FENIX.length > 0 ? GARDIENS_FENIX : [...new Set(
+                    DATA.filter(r => r[COLS.club] !== 'FENIX' && r[COLS.gardien])
+                        .map(r => (r[COLS.gardien] || '').toString().trim()).filter(Boolean)
+                )].sort();
+                ['gbg-gardien', 'gbg-gardien-2'].forEach((id, i) => {
+                    const sel = document.getElementById(id);
+                    if (!sel) return;
+                    sel.innerHTML = `<option value="">${i === 0 ? '— Gardien —' : '— Gardien 2 —'}</option>`;
+                    gardiensGB.forEach(g => sel.innerHTML += `<option value="${g}">${g}</option>`);
+                });
             }
             
             const zoneFilter = document.getElementById('filter-impact-zone');
