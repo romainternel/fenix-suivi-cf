@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=90">
-    <script src="js/utils.js?v=90"></script>
-    <script src="js/impact-images.js?v=90"></script>
-    <script src="js/player-mode.js?v=90"></script>
-    <script src="js/page-joueurs.js?v=90"></script>
-    <script src="js/page-notes-graph.js?v=90"></script>
-    <script src="js/page-analyse.js?v=90"></script>
+    <link rel="stylesheet" href="css/style.css?v=91">
+    <script src="js/utils.js?v=91"></script>
+    <script src="js/impact-images.js?v=91"></script>
+    <script src="js/player-mode.js?v=91"></script>
+    <script src="js/page-joueurs.js?v=91"></script>
+    <script src="js/page-notes-graph.js?v=91"></script>
+    <script src="js/page-analyse.js?v=91"></script>
 </head>
 <body>
 
@@ -1192,7 +1192,7 @@ let _effInfoPoste = null;
             btn.textContent = visible ? '🔀 Comparer' : '✕ Fermer';
             // Pour ng-filters : n'afficher que le dropdown correspondant au type de joueur courant
             if (filterId === 'ng-filters' && !visible) {
-                const isGB = document.getElementById('ng-section-gb')?.style.display !== 'none';
+                const isGB = document.getElementById('ng-section-joueur')?.style.display !== 'block';
                 const jw = document.getElementById('ng-compare-joueur-wrap');
                 const gw = document.getElementById('ng-compare-gardien-wrap');
                 if (jw) jw.style.display = isGB ? 'none' : '';
