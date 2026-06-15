@@ -1050,11 +1050,11 @@
                     const cy = 5 + ry * 0.50;
                     const isPos = isGB ? row[COLS.finalite]==='Tir arrêté' : row[COLS.resultat]==='But';
                     if (isPos) {
-                        return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.8" fill="#10B981" stroke="white" stroke-width="0.8"/>`;
+                        return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="1.6" fill="#10B981" stroke="white" stroke-width="0.5"/>`;
                     } else {
-                        const s = 2.2;
-                        return `<line x1="${(cx-s).toFixed(1)}" y1="${(cy-s).toFixed(1)}" x2="${(cx+s).toFixed(1)}" y2="${(cy+s).toFixed(1)}" stroke="#EF4444" stroke-width="1.8"/>
-                                <line x1="${(cx+s).toFixed(1)}" y1="${(cy-s).toFixed(1)}" x2="${(cx-s).toFixed(1)}" y2="${(cy+s).toFixed(1)}" stroke="#EF4444" stroke-width="1.8"/>`;
+                        const s = 1.4;
+                        return `<line x1="${(cx-s).toFixed(1)}" y1="${(cy-s).toFixed(1)}" x2="${(cx+s).toFixed(1)}" y2="${(cy+s).toFixed(1)}" stroke="#EF4444" stroke-width="1.2"/>
+                                <line x1="${(cx+s).toFixed(1)}" y1="${(cy-s).toFixed(1)}" x2="${(cx-s).toFixed(1)}" y2="${(cy+s).toFixed(1)}" stroke="#EF4444" stroke-width="1.2"/>`;
                     }
                 }).join('');
                 return `<svg viewBox="0 0 100 65" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:5px;border:1px solid #E2E8F0">
