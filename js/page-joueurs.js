@@ -1481,30 +1481,35 @@
                 const sans = totalI - impactCoords.length;
                 if (sans>0) s4.addText(`${sans} tir(s) sans coordonnées`, { x:5, y:legY, w:4.8, h:0.2, fontSize:7.5, color:'94A3B8', fontFace:'Arial', align:'right' });
 
-                // Grille efficacité par zone (comme page Impact > Efficacité)
-                const ZONE_POS = {
-                    '6m ail G':[0,0], '6m ext G':[1,0], '6m central G':[2,0], '6m central D':[3,0], '6m ext D':[4,0], '6m ail D':[5,0],
-                    '6-9 ext G':[0,1], '6-9 central G':[2,1], '7m':[3,1], '6-9 central D':[4,1], '6-9 ext D':[5,1],
-                    '9m ext G':[0,2], '9m Int G':[2,2], '9m Int D':[4,2], '9m ext D':[5,2],
-                };
-                const gX0=0.25, gY0=3.25, gCW=1.5, gCH=0.52, gGap=0.05;
+                // Grille efficacité par zone — layout flex identique à Impact > Efficacité
+                // Chaque ligne remplit toute la largeur (6/5/4 cellules → plus larges en bas)
+                const gX0=0.25, gY0=3.25, gCH=0.52, gGap=0.06, totalGW=9.5;
                 s4.addText('EFFICACITÉ PAR ZONE', { x:gX0, y:2.96, w:9.5, h:0.22, fontSize:8, color:NAVY, fontFace:'Arial', bold:true, charSpacing:1 });
-                Object.entries(ZONE_POS).forEach(([zone, [col, row]]) => {
-                    const zd = zoneStats[zone];
-                    const gx = gX0 + col * (gCW + gGap);
-                    const gy = gY0 + row * (gCH + gGap);
-                    if (!zd || zd.total === 0) {
-                        s4.addShape(pptx.ShapeType.roundRect, { x:gx, y:gy, w:gCW, h:gCH, fill:{ color:'F1F5F9' }, line:{ color:'E2E8F0', width:0.5 } });
-                        s4.addText(zone, { x:gx+0.05, y:gy, w:gCW-0.1, h:gCH, fontSize:6.5, color:'CBD5E1', fontFace:'Arial', align:'center', valign:'middle' });
-                    } else {
-                        const pct = Math.round(zd.buts / zd.total * 100);
-                        const [bg, tx] = pct>=65?['D1FAE5','065F46']:pct>=45?['FEF3C7','92400E']:['FEE2E2','991B1B'];
-                        s4.addShape(pptx.ShapeType.roundRect, { x:gx, y:gy, w:gCW, h:gCH, fill:{ color:bg }, line:{ color:bg, width:0 } });
-                        s4.addText([
-                            { text:zone,      options:{ fontSize:6.5, color:tx, fontFace:'Arial', align:'center', breakLine:true } },
-                            { text:`${pct}%`, options:{ fontSize:13,  color:tx, fontFace:'Arial', bold:true, align:'center' } },
-                        ], { x:gx+0.05, y:gy, w:gCW-0.1, h:gCH, align:'center', valign:'middle' });
-                    }
+                const zoneRows4 = [
+                    ['6m ail G','6m ext G','6m central G','6m central D','6m ext D','6m ail D'],
+                    ['6-9 ext G','6-9 central G','7m','6-9 central D','6-9 ext D'],
+                    ['9m ext G','9m Int G','9m Int D','9m ext D'],
+                ];
+                zoneRows4.forEach((cells, ri) => {
+                    const n  = cells.length;
+                    const cw = (totalGW - gGap * (n - 1)) / n;
+                    const gy = gY0 + ri * (gCH + gGap);
+                    cells.forEach((zone, ci) => {
+                        const gx = gX0 + ci * (cw + gGap);
+                        const zd = zoneStats[zone];
+                        if (!zd || zd.total === 0) {
+                            s4.addShape(pptx.ShapeType.roundRect, { x:gx, y:gy, w:cw, h:gCH, fill:{ color:'F1F5F9' }, line:{ color:'E2E8F0', width:0.5 } });
+                            s4.addText(zone, { x:gx+0.05, y:gy, w:cw-0.1, h:gCH, fontSize:6.5, color:'CBD5E1', fontFace:'Arial', align:'center', valign:'middle' });
+                        } else {
+                            const pct = Math.round(zd.buts / zd.total * 100);
+                            const [bg, tx] = pct>=65?['D1FAE5','065F46']:pct>=45?['FEF3C7','92400E']:['FEE2E2','991B1B'];
+                            s4.addShape(pptx.ShapeType.roundRect, { x:gx, y:gy, w:cw, h:gCH, fill:{ color:bg }, line:{ color:bg, width:0 } });
+                            s4.addText([
+                                { text:zone,      options:{ fontSize:6.5, color:tx, fontFace:'Arial', align:'center', breakLine:true } },
+                                { text:`${pct}%`, options:{ fontSize:13,  color:tx, fontFace:'Arial', bold:true, align:'center' } },
+                            ], { x:gx+0.05, y:gy, w:cw-0.1, h:gCH, align:'center', valign:'middle' });
+                        }
+                    });
                 });
             }
 
