@@ -621,7 +621,7 @@
             document.getElementById('player-modal').style.display = 'none';
         }
 
-        async function printFicheJoueur() {
+        async function printFicheJoueur(renderOnly = false) {
             const panel   = document.getElementById('joueur-panel');
             const matches = document.getElementById('joueur-matches');
             if (!panel || !matches) return;
@@ -990,6 +990,35 @@
                 r[COLS.impact] && String(r[COLS.impact]).includes(';')
             );
 
+            // Efficacité par zone (terrain uniquement)
+            const zoneStatsHtml = {};
+            if (!isGB) {
+                impactRowsAll.forEach(row => {
+                    const z = (row[COLS.field_position] || '').toString().trim();
+                    if (!z) return;
+                    if (!zoneStatsHtml[z]) zoneStatsHtml[z] = { buts: 0, total: 0 };
+                    zoneStatsHtml[z].total++;
+                    if (row[COLS.resultat] === 'But') zoneStatsHtml[z].buts++;
+                });
+            }
+            const buildZoneGrid = () => {
+                if (isGB || !Object.keys(zoneStatsHtml).length) return '';
+                const zr2 = [
+                    ['6m ail G','6m ext G','6m central G','6m central D','6m ext D','6m ail D'],
+                    ['6-9 ext G','6-9 central G','7m','6-9 central D','6-9 ext D'],
+                    ['9m ext G','9m Int G','9m Int D','9m ext D'],
+                ];
+                const mkZCell = zone => {
+                    const zd = zoneStatsHtml[zone];
+                    if (!zd || zd.total === 0)
+                        return `<div style="flex:1;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:3px;padding:3px 1px;text-align:center;min-width:0"><div style="font-size:0.52rem;color:#CBD5E1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${zone}</div><div style="font-size:0.7rem;color:#CBD5E1">—</div></div>`;
+                    const pct = Math.round(zd.buts / zd.total * 100);
+                    const [bg, tx] = pct>=65?['#D1FAE5','#065F46']:pct>=45?['#FEF3C7','#92400E']:['#FEE2E2','#991B1B'];
+                    return `<div style="flex:1;background:${bg};border-radius:3px;padding:3px 1px;text-align:center;min-width:0"><div style="font-size:0.52rem;color:${tx};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${zone}</div><div style="font-weight:700;font-size:0.85rem;color:${tx}">${pct}%</div></div>`;
+                };
+                return `<div style="margin-top:12px;padding-top:8px;border-top:1px solid #E2E8F0"><div style="font-size:0.65rem;font-weight:700;color:#0A2463;letter-spacing:1px;margin-bottom:5px">EFFICACITÉ PAR ZONE</div>${zr2.map(cells=>`<div style="display:flex;gap:3px;margin-bottom:3px">${cells.map(mkZCell).join('')}</div>`).join('')}</div>`;
+            };
+
             const buildImpactSVG = (rows, viewKey) => {
                 const bgSrc = (typeof IMPACT_B64 !== 'undefined' && IMPACT_B64[viewKey]) ? IMPACT_B64[viewKey] : null;
                 const bgEl = bgSrc
@@ -1042,6 +1071,7 @@
                             ✕ <span style="color:#EF4444">${isGB ? 'But encaissé' : 'Tir raté'}</span> &nbsp;
                             (${totalI - impactRowsWithCoords.length} tir(s) sans coordonnées non représenté(s))
                         </div>
+                        ${buildZoneGrid()}
                     </div>`;
             }
 
@@ -1076,7 +1106,7 @@
                 </div>
                 <div class="pdf-page" style="padding:0;overflow:hidden">
                     ${_pptHdr(isGB ? 'FICHE JOUEUR' : 'FICHE JOUEUR  ·  ACTIONS ATT / DEF')}
-                    <div class="pdf-merged-cols" style="display:flex;gap:10px;padding:8px 16px;align-items:start">
+                    <div class="pdf-merged-cols" style="display:flex;gap:10px;padding:8px 16px;align-items:center">
                         <div style="flex:0 0 40%">${panel.outerHTML}</div>
                         <div style="flex:1">${actionCardHTML}</div>
                     </div>
@@ -1086,7 +1116,7 @@
                     <div style="padding:10px 18px">${matches.outerHTML}</div>
                 </div>
                 ${graphBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden">${_pptHdr(graphLabel)}<div style="padding:10px 18px">${graphBlock}</div></div>` : ''}
-                ${impactBlock ? `<div style="padding:0;overflow:hidden">${_pptHdr(impactTitle, impactStatSub)}<div style="padding:10px 18px">${impactBlock}</div></div>` : ''}`;
+                ${impactBlock ? `<div class="pdf-page" style="padding:0;overflow:hidden">${_pptHdr(impactTitle, impactStatSub)}<div style="padding:10px 18px">${impactBlock}</div></div>` : ''}`;
 
             // Attendre que toutes les <img> soient décodées avant d'imprimer
             const imgEls = Array.from(printZone.querySelectorAll('img'));
@@ -1096,22 +1126,90 @@
                     : new Promise(r => { img.onload = r; img.onerror = r; if (img.complete) r(); })
             ));
 
-            window.addEventListener('afterprint', function cleanup() {
-                printZone.innerHTML = '';
-                window.removeEventListener('afterprint', cleanup);
-            });
-            window.print();
+            if (!renderOnly) {
+                window.addEventListener('afterprint', function cleanup() {
+                    printZone.innerHTML = '';
+                    window.removeEventListener('afterprint', cleanup);
+                });
+                window.print();
+            }
         }
 
         async function exportJoueurPPT() {
             if (typeof PptxGenJS === 'undefined') { alert('PptxGenJS non chargé'); return; }
+            if (typeof html2canvas === 'undefined') { alert('html2canvas non chargé'); return; }
             const nom = currentSelectedJoueur;
             if (!nom) return;
 
-            const isGB = (typeof detectIsGB === 'function') ? detectIsGB(nom) : (JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) || {}).poste === 'GB';
-            const matchFilter = document.getElementById('filter-joueur-match')?.value || '';
-            const bilanMatchs = _getJoueurBilanMatchs();
-            const effectiveMatchs = matchFilter ? [matchFilter] : (bilanMatchs || MATCHS);
+            const btnEl = document.querySelector('[onclick="exportJoueurPPT()"]');
+            if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳…'; }
+
+            try {
+                // 1. Render PDF layout sans imprimer
+                await printFicheJoueur(true);
+
+                // 2. Rendre le print-zone visible temporairement (largeur A4 paysage)
+                const pz = document.getElementById('joueur-print-zone');
+                pz.style.visibility = 'visible';
+                pz.style.left = '-1400px';
+                pz.style.width = '297mm';
+
+                await new Promise(r => setTimeout(r, 400));
+
+                // 3. Capturer chaque .pdf-page avec html2canvas
+                const pptx = new PptxGenJS();
+                pptx.defineLayout({ name: 'CF_A4L', width: 11.69, height: 8.27 });
+                pptx.layout = 'CF_A4L';
+                pptx.author = 'FENIX Handball CF';
+
+                const pages = pz.querySelectorAll('.pdf-page');
+                for (const page of pages) {
+                    const canvas = await html2canvas(page, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                    });
+                    const imgData = canvas.toDataURL('image/png');
+                    const ar = canvas.width / canvas.height;
+                    const slAR = 11.69 / 8.27; // A4 paysage = 1.414
+                    const sl = pptx.addSlide();
+                    sl.background = { color: 'FFFFFF' };
+                    let iW, iH, iX, iY;
+                    if (ar >= slAR) {
+                        // Image plus large → caler sur la largeur
+                        iW = 11.69; iH = parseFloat((iW / ar).toFixed(3));
+                        iX = 0;    iY = parseFloat(((8.27 - iH) / 2).toFixed(3));
+                    } else {
+                        // Image plus haute → caler sur la hauteur
+                        iH = 8.27; iW = parseFloat((iH * ar).toFixed(3));
+                        iX = parseFloat(((11.69 - iW) / 2).toFixed(3)); iY = 0;
+                    }
+                    sl.addImage({ data: imgData, x: iX, y: iY, w: iW, h: iH });
+                }
+
+                // 4. Télécharger
+                const nomSafe = nom.replace(/\s+/g, '_');
+                await pptx.writeFile({ fileName: `${nomSafe}_suivi_CF.pptx` });
+
+            } finally {
+                // 5. Nettoyer
+                const pz = document.getElementById('joueur-print-zone');
+                pz.style.visibility = '';
+                pz.style.left = '';
+                pz.style.width = '';
+                pz.innerHTML = '';
+                if (btnEl) { btnEl.disabled = false; btnEl.textContent = '📊 PowerPoint'; }
+            }
+
+            // --- ANCIENNE FONCTION PPT (supprimée) ---
+            // La suite est remplacée par le return ci-dessus
+            if (false) { // bloc mort pour éviter de casser la structure
+            const isGB = false;
+            const matchFilter = '';
+            const bilanMatchs = null;
+            const effectiveMatchs = [];
             const inPeriod = row => {
                 if (matchFilter) return row[COLS.rencontre] === matchFilter;
                 if (bilanMatchs) return bilanMatchs.includes(row[COLS.rencontre]);
@@ -1576,5 +1674,6 @@
             }
 
             await pptx.writeFile({ fileName: `${nom.replace(/\s+/g,'_')}_suivi_CF.pptx` });
+            } // end if(false) — ancien code PPT désactivé
         }
 
