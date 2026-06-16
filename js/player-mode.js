@@ -490,19 +490,19 @@
                         ? `${total} <span style="color:#94A3B8;font-size:0.82em">(${sub})</span>`
                         : (total > 0 ? total : '—');
                     return `<tr>
-                        <td style="padding:4px 8px;font-size:0.82rem;${total===0?'color:#CBD5E1':''}">${g.label}</td>
-                        <td style="padding:4px 8px;text-align:right;${style}">${cTxt}</td>
-                        <td style="padding:4px 8px;text-align:right;color:#94A3B8;font-size:0.78rem">${total > 0 ? (total/nbM).toFixed(1) : '—'}</td>
+                        <td style="padding:4px 5px;font-size:0.78rem;${total===0?'color:#CBD5E1':''}">${g.label}</td>
+                        <td style="padding:4px 5px;text-align:right;${style}">${cTxt}</td>
+                        <td style="padding:4px 5px;text-align:right;color:#94A3B8;font-size:0.76rem">${total > 0 ? (total/nbM).toFixed(1) : '—'}</td>
                     </tr>`;
                 }).join('');
                 return `<div style="flex:1;min-width:0">
-                    <div style="background:${headerColor};color:#fff;padding:5px 10px;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:1px;border-radius:6px 6px 0 0">${title}</div>
-                    <div style="background:${bgColor};border-radius:0 0 6px 6px;overflow:hidden">
+                    <div style="background:${headerColor};color:#fff;padding:5px 8px;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:1px;border-radius:6px 6px 0 0">${title}</div>
+                    <div style="background:${bgColor};border-radius:0 0 6px 6px;overflow-x:auto">
                         <table style="width:100%;border-collapse:collapse">
                             <thead><tr style="background:rgba(0,0,0,0.06)">
-                                <th style="padding:4px 8px;text-align:left;font-size:0.7rem;color:#475569;font-weight:700">ACTION</th>
-                                <th style="padding:4px 8px;text-align:right;font-size:0.7rem;color:#475569;font-weight:700">TOTAL</th>
-                                <th style="padding:4px 8px;text-align:right;font-size:0.7rem;color:#94A3B8;font-weight:700">/MATCH</th>
+                                <th style="padding:4px 5px;text-align:left;font-size:0.68rem;color:#475569;font-weight:700">ACT.</th>
+                                <th style="padding:4px 5px;text-align:right;font-size:0.68rem;color:#475569;font-weight:700">TOT</th>
+                                <th style="padding:4px 5px;text-align:right;font-size:0.68rem;color:#94A3B8;font-weight:700">/M</th>
                             </tr></thead>
                             <tbody>${rows}</tbody>
                         </table>
@@ -550,10 +550,10 @@
                 <div class="pmf-actions-detail" style="display:none">
                     <div class="pmf-actions-2col">
                         ${makeSection(NOTE_GROUPS.attPlus,  '#059669', '#F0FDF4', 'ATTAQUE +')}
-                        ${makeSection(NOTE_GROUPS.defPlus,  '#059669', '#EFF6FF', 'DÉFENSE +')}
+                        ${makeSection(NOTE_GROUPS.attMoins, '#DC2626', '#FEF2F2', 'ATTAQUE −')}
                     </div>
                     <div class="pmf-actions-2col">
-                        ${makeSection(NOTE_GROUPS.attMoins, '#DC2626', '#FEF2F2', 'ATTAQUE −')}
+                        ${makeSection(NOTE_GROUPS.defPlus,  '#059669', '#EFF6FF', 'DÉFENSE +')}
                         ${makeSection(NOTE_GROUPS.defMoins, '#DC2626', '#FEF9E7', 'DÉFENSE −')}
                     </div>
                 </div>
