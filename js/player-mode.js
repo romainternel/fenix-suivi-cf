@@ -956,7 +956,7 @@
         }
 
         function onPmzResultFilter(val) {
-            _pmzResultFilter = val;
+            _pmzResultFilter = (_pmzResultFilter === val) ? '' : val;
             renderPlayerZones();
         }
 

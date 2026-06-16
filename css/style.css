@@ -2126,11 +2126,13 @@
 
             /* Filtre Impact sticky ajusté pour barre 2 lignes */
             .pm-impact-filter { top: 92px; }
+            /* Header sticky Stats Match ajusté pour barre 2 lignes */
+            .pm-stats-header { top: 92px; }
 
-            /* Canvases impact : face en premier, 2 colonnes, ald centré seul */
+            /* Canvases impact : face en premier pleine largeur, alg+ald côte à côte en dessous */
             .pmf-canvases { grid-template-columns: repeat(2, 1fr) !important; }
-            .pmf-canvas-wrap:nth-child(2) { order: -1; }
-            .pmf-canvas-wrap:last-child { grid-column: span 2; max-width: 52%; margin: 0 auto; }
+            .pmf-canvas-wrap:nth-child(2) { order: -1; grid-column: span 2; }
+            .pmf-canvas-wrap:last-child { grid-column: unset; max-width: unset; margin: unset; }
         }
 
         /* Graph en paysage mobile : moins haut, profite de la largeur */
