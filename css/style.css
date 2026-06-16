@@ -2053,6 +2053,14 @@
         .pmf-legend-green { color: #10B981; }
         .pmf-legend-red   { color: #EF4444; }
 
+        .pmz-filter-item {
+            cursor: pointer; padding: 2px 9px; border-radius: 12px;
+            display: inline-block; transition: background 0.15s, color 0.15s;
+            user-select: none; font-size: 0.75rem;
+        }
+        .pmz-filter-active { background: #1E293B; color: white !important; }
+        .pmz-filter-active span { color: white !important; }
+
         .pmf-no-impact {
             text-align: center; color: #94a3b8;
             font-size: 0.85rem; padding: 20px 0;

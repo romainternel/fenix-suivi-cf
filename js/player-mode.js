@@ -20,6 +20,7 @@
         let _pmmImpactRows = [];
         let _pmmIsGB = false;
         let _pmBilanFilter = '';
+        let _pmzResultFilter = '';
         let _cachedSeasonStats = null;
 
         function getPlayerSeasonStats(nom) {
@@ -843,9 +844,15 @@
             });
             const resetBtn = document.getElementById('pmm-zone-reset');
             if (resetBtn) resetBtn.style.display = _pmmZoneFilter ? 'inline' : 'none';
-            const rows = _pmmZoneFilter ? _pmmImpactRows.filter(r => (r[COLS.field_position]||'').toString().trim() === _pmmZoneFilter) : _pmmImpactRows;
+            let rows = _pmmZoneFilter ? _pmmImpactRows.filter(r => (r[COLS.field_position]||'').toString().trim() === _pmmZoneFilter) : _pmmImpactRows;
+            if (_pmzResultFilter) rows = rows.filter(r => _pmzResultFilter === 'pos' ? (_pmmIsGB ? r[COLS.finalite] === 'Tir arrêté' : r[COLS.resultat] === 'But') : (_pmmIsGB ? r[COLS.finalite] !== 'Tir arrêté' : r[COLS.resultat] !== 'But'));
             _updatePmmImpactStats(rows);
             _drawMatchExtrasImpact(rows);
+        }
+
+        function onPmzResultFilter(val) {
+            _pmzResultFilter = val;
+            renderPlayerZones();
         }
 
         // ── Canvas terrain vu du dessus (positions de tir sur le terrain) ─────────
@@ -936,6 +943,12 @@
                 ? DATA.filter(r => r[COLS.club] !== 'FENIX' && (!matchFilter || r[COLS.rencontre] === matchFilter) && (!bilanMF || bilanMF.includes(r[COLS.rencontre])) && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
                 : DATA.filter(r => r[COLS.club] === 'FENIX'  && (!matchFilter || r[COLS.rencontre] === matchFilter) && (!bilanMF || bilanMF.includes(r[COLS.rencontre])) && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom)   && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
 
+            const displayRows = _pmzResultFilter
+                ? _pmmImpactRows.filter(r => _pmzResultFilter === 'pos'
+                    ? (isGB ? r[COLS.finalite] === 'Tir arrêté' : r[COLS.resultat] === 'But')
+                    : (isGB ? r[COLS.finalite] !== 'Tir arrêté' : r[COLS.resultat] !== 'But'))
+                : _pmmImpactRows;
+
             // Lignes avec position terrain (pour canvas vu du dessus)
             const terrainRows = isGB ? [] : DATA.filter(r =>
                 r[COLS.club] === 'FENIX' &&
@@ -950,10 +963,11 @@
                 return;
             }
 
-            const impactTitle  = isGB ? 'ARRÊTS ET BUTS CONCÉDÉS' : 'ZONES DE TIR SUR LE BUT';
+            const impactTitle = isGB ? 'ARRÊTS ET BUTS CONCÉDÉS' : 'ZONES DE TIR SUR LE BUT';
+            const _fi = (v, label) => `<span class="pmz-filter-item${_pmzResultFilter===v?' pmz-filter-active':''}" onclick="onPmzResultFilter('${v}')">${label}</span>`;
             const impactLegend = isGB
-                ? `<span class="pmf-legend-dot pmf-legend-green">●</span> Tir arrêté <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> But encaissé`
-                : `<span class="pmf-legend-dot pmf-legend-green">●</span> But <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> Tir raté`;
+                ? `${_fi('','Tout')} ${_fi('pos','<span class="pmf-legend-green">●</span> Arrêté')} ${_fi('neg','<span class="pmf-legend-red">✕</span> Encaissé')}`
+                : `${_fi('','Tout')} ${_fi('pos','<span class="pmf-legend-green">●</span> But')} ${_fi('neg','<span class="pmf-legend-red">✕</span> Raté')}`;
 
             const zones = [...new Set(_pmmImpactRows.map(r => (r[COLS.field_position]||'').toString().trim()).filter(Boolean))];
             const zonePct = {};
@@ -1010,8 +1024,8 @@
                     <div class="pmf-legend" style="margin-top:8px">${impactLegend}</div>
                 </div>`;
 
-            _updatePmmImpactStats(_pmmImpactRows);
-            _drawMatchExtrasImpact(_pmmImpactRows);
+            _updatePmmImpactStats(displayRows);
+            _drawMatchExtrasImpact(displayRows);
             if (!isGB && terrainRows.length > 0) {
                 requestAnimationFrame(() => _drawPmTerrain(terrainRows));
             }
