@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=99">
-    <script src="js/utils.js?v=99"></script>
-    <script src="js/impact-images.js?v=99"></script>
-    <script src="js/player-mode.js?v=99"></script>
-    <script src="js/page-joueurs.js?v=99"></script>
-    <script src="js/page-notes-graph.js?v=99"></script>
-    <script src="js/page-analyse.js?v=99"></script>
+    <link rel="stylesheet" href="css/style.css?v=100">
+    <script src="js/utils.js?v=100"></script>
+    <script src="js/impact-images.js?v=100"></script>
+    <script src="js/player-mode.js?v=100"></script>
+    <script src="js/page-joueurs.js?v=100"></script>
+    <script src="js/page-notes-graph.js?v=100"></script>
+    <script src="js/page-analyse.js?v=100"></script>
 </head>
 <body>
 
@@ -951,9 +951,10 @@
                     </div>
                 </div>
 
-                <div class="legend" style="margin-top:0.75rem;">
-                    <div class="legend-item"><div class="legend-dot but"></div><span>But marqué</span></div>
-                    <div class="legend-item"><div class="legend-dot tir-rate"></div><span>Tir arrêté/raté</span></div>
+                <div class="legend" style="margin-top:0.75rem;display:flex;align-items:center;gap:2px;flex-wrap:wrap">
+                    <span class="pmz-filter-item pmz-filter-active" id="impact-rf-tout"  onclick="onImpactResultFilter('')">Tout</span>
+                    <span class="pmz-filter-item" id="impact-rf-but"  onclick="onImpactResultFilter('But')"><span style="color:#10B981">●</span> But marqué</span>
+                    <span class="pmz-filter-item" id="impact-rf-rate" onclick="onImpactResultFilter('Tir raté')"><span style="color:#EF4444">✕</span> Tir arrêté/raté</span>
                 </div>
             </div>
         </div>
@@ -2762,6 +2763,9 @@ let _effInfoPoste = null;
         function updateImpactPage() {
             const joueurFilter   = document.getElementById('filter-impact-joueur').value;
             const resultatFilter = document.getElementById('filter-impact-resultat').value;
+            document.getElementById('impact-rf-tout')?.classList.toggle('pmz-filter-active', resultatFilter === '');
+            document.getElementById('impact-rf-but')?.classList.toggle('pmz-filter-active', resultatFilter === 'But');
+            document.getElementById('impact-rf-rate')?.classList.toggle('pmz-filter-active', resultatFilter === 'Tir raté');
             const bilanM = impactBilanFilter ? BILANS.find(b => b.nom === impactBilanFilter)?.matchs : null;
 
             // Stats générales : tous les tirs (avec ou sans coordonnées d'impact)
@@ -2816,6 +2820,14 @@ let _effInfoPoste = null;
                 c.classList.toggle('zr-empty', !!zonesAvecDonnees && !zonesAvecDonnees.has(c.dataset.zone));
             });
             updateZoneEfficacite();
+        }
+
+        function onImpactResultFilter(val) {
+            document.getElementById('filter-impact-resultat').value = val;
+            document.getElementById('impact-rf-tout').classList.toggle('pmz-filter-active', val === '');
+            document.getElementById('impact-rf-but').classList.toggle('pmz-filter-active', val === 'But');
+            document.getElementById('impact-rf-rate').classList.toggle('pmz-filter-active', val === 'Tir raté');
+            updateImpactPage();
         }
 
         function drawImpactCanvas(canvasId, img, data) {
