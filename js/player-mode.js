@@ -1,3 +1,18 @@
+        // ── Tooltip mobile ──────────────────────────────────────────────────────
+        function showPmTooltip(el, text) {
+            const existing = document.getElementById('pm-tooltip-popup');
+            if (existing) { existing.remove(); return; }
+            const tip = document.createElement('div');
+            tip.id = 'pm-tooltip-popup';
+            tip.style.cssText = 'position:fixed;z-index:9999;background:#1E293B;color:white;padding:8px 12px;border-radius:8px;font-size:0.75rem;max-width:240px;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.3)';
+            tip.textContent = text;
+            const rect = el.getBoundingClientRect();
+            tip.style.top = Math.min(rect.bottom + 8, window.innerHeight - 80) + 'px';
+            tip.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
+            document.body.appendChild(tip);
+            setTimeout(() => { if (tip.parentNode) tip.remove(); }, 3000);
+        }
+
         // ── Session ─────────────────────────────────────────────────────────────
         let PLAYER_SESSION = null;
         let _pmfChart = null;
@@ -66,6 +81,8 @@
                 if (nameEl) nameEl.textContent = PLAYER_SESSION.nom;
             }
 
+            const backBtn = document.getElementById('pm-back-btn');
+            if (backBtn) backBtn.style.display = (PLAYER_SESSION && PLAYER_SESSION.isPreview) ? 'inline-flex' : 'none';
             if (typeof DATA !== 'undefined' && DATA.length > 0) pmTab(sessionStorage.getItem('pm_active_tab') || 'fiche');
         }
 
@@ -88,6 +105,7 @@
         function pmTab(tab) {
             _pmActiveTab = tab;
             sessionStorage.setItem('pm_active_tab', tab);
+            window.scrollTo(0, 0);
             document.querySelectorAll('.pm-tab-btn').forEach(b => {
                 b.classList.toggle('active', b.dataset.tab === tab);
             });
@@ -236,7 +254,7 @@
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val">${pd}</div><div class="pmf-kpi-lbl">PD</div></div>
                     ${po > 0 ? `<div class="pmf-kpi-box"><div class="pmf-kpi-val">${po}</div><div class="pmf-kpi-lbl">PÉN. OBTENUS</div></div>` : ''}
                     <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:#EF4444">${pb}</div><div class="pmf-kpi-lbl">PERTES BALLE</div></div>
-                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div><div class="pmf-kpi-lbl" style="display:flex;align-items:center;justify-content:center;gap:2px;">NOTE<span title="Score global saison : actions positives (ATT+, DEF+) moins actions négatives (ATT-, DEF-)" style="cursor:help;background:#CBD5E1;color:#1E293B;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0">i</span></div></div>
+                    <div class="pmf-kpi-box"><div class="pmf-kpi-val" style="color:${noteColor}">${noteDisplay}</div><div class="pmf-kpi-lbl" style="display:flex;align-items:center;justify-content:center;gap:2px;">NOTE<span onclick="showPmTooltip(this,'Score global saison : actions positives (ATT+, DEF+) moins actions négatives (ATT-, DEF-)')" style="cursor:pointer;background:#CBD5E1;color:#1E293B;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0">i</span></div></div>
                 </div>`;
 
             // ── Encart 2 : Actions (joueur de champ) ou Zones % (GB) ──
@@ -868,26 +886,61 @@
             });
         }
 
-        // ── Extras Stats Match : terrain vu du dessus + impact but + actions ──────
+        // ── Extras Stats Match : actions seulement (terrain + zones → onglet Impact) ─
         function renderPlayerMatchExtras(nom, isGB, matchFilter) {
             const wrap = document.getElementById('pm-match-extras');
             if (!wrap) return;
-
-            _pmmZoneFilter = '';
-            _pmmIsGB = isGB;
             const _bilanMF = _getPmBilanMatchs();
+            const actionsHTML  = isGB ? _buildGbZoneTableHTML(nom, matchFilter, _bilanMF) : _buildDetailedActionsHTML(nom, matchFilter, _bilanMF);
+            const actionsTitle = isGB ? 'STATS PAR ZONE' : 'ACTIONS';
+            wrap.innerHTML = `
+                <div class="pmf-card">
+                    <div class="pmf-card-title">${actionsTitle}</div>
+                    ${actionsHTML}
+                </div>`;
+        }
+
+        // ── Page Impact : terrain + zones de tir + filtre match ──────────────────
+        function renderPlayerZones() {
+            const nom = getSessionPlayerNom();
+            const content = document.getElementById('pm-zones-content');
+            if (!content) return;
+
+            const emptyHTML = (icon, title, msg) => `<div class="pm-empty-state">
+                <div class="pm-empty-icon">${icon}</div>
+                <div class="pm-empty-title">${title}</div>
+                <div class="pm-empty-msg">${msg}</div>
+            </div>`;
+
+            if (!nom || !DATA.length) {
+                content.innerHTML = emptyHTML('💥', 'Aucune donnée', 'Le staff n\'a pas encore importé les données.');
+                return;
+            }
+
+            const isGB = detectIsGB(nom);
+            const matchFilter = _pmCurrentMatchIdx >= 0 ? (MATCHS[_pmCurrentMatchIdx] || '') : '';
+            const bilanMF = _getPmBilanMatchs();
+
+            _pmmIsGB = isGB;
+            _pmmZoneFilter = '';
+
             _pmmImpactRows = isGB
-                ? DATA.filter(r => r[COLS.club] !== 'FENIX' && (!matchFilter || r[COLS.rencontre] === matchFilter) && (!_bilanMF || _bilanMF.includes(r[COLS.rencontre])) && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
-                : DATA.filter(r => r[COLS.club] === 'FENIX'  && (!matchFilter || r[COLS.rencontre] === matchFilter) && (!_bilanMF || _bilanMF.includes(r[COLS.rencontre])) && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom)   && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
+                ? DATA.filter(r => r[COLS.club] !== 'FENIX' && (!matchFilter || r[COLS.rencontre] === matchFilter) && (!bilanMF || bilanMF.includes(r[COLS.rencontre])) && matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) && r[COLS.impact] && String(r[COLS.impact]).includes(';'))
+                : DATA.filter(r => r[COLS.club] === 'FENIX'  && (!matchFilter || r[COLS.rencontre] === matchFilter) && (!bilanMF || bilanMF.includes(r[COLS.rencontre])) && matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom)   && r[COLS.impact] && String(r[COLS.impact]).includes(';'));
 
             // Lignes avec position terrain (pour canvas vu du dessus)
             const terrainRows = isGB ? [] : DATA.filter(r =>
                 r[COLS.club] === 'FENIX' &&
                 (!matchFilter || r[COLS.rencontre] === matchFilter) &&
-                (!_bilanMF || _bilanMF.includes(r[COLS.rencontre])) &&
+                (!bilanMF || bilanMF.includes(r[COLS.rencontre])) &&
                 matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom) &&
                 r[COLS.position_terrain] && String(r[COLS.position_terrain]).includes(';')
             );
+
+            if (_pmmImpactRows.length === 0 && terrainRows.length === 0) {
+                content.innerHTML = emptyHTML('💥', 'Pas encore de données d\'impact', 'Les coordonnées de tir s\'afficheront ici.');
+                return;
+            }
 
             const impactTitle  = isGB ? 'ARRÊTS ET BUTS CONCÉDÉS' : 'ZONES DE TIR SUR LE BUT';
             const impactLegend = isGB
@@ -919,9 +972,6 @@
                     <div class="zr-row">${_zc('9m ext G')}${_zc('9m Int G')}${_zc('9m Int D')}${_zc('9m ext D')}</div>
                 </div>`;
 
-            const actionsHTML  = isGB ? _buildGbZoneTableHTML(nom, matchFilter, _bilanMF) : _buildDetailedActionsHTML(nom, matchFilter, _bilanMF);
-            const actionsTitle = isGB ? 'STATS PAR ZONE' : 'ACTIONS';
-
             const terrainSection = (!isGB && terrainRows.length > 0) ? `
                 <div class="pmf-card">
                     <div class="pmf-card-title">POSITIONS DE TIR SUR LE TERRAIN</div>
@@ -935,7 +985,7 @@
                     </div>
                 </div>` : '';
 
-            wrap.innerHTML = `
+            content.innerHTML = `
                 ${terrainSection}
                 <div class="pmf-card">
                     <div class="pmf-card-header-row">
@@ -950,10 +1000,6 @@
                     ${_pmmImpactRows.length === 0 ? '<div class="pmf-no-impact">Aucune donnée de tir avec coordonnées</div>' : ''}
                     <div style="margin-top:12px">${zoneGridHTML}</div>
                     <div class="pmf-legend" style="margin-top:8px">${impactLegend}</div>
-                </div>
-                <div class="pmf-card">
-                    <div class="pmf-card-title">${actionsTitle}</div>
-                    ${actionsHTML}
                 </div>`;
 
             _updatePmmImpactStats(_pmmImpactRows);
@@ -961,82 +1007,6 @@
             if (!isGB && terrainRows.length > 0) {
                 requestAnimationFrame(() => _drawPmTerrain(terrainRows));
             }
-        }
-
-        // ── Page Zones de tir (saison) ───────────────────────────────────────────
-        function renderPlayerZones() {
-            const nom = getSessionPlayerNom();
-            const content = document.getElementById('pm-zones-content');
-            if (!content) return;
-
-            const emptyHTML = (icon, title, msg) => `<div class="pm-empty-state">
-                <div class="pm-empty-icon">${icon}</div>
-                <div class="pm-empty-title">${title}</div>
-                <div class="pm-empty-msg">${msg}</div>
-            </div>`;
-
-            if (!nom || !DATA.length) {
-                content.innerHTML = emptyHTML('🎯', 'Aucune donnée', 'Le staff n\'a pas encore importé les données.');
-                return;
-            }
-
-            const isGB = detectIsGB(nom);
-            const bilanMF = _getPmBilanMatchs();
-
-            const impactRows = isGB
-                ? DATA.filter(r =>
-                    r[COLS.club] !== 'FENIX' &&
-                    (!bilanMF || bilanMF.includes(r[COLS.rencontre])) &&
-                    matchPlayerName((r[COLS.gardien]||'').toString().trim(), nom) &&
-                    r[COLS.impact] && String(r[COLS.impact]).includes(';'))
-                : DATA.filter(r =>
-                    r[COLS.club] === 'FENIX' &&
-                    (!bilanMF || bilanMF.includes(r[COLS.rencontre])) &&
-                    matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom) &&
-                    r[COLS.impact] && String(r[COLS.impact]).includes(';'));
-
-            if (impactRows.length === 0) {
-                content.innerHTML = emptyHTML('🎯', 'Pas encore de zones enregistrées', 'Les coordonnées de tir s\'afficheront ici dès qu\'elles seront saisies.');
-                return;
-            }
-
-            const b64 = (typeof IMPACT_B64 !== 'undefined') ? IMPACT_B64 : {};
-            const title  = isGB ? 'ARRÊTS & BUTS CONCÉDÉS — SAISON' : 'ZONES DE TIR SUR LE BUT — SAISON';
-            const legend = isGB
-                ? `<span class="pmf-legend-dot pmf-legend-green">●</span> Tir arrêté <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> But encaissé`
-                : `<span class="pmf-legend-dot pmf-legend-green">●</span> But <span class="pmf-legend-dot pmf-legend-red" style="margin-left:10px">✕</span> Tir raté`;
-
-            const pos   = isGB ? impactRows.filter(r => r[COLS.finalite] === 'Tir arrêté').length : impactRows.filter(r => r[COLS.resultat] === 'But').length;
-            const total = impactRows.length;
-            const eff   = total > 0 ? Math.round(pos / total * 100) : 0;
-            const tp    = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) : null;
-            const ec    = (typeof getEffColor === 'function') ? getEffColor(eff, tp ? tp.poste : '') : '#64748B';
-            const matchCount = new Set(impactRows.map(r => r[COLS.rencontre]).filter(Boolean)).size;
-            const statStr = isGB
-                ? `${pos} arrêt${pos>1?'s':''} / ${total} tir${total>1?'s':''}`
-                : `${pos} but${pos>1?'s':''} / ${total} tir${total>1?'s':''}`;
-
-            content.innerHTML = `
-                <div class="pmf-card">
-                    <div class="pmf-card-header-row">
-                        <div class="pmf-card-title">${title}</div>
-                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                            <span style="font-size:0.75rem;color:#64748B">${statStr}</span>
-                            <span style="font-size:1rem;font-weight:800;color:${ec}">${eff}%</span>
-                            <span style="font-size:0.72rem;color:#94A3B8">${matchCount} match${matchCount>1?'s':''}</span>
-                        </div>
-                    </div>
-                    <div class="pmf-canvases">
-                        <div class="pmf-canvas-wrap"><canvas id="pmz-canvas-alg"></canvas><div class="pmf-canvas-lbl">EXT GAUCHE</div></div>
-                        <div class="pmf-canvas-wrap"><canvas id="pmz-canvas-face"></canvas><div class="pmf-canvas-lbl">CENTRAL</div></div>
-                        <div class="pmf-canvas-wrap"><canvas id="pmz-canvas-ald"></canvas><div class="pmf-canvas-lbl">EXT DROIT</div></div>
-                    </div>
-                    <div class="pmf-legend" style="margin-top:8px">${legend}</div>
-                </div>`;
-
-            _drawImpactCanvas('pmz-canvas-alg',  b64.alg,  impactRows.filter(r => getImpactView(r) === 'alg'),  isGB);
-            _drawImpactCanvas('pmz-canvas-face', b64.face, impactRows.filter(r => getImpactView(r) === 'face'), isGB);
-            _drawImpactCanvas('pmz-canvas-ald',  b64.ald,  impactRows.filter(r => getImpactView(r) === 'ald'),  isGB);
         }
 
         // ── Stats Match : équipes ────────────────────────────────────────────────
@@ -1076,7 +1046,7 @@
             const card=(data,color,title)=>{
                 const d=showAvg?{poss:rd(data.poss,matchCount),buts:`${rd(data.buts,matchCount)}/${rd(data.total,matchCount)}`,pen:`Pen: ${rd(data.penB,matchCount)}/${rd(data.penT,matchCount)}`,pb:rd(data.pb,matchCount),po:rd(data.po,matchCount)}:{poss:data.poss,buts:`${data.buts}/${data.total}`,pen:`Pen: ${data.penB}/${data.penT}`,pb:data.pb,po:data.po};
                 return `<div class="pm-team-card" style="border-left:4px solid ${color}">
-                    <div class="pm-team-title"><span class="pm-dot" style="background:${color}"></span><strong>${title}</strong>${showAvg?'<span class="pm-avg-lbl">(Moy./match)</span>':''}</div>
+                    <div class="pm-team-title"><span class="pm-dot" style="background:${color}"></span><strong>${title}</strong>${showAvg?'<span class="pm-avg-lbl">(Moy./match)</span>':''}<span style="font-size:0.65rem;color:#94A3B8;font-style:italic;margin-left:6px">stats équipe</span></div>
                     <div class="pm-stats-grid">
                         <div class="pm-stat-box"><div class="pm-stat-val">${d.poss}</div><div class="pm-stat-lbl">POSSESSIONS</div></div>
                         <div class="pm-stat-box"><div class="pm-stat-val">${d.buts}</div><div class="pm-stat-lbl">BUTS<br><small style="color:#94a3b8">${d.pen}</small></div></div>
@@ -1228,11 +1198,14 @@
         function buildPmMatchNav() {
             const sel = document.getElementById('pm-match-sel');
             if (!sel) return;
-            sel.innerHTML = '<option value="">Tous les matchs</option>'
-                + (MATCHS || []).map(m => `<option value="${m}">${m}</option>`).join('');
+            const opts = '<option value="">Tous les matchs</option>' + (MATCHS || []).map(m => `<option value="${m}">${m}</option>`).join('');
+            sel.innerHTML = opts;
             sel.value = '';
             _pmCurrentMatchIdx = -1;
             _pmBilanFilter = '';
+            // Peupler aussi le sélecteur Impact
+            const impactSel = document.getElementById('pm-impact-match-sel');
+            if (impactSel) { impactSel.innerHTML = opts; impactSel.value = ''; }
             // Peupler bilan dropdown
             const bilanSel  = document.getElementById('pm-bilan-sel');
             const bilanWrap = document.getElementById('pm-bilan-wrap');
@@ -1241,6 +1214,16 @@
                 if (bilanWrap) bilanWrap.style.display = BILANS.length ? 'flex' : 'none';
             }
             renderPlayerMatchStats();
+        }
+
+        function pmImpactMatchSelect() {
+            const sel = document.getElementById('pm-impact-match-sel');
+            const val = sel ? sel.value : '';
+            _pmCurrentMatchIdx = val ? (MATCHS || []).indexOf(val) : -1;
+            const mainSel = document.getElementById('pm-match-sel');
+            if (mainSel) mainSel.value = val;
+            updatePmPeriodChip();
+            renderPlayerZones();
         }
 
         function pmBilanSelect() {
@@ -1572,6 +1555,8 @@
 
         function exitPreviewMode() {
             PLAYER_SESSION = null;
+            const backBtn = document.getElementById('pm-back-btn');
+            if (backBtn) backBtn.style.display = 'none';
 
             // Restaurer l'interface staff
             ['header', 'nav', 'main'].forEach(sel => {

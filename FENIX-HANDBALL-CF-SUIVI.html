@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=96">
-    <script src="js/utils.js?v=96"></script>
-    <script src="js/impact-images.js?v=96"></script>
-    <script src="js/player-mode.js?v=96"></script>
-    <script src="js/page-joueurs.js?v=96"></script>
-    <script src="js/page-notes-graph.js?v=96"></script>
-    <script src="js/page-analyse.js?v=96"></script>
+    <link rel="stylesheet" href="css/style.css?v=97">
+    <script src="js/utils.js?v=97"></script>
+    <script src="js/impact-images.js?v=97"></script>
+    <script src="js/player-mode.js?v=97"></script>
+    <script src="js/page-joueurs.js?v=97"></script>
+    <script src="js/page-notes-graph.js?v=97"></script>
+    <script src="js/page-analyse.js?v=97"></script>
 </head>
 <body>
 
@@ -3338,9 +3338,14 @@ let _effInfoPoste = null;
                 📊 <span class="pm-tab-label">Stats Match</span>
             </button>
             <button class="pm-tab-btn" data-tab="zones" onclick="pmTab('zones')">
-                🎯 <span class="pm-tab-label">Zones</span>
+                💥 <span class="pm-tab-label">Impact</span>
             </button>
         </div>
+        <button id="pm-back-btn" onclick="exitPreviewMode()"
+                style="display:none;align-items:center;gap:5px;background:rgba(255,255,255,.2);
+                       border:1px solid rgba(255,255,255,.4);border-radius:20px;color:white;
+                       font-size:0.75rem;font-weight:700;padding:5px 12px;cursor:pointer;
+                       white-space:nowrap;flex-shrink:0">← Staff</button>
         <div style="position:relative;margin-left:6px">
             <button id="pm-menu-btn" class="pm-menu-btn" onclick="togglePmMenu()">⋯</button>
             <div id="pm-menu-dropdown" class="pm-menu-dropdown" style="display:none">
@@ -3412,8 +3417,16 @@ let _effInfoPoste = null;
         <div id="pm-match-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:20px"></div>
     </div>
 
-    <!-- ── MODE JOUEUR ── page zones de tir (saison) ─────────────────────── -->
+    <!-- ── MODE JOUEUR ── page impact (zones de tir) ─────────────────────── -->
     <div id="pm-zones-page" style="display:none;padding:72px 16px 24px;max-width:900px;margin:0 auto">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+            <label style="font-size:0.8rem;font-weight:600;color:#64748B">MATCH</label>
+            <select id="pm-impact-match-sel" onchange="pmImpactMatchSelect()"
+                    style="border:1px solid #E2E8F0;border-radius:8px;padding:6px 12px;
+                           font-size:0.85rem;color:#1E293B;background:white;max-width:220px">
+                <option value="">Tous les matchs</option>
+            </select>
+        </div>
         <div id="pm-zones-content"></div>
     </div>
 
