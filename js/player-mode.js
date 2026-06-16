@@ -768,8 +768,11 @@
             if (!canvas) return;
             const W = canvas.parentElement.clientWidth || 300;
             const H = Math.round(W * 0.62);
-            canvas.width = W; canvas.height = H;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+            canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
             const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
             const paint = img => {
                 if (img) ctx.drawImage(img, 0, 0, W, H);
                 else { ctx.fillStyle = '#DBEAFE'; ctx.fillRect(0, 0, W, H); }
@@ -777,16 +780,16 @@
                     const p = String(row[COLS.impact]).split(';');
                     const x = parseFloat(p[0]), y = parseFloat(p[1]);
                     if (isNaN(x) || isNaN(y)) return;
-                    const dotX = (x/100)*W, dotY = (y/100)*H, s = Math.max(3, W*0.013);
+                    const dotX = (x/100)*W, dotY = (y/100)*H, s = Math.max(2, W*0.010);
                     const isPos = isGB ? row[COLS.finalite] === 'Tir arrêté' : row[COLS.resultat] === 'But';
                     ctx.save(); ctx.lineCap = 'round';
                     if (isPos) {
                         ctx.beginPath(); ctx.arc(dotX, dotY, s, 0, Math.PI*2);
                         ctx.fillStyle = '#10B981'; ctx.fill();
-                        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+                        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
                     } else {
                         const sc = s / Math.SQRT2;
-                        ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 2.5;
+                        ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 2;
                         ctx.beginPath();
                         ctx.moveTo(dotX-sc, dotY-sc); ctx.lineTo(dotX+sc, dotY+sc);
                         ctx.moveTo(dotX+sc, dotY-sc); ctx.lineTo(dotX-sc, dotY+sc);
@@ -850,10 +853,15 @@
             const canvas = document.getElementById('pmm-terrain-canvas');
             if (!canvas) return;
             const container = canvas.parentElement;
-            canvas.width  = container.clientWidth  || 400;
-            canvas.height = container.clientHeight || 220;
-            const W = canvas.width, H = canvas.height;
+            const W = container.clientWidth  || 400;
+            const H = container.clientHeight || 220;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width  = Math.round(W * dpr);
+            canvas.height = Math.round(H * dpr);
+            canvas.style.width  = W + 'px';
+            canvas.style.height = H + 'px';
             const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
             ctx.clearRect(0, 0, W, H);
             rows.forEach(row => {
                 const posStr = (row[COLS.position_terrain] || '').toString();
@@ -861,21 +869,21 @@
                 const [xs, ys] = posStr.split(';');
                 const x = parseFloat(xs), y = parseFloat(ys);
                 if (isNaN(x) || isNaN(y)) return;
-                const cx = (x / 100) * W, cy = (y / 100) * H, s = Math.max(4, W * 0.011);
+                const cx = (x / 100) * W, cy = (y / 100) * H, s = Math.max(3, W * 0.009);
                 const res = row[COLS.resultat];
                 ctx.save(); ctx.lineCap = 'round';
                 if (res === 'But') {
                     ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
                     ctx.fillStyle = '#10B981'; ctx.fill();
-                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
                 } else if (res === 'Tir raté') {
-                    ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 2.5;
+                    ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.moveTo(cx - s, cy - s); ctx.lineTo(cx + s, cy + s);
                     ctx.moveTo(cx + s, cy - s); ctx.lineTo(cx - s, cy + s);
                     ctx.stroke();
                 } else if (res === 'PB') {
-                    ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 1.5;
                     const sp = s * 0.6;
                     ctx.beginPath();
                     ctx.moveTo(cx - sp, cy - sp); ctx.lineTo(cx + sp, cy + sp);

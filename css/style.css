@@ -1684,6 +1684,14 @@
             .pm-tab-label { display: none; }
         }
 
+        /* Impact tab — filtre match sticky */
+        .pm-impact-filter {
+            position: sticky; top: 56px; background: white; z-index: 50;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 10px 0 8px; margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.06);
+        }
+
         /* Stats Match sticky header */
         .pm-stats-header {
             position: sticky; top: 56px; background: white; z-index: 50;
@@ -2100,6 +2108,9 @@
 
             /* Cartes équipes en 1 colonne */
             #pm-match-cards { grid-template-columns: 1fr !important; }
+
+            /* Filtre Impact sticky ajusté pour barre 2 lignes */
+            .pm-impact-filter { top: 92px; }
 
             /* Canvases impact : face en premier, 2 colonnes, ald centré seul */
             .pmf-canvases { grid-template-columns: repeat(2, 1fr) !important; }
