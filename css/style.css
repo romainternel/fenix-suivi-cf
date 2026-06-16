@@ -1939,6 +1939,11 @@
         .pmf-badge-down  { background: #FEE2E2; color: #991B1B; }
         .pmf-badge-streak { background: #EFF6FF; color: #1E40AF; }
 
+        .pmf-signature {
+            display: flex; align-items: center; gap: 14px;
+            background: #FFFBEB; border-left: 4px solid #F59E0B;
+        }
+
         .pmf-card-header-row {
             display: flex; align-items: center; justify-content: space-between;
             gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1rem;

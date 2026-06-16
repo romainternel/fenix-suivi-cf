@@ -261,6 +261,17 @@
             // ── Encart 2 : Actions (joueur de champ) ou Zones % (GB) ──
             const actionsHTML = isGB ? _buildGbZoneTableHTML(nom, '', bilanMatchs) : _buildDetailedActionsHTML(nom, '', bilanMatchs);
 
+            // ── Badge signature ──
+            const sig = computePlayerSignature(nom, isGB);
+            const sigHTML = sig ? `
+                <div class="pmf-card pmf-signature">
+                    <div style="font-size:1.5rem;flex-shrink:0">💥</div>
+                    <div>
+                        <div style="font-weight:700;color:#1E293B;font-size:0.92rem">${sig.label}</div>
+                        <div style="font-size:0.78rem;color:#92400E;margin-top:2px">Tu domines l'équipe sur cette action cette saison</div>
+                    </div>
+                </div>` : '';
+
             // ── Assemblage ──
             if (!page) return;
 
@@ -280,6 +291,8 @@
                     <div class="pmf-card-title">MA FICHE</div>
                     ${statsHTML}
                 </div>
+
+                ${sigHTML}
 
                 <div class="pmf-card">
                     <div class="pmf-card-title">${isGB ? 'STATS PAR ZONE' : 'ACTIONS'}</div>
@@ -385,6 +398,90 @@
             if (str.dir === 1 && str.streak >= 3) badges.push(`<span class="pmf-badge pmf-badge-up">↑ En progression (${str.streak} matchs)</span>`);
             else if (str.dir === -1 && str.streak >= 3) badges.push(`<span class="pmf-badge pmf-badge-down">↓ En baisse (${str.streak} matchs)</span>`);
             el.innerHTML = badges.length ? `<div class="pmf-badges-row">${badges.join('')}</div>` : '';
+        }
+
+        // ── Badge "Ta signature" (S-11) ─────────────────────────────────────────
+        function computePlayerSignature(nom, isGB) {
+            if (isGB) {
+                const gbStats = {};
+                DATA.forEach(row => {
+                    if (row[COLS.club] === 'FENIX') return;
+                    const g = (row[COLS.gardien]||'').toString().trim();
+                    if (!g) return;
+                    const isArret = row[COLS.finalite] === 'Tir arrêté';
+                    const isBut   = row[COLS.resultat]  === 'But';
+                    if (!isArret && !isBut) return;
+                    const z = (row[COLS.field_position]||'').toString().trim();
+                    if (!z) return;
+                    if (!gbStats[g]) gbStats[g] = {};
+                    if (!gbStats[g][z]) gbStats[g][z] = { arrets: 0, total: 0 };
+                    gbStats[g][z].total++;
+                    if (isArret) gbStats[g][z].arrets++;
+                });
+                const gbNames = Object.keys(gbStats);
+                if (gbNames.length < 2) return null;
+                const myKey = gbNames.find(g => matchPlayerName(g, nom));
+                if (!myKey) return null;
+                let best = null, bestRatio = 0;
+                Object.keys(gbStats[myKey]).forEach(z => {
+                    const my = gbStats[myKey][z];
+                    if (my.total < 5) return;
+                    const myPct = my.arrets / my.total;
+                    let sum = 0, cnt = 0;
+                    gbNames.forEach(g => {
+                        if (g === myKey) return;
+                        const st = gbStats[g]?.[z];
+                        if (!st || st.total < 3) return;
+                        sum += st.arrets / st.total; cnt++;
+                    });
+                    if (!cnt || sum / cnt === 0) return;
+                    const ratio = myPct / (sum / cnt);
+                    if (ratio >= 1.5 && ratio > bestRatio) { bestRatio = ratio; best = `Zone ${z}`; }
+                });
+                return best ? { label: best } : null;
+            }
+
+            const allGroups = [...NOTE_GROUPS.attPlus, ...NOTE_GROUPS.defPlus];
+            const actionToLabel = {};
+            allGroups.forEach(g => g.main.forEach(a => { actionToLabel[a] = g.label; }));
+            const playerCounts = {}, teamTotals = {};
+            allGroups.forEach(g => { playerCounts[g.label] = 0; teamTotals[g.label] = { total: 0, players: new Set() }; });
+
+            const playersWithData = new Set();
+            DATA.forEach(row => {
+                if (row[COLS.club] !== 'FENIX') return;
+                const joueurs = (row[COLS.action_joueur]||'').toString().split(';');
+                const atts    = (row[COLS.action_att]||'').toString().split(';');
+                const defs    = (row[COLS.action_def]||'').toString().split(';');
+                joueurs.forEach((j, idx) => {
+                    const pNom = j.trim();
+                    if (!pNom) return;
+                    const att = lastNonEmpty(atts, idx);
+                    const def = lastNonEmpty(defs, idx);
+                    [att, def].forEach(action => {
+                        const label = actionToLabel[action];
+                        if (!label) return;
+                        teamTotals[label].total++;
+                        teamTotals[label].players.add(pNom);
+                        if (matchPlayerName(pNom, nom)) playerCounts[label]++;
+                    });
+                    if (att || def) playersWithData.add(pNom);
+                });
+            });
+
+            if (playersWithData.size < 5) return null;
+            let best = null, bestRatio = 0;
+            allGroups.forEach(g => {
+                const count = playerCounts[g.label];
+                if (count < 3) return;
+                const td = teamTotals[g.label];
+                if (!td.players.size) return;
+                const avg = td.total / td.players.size;
+                if (!avg) return;
+                const ratio = count / avg;
+                if (ratio >= 1.5 && ratio > bestRatio) { bestRatio = ratio; best = g.label; }
+            });
+            return best ? { label: best } : null;
         }
 
         // ── Tableau zones de tir GB (remplace ACTIONS pour les gardiens) ────────
