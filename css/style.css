@@ -2081,14 +2081,16 @@
             border-top: 1px solid #E2E8F0; text-align: center;
         }
 
+        .pmf-graph-wrap { position: relative; height: 320px; }
+
         /* ── Player Mode : responsive iPhone (< 520px) ────────────────────────── */
         @media (max-width: 520px) {
             /* Actions : 1 quadrant par ligne */
             .pmf-actions-2col   { grid-template-columns: 1fr; }
             /* Totaux : 2 colonnes au lieu de 4 */
             .pmf-actions-totals { grid-template-columns: 1fr 1fr; }
-            /* Graph plus haut sur iPhone */
-            .pmf-graph-wrap     { height: 380px !important; }
+            /* Graph portrait iPhone */
+            .pmf-graph-wrap     { height: 300px; }
 
 
             /* Barre navigation : 2 lignes (logo / tabs + logout) */
@@ -2129,6 +2131,11 @@
             .pmf-canvases { grid-template-columns: repeat(2, 1fr) !important; }
             .pmf-canvas-wrap:nth-child(2) { order: -1; }
             .pmf-canvas-wrap:last-child { grid-column: span 2; max-width: 52%; margin: 0 auto; }
+        }
+
+        /* Graph en paysage mobile : moins haut, profite de la largeur */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .pmf-graph-wrap { height: 220px; }
         }
 
         /* ── Sous-navigation Joueurs (barre contenu) ────────────────────────── */

@@ -85,6 +85,13 @@
             const backBtn = document.getElementById('pm-back-btn');
             if (backBtn) backBtn.style.display = (PLAYER_SESSION && PLAYER_SESSION.isPreview) ? 'inline-flex' : 'none';
             if (typeof DATA !== 'undefined' && DATA.length > 0) pmTab(sessionStorage.getItem('pm_active_tab') || 'fiche');
+
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => { if (_pmfChart) _pmfChart.resize(); }, 150);
+            });
+            window.addEventListener('resize', () => {
+                if (_pmfChart) _pmfChart.resize();
+            });
         }
 
         // ── Navigation tabs ──────────────────────────────────────────────────────
@@ -301,7 +308,7 @@
 
                 <div class="pmf-card">
                     <div class="pmf-card-title">${isGB ? 'PERFORMANCES PAR RENCONTRE' : 'PROGRESSION — SAISON'}</div>
-                    <div class="pmf-graph-wrap" style="position:relative;height:340px">
+                    <div class="pmf-graph-wrap">
                         <canvas id="pmf-graph-canvas"></canvas>
                     </div>
                 </div>`;
@@ -678,6 +685,7 @@
 
             const isGB = (typeof detectIsGB === 'function') ? detectIsGB(nom) : false;
             const isMobile = window.innerWidth < 520;
+            const isPhone  = Math.min(window.screen.width, window.screen.height) < 500;
 
             if (isGB) {
                 const gbMd = {};
@@ -741,8 +749,8 @@
                         labels: played,
                         datasets: [
                             { type:'bar',  label:'Arrêts',      data:arrArr, yAxisID:'y',  backgroundColor:'rgba(16,185,129,0.65)', borderColor:'#10B981', borderWidth:1, order:3 },
-                            { type:'line', label:'Score Total', data:scrArr, yAxisID:'y',  borderColor:'#1E3A5F', backgroundColor:'#1E3A5F', borderWidth:2.5, pointRadius:5, pointBackgroundColor:'#1E3A5F', tension:0.3, order:1 },
-                            { type:'line', label:'% Arrêts',   data:pctArr, yAxisID:'y1', borderColor:'#0EA5E9', backgroundColor:'rgba(14,165,233,0.1)', borderWidth:2, pointRadius:4, pointBackgroundColor:'#0EA5E9', tension:0.3, fill:false, order:2 },
+                            { type:'line', label:'Score Total', data:scrArr, yAxisID:'y',  borderColor:'#1E3A5F', backgroundColor:'#1E3A5F', borderWidth:isPhone?1.5:2.5, pointRadius:isPhone?2.5:5, pointBackgroundColor:'#1E3A5F', tension:0.3, order:1 },
+                            { type:'line', label:'% Arrêts',   data:pctArr, yAxisID:'y1', borderColor:'#0EA5E9', backgroundColor:'rgba(14,165,233,0.1)', borderWidth:isPhone?1.2:2, pointRadius:isPhone?2:4, pointBackgroundColor:'#0EA5E9', tension:0.3, fill:false, order:2 },
                             { type:'line', label:'__zero__',   data:played.map(()=>0), yAxisID:'y', borderColor:'#1E3A5F', borderWidth:1, pointRadius:0, tension:0, order:6 },
                         ],
                     },
@@ -828,7 +836,7 @@
                     datasets: [
                         { type:'bar',  label:'NOTE ATT',     data:noteATT, backgroundColor:'rgba(20,184,166,0.75)',  borderColor:'#14B8A6', borderWidth:1, order:4 },
                         { type:'bar',  label:'NOTE DEF',     data:noteDEF, backgroundColor:'rgba(245,158,11,0.75)', borderColor:'#F59E0B', borderWidth:1, order:5 },
-                        { type:'line', label:'TOTAL JOUEUR', data:total,   borderColor:'#1E3A5F', backgroundColor:'#1E3A5F', borderWidth:2.5, pointRadius:5, pointBackgroundColor:'#1E3A5F', tension:0.3, order:1 },
+                        { type:'line', label:'TOTAL JOUEUR', data:total,   borderColor:'#1E3A5F', backgroundColor:'#1E3A5F', borderWidth:isPhone?1.5:2.5, pointRadius:isPhone?2.5:5, pointBackgroundColor:'#1E3A5F', tension:0.3, order:1 },
                         { type:'line', label:'Médiane',      data:played.map(()=>median), borderColor:'#94A3B8', borderWidth:1.5, borderDash:[6,4], pointRadius:0, pointStyle:'line', tension:0, order:2 },
                         { type:'line', label:'Tendance',     data:trend, borderColor:'#60A5FA', borderWidth:1.5, borderDash:[3,3], pointRadius:0, pointStyle:'line', tension:0, order:3 },
                         { type:'line', label:'__zero__',     data:played.map(()=>0), borderColor:'#1E3A5F', borderWidth:1, pointRadius:0, tension:0, order:6 },
