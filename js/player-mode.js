@@ -343,9 +343,14 @@
         function computePlayerRank(nom, posteCode) {
             if (!posteCode || !JOUEURS_TERRAIN) return null;
             const teammates = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
-            const myNote = _computeNoteScore(nom, posteCode).total;
+            const noteCache = new Map();
+            const getNote = n => {
+                if (!noteCache.has(n)) noteCache.set(n, _computeNoteScore(n, posteCode).total);
+                return noteCache.get(n);
+            };
+            const myNote = getNote(nom);
             let rank = 1;
-            teammates.forEach(p => { if (_computeNoteScore(p.nom, posteCode).total > myNote) rank++; });
+            teammates.forEach(p => { if (getNote(p.nom) > myNote) rank++; });
             return { rank, total: teammates.length + 1 };
         }
 

@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=107">
-    <script src="js/utils.js?v=107"></script>
-    <script src="js/impact-images.js?v=107"></script>
-    <script src="js/player-mode.js?v=107"></script>
-    <script src="js/page-joueurs.js?v=107"></script>
-    <script src="js/page-notes-graph.js?v=107"></script>
-    <script src="js/page-analyse.js?v=107"></script>
+    <link rel="stylesheet" href="css/style.css?v=108">
+    <script src="js/utils.js?v=108"></script>
+    <script src="js/impact-images.js?v=108"></script>
+    <script src="js/player-mode.js?v=108"></script>
+    <script src="js/page-joueurs.js?v=108"></script>
+    <script src="js/page-notes-graph.js?v=108"></script>
+    <script src="js/page-analyse.js?v=108"></script>
 </head>
 <body>
 
@@ -1079,96 +1079,86 @@ let _effInfoPoste = null;
                 if (cell) toggleGardienZone(cell.dataset.zone);
             });
             // Tooltip survol canvases Gardien
+            let _ttHideTimer = null;
+            function _showCanvasTooltip(canvas, dots, cx, cy, isGardien) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const mx = (cx - rect.left) * scaleX;
+                const my = (cy - rect.top)  * scaleY;
+                const nearby = dots
+                    .map(d => ({ ...d, dist: Math.hypot(d.x - mx, d.y - my) }))
+                    .filter(d => d.dist < 14)
+                    .sort((a, b) => a.dist - b.dist);
+                const tt = document.getElementById('impact-tooltip');
+                if (nearby.length > 0) {
+                    const lines = nearby.slice(0, 5).map((d, i) => {
+                        const r = d.row;
+                        const isArret = isGardien ? r[COLS.finalite] === 'Tir arrêté' : r[COLS.resultat] === 'But';
+                        const marker = isArret ? '●' : '✕';
+                        const color  = isArret ? '#6ee7b7' : '#fca5a5';
+                        const bold   = i === 0 ? 'font-weight:700;' : 'opacity:0.75;';
+                        return `<div style="${bold}display:flex;gap:0.4rem;align-items:baseline;">` +
+                               `<span style="color:${color};font-size:0.9em;">${marker}</span>` +
+                               `<span style="color:#93c5fd;">${r[COLS.field_position] || '—'}</span>` +
+                               `&nbsp;${r[COLS.joueur] || ''}` +
+                               `<span style="opacity:0.6;font-size:0.85em;">${r[COLS.rencontre] || ''}</span>` +
+                               `</div>`;
+                    });
+                    if (nearby.length > 5)
+                        lines.push(`<div style="opacity:0.5;font-size:0.8em;">+${nearby.length - 5} autre(s)</div>`);
+                    tt.innerHTML = lines.join('');
+                    tt.style.display = 'block';
+                    tt.style.left = Math.min(cx + 14, window.innerWidth - 180) + 'px';
+                    tt.style.top  = Math.max(cy - 14, 8) + 'px';
+                    return true;
+                } else {
+                    tt.style.display = 'none';
+                    return false;
+                }
+            }
             ['alg', 'face', 'ald'].forEach(view => {
                 const canvas = document.getElementById(`goal-canvas-${view}`);
                 if (!canvas) return;
                 canvas.addEventListener('mousemove', e => {
-                    const rect = canvas.getBoundingClientRect();
-                    const scaleX = canvas.width / rect.width;
-                    const scaleY = canvas.height / rect.height;
-                    const mx = (e.clientX - rect.left) * scaleX;
-                    const my = (e.clientY - rect.top)  * scaleY;
-                    const nearby = GARDIEN_DOTS[view]
-                        .map(d => ({ ...d, dist: Math.hypot(d.x - mx, d.y - my) }))
-                        .filter(d => d.dist < 14)
-                        .sort((a, b) => a.dist - b.dist);
-                    if (nearby.length > 0) {
-                        const tt = document.getElementById('impact-tooltip');
-                        const lines = nearby.slice(0, 5).map((d, i) => {
-                            const r = d.row;
-                            const isArret = r[COLS.finalite] === 'Tir arrêté';
-                            const marker = isArret ? '●' : '✕';
-                            const color  = isArret ? '#6ee7b7' : '#fca5a5';
-                            const bold   = i === 0 ? 'font-weight:700;' : 'opacity:0.75;';
-                            return `<div style="${bold}display:flex;gap:0.4rem;align-items:baseline;">` +
-                                   `<span style="color:${color};font-size:0.9em;">${marker}</span>` +
-                                   `<span style="color:#93c5fd;">${r[COLS.field_position] || '—'}</span>` +
-                                   `&nbsp;${r[COLS.joueur] || ''}` +
-                                   `<span style="opacity:0.6;font-size:0.85em;">${r[COLS.rencontre] || ''}</span>` +
-                                   `</div>`;
-                        });
-                        if (nearby.length > 5)
-                            lines.push(`<div style="opacity:0.5;font-size:0.8em;">+${nearby.length - 5} autre(s)</div>`);
-                        const tt2 = document.getElementById('impact-tooltip');
-                        tt2.innerHTML = lines.join('');
-                        tt2.style.display = 'block';
-                        tt2.style.left = (e.clientX + 14) + 'px';
-                        tt2.style.top  = (e.clientY - 14) + 'px';
-                        canvas.style.cursor = 'crosshair';
-                    } else {
-                        document.getElementById('impact-tooltip').style.display = 'none';
-                        canvas.style.cursor = 'default';
-                    }
+                    _showCanvasTooltip(canvas, GARDIEN_DOTS[view], e.clientX, e.clientY, true);
+                    canvas.style.cursor = 'crosshair';
                 });
                 canvas.addEventListener('mouseleave', () => {
                     document.getElementById('impact-tooltip').style.display = 'none';
+                    canvas.style.cursor = 'default';
                 });
+                canvas.addEventListener('touchstart', e => {
+                    e.preventDefault();
+                    const t = e.touches[0];
+                    const found = _showCanvasTooltip(canvas, GARDIEN_DOTS[view], t.clientX, t.clientY, true);
+                    if (found) {
+                        clearTimeout(_ttHideTimer);
+                        _ttHideTimer = setTimeout(() => document.getElementById('impact-tooltip').style.display = 'none', 3000);
+                    }
+                }, { passive: false });
             });
             // Tooltip survol des points Impact
             ['alg', 'face', 'ald'].forEach(view => {
                 const canvas = document.getElementById(`impact-canvas-${view}`);
                 if (!canvas) return;
                 canvas.addEventListener('mousemove', e => {
-                    const rect = canvas.getBoundingClientRect();
-                    const scaleX = canvas.width / rect.width;
-                    const scaleY = canvas.height / rect.height;
-                    const mx = (e.clientX - rect.left) * scaleX;
-                    const my = (e.clientY - rect.top)  * scaleY;
-                    // Tous les points proches, triés du plus proche au plus loin
-                    const nearby = IMPACT_DOTS[view]
-                        .map(d => ({ ...d, dist: Math.hypot(d.x - mx, d.y - my) }))
-                        .filter(d => d.dist < 14)
-                        .sort((a, b) => a.dist - b.dist);
-                    if (nearby.length > 0) {
-                        const tt = document.getElementById('impact-tooltip');
-                        const lines = nearby.slice(0, 5).map((d, i) => {
-                            const r = d.row;
-                            const isBut = r[COLS.resultat] === 'But';
-                            const marker = isBut ? '●' : '✕';
-                            const color  = isBut ? '#6ee7b7' : '#fca5a5';
-                            const bold   = i === 0 ? 'font-weight:700;' : 'opacity:0.75;';
-                            return `<div style="${bold}display:flex;gap:0.4rem;align-items:baseline;">` +
-                                   `<span style="color:${color};font-size:0.9em;">${marker}</span>` +
-                                   `<span style="color:#93c5fd;">${r[COLS.field_position] || '—'}</span>` +
-                                   `&nbsp;${r[COLS.joueur] || ''}` +
-                                   `<span style="opacity:0.6;font-size:0.85em;">${r[COLS.rencontre] || ''}</span>` +
-                                   `</div>`;
-                        });
-                        if (nearby.length > 5)
-                            lines.push(`<div style="opacity:0.5;font-size:0.8em;">+${nearby.length - 5} autre(s)</div>`);
-                        tt.innerHTML = lines.join('');
-                        tt.style.display = 'block';
-                        tt.style.left = (e.clientX + 14) + 'px';
-                        tt.style.top  = (e.clientY - 14) + 'px';
-                        canvas.style.cursor = 'crosshair';
-                    } else {
-                        document.getElementById('impact-tooltip').style.display = 'none';
-                        canvas.style.cursor = 'default';
-                    }
+                    _showCanvasTooltip(canvas, IMPACT_DOTS[view], e.clientX, e.clientY, false);
+                    canvas.style.cursor = 'crosshair';
                 });
                 canvas.addEventListener('mouseleave', () => {
                     document.getElementById('impact-tooltip').style.display = 'none';
+                    canvas.style.cursor = 'default';
                 });
+                canvas.addEventListener('touchstart', e => {
+                    e.preventDefault();
+                    const t = e.touches[0];
+                    const found = _showCanvasTooltip(canvas, IMPACT_DOTS[view], t.clientX, t.clientY, false);
+                    if (found) {
+                        clearTimeout(_ttHideTimer);
+                        _ttHideTimer = setTimeout(() => document.getElementById('impact-tooltip').style.display = 'none', 3000);
+                    }
+                }, { passive: false });
             });
         });
 

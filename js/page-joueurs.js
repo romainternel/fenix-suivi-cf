@@ -508,17 +508,22 @@
         // Modal Joueur
         function openPlayerModal(joueur) {
             document.getElementById('modal-player-name').textContent = '📊 ' + joueur + ' - Stats par match';
-            
+
+            const matchFilter  = document.getElementById('filter-joueur-match')?.value || '';
+            const bilanMatchs  = _getJoueurBilanMatchs();
+
             // Calculer les stats par match pour ce joueur
             const statsByMatch = {};
-            
+
             // Stats depuis colonne Joueur + Resultat
             DATA.forEach(row => {
                 if (row[COLS.club] !== 'FENIX') return;
                 if (!matchPlayerName((row[COLS.joueur] || '').toString().trim(), joueur)) return;
-                
+
                 const match = row[COLS.rencontre];
                 if (!match) return;
+                if (matchFilter && match !== matchFilter) return;
+                if (bilanMatchs && !bilanMatchs.includes(match)) return;
                 
                 if (!statsByMatch[match]) {
                     statsByMatch[match] = { 
@@ -545,9 +550,12 @@
             
             // PD depuis Action Joueur + Action ATT
             DATA.forEach(row => {
+                if (row[COLS.club] !== 'FENIX') return;
                 const match = row[COLS.rencontre];
                 if (!match) return;
-                
+                if (matchFilter && match !== matchFilter) return;
+                if (bilanMatchs && !bilanMatchs.includes(match)) return;
+
                 const actionJoueurs = (row[COLS.action_joueur] || '').toString().split(';');
                 const actionsAtt = (row[COLS.action_att] || '').toString().split(';');
                 
