@@ -34,6 +34,7 @@
             const eff   = total > 0 ? Math.round(buts / total * 100) : 0;
             let pd = 0;
             DATA.forEach(row => {
+                if (row[COLS.club] !== 'FENIX') return;
                 (row[COLS.action_joueur]||'').toString().split(';').forEach((j, i) => {
                     if (!matchPlayerName(j.trim(), nom)) return;
                     const act = lastNonEmpty((row[COLS.action_att]||'').toString().split(';'), i);
@@ -349,7 +350,7 @@
         }
 
         function computeStreak(nom) {
-            // Note ATT+DEF par match (uniquement matchs où le joueur a eu des actions)
+            if (!MATCHS || !MATCHS.length) return { streak: 0, dir: 0 };
             const matchStats = MATCHS.map(m => {
                 let ap = 0, am = 0, dp = 0, dm = 0;
                 DATA.forEach(row => {

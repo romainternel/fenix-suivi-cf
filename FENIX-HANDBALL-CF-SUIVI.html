@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=105">
-    <script src="js/utils.js?v=105"></script>
-    <script src="js/impact-images.js?v=105"></script>
-    <script src="js/player-mode.js?v=105"></script>
-    <script src="js/page-joueurs.js?v=105"></script>
-    <script src="js/page-notes-graph.js?v=105"></script>
-    <script src="js/page-analyse.js?v=105"></script>
+    <link rel="stylesheet" href="css/style.css?v=106">
+    <script src="js/utils.js?v=106"></script>
+    <script src="js/impact-images.js?v=106"></script>
+    <script src="js/player-mode.js?v=106"></script>
+    <script src="js/page-joueurs.js?v=106"></script>
+    <script src="js/page-notes-graph.js?v=106"></script>
+    <script src="js/page-analyse.js?v=106"></script>
 </head>
 <body>
 
@@ -1061,6 +1061,15 @@ let _effInfoPoste = null;
                 });
                 document.querySelectorAll('#page-impact .goal-wrapper').forEach(el => impactObs.observe(el));
             }
+            // Redraw timeline on orientation change
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    if (document.getElementById('filter-analyse-match')?.value &&
+                        document.getElementById('page-analyse')?.classList.contains('active')) {
+                        drawTimeline();
+                    }
+                }, 150);
+            });
             document.getElementById('zone-rect-selector')?.addEventListener('click', e => {
                 const cell = e.target.closest('.zr-cell');
                 if (cell) toggleImpactZone(cell.dataset.zone);

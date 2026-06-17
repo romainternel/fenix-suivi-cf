@@ -94,7 +94,7 @@
                 matchPlayerName((r[COLS.joueur]||'').toString().trim(), nom) &&
                 ['But','Tir raté'].includes(r[COLS.resultat])
             ).length;
-            return asGardien > 0 && asGardien >= asJoueur;
+            return asGardien >= 5 && asGardien >= asJoueur;
         }
 
         function checkDuplicateNames() {

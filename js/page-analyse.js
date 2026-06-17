@@ -452,20 +452,24 @@
             setTimeout(() => msg.style.display = 'none', 2000);
         }
 
+        function _escapeHtml(str) {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
         function sendChatMessage() {
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
             if (!message) return;
-            
+
             const matchFilter = document.getElementById('filter-analyse-match').value;
             if (!matchFilter) return;
-            
+
             // Ajouter message utilisateur
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.innerHTML += `
                 <div class="chat-message user">
                     <div class="chat-avatar">👨‍🏫</div>
-                    <div class="chat-content">${message}</div>
+                    <div class="chat-content">${_escapeHtml(message)}</div>
                 </div>
             `;
             
@@ -639,7 +643,9 @@
             if (!container) return;
 
             if (typeof MATCHS === 'undefined' || !MATCHS || MATCHS.length < 3) {
-                container.innerHTML = '';
+                container.innerHTML = MATCHS && MATCHS.length > 0
+                    ? `<p style="color:#64748B;font-size:0.85rem;text-align:center;padding:16px 0">Minimum 3 matchs nécessaires pour calculer les corrélations (${MATCHS.length} match${MATCHS.length > 1 ? 's' : ''} actuellement).</p>`
+                    : '';
                 return;
             }
 

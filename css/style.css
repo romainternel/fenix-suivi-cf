@@ -21,6 +21,7 @@
             background: var(--fenix-gray);
             color: var(--fenix-dark);
             min-height: 100vh;
+            min-height: 100dvh;
         }
 
         .header {
