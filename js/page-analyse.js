@@ -1,4 +1,4 @@
-﻿        // ===== PAGE ANALYSE =====
+﻿        // ===== PAGE ANALYSE — v111 =====
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
