@@ -1,4 +1,4 @@
-﻿        function _getJoueurBilanMatchs() {
+        function _getJoueurBilanMatchs() {
             const val = document.getElementById('filter-joueur-bilan')?.value || '';
             if (!val || typeof BILANS === 'undefined') return null;
             return BILANS.find(b => b.nom === val)?.matchs || null;

@@ -1,4 +1,4 @@
-﻿        // NOTE_GROUPS défini dans utils.js (chargé en premier)
+        // NOTE_GROUPS défini dans utils.js (chargé en premier)
 
         function openNotesDetail(joueur, filter = 'all') {
             const matchFilter = document.getElementById('filter-note-match')?.value || '';
