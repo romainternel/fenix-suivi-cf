@@ -5,43 +5,43 @@
         // ===== MODULE ANALYSE — ENC_FAMILLE_MAP validé coach 2026-06-17 =====
         const ENC_FAMILLE_MAP = {
             // ISOLER — finalités qui isolent un défenseur
-            ‘DUEL’:’Isoler’,’Markus’:’Isoler’,
-            ‘Écartement’:’Isoler’,’Ecartement’:’Isoler’,
-            ‘Renverse’:’Isoler’,’Aix’:’Isoler’,
-            ‘Suède’:’Isoler’,’Suede’:’Isoler’,’FIRST’:’Isoler’,
-            ‘Suède DC’:’Isoler’,’Suede DC’:’Isoler’,
-            ‘PORTO’:’Isoler’,’Gidsel’:’Isoler’,’2 pvts’:’Isoler’,
-            ‘LIMOGES’:’Isoler’,’ISO’:’Isoler’,
-            "Départ d’ailier":’Isoler’,"Depart ailier":’Isoler’,
+            'DUEL':'Isoler','Markus':'Isoler',
+            'Écartement':'Isoler','Ecartement':'Isoler',
+            'Renverse':'Isoler','Aix':'Isoler',
+            'Suède':'Isoler','Suede':'Isoler','FIRST':'Isoler',
+            'Suède DC':'Isoler','Suede DC':'Isoler',
+            'PORTO':'Isoler','Gidsel':'Isoler','2 pvts':'Isoler',
+            'LIMOGES':'Isoler','ISO':'Isoler',
+            "Départ d'ailier":'Isoler',"Depart ailier":'Isoler',
             // RENTRÉE
-            ‘Szeged’:’Rentrée’,’Ressort’:’Rentrée’,
-            ‘+’:’Rentrée’,’110’:’Rentrée’,
-            ‘6 OPPOSÉ’:’Rentrée’,’6 OPPOSE’:’Rentrée’,
-            ‘90’:’Rentrée’,’3 OPPOSÉ’:’Rentrée’,’3 OPPOSE’:’Rentrée’,
-            ‘Flensburg’:’Rentrée’,’POSTE’:’Rentrée’,
-            ‘POSTE CROISÉ’:’Rentrée’,’POSTE CROISE’:’Rentrée’,’Maillot’:’Rentrée’,
+            'Szeged':'Rentrée','Ressort':'Rentrée',
+            '+':'Rentrée','110':'Rentrée',
+            '6 OPPOSÉ':'Rentrée','6 OPPOSE':'Rentrée',
+            '90':'Rentrée','3 OPPOSÉ':'Rentrée','3 OPPOSE':'Rentrée',
+            'Flensburg':'Rentrée','POSTE':'Rentrée',
+            'POSTE CROISÉ':'Rentrée','POSTE CROISE':'Rentrée','Maillot':'Rentrée',
             // JEU PVT
-            ‘DOUBLE’:’Jeu PVT’,’Rafal’:’Jeu PVT’,’GLISSE’:’Jeu PVT’,
-            ‘SKERN’:’Jeu PVT’,’SPANISH’:’Jeu PVT’,’SWITCH’:’Jeu PVT’,’Triangle’:’Jeu PVT’,
+            'DOUBLE':'Jeu PVT','Rafal':'Jeu PVT','GLISSE':'Jeu PVT',
+            'SKERN':'Jeu PVT','SPANISH':'Jeu PVT','SWITCH':'Jeu PVT','Triangle':'Jeu PVT',
             // BLOC PVT
-            ‘Bloc 4’:’Bloc PVT’,’Bonit’:’Bloc PVT’,’Bloc ext’:’Bloc PVT’,
-            ‘Écran 3’:’Bloc PVT’,’Ecran 3’:’Bloc PVT’,
-            ‘Julen’:’Bloc PVT’,’BLOC 3H’:’Bloc PVT’,’Rares’:’Bloc PVT’,
-            ‘Écran 2’:’Bloc PVT’,’Ecran 2’:’Bloc PVT’,
+            'Bloc 4':'Bloc PVT','Bonit':'Bloc PVT','Bloc ext':'Bloc PVT',
+            'Écran 3':'Bloc PVT','Ecran 3':'Bloc PVT',
+            'Julen':'Bloc PVT','BLOC 3H':'Bloc PVT','Rares':'Bloc PVT',
+            'Écran 2':'Bloc PVT','Ecran 2':'Bloc PVT',
             // 7VS6
-            ‘7vs6 Classique’:’7vs6’,’7vs6 12/45’:’7vs6’,’7vs6 12/56’:’7vs6’,
-            ‘7vs6 23/45’:’7vs6’,’7vs6 FIRST’:’7vs6’,’7vs6 3pvts’:’7vs6’,
-            ‘7vs6 Markus’:’7vs6’,’6 Barthez’:’7vs6’,
-            ‘7vs6 1-2/5-6’:’7vs6’,’7vs6 2-3/4-5’:’7vs6’,’7vs5’:’7vs6’,’BARTHEZ’:’7vs6’,
+            '7vs6 Classique':'7vs6','7vs6 12/45':'7vs6','7vs6 12/56':'7vs6',
+            '7vs6 23/45':'7vs6','7vs6 FIRST':'7vs6','7vs6 3pvts':'7vs6',
+            '7vs6 Markus':'7vs6','6 Barthez':'7vs6',
+            '7vs6 1-2/5-6':'7vs6','7vs6 2-3/4-5':'7vs6','7vs5':'7vs6','BARTHEZ':'7vs6',
             // FAIRE COURIR
-            ‘Bretzel’:’Faire courir’,’Course-tir’:’Faire courir’,
-            ‘FENIX’:’Faire courir’,’Long’:’Faire courir’,’DK’:’Faire courir’,
-            ‘M’:’Faire courir’,’DANI’:’Faire courir’,
+            'Bretzel':'Faire courir','Course-tir':'Faire courir',
+            'FENIX':'Faire courir','Long':'Faire courir','DK':'Faire courir',
+            'M':'Faire courir','DANI':'Faire courir',
             // SPÉCIAUX
-            ‘Fake’:’Spéciaux’,’RAPIDO’:’Spéciaux’,’IRUN’:’Spéciaux’,’Kung Fu’:’Spéciaux’,
-            ‘Moustache’:’Spéciaux’,’Spéciaux’:’Spéciaux’,’Speciaux’:’Spéciaux’,’Kebab’:’Spéciaux’,
+            'Fake':'Spéciaux','RAPIDO':'Spéciaux','IRUN':'Spéciaux','Kung Fu':'Spéciaux',
+            'Moustache':'Spéciaux','Spéciaux':'Spéciaux','Speciaux':'Spéciaux','Kebab':'Spéciaux',
             // 6VS5
-            ‘K’:’6vs5’,’Danois’:’6vs5’,’1 rotation’:’6vs5’,
+            'K':'6vs5','Danois':'6vs5','1 rotation':'6vs5',
         };
 
         const ENC_FAMILLES_ORDRE = ['Isoler','Rentrée','Jeu PVT','Bloc PVT','7vs6','Faire courir','Spéciaux','6vs5'];
