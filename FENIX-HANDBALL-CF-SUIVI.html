@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -10,25 +10,25 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=109">
-    <script src="js/utils.js?v=109"></script>
-    <script src="js/impact-images.js?v=109"></script>
-    <script src="js/player-mode.js?v=109"></script>
-    <script src="js/page-joueurs.js?v=109"></script>
-    <script src="js/page-notes-graph.js?v=109"></script>
-    <script src="js/page-analyse.js?v=109"></script>
+    <link rel="stylesheet" href="css/style.css?v=110">
+    <script src="js/utils.js?v=110"></script>
+    <script src="js/impact-images.js?v=110"></script>
+    <script src="js/player-mode.js?v=110"></script>
+    <script src="js/page-joueurs.js?v=110"></script>
+    <script src="js/page-notes-graph.js?v=110"></script>
+    <script src="js/page-analyse.js?v=110"></script>
 </head>
 <body>
 
-    <!-- Écran de connexion -->
+    <!-- �cran de connexion -->
     <div id="login-screen">
         <div class="login-box">
             <div class="login-logo"><img src="favicon.png" style="width:100%;height:100%;object-fit:cover;"></div>
             <div class="login-title">FENIX Stats</div>
-            <div class="login-subtitle">Centre de Formation · Accès Staff</div>
+            <div class="login-subtitle">Centre de Formation � Acc�s Staff</div>
             <input type="password" id="login-input" class="login-input"
                 placeholder="Mot de passe" onkeydown="if(event.key==='Enter') checkLogin()">
-            <button class="login-btn" onclick="checkLogin()">ACCÉDER</button>
+            <button class="login-btn" onclick="checkLogin()">ACC�DER</button>
             <div class="login-error" id="login-error"></div>
         </div>
     </div>
@@ -82,20 +82,20 @@
             </div>
         </div>
         <nav class="nav">
-            <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
-            <button class="nav-btn" data-page="joueurs">👥 Joueurs</button>
+            <button class="nav-btn active" data-page="dashboard">?? Dashboard</button>
+            <button class="nav-btn" data-page="joueurs">?? Joueurs</button>
             <span class="nav-separator"></span>
-            <button id="btn-player-accounts" onclick="openPlayerAccountsModal()">🔑 Comptes</button>
-            <button id="btn-preview-mode" onclick="openPreviewModal()">👤 Vue joueur</button>
+            <button id="btn-player-accounts" onclick="openPlayerAccountsModal()">?? Comptes</button>
+            <button id="btn-preview-mode" onclick="openPreviewModal()">?? Vue joueur</button>
         </nav>
     </header>
 
     <div id="joueurs-subnav" class="joueurs-subnav" style="display:none;">
-        <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
-        <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">⭐ Notes</button>
+        <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">?? Fiche</button>
+        <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">? Notes</button>
         <span class="jsub-sep"></span>
-        <button id="btn-joueur-graph" class="btn-joueur-context" disabled onclick="openGraphiqueForSelected()">📈 Graphique</button>
-        <button id="btn-joueur-impact" class="btn-joueur-context" disabled onclick="openImpactForSelected()">🎯 Impact</button>
+        <button id="btn-joueur-graph" class="btn-joueur-context" disabled onclick="openGraphiqueForSelected()">?? Graphique</button>
+        <button id="btn-joueur-impact" class="btn-joueur-context" disabled onclick="openImpactForSelected()">?? Impact</button>
     </div>
 
     <main class="main">
@@ -104,14 +104,14 @@
             <!-- Import Section -->
             <div class="import-section" id="import-section">
                 <div class="import-left">
-                    <div class="import-icon" id="import-icon">📁</div>
+                    <div class="import-icon" id="import-icon">??</div>
                     <div>
-                        <h2 id="import-title">IMPORTER LES DONNÉES</h2>
+                        <h2 id="import-title">IMPORTER LES DONN�ES</h2>
                         <p id="import-subtitle">Fichier Excel (.xlsx, .xlsm)</p>
                     </div>
                 </div>
                 <button class="import-btn" id="import-btn" onclick="document.getElementById('file-input').click()">
-                    Sélectionner un fichier
+                    S�lectionner un fichier
                 </button>
                 <input type="file" id="file-input" accept=".xlsx,.xlsm,.xls" />
             </div>
@@ -119,8 +119,8 @@
             <!-- Matchs Section - COMPACT comme import -->
             <div class="matchs-bar" id="matchs-section" style="display: none;">
                 <div class="matchs-bar-left">
-                    <div class="matchs-bar-icon">🏆</div>
-                    <div class="matchs-bar-title">MATCHS ANALYSÉS</div>
+                    <div class="matchs-bar-icon">??</div>
+                    <div class="matchs-bar-title">MATCHS ANALYS�S</div>
                     <div class="matchs-count-badge" id="stat-matchs">0</div>
                 </div>
                 <div class="filter-group" style="margin: 0; position: relative;">
@@ -128,7 +128,7 @@
                     <div class="multi-select-container">
                         <button type="button" class="multi-select-btn" id="match-select-btn" onclick="toggleMatchDropdown()">
                             <span id="match-select-text">Tous les matchs</span>
-                            <span class="dropdown-arrow">▼</span>
+                            <span class="dropdown-arrow">?</span>
                         </button>
                         <div class="multi-select-dropdown" id="match-dropdown" style="display: none;">
                             <label class="checkbox-item">
@@ -139,7 +139,7 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn-goto-analyse" onclick="goToAnalysePage()">🔍 Analyse</button>
+                <button class="btn-goto-analyse" onclick="goToAnalysePage()">?? Analyse</button>
             </div>
 
             <!-- Team Cards -->
@@ -147,9 +147,9 @@
                 <!-- FENIX Card -->
                 <div class="team-card fenix">
                     <div class="team-card-header">
-                        <span>🔵</span>
+                        <span>??</span>
                         <h3>FENIX TOULOUSE <span id="fenix-avg-label" class="avg-label"></span></h3>
-                        <button class="graph-btn" onclick="openGraphModal('fenix')" title="Voir les graphiques">📈</button>
+                        <button class="graph-btn" onclick="openGraphModal('fenix')" title="Voir les graphiques">??</button>
                     </div>
                     <div class="team-stats">
                         <div class="team-stat-item">
@@ -163,7 +163,7 @@
                         </div>
                         <div class="team-stat-item">
                             <div class="value" id="fenix-eff">0%</div>
-                            <div class="label">% Réussite</div>
+                            <div class="label">% R�ussite</div>
                         </div>
                         <div class="team-stat-item">
                             <div class="value" id="fenix-pb">0</div>
@@ -175,7 +175,7 @@
                         </div>
                         <div class="team-stat-item">
                             <div class="value" id="fenix-neutralise">0</div>
-                            <div class="label">Neutralisé</div>
+                            <div class="label">Neutralis�</div>
                         </div>
                     </div>
                 </div>
@@ -183,9 +183,9 @@
                 <!-- Adversaire Card -->
                 <div class="team-card adversaire">
                     <div class="team-card-header">
-                        <span>🔴</span>
+                        <span>??</span>
                         <h3><span id="adversaire-title-text">ADVERSAIRE</span> <span id="adv-avg-label" class="avg-label"></span></h3>
-                        <button class="graph-btn" onclick="openGraphModal('adversaire')" title="Voir les graphiques">📈</button>
+                        <button class="graph-btn" onclick="openGraphModal('adversaire')" title="Voir les graphiques">??</button>
                     </div>
                     <div class="team-stats">
                         <div class="team-stat-item">
@@ -199,7 +199,7 @@
                         </div>
                         <div class="team-stat-item">
                             <div class="value" id="adv-eff">0%</div>
-                            <div class="label">% Réussite</div>
+                            <div class="label">% R�ussite</div>
                         </div>
                         <div class="team-stat-item">
                             <div class="value" id="adv-pb">0</div>
@@ -211,7 +211,7 @@
                         </div>
                         <div class="team-stat-item">
                             <div class="value" id="adv-neutralise">0</div>
-                            <div class="label">Neutralisé</div>
+                            <div class="label">Neutralis�</div>
                         </div>
                     </div>
                 </div>
@@ -220,25 +220,25 @@
             <!-- Players Stats Table -->
             <div class="section" id="players-section" style="display: none;">
                 <div class="section-header">
-                    <h2 class="section-title">📋 Statistiques Joueurs</h2>
-                    <button class="avg-toggle-btn" id="avg-toggle-btn" onclick="togglePlayerAverages()">⌀ Moyenne</button>
+                    <h2 class="section-title">?? Statistiques Joueurs</h2>
+                    <button class="avg-toggle-btn" id="avg-toggle-btn" onclick="togglePlayerAverages()">? Moyenne</button>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th id="th-joueur" onclick="setSortCol('joueur')">Joueur <span class="sort-icon">↕</span></th>
-                                <th id="th-buts" class="sort-active" onclick="setSortCol('buts')">Buts <span class="sort-icon">↓</span></th>
-                                <th id="th-tirsRates" onclick="setSortCol('tirsRates')">Tir raté <span class="sort-icon">↕</span></th>
-                                <th id="th-eff" onclick="setSortCol('eff')">% Réu <span class="sort-icon">↕</span></th>
-                                <th id="th-pen" onclick="setSortCol('pen')">Pen <span class="sort-icon">↕</span></th>
-                                <th id="th-pb" onclick="setSortCol('pb')">PB <span class="sort-icon">↕</span></th>
-                                <th id="th-po" onclick="setSortCol('po')">PO <span class="sort-icon">↕</span></th>
-                                <th id="th-neutralise" onclick="setSortCol('neutralise')">Neutralisé <span class="sort-icon">↕</span></th>
-                                <th id="th-pd" onclick="setSortCol('pd')">PD <span class="sort-icon">↕</span></th>
-                                <th id="th-tj" onclick="setSortCol('tj')">Tps Jeu <span class="sort-icon">↕</span></th>
-                                <th id="th-moyTJ" onclick="setSortCol('moyTJ')">Moy TJ <span class="sort-icon">↕</span></th>
-                                <th id="th-matchsTJ" onclick="setSortCol('matchsTJ')">Matchs TJ <span class="sort-icon">↕</span></th>
+                                <th id="th-joueur" onclick="setSortCol('joueur')">Joueur <span class="sort-icon">?</span></th>
+                                <th id="th-buts" class="sort-active" onclick="setSortCol('buts')">Buts <span class="sort-icon">?</span></th>
+                                <th id="th-tirsRates" onclick="setSortCol('tirsRates')">Tir rat� <span class="sort-icon">?</span></th>
+                                <th id="th-eff" onclick="setSortCol('eff')">% R�u <span class="sort-icon">?</span></th>
+                                <th id="th-pen" onclick="setSortCol('pen')">Pen <span class="sort-icon">?</span></th>
+                                <th id="th-pb" onclick="setSortCol('pb')">PB <span class="sort-icon">?</span></th>
+                                <th id="th-po" onclick="setSortCol('po')">PO <span class="sort-icon">?</span></th>
+                                <th id="th-neutralise" onclick="setSortCol('neutralise')">Neutralis� <span class="sort-icon">?</span></th>
+                                <th id="th-pd" onclick="setSortCol('pd')">PD <span class="sort-icon">?</span></th>
+                                <th id="th-tj" onclick="setSortCol('tj')">Tps Jeu <span class="sort-icon">?</span></th>
+                                <th id="th-moyTJ" onclick="setSortCol('moyTJ')">Moy TJ <span class="sort-icon">?</span></th>
+                                <th id="th-matchsTJ" onclick="setSortCol('matchsTJ')">Matchs TJ <span class="sort-icon">?</span></th>
                             </tr>
                         </thead>
                         <tbody id="players-stats-table">
@@ -248,12 +248,12 @@
             </div>
         </div>
 
-        <!-- Match — fusionné dans page-analyse -->
+        <!-- Match � fusionn� dans page-analyse -->
         <div class="page" id="page-match" style="display:none !important;"></div>
 
         <!-- Analyse Page -->
         <div class="page" id="page-analyse">
-            <!-- Bloc Match : terrain + stats équipes -->
+            <!-- Bloc Match : terrain + stats �quipes -->
             <div class="section">
                 <div class="filters">
                     <div class="filter-group" style="position:relative;">
@@ -261,7 +261,7 @@
                         <div class="multi-select-container">
                             <button type="button" class="multi-select-btn" id="match-page-btn" onclick="toggleMatchPageDropdown()">
                                 <span id="match-page-text">Tous les matchs</span>
-                                <span class="dropdown-arrow">▼</span>
+                                <span class="dropdown-arrow">?</span>
                             </button>
                             <div class="multi-select-dropdown" id="match-page-dropdown" style="display:none;">
                                 <label class="checkbox-item">
@@ -280,11 +280,11 @@
                         </select>
                     </div>
                     <div class="filter-group" style="position:relative;">
-                        <label>Résultat</label>
+                        <label>R�sultat</label>
                         <div class="multi-select-container">
                             <button type="button" class="multi-select-btn" id="match-resultat-btn" onclick="toggleResultatDropdown()">
                                 <span id="match-resultat-text">Tous</span>
-                                <span class="dropdown-arrow">▼</span>
+                                <span class="dropdown-arrow">?</span>
                             </button>
                             <div class="multi-select-dropdown" id="match-resultat-dropdown" style="display:none;">
                                 <label class="checkbox-item">
@@ -293,7 +293,7 @@
                                 </label>
                                 <div id="match-resultat-checkboxes">
                                     <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="But" checked onchange="updateResultatSelection()"><span>But</span></label>
-                                    <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="Tir raté" checked onchange="updateResultatSelection()"><span>Tir raté</span></label>
+                                    <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="Tir rat�" checked onchange="updateResultatSelection()"><span>Tir rat�</span></label>
                                     <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="PB" checked onchange="updateResultatSelection()"><span>PB</span></label>
                                     <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="PO" checked onchange="updateResultatSelection()"><span>PO</span></label>
                                     <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="Jet franc" checked onchange="updateResultatSelection()"><span>Jet franc</span></label>
@@ -321,7 +321,7 @@
                         </div>
                         <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.6rem;font-size:0.78rem;color:#475569;">
                             <span><svg width="12" height="12" style="vertical-align:middle;margin-right:3px"><circle cx="6" cy="6" r="5" fill="#10B981"/></svg>But</span>
-                            <span><svg width="14" height="14" style="vertical-align:middle;margin-right:3px"><line x1="2" y1="2" x2="12" y2="12" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/></svg>Tir raté</span>
+                            <span><svg width="14" height="14" style="vertical-align:middle;margin-right:3px"><line x1="2" y1="2" x2="12" y2="12" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/></svg>Tir rat�</span>
                             <span><svg width="14" height="14" style="vertical-align:middle;margin-right:3px"><line x1="2" y1="2" x2="12" y2="12" stroke="#8B4513" stroke-width="2.5" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="#8B4513" stroke-width="2.5" stroke-linecap="round"/></svg>PB</span>
                             <span><svg width="12" height="12" style="vertical-align:middle;margin-right:3px"><circle cx="6" cy="6" r="5" fill="#3B82F6"/></svg>PO</span>
                             <span><svg width="12" height="12" style="vertical-align:middle;margin-right:3px"><polygon points="6,1 11,11 1,11" fill="#F59E0B"/></svg>Jet franc</span>
@@ -330,9 +330,9 @@
 
                     <!-- Card FENIX -->
                     <div class="match-team-card fenix">
-                        <div class="mtc-header">🔵 FENIX</div>
+                        <div class="mtc-header">?? FENIX</div>
                         <div class="mtc-section">
-                            <div class="mtc-section-title">GÉNÉRAL</div>
+                            <div class="mtc-section-title">G�N�RAL</div>
                             <div class="mtc-row">
                                 <div class="mtc-stat"><div class="mtc-lbl">POSS</div><div class="mtc-val" id="mf-gen-poss">0</div></div>
                                 <div class="mtc-stat"><div class="mtc-lbl">BUT</div><div class="mtc-but" id="mf-gen-sub">0/0</div></div>
@@ -343,7 +343,7 @@
                             </div>
                         </div>
                         <div class="mtc-section">
-                            <div class="mtc-section-title">ATT PLACÉE</div>
+                            <div class="mtc-section-title">ATT PLAC�E</div>
                             <div class="mtc-row">
                                 <div class="mtc-stat"><div class="mtc-lbl">POSS</div><div class="mtc-val" id="mf-ap-poss">0</div></div>
                                 <div class="mtc-stat"><div class="mtc-lbl">BUT</div><div class="mtc-but" id="mf-ap-sub">0/0</div></div>
@@ -368,9 +368,9 @@
 
                     <!-- Card ADVERSAIRE -->
                     <div class="match-team-card adversaire">
-                        <div class="mtc-header" id="match-adv-title">🔴 ADVERSAIRE</div>
+                        <div class="mtc-header" id="match-adv-title">?? ADVERSAIRE</div>
                         <div class="mtc-section">
-                            <div class="mtc-section-title">GÉNÉRAL</div>
+                            <div class="mtc-section-title">G�N�RAL</div>
                             <div class="mtc-row">
                                 <div class="mtc-stat"><div class="mtc-lbl">POSS</div><div class="mtc-val" id="ma-gen-poss">0</div></div>
                                 <div class="mtc-stat"><div class="mtc-lbl">BUT</div><div class="mtc-but" id="ma-gen-sub">0/0</div></div>
@@ -381,7 +381,7 @@
                             </div>
                         </div>
                         <div class="mtc-section">
-                            <div class="mtc-section-title">ATT PLACÉE</div>
+                            <div class="mtc-section-title">ATT PLAC�E</div>
                             <div class="mtc-row">
                                 <div class="mtc-stat"><div class="mtc-lbl">POSS</div><div class="mtc-val" id="ma-ap-poss">0</div></div>
                                 <div class="mtc-stat"><div class="mtc-lbl">BUT</div><div class="mtc-but" id="ma-ap-sub">0/0</div></div>
@@ -408,11 +408,11 @@
 
             <div class="analyse-separator"></div>
 
-            <!-- Bloc Analyse détaillée -->
+            <!-- Bloc Analyse d�taill�e -->
             <div class="section">
                 <div class="filters">
                     <div class="filter-group">
-                        <label>Sélectionner un match</label>
+                        <label>S�lectionner un match</label>
                         <select id="filter-analyse-match" onchange="updateAnalysePage()">
                             <option value="">-- Choisir un match --</option>
                         </select>
@@ -423,7 +423,7 @@
                     <div id="periode-warning"></div>
                     <!-- Timeline du score -->
                     <div class="analyse-section">
-                        <h3 class="analyse-section-title">📈 Évolution du Score</h3>
+                        <h3 class="analyse-section-title">?? �volution du Score</h3>
                         <div id="timeline-scores" class="timeline-scores"></div>
                         <div class="timeline-container">
                             <canvas id="timeline-canvas"></canvas>
@@ -434,36 +434,36 @@
 
                     <!-- Analyse comparative -->
                     <div class="analyse-grid">
-                        <!-- Résumé automatique du match -->
+                        <!-- R�sum� automatique du match -->
                         <div class="analyse-card ia-card">
                             <div class="analyse-card-header">
-                                <span>📊</span>
-                                <h3>Résumé du match</h3>
+                                <span>??</span>
+                                <h3>R�sum� du match</h3>
                             </div>
                             <div class="analyse-card-body" id="ia-analyse">
-                                <!-- Généré automatiquement -->
+                                <!-- G�n�r� automatiquement -->
                             </div>
                         </div>
 
                         <!-- Avis Coach -->
                         <div class="analyse-card coach-card">
                             <div class="analyse-card-header">
-                                <span>👨‍🏫</span>
+                                <span>?????</span>
                                 <h3>Ton Analyse (Coach)</h3>
                             </div>
                             <div class="analyse-card-body">
-                                <textarea id="coach-analyse" placeholder="Écris ici ton analyse personnelle du match...&#10;&#10;Ex: 'On a perdu le match à cause de la gestion des temps faibles. Les 5 dernières minutes de MT1 ont été catastrophiques...'"></textarea>
-                                <button class="save-coach-btn" onclick="saveCoachAnalyse()">💾 Sauvegarder mon analyse</button>
-                                <div id="coach-saved-msg" class="saved-msg" style="display: none;">✓ Analyse sauvegardée</div>
+                                <textarea id="coach-analyse" placeholder="�cris ici ton analyse personnelle du match...&#10;&#10;Ex: 'On a perdu le match � cause de la gestion des temps faibles. Les 5 derni�res minutes de MT1 ont �t� catastrophiques...'"></textarea>
+                                <button class="save-coach-btn" onclick="saveCoachAnalyse()">?? Sauvegarder mon analyse</button>
+                                <div id="coach-saved-msg" class="saved-msg" style="display: none;">? Analyse sauvegard�e</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Indicateurs clés -->
+                    <!-- Indicateurs cl�s -->
                     <div class="analyse-section">
-                        <h3 class="analyse-section-title">📊 Indicateurs Clés</h3>
+                        <h3 class="analyse-section-title">?? Indicateurs Cl�s</h3>
                         <div class="indicateurs-grid" id="indicateurs-grid">
-                            <!-- Généré automatiquement -->
+                            <!-- G�n�r� automatiquement -->
                         </div>
                     </div>
 
@@ -472,23 +472,23 @@
                         <div id="enc-familles-section"></div>
                     </div>
 
-                    <!-- Gardien × systèmes adverses (A-06/07) -->
+                    <!-- Gardien � syst�mes adverses (A-06/07) -->
                     <div class="analyse-section">
                         <div id="enc-gardien-section"></div>
                     </div>
 
                     <!-- Chat IA -->
                     <div class="analyse-section">
-                        <h3 class="analyse-section-title">💬 Chat IA - Pose tes questions</h3>
+                        <h3 class="analyse-section-title">?? Chat IA - Pose tes questions</h3>
                         <div class="chat-container">
                             <div class="chat-messages" id="chat-messages">
                                 <div class="chat-message ia">
-                                    <div class="chat-avatar">🤖</div>
-                                    <div class="chat-content">Salut Coach ! Je suis prêt à analyser ce match avec toi. Pose-moi tes questions sur les stats, les joueurs, les moments clés...</div>
+                                    <div class="chat-avatar">??</div>
+                                    <div class="chat-content">Salut Coach ! Je suis pr�t � analyser ce match avec toi. Pose-moi tes questions sur les stats, les joueurs, les moments cl�s...</div>
                                 </div>
                             </div>
                             <div class="chat-input-container">
-                                <input type="text" id="chat-input" placeholder="Ex: Pourquoi on a perdu ? Qui a été le plus efficace ?" onkeypress="if(event.key==='Enter')sendChatMessage()">
+                                <input type="text" id="chat-input" placeholder="Ex: Pourquoi on a perdu ? Qui a �t� le plus efficace ?" onkeypress="if(event.key==='Enter')sendChatMessage()">
                                 <button class="chat-send-btn" onclick="sendChatMessage()">Envoyer</button>
                             </div>
                         </div>
@@ -499,8 +499,8 @@
                     <div id="enc-saison-section"></div>
                     <div id="saison-correlations"></div>
                     <div class="no-data" style="margin-top:1.5rem">
-                        <div class="no-data-icon">🔍</div>
-                        <p>Sélectionne un match pour voir l'analyse détaillée</p>
+                        <div class="no-data-icon">??</div>
+                        <p>S�lectionne un match pour voir l'analyse d�taill�e</p>
                     </div>
                 </div>
             </div>
@@ -509,11 +509,11 @@
         <!-- Joueurs Page -->
         <div class="page" id="page-joueurs">
             <div class="section">
-                <!-- Titre + filtre sur la même ligne -->
+                <!-- Titre + filtre sur la m�me ligne -->
                 <div class="joueurs-topbar">
-                    <h2 class="section-title">👥 Statistiques Joueurs</h2>
+                    <h2 class="section-title">?? Statistiques Joueurs</h2>
                     <div id="filter-bilan-joueur-wrap" class="filter-group" style="display:none">
-                        <label>Période</label>
+                        <label>P�riode</label>
                         <select id="filter-joueur-bilan" onchange="syncBilanFilters('filter-joueur-bilan');updateJoueursPage()">
                             <option value="">Toute la saison</option>
                         </select>
@@ -559,17 +559,17 @@
 
                             <!-- Ligne de but -->
                             <line x1="0" y1="0" x2="100" y2="0" stroke="white" stroke-width="0.6"/>
-                            <!-- Lignes latérales -->
+                            <!-- Lignes lat�rales -->
                             <line x1="0" y1="0" x2="0" y2="100" stroke="white" stroke-width="0.6"/>
                             <line x1="100" y1="0" x2="100" y2="100" stroke="white" stroke-width="0.6"/>
-                            <!-- Ligne médiane (bas) -->
+                            <!-- Ligne m�diane (bas) -->
                             <line x1="0" y1="100" x2="100" y2="100" stroke="white" stroke-width="0.6"/>
 
                             <!-- Zone 6m (arc vers le bas, into the court) -->
                             <path d="M 12.5,0 A 37.5,30 0 0,0 87.5,0"
                                   fill="rgba(255,255,255,0.07)" stroke="white" stroke-width="0.65"/>
 
-                            <!-- Ligne 9m (pointillés, arc vers le bas) -->
+                            <!-- Ligne 9m (pointill�s, arc vers le bas) -->
                             <path d="M 0,15 A 52,44 0 0,0 100,15"
                                   fill="none" stroke="white" stroke-width="0.55" stroke-dasharray="2.5,1.8" opacity="0.8"/>
 
@@ -580,39 +580,39 @@
                             <g id="court-players"></g>
                         </svg>
                     </div>
-                    <!-- Colonne droite : carte joueur + tableau matchs empilés -->
+                    <!-- Colonne droite : carte joueur + tableau matchs empil�s -->
                     <div class="joueur-right-col">
                         <div class="joueur-panel" id="joueur-panel">
                             <div class="jp-empty">
-                                <div style="font-size:2.5rem;margin-bottom:0.6rem;opacity:0.4">👆</div>
-                                <div style="font-weight:600;color:#475569;font-size:0.95rem">Sélectionne un joueur sur le terrain</div>
+                                <div style="font-size:2.5rem;margin-bottom:0.6rem;opacity:0.4">??</div>
+                                <div style="font-weight:600;color:#475569;font-size:0.95rem">S�lectionne un joueur sur le terrain</div>
                             </div>
                         </div>
-                        <!-- Tableau stats match — sous la carte, même largeur -->
+                        <!-- Tableau stats match � sous la carte, m�me largeur -->
                         <div id="joueur-matches"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Modal Détail Notes Joueur -->
+        <!-- Modal D�tail Notes Joueur -->
         <!-- Modal Zone GB -->
         <div class="modal-overlay" id="gb-zone-modal" style="display:none" onclick="if(event.target===this)closeGbZoneModal()">
             <div class="modal-content" style="width:min(680px,92vw);max-height:80vh;display:flex;flex-direction:column;border-radius:16px;overflow:hidden">
                 <div class="modal-header">
-                    <h2 id="gb-zone-modal-title">Zones — Gardien</h2>
-                    <button class="modal-close" onclick="closeGbZoneModal()">✕</button>
+                    <h2 id="gb-zone-modal-title">Zones � Gardien</h2>
+                    <button class="modal-close" onclick="closeGbZoneModal()">?</button>
                 </div>
                 <div style="flex:1;overflow-y:auto;padding:1rem">
                     <table id="gb-zone-table" style="width:100%;border-collapse:collapse;font-size:0.85rem">
                         <thead>
                             <tr style="background:#F8FAFC">
                                 <th style="padding:0.5rem;text-align:left;border-bottom:2px solid #E2E8F0">Zone</th>
-                                <th style="padding:0.5rem;text-align:left;border-bottom:2px solid #E2E8F0">Difficulté</th>
-                                <th style="padding:0.5rem;text-align:center;border-bottom:2px solid #E2E8F0;color:var(--fenix-success)">Arrêts</th>
+                                <th style="padding:0.5rem;text-align:left;border-bottom:2px solid #E2E8F0">Difficult�</th>
+                                <th style="padding:0.5rem;text-align:center;border-bottom:2px solid #E2E8F0;color:var(--fenix-success)">Arr�ts</th>
                                 <th style="padding:0.5rem;text-align:center;border-bottom:2px solid #E2E8F0;color:var(--fenix-danger)">Buts enc.</th>
                                 <th style="padding:0.5rem;text-align:center;border-bottom:2px solid #E2E8F0">Tirs</th>
-                                <th style="padding:0.5rem;text-align:center;border-bottom:2px solid #E2E8F0">% Arrêts</th>
+                                <th style="padding:0.5rem;text-align:center;border-bottom:2px solid #E2E8F0">% Arr�ts</th>
                             </tr>
                         </thead>
                         <tbody id="gb-zone-tbody"></tbody>
@@ -624,22 +624,22 @@
         <div class="modal-overlay" id="notes-detail-modal" style="display:none" onclick="if(event.target===this)closeNotesDetail()">
             <div class="modal-content nd-modal">
                 <div class="modal-header">
-                    <h2 id="nd-title">Détail Notes</h2>
+                    <h2 id="nd-title">D�tail Notes</h2>
                     <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <button id="nd-graph-btn" class="nd-graph-btn">📈</button>
-                        <button class="modal-close" onclick="closeNotesDetail()">✕</button>
+                        <button id="nd-graph-btn" class="nd-graph-btn">??</button>
+                        <button class="modal-close" onclick="closeNotesDetail()">?</button>
                     </div>
                 </div>
                 <div class="nd-body" id="nd-body"></div>
             </div>
         </div>
 
-        <!-- Modal Détail Joueur -->
+        <!-- Modal D�tail Joueur -->
         <div class="modal-overlay" id="player-modal" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2 id="modal-player-name">Nom du joueur</h2>
-                    <button class="modal-close" onclick="closePlayerModal()">✕</button>
+                    <button class="modal-close" onclick="closePlayerModal()">?</button>
                 </div>
                 <div class="modal-body">
                     <div class="table-container">
@@ -648,7 +648,7 @@
                                 <tr>
                                     <th>Match</th>
                                     <th>Buts</th>
-                                    <th>Tirs ratés</th>
+                                    <th>Tirs rat�s</th>
                                     <th>% Tir Champ</th>
                                     <th>Pen</th>
                                     <th>% Pen</th>
@@ -670,7 +670,7 @@
         <div class="page" id="page-notes">
             <div class="section">
                 <div class="section-header">
-                    <h2 class="section-title">⭐ Notes & Actions Joueurs</h2>
+                    <h2 class="section-title">? Notes & Actions Joueurs</h2>
                 </div>
 
                 <div class="filters">
@@ -691,26 +691,26 @@
                 <!-- Rendu dynamique : une section par bilan + Toute la saison -->
                 <div id="notes-periods-container"></div>
 
-                <!-- Champ caché conservé pour compatibilité syncBilanFilters -->
+                <!-- Champ cach� conserv� pour compatibilit� syncBilanFilters -->
                 <select id="filter-notes-bilan" style="display:none">
                     <option value="">Toute la saison</option>
                 </select>
             </div>
 
-            <!-- Section Notes Gardiens — visible uniquement si GB sélectionné -->
+            <!-- Section Notes Gardiens � visible uniquement si GB s�lectionn� -->
             <div id="section-notes-gb" class="section" style="margin-top:1.5rem;display:none;">
                 <div class="section-header">
-                    <h2 class="section-title">🧤 Notes Gardiens</h2>
+                    <h2 class="section-title">?? Notes Gardiens</h2>
                 </div>
 
-                <!-- Légende difficulté -->
+                <!-- L�gende difficult� -->
                 <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem;font-size:0.75rem;">
-                    <span style="background:#FEE2E2;color:#991B1B;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">Très difficile · Arrêt +3 / But -1</span>
-                    <span style="background:#FFEDD5;color:#92400E;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">Difficile · Arrêt +2–3 / But -1</span>
-                    <span style="background:#FEF3C7;color:#78350F;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">Moyen · Arrêt +2 / But -1</span>
-                    <span style="background:#D1FAE5;color:#065F46;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">Facile · Arrêt +1 / But -1</span>
-                    <span style="background:#F1F5F9;color:#475569;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">Très facile · Arrêt +1 / But -1</span>
-                    <span style="background:#EDE9FE;color:#5B21B6;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">But GB +1 · PB GB -1</span>
+                    <span style="background:#FEE2E2;color:#991B1B;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">Tr�s difficile � Arr�t +3 / But -1</span>
+                    <span style="background:#FFEDD5;color:#92400E;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">Difficile � Arr�t +2�3 / But -1</span>
+                    <span style="background:#FEF3C7;color:#78350F;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">Moyen � Arr�t +2 / But -1</span>
+                    <span style="background:#D1FAE5;color:#065F46;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">Facile � Arr�t +1 / But -1</span>
+                    <span style="background:#F1F5F9;color:#475569;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">Tr�s facile � Arr�t +1 / But -1</span>
+                    <span style="background:#EDE9FE;color:#5B21B6;border-radius:6px;padding:0.2rem 0.5rem;font-weight:600;">But GB +1 � PB GB -1</span>
                 </div>
 
                 <div class="table-container">
@@ -718,10 +718,10 @@
                         <thead>
                             <tr>
                                 <th>Gardien</th>
-                                <th>Arrêts</th>
+                                <th>Arr�ts</th>
                                 <th>Buts enc.</th>
-                                <th>% Arrêts</th>
-                                <th>Score Arrêts</th>
+                                <th>% Arr�ts</th>
+                                <th>Score Arr�ts</th>
                                 <th>Score Buts</th>
                                 <th>Score Total</th>
                                 <th>/match</th>
@@ -736,34 +736,34 @@
             </div>
         </div>
 
-        <!-- Graphiques combinés : Joueur + GB -->
+        <!-- Graphiques combin�s : Joueur + GB -->
         <div class="page" id="page-notegraph" onclick="ngGoBack()">
             <div class="ng-page-layout" onclick="event.stopPropagation()">
                 <div class="ng-header">
-                    <button class="btn-comparer" onclick="toggleCompare('ng-filters', this)">🔀 Comparer</button>
+                    <button class="btn-comparer" onclick="toggleCompare('ng-filters', this)">?? Comparer</button>
                     <div id="ng-filters" style="display:none;" class="compare-filters">
                         <div id="ng-compare-joueur-wrap" class="filter-group" style="margin:0">
                             <label style="color:white;font-weight:600;">Joueur</label>
                             <select id="ng-joueur" onchange="updateNoteGraph()">
-                                <option value="">— Joueur —</option>
+                                <option value="">� Joueur �</option>
                             </select>
                         </div>
                         <div id="ng-compare-joueur-2-wrap" class="filter-group" style="margin:0;display:none">
                             <label style="color:#FCA5A5;font-weight:600;">Joueur 2</label>
                             <select id="ng-joueur-2" onchange="updateNoteGraph()">
-                                <option value="">— Joueur 2 —</option>
+                                <option value="">� Joueur 2 �</option>
                             </select>
                         </div>
                         <div id="ng-compare-gardien-wrap" class="filter-group" style="margin:0">
                             <label style="color:white;font-weight:600;">Gardien</label>
                             <select id="gbg-gardien" onchange="updateGbGraph()">
-                                <option value="">— Gardien —</option>
+                                <option value="">� Gardien �</option>
                             </select>
                         </div>
                         <div id="ng-compare-gardien-2-wrap" class="filter-group" style="margin:0;display:none">
                             <label style="color:#FCA5A5;font-weight:600;">Gardien 2</label>
                             <select id="gbg-gardien-2" onchange="updateGbGraph()">
-                                <option value="">— Gardien 2 —</option>
+                                <option value="">� Gardien 2 �</option>
                             </select>
                         </div>
                     </div>
@@ -771,9 +771,9 @@
                 </div>
                 <div class="ng-charts-body">
                     <div id="ng-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:rgba(255,255,255,0.5);gap:12px;">
-                        <span style="font-size:2.5rem">📈</span>
-                        <span style="font-size:0.9rem;font-weight:600">Sélectionne un joueur sur le terrain</span>
-                        <button onclick="ngGoBack()" style="margin-top:8px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:7px 18px;border-radius:20px;cursor:pointer;font-size:0.82rem">← Retour</button>
+                        <span style="font-size:2.5rem">??</span>
+                        <span style="font-size:0.9rem;font-weight:600">S�lectionne un joueur sur le terrain</span>
+                        <button onclick="ngGoBack()" style="margin-top:8px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:7px 18px;border-radius:20px;cursor:pointer;font-size:0.82rem">? Retour</button>
                     </div>
                     <div class="ng-chart-section" id="ng-section-joueur" style="display:none">
                         <canvas id="ng-canvas"></canvas>
@@ -789,8 +789,8 @@
         <div class="page" id="page-gardiens">
             <div class="section">
                 <div class="section-header">
-                    <h2 class="section-title">🥅 Statistiques Gardiens</h2>
-                    <button class="btn-comparer btn-comparer-dark" onclick="toggleCompare('gardien-filters', this)">🔀 Comparer</button>
+                    <h2 class="section-title">?? Statistiques Gardiens</h2>
+                    <button class="btn-comparer btn-comparer-dark" onclick="toggleCompare('gardien-filters', this)">?? Comparer</button>
                 </div>
 
                 <div id="gardien-filters" class="filters compare-filters" style="display:none;">
@@ -814,15 +814,15 @@
                         <div class="value" id="gb-tirs">0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="label">Arrêts</div>
+                        <div class="label">Arr�ts</div>
                         <div class="value" id="gb-arrets">0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="label">% Arrêts</div>
+                        <div class="label">% Arr�ts</div>
                         <div class="value" id="gb-pct">0%</div>
                     </div>
                     <div class="stat-card">
-                        <div class="label">Buts encaissés</div>
+                        <div class="label">Buts encaiss�s</div>
                         <div class="value" id="gb-buts">0</div>
                     </div>
                 </div>
@@ -833,12 +833,12 @@
                     <div class="goal-wrapper"><canvas id="goal-canvas-ald"></canvas><div class="label">Externe Droit</div></div>
                 </div>
 
-                <!-- Sélecteur de zone gardien -->
+                <!-- S�lecteur de zone gardien -->
                 <div style="margin-top:1rem;">
                     <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">
                         <span style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;">Zone</span>
                         <span id="zone-filter-active-gardien" style="font-size:0.78rem;color:#2563eb;font-weight:700;"></span>
-                        <button id="zone-reset-btn-gardien" onclick="toggleGardienZone(null)" style="display:none;font-size:0.72rem;color:#2563eb;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;">✕ Tout voir</button>
+                        <button id="zone-reset-btn-gardien" onclick="toggleGardienZone(null)" style="display:none;font-size:0.72rem;color:#2563eb;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;">? Tout voir</button>
                     </div>
                     <div id="zone-rect-selector-gardien" style="display:flex;flex-direction:column;gap:4px;">
                         <div class="zr-row">
@@ -866,8 +866,8 @@
                 </div>
 
                 <div class="legend" style="margin-top:0.75rem;">
-                    <div class="legend-item"><div class="legend-dot tir-rate"></div><span>But encaissé</span></div>
-                    <div class="legend-item"><div class="legend-dot but"></div><span>Tir arrêté</span></div>
+                    <div class="legend-item"><div class="legend-dot tir-rate"></div><span>But encaiss�</span></div>
+                    <div class="legend-item"><div class="legend-dot but"></div><span>Tir arr�t�</span></div>
                 </div>
             </div>
         </div>
@@ -876,19 +876,19 @@
         <div class="page" id="page-impact">
             <div class="section">
                 <div class="section-header">
-                    <h2 class="section-title">🎯 Impact au Shoot</h2>
+                    <h2 class="section-title">?? Impact au Shoot</h2>
                     <div id="filter-bilan-impact-wrap" style="display:none;align-items:center;gap:6px">
-                        <label style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase">Période</label>
+                        <label style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase">P�riode</label>
                         <select id="filter-impact-bilan" onchange="impactBilanFilter=this.value;updateImpactPage()"
                                 style="border:1px solid #E2E8F0;border-radius:8px;padding:4px 10px;font-size:0.82rem;color:#1E293B;background:white">
                             <option value="">Toute la saison</option>
                         </select>
                     </div>
-                    <button id="btn-efficacite" class="btn-comparer btn-comparer-dark" onclick="toggleEfficaciteMode(this)">🎨 Efficacité</button>
-                    <button class="btn-comparer btn-comparer-dark" onclick="toggleCompare('impact-filters', this)">🔀 Comparer</button>
+                    <button id="btn-efficacite" class="btn-comparer btn-comparer-dark" onclick="toggleEfficaciteMode(this)">?? Efficacit�</button>
+                    <button class="btn-comparer btn-comparer-dark" onclick="toggleCompare('impact-filters', this)">?? Comparer</button>
                 </div>
 
-                <!-- Filtres + Stats alignés sur la même ligne -->
+                <!-- Filtres + Stats align�s sur la m�me ligne -->
                 <div style="display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem;">
                     <div id="impact-filters" class="filters compare-filters" style="flex:1;margin:0;display:none;">
                         <div class="filter-group">
@@ -898,11 +898,11 @@
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label>Résultat</label>
+                            <label>R�sultat</label>
                             <select id="filter-impact-resultat" onchange="updateImpactPage()">
                                 <option value="">Tous</option>
                                 <option value="But">But</option>
-                                <option value="Tir raté">Tir arrêté</option>
+                                <option value="Tir rat�">Tir arr�t�</option>
                             </select>
                         </div>
                     </div>
@@ -918,8 +918,8 @@
                         </div>
                         <div style="font-size:1.3rem;font-weight:300;color:#cbd5e1;line-height:1;margin-left:0.25rem;">|</div>
                         <div style="text-align:center;margin-left:0.25rem;">
-                            <div style="font-size:1.5rem;font-weight:800;" id="impact-eff">—</div>
-                            <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;gap:2px;">Efficacité<span class="eff-info-btn" id="impact-eff-info-btn" onclick="openEffInfoModal(event,_effInfoPoste)">i</span></div>
+                            <div style="font-size:1.5rem;font-weight:800;" id="impact-eff">�</div>
+                            <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;gap:2px;">Efficacit�<span class="eff-info-btn" id="impact-eff-info-btn" onclick="openEffInfoModal(event,_effInfoPoste)">i</span></div>
                         </div>
                     </div>
                 </div>
@@ -931,12 +931,12 @@
                     <div class="goal-wrapper"><canvas id="impact-canvas-ald"></canvas><div class="label">Externe Droit</div></div>
                 </div>
 
-                <!-- Sélecteur de zone rectangulaire -->
+                <!-- S�lecteur de zone rectangulaire -->
                 <div style="margin-top:1rem;">
                     <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">
                         <span style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;">Zone</span>
                         <span id="zone-filter-active" style="font-size:0.78rem;color:#2563eb;font-weight:700;"></span>
-                        <button id="zone-reset-btn" onclick="toggleImpactZone(null)" style="display:none;font-size:0.72rem;color:#2563eb;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;">✕ Tout voir</button>
+                        <button id="zone-reset-btn" onclick="toggleImpactZone(null)" style="display:none;font-size:0.72rem;color:#2563eb;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;">? Tout voir</button>
                     </div>
                     <div id="zone-rect-selector" style="display:flex;flex-direction:column;gap:4px;">
                         <div class="zr-row">
@@ -965,8 +965,8 @@
 
                 <div class="legend" style="margin-top:0.75rem;display:flex;align-items:center;gap:2px;flex-wrap:wrap">
                     <span class="pmz-filter-item pmz-filter-active" id="impact-rf-tout"  onclick="onImpactResultFilter('')">Tout</span>
-                    <span class="pmz-filter-item" id="impact-rf-but"  onclick="onImpactResultFilter('But')"><span style="color:#10B981">●</span> But marqué</span>
-                    <span class="pmz-filter-item" id="impact-rf-rate" onclick="onImpactResultFilter('Tir raté')"><span style="color:#EF4444">✕</span> Tir arrêté/raté</span>
+                    <span class="pmz-filter-item" id="impact-rf-but"  onclick="onImpactResultFilter('But')"><span style="color:#10B981">?</span> But marqu�</span>
+                    <span class="pmz-filter-item" id="impact-rf-rate" onclick="onImpactResultFilter('Tir rat�')"><span style="color:#EF4444">?</span> Tir arr�t�/rat�</span>
                 </div>
             </div>
         </div>
@@ -984,8 +984,8 @@
         let TEMPS_JEU = {}; // { nomLower: { 'J01': minutes, 'J02': minutes, ... } }
         let BILANS = [];    // [{ nom, saison, journeeFin, matchs[], label }]
         let _rawBilanRows = [];
-        let _ngBilanMatches = null; // filtre bilan passé au notegraph depuis la page Joueurs
-        let GARDIENS_FENIX = []; // Dérivé de JOUEURS_TERRAIN (poste GB) au chargement des données
+        let _ngBilanMatches = null; // filtre bilan pass� au notegraph depuis la page Joueurs
+        let GARDIENS_FENIX = []; // D�riv� de JOUEURS_TERRAIN (poste GB) au chargement des donn�es
         let FIELD_POSITIONS = [];
         let impactZoneFilter = '';
         let impactBilanFilter = '';
@@ -994,16 +994,16 @@
         const IMPACT_DOTS  = { alg: [], face: [], ald: [] };
         const GARDIEN_DOTS = { alg: [], face: [], ald: [] };
 
-        // Seuils d'efficacité par poste — standards D1 Starligue 2024-25 (hors penalty)
-        // Violet ≥ hi% = Solide, Vert ≥ mid% = Projetable, Rouge < mid% = Non projetable
+        // Seuils d'efficacit� par poste � standards D1 Starligue 2024-25 (hors penalty)
+        // Violet = hi% = Solide, Vert = mid% = Projetable, Rouge < mid% = Non projetable
         const EFF_SEUILS = {
-            PIV: { hi: 79, mid: 74 }, // Pivot — moy D1 77,1%
-            AG:  { hi: 74, mid: 69 }, // Ailier G — moy D1 72,4%
-            AD:  { hi: 74, mid: 69 }, // Ailier D — moy D1 73,0%
-            DC:  { hi: 64, mid: 59 }, // Demi-Centre — moy D1 61,9%
-            ARD: { hi: 63, mid: 58 }, // Arrière D — moy D1 59,1%
-            ARG: { hi: 60, mid: 55 }, // Arrière G — moy D1 57,7%
-            GB:  { hi: 35, mid: 30 }, // Gardien — % arrêts : moy monde 30%, top Starligue 36%
+            PIV: { hi: 79, mid: 74 }, // Pivot � moy D1 77,1%
+            AG:  { hi: 74, mid: 69 }, // Ailier G � moy D1 72,4%
+            AD:  { hi: 74, mid: 69 }, // Ailier D � moy D1 73,0%
+            DC:  { hi: 64, mid: 59 }, // Demi-Centre � moy D1 61,9%
+            ARD: { hi: 63, mid: 58 }, // Arri�re D � moy D1 59,1%
+            ARG: { hi: 60, mid: 55 }, // Arri�re G � moy D1 57,7%
+            GB:  { hi: 35, mid: 30 }, // Gardien � % arr�ts : moy monde 30%, top Starligue 36%
         };
 
 
@@ -1016,13 +1016,13 @@
 let _effInfoPoste = null;
 
         const EFF_TABLE_DATA = [
-            { poste: 'PIV',  moyD1: '77,1%', np: '< 74%',  proj: '74–78%', sol: '≥ 79%' },
-            { poste: 'AD',   moyD1: '73,0%', np: '< 69%',  proj: '69–73%', sol: '≥ 74%' },
-            { poste: 'AG',   moyD1: '72,4%', np: '< 69%',  proj: '69–73%', sol: '≥ 74%' },
-            { poste: 'DC',   moyD1: '61,9%', np: '< 59%',  proj: '59–63%', sol: '≥ 64%' },
-            { poste: 'ARD',  moyD1: '59,1%', np: '< 58%',  proj: '58–62%', sol: '≥ 63%' },
-            { poste: 'ARG',  moyD1: '57,7%', np: '< 55%',  proj: '55–59%', sol: '≥ 60%' },
-            { poste: 'GB',   moyD1: '~30%',  np: '< 30%',  proj: '30–34%', sol: '≥ 35%' },
+            { poste: 'PIV',  moyD1: '77,1%', np: '< 74%',  proj: '74�78%', sol: '= 79%' },
+            { poste: 'AD',   moyD1: '73,0%', np: '< 69%',  proj: '69�73%', sol: '= 74%' },
+            { poste: 'AG',   moyD1: '72,4%', np: '< 69%',  proj: '69�73%', sol: '= 74%' },
+            { poste: 'DC',   moyD1: '61,9%', np: '< 59%',  proj: '59�63%', sol: '= 64%' },
+            { poste: 'ARD',  moyD1: '59,1%', np: '< 58%',  proj: '58�62%', sol: '= 63%' },
+            { poste: 'ARG',  moyD1: '57,7%', np: '< 55%',  proj: '55�59%', sol: '= 60%' },
+            { poste: 'GB',   moyD1: '~30%',  np: '< 30%',  proj: '30�34%', sol: '= 35%' },
         ];
 
         function openEffInfoModal(event, posteCode) {
@@ -1031,7 +1031,7 @@ let _effInfoPoste = null;
             tbody.innerHTML = EFF_TABLE_DATA.map(r => {
                 const hl = r.poste === posteCode;
                 return `<tr class="${hl ? 'eff-row-hl' : ''}">
-                    <td>${r.poste}${hl ? ' ◀' : ''}</td>
+                    <td>${r.poste}${hl ? ' ?' : ''}</td>
                     <td style="color:#64748b;">${r.moyD1}</td>
                     <td style="color:#dc2626;">${r.np}</td>
                     <td style="color:#2563eb;font-weight:700;">${r.proj}</td>
@@ -1106,13 +1106,13 @@ let _effInfoPoste = null;
                 if (nearby.length > 0) {
                     const lines = nearby.slice(0, 5).map((d, i) => {
                         const r = d.row;
-                        const isArret = isGardien ? r[COLS.finalite] === 'Tir arrêté' : r[COLS.resultat] === 'But';
-                        const marker = isArret ? '●' : '✕';
+                        const isArret = isGardien ? r[COLS.finalite] === 'Tir arr�t�' : r[COLS.resultat] === 'But';
+                        const marker = isArret ? '?' : '?';
                         const color  = isArret ? '#6ee7b7' : '#fca5a5';
                         const bold   = i === 0 ? 'font-weight:700;' : 'opacity:0.75;';
                         return `<div style="${bold}display:flex;gap:0.4rem;align-items:baseline;">` +
                                `<span style="color:${color};font-size:0.9em;">${marker}</span>` +
-                               `<span style="color:#93c5fd;">${r[COLS.field_position] || '—'}</span>` +
+                               `<span style="color:#93c5fd;">${r[COLS.field_position] || '�'}</span>` +
                                `&nbsp;${r[COLS.joueur] || ''}` +
                                `<span style="opacity:0.6;font-size:0.85em;">${r[COLS.rencontre] || ''}</span>` +
                                `</div>`;
@@ -1190,7 +1190,7 @@ let _effInfoPoste = null;
                 const matchVal = document.getElementById('filter-joueur-match')?.value || '';
                 const noteMatchSel = document.getElementById('filter-note-match');
                 if (noteMatchSel) noteMatchSel.value = matchVal;
-                // Sync joueur sélectionné
+                // Sync joueur s�lectionn�
                 if (typeof currentSelectedJoueur !== 'undefined' && currentSelectedJoueur) {
                     const noteJoueurSel = document.getElementById('filter-note-joueur');
                     if (noteJoueurSel) {
@@ -1215,7 +1215,7 @@ let _effInfoPoste = null;
                 const dateEl = document.getElementById('pm-menu-import-date');
                 if (dateEl) {
                     const dt = localStorage.getItem('fenix_data_date') || '';
-                    dateEl.textContent = dt ? 'Données du ' + dt : 'Date import inconnue';
+                    dateEl.textContent = dt ? 'Donn�es du ' + dt : 'Date import inconnue';
                 }
             }
             drop.style.display = open ? 'none' : 'block';
@@ -1234,8 +1234,8 @@ let _effInfoPoste = null;
             const visible = el.style.display !== 'none' && el.style.display !== '';
             el.style.display = visible ? 'none' : 'flex';
             btn.classList.toggle('btn-comparer-active', !visible);
-            btn.textContent = visible ? '🔀 Comparer' : '✕ Fermer';
-            // Pour ng-filters : afficher la paire du bon type (joueur×2 ou gardien×2)
+            btn.textContent = visible ? '?? Comparer' : '? Fermer';
+            // Pour ng-filters : afficher la paire du bon type (joueur�2 ou gardien�2)
             if (filterId === 'ng-filters' && !visible) {
                 const isGB = document.getElementById('ng-section-joueur')?.style.display !== 'block';
                 ['ng-compare-joueur-wrap', 'ng-compare-joueur-2-wrap'].forEach(id => {
@@ -1256,7 +1256,7 @@ let _effInfoPoste = null;
             });
             document.querySelectorAll('.btn-comparer').forEach(btn => {
                 btn.classList.remove('btn-comparer-active');
-                btn.textContent = btn.textContent.includes('Fermer') ? '🔀 Comparer' : btn.textContent;
+                btn.textContent = btn.textContent.includes('Fermer') ? '?? Comparer' : btn.textContent;
             });
         }
 
@@ -1271,9 +1271,9 @@ let _effInfoPoste = null;
                 if (hasPlayer) {
                     const tp = JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, currentSelectedJoueur));
                     const poste = tp ? tp.poste : '';
-                    label.innerHTML = `<strong style="color:#1e293b">${currentSelectedJoueur}</strong>${poste ? '<span style="color:#64748B;margin-left:4px">· ' + poste + '</span>' : ''}`;
+                    label.innerHTML = `<strong style="color:#1e293b">${currentSelectedJoueur}</strong>${poste ? '<span style="color:#64748B;margin-left:4px">� ' + poste + '</span>' : ''}`;
                 } else {
-                    label.innerHTML = '<span style="color:#94A3B8">← Clique un joueur sur le terrain</span>';
+                    label.innerHTML = '<span style="color:#94A3B8">? Clique un joueur sur le terrain</span>';
                 }
             }
         }
@@ -1283,7 +1283,7 @@ let _effInfoPoste = null;
             const isGB = detectIsGB(currentSelectedJoueur);
 
             if (isGB) {
-                // GB → pré-sélectionner dans gbg-gardien
+                // GB ? pr�-s�lectionner dans gbg-gardien
                 const selGB = document.getElementById('gbg-gardien');
                 if (selGB) {
                     selGB.value = '';
@@ -1298,7 +1298,7 @@ let _effInfoPoste = null;
                 const selNG = document.getElementById('ng-joueur');
                 if (selNG) selNG.value = '';
             } else {
-                // Joueur de champ → pré-sélectionner dans ng-joueur
+                // Joueur de champ ? pr�-s�lectionner dans ng-joueur
                 const selNG = document.getElementById('ng-joueur');
                 if (selNG) {
                     selNG.value = '';
@@ -1417,7 +1417,7 @@ let _effInfoPoste = null;
                     const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                     DATA = jsonData.slice(1).filter(row => row.length > 0 && row[COLS.rencontre]);
 
-                    // Lecture feuille "Joueurs" si présente
+                    // Lecture feuille "Joueurs" si pr�sente
                     const joueursSheetName = workbook.SheetNames.find(n => n.toLowerCase() === 'joueurs');
                     if (joueursSheetName) {
                         const jSheet = workbook.Sheets[joueursSheetName];
@@ -1433,7 +1433,7 @@ let _effInfoPoste = null;
                                 const nom   = row[iNom]?.toString().trim();
                                 const poste = row[iPoste]?.toString().trim().toUpperCase();
                                 if (!nom || !poste) return;
-                                // Dernière occurrence d'un nom = saison la plus récente
+                                // Derni�re occurrence d'un nom = saison la plus r�cente
                                 if (seen[nom] !== undefined) newTerrain.splice(seen[nom], 1, null);
                                 posteCounts[poste] = posteCounts[poste] || 0;
                                 const pool = POSTE_POSITIONS[poste] || [{x:50,y:50}];
@@ -1520,15 +1520,15 @@ let _effInfoPoste = null;
         }
 
         function updateImportUI(filename, date) {
-            document.getElementById('import-icon').textContent = '✅';
-            document.getElementById('import-title').textContent = 'DONNÉES CHARGÉES';
-            document.getElementById('import-subtitle').textContent = date + ' — ' + filename;
+            document.getElementById('import-icon').textContent = '?';
+            document.getElementById('import-title').textContent = 'DONN�ES CHARG�ES';
+            document.getElementById('import-subtitle').textContent = date + ' � ' + filename;
             const btn = document.getElementById('import-btn');
-            btn.textContent = '🔄 Réimporter';
+            btn.textContent = '?? R�importer';
             btn.classList.add('reimport-btn');
             document.getElementById('import-section').style.display = 'none';
             const badge = document.getElementById('header-data-badge');
-            badge.textContent = '📁 ' + filename + '  ·  ' + date;
+            badge.textContent = '?? ' + filename + '  �  ' + date;
             badge.style.display = 'inline-flex';
         }
 
@@ -1573,7 +1573,7 @@ let _effInfoPoste = null;
             });
             JOUEURS_FENIX = [...joueurs].sort();
             FIELD_POSITIONS = [...new Set(DATA.map(row => row[COLS.field_position]).filter(Boolean))].sort();
-            // Gardiens dérivés de JOUEURS_TERRAIN — seule source de vérité
+            // Gardiens d�riv�s de JOUEURS_TERRAIN � seule source de v�rit�
             GARDIENS_FENIX = JOUEURS_TERRAIN.filter(p => p.poste === 'GB').map(p => p.nom);
         }
 
@@ -1581,7 +1581,7 @@ let _effInfoPoste = null;
             BILANS = [];
             if (!_rawBilanRows.length || !MATCHS.length) return;
             const activeSaison = document.getElementById('filter-saison')?.value || '';
-            // Filtrer les bilans par saison active (si renseignée dans la feuille ET dans le filtre)
+            // Filtrer les bilans par saison active (si renseign�e dans la feuille ET dans le filtre)
             const rowsToProcess = _rawBilanRows.filter(r => !r.saison || !activeSaison || r.saison === activeSaison);
             if (!rowsToProcess.length) {
                 ['filter-bilan-joueur-wrap','filter-bilan-notes-wrap'].forEach(id => {
@@ -1590,7 +1590,7 @@ let _effInfoPoste = null;
                 });
                 return;
             }
-            // Limiter les matchs à la saison active pour le calcul des plages
+            // Limiter les matchs � la saison active pour le calcul des plages
             const saisonMatchs = activeSaison
                 ? [...new Set(DATA.filter(r => r[COLS.saison] === activeSaison).map(r => r[COLS.rencontre]).filter(Boolean))]
                 : MATCHS;
@@ -1606,7 +1606,7 @@ let _effInfoPoste = null;
                 if (!matchs.length) return;
                 const j1 = String((matchs[0].match(/J(\d+)/i) || [])[1] || '?').padStart(2, '0');
                 const j2 = String((matchs[matchs.length - 1].match(/J(\d+)/i) || [])[1] || '?').padStart(2, '0');
-                BILANS.push({ nom: raw.nom, saison: raw.saison, journeeFin: raw.journeeFin, matchs, label: `${raw.nom} — J${j1} à J${j2}` });
+                BILANS.push({ nom: raw.nom, saison: raw.saison, journeeFin: raw.journeeFin, matchs, label: `${raw.nom} � J${j1} � J${j2}` });
                 prevEndIdx = endIdx;
             });
             // Peupler les dropdowns bilan (joueurs + notes + impact)
@@ -1678,7 +1678,7 @@ let _effInfoPoste = null;
                 ['ng-joueur', 'ng-joueur-2'].forEach((id, i) => {
                     const sel = document.getElementById(id);
                     if (!sel) return;
-                    sel.innerHTML = `<option value="">${i === 0 ? '— Joueur —' : '— Joueur 2 —'}</option>`;
+                    sel.innerHTML = `<option value="">${i === 0 ? '� Joueur �' : '� Joueur 2 �'}</option>`;
                     joueursOptions.forEach(j => sel.innerHTML += `<option value="${j}">${j}</option>`);
                 });
             }
@@ -1689,7 +1689,7 @@ let _effInfoPoste = null;
                 GARDIENS_FENIX.forEach(g => gardienFilter.innerHTML += `<option value="${g}">${g}</option>`);
             }
 
-            // Graph GB : gardiens détectés dans les tirs adverses, filtrés par GARDIENS_FENIX si disponible
+            // Graph GB : gardiens d�tect�s dans les tirs adverses, filtr�s par GARDIENS_FENIX si disponible
             // gbg-gardien / gbg-gardien-2
             {
                 const gardiensGB = GARDIENS_FENIX.length > 0 ? GARDIENS_FENIX : [...new Set(
@@ -1699,7 +1699,7 @@ let _effInfoPoste = null;
                 ['gbg-gardien', 'gbg-gardien-2'].forEach((id, i) => {
                     const sel = document.getElementById(id);
                     if (!sel) return;
-                    sel.innerHTML = `<option value="">${i === 0 ? '— Gardien —' : '— Gardien 2 —'}</option>`;
+                    sel.innerHTML = `<option value="">${i === 0 ? '� Gardien �' : '� Gardien 2 �'}</option>`;
                     gardiensGB.forEach(g => sel.innerHTML += `<option value="${g}">${g}</option>`);
                 });
             }
@@ -1838,10 +1838,10 @@ let _effInfoPoste = null;
                 const icon = th.querySelector('.sort-icon');
                 if (sortConfig.col === col) {
                     th.classList.add('sort-active');
-                    if (icon) icon.textContent = sortConfig.dir === 'desc' ? '↓' : '↑';
+                    if (icon) icon.textContent = sortConfig.dir === 'desc' ? '?' : '?';
                 } else {
                     th.classList.remove('sort-active');
-                    if (icon) icon.textContent = '↕';
+                    if (icon) icon.textContent = '?';
                 }
             });
         }
@@ -1859,7 +1859,7 @@ let _effInfoPoste = null;
                 ? [...new Set(DATA.filter(row => row[COLS.saison] === saison).map(row => row[COLS.rencontre]).filter(Boolean))]
                 : MATCHS;
 
-            // Mettre à jour les checkboxes du dashboard
+            // Mettre � jour les checkboxes du dashboard
             const matchCheckboxes = document.getElementById('match-checkboxes');
             if (matchCheckboxes) {
                 matchCheckboxes.innerHTML = '';
@@ -1875,7 +1875,7 @@ let _effInfoPoste = null;
                 if (allCheckbox) allCheckbox.checked = true;
             }
 
-            // Mettre à jour les selects de match des autres pages
+            // Mettre � jour les selects de match des autres pages
             populateMatchPageCheckboxes(matchesToShow);
 
             const matchSelects = ['filter-joueur-match', 'filter-gardien-match', 'filter-note-match', 'filter-analyse-match'];
@@ -1952,12 +1952,12 @@ let _effInfoPoste = null;
             const selectedMatches = getSelectedMatches();
             const matchCount = selectedMatches.length;
             
-            // Filtrer les données selon les matchs sélectionnés
+            // Filtrer les donn�es selon les matchs s�lectionn�s
             let filteredData = DATA.filter(row => selectedMatches.includes(row[COLS.rencontre]));
             
             document.getElementById('stat-matchs').textContent = matchCount;
             
-            // Déterminer si on affiche la moyenne ou le total
+            // D�terminer si on affiche la moyenne ou le total
             const showAverage = matchCount > 1;
             
             // Afficher le label moyenne/match
@@ -1972,14 +1972,14 @@ let _effInfoPoste = null;
             
             // Buts et tirs
             const fenixButs = fenixData.filter(row => row[COLS.resultat] === 'But').length;
-            const fenixTirsRates = fenixData.filter(row => row[COLS.resultat] === 'Tir raté').length;
+            const fenixTirsRates = fenixData.filter(row => row[COLS.resultat] === 'Tir rat�').length;
             const fenixTotalTirs = fenixButs + fenixTirsRates;
             const fenixEff = fenixTotalTirs > 0 ? Math.round(fenixButs / fenixTotalTirs * 100) : 0;
             
-            // Pénaltys (GE = Pen)
+            // P�naltys (GE = Pen)
             const fenixPenData = fenixData.filter(row => row[COLS.ge] && row[COLS.ge].toString().toLowerCase().includes('pen'));
             const fenixPenButs = fenixPenData.filter(row => row[COLS.resultat] === 'But').length;
-            const fenixPenTirs = fenixPenButs + fenixPenData.filter(row => row[COLS.resultat] === 'Tir raté').length;
+            const fenixPenTirs = fenixPenButs + fenixPenData.filter(row => row[COLS.resultat] === 'Tir rat�').length;
             
             const fenixPB = fenixData.filter(row => row[COLS.resultat] === 'PB').length;
             const fenixPO = fenixData.filter(row => row[COLS.resultat] === 'PO').length;
@@ -2007,13 +2007,13 @@ let _effInfoPoste = null;
             const advData = filteredData.filter(row => row[COLS.club] !== 'FENIX');
             const advPossessions = advData.filter(row => row[COLS.possession] && row[COLS.possession].toString().trim() !== '').length;
             const advButs = advData.filter(row => row[COLS.resultat] === 'But').length;
-            const advTirsRates = advData.filter(row => row[COLS.resultat] === 'Tir raté').length;
+            const advTirsRates = advData.filter(row => row[COLS.resultat] === 'Tir rat�').length;
             const advTotalTirs = advButs + advTirsRates;
             const advEff = advTotalTirs > 0 ? Math.round(advButs / advTotalTirs * 100) : 0;
             
             const advPenData = advData.filter(row => row[COLS.ge] && row[COLS.ge].toString().toLowerCase().includes('pen'));
             const advPenButs = advPenData.filter(row => row[COLS.resultat] === 'But').length;
-            const advPenTirs = advPenButs + advPenData.filter(row => row[COLS.resultat] === 'Tir raté').length;
+            const advPenTirs = advPenButs + advPenData.filter(row => row[COLS.resultat] === 'Tir rat�').length;
             
             const advPB = advData.filter(row => row[COLS.resultat] === 'PB').length;
             const advPO = advData.filter(row => row[COLS.resultat] === 'PO').length;
@@ -2069,7 +2069,7 @@ let _effInfoPoste = null;
                 if (row[COLS.resultat] === 'But') {
                     playerStats[joueur].buts++;
                     if (isPen) playerStats[joueur].penButs++;
-                } else if (row[COLS.resultat] === 'Tir raté') {
+                } else if (row[COLS.resultat] === 'Tir rat�') {
                     playerStats[joueur].tirsRates++;
                     if (isPen) playerStats[joueur].penTirs++;
                 } else if (row[COLS.resultat] === 'PB') {
@@ -2166,7 +2166,7 @@ let _effInfoPoste = null;
                     const tjMoy = tjData.matchs ? Math.round(tjData.total / tjData.matchs) : null;
                     const tjCell = tjData.total !== null
                         ? `<td>${tjData.total} min</td><td>${tjMoy} min</td><td>${tjData.matchs}</td>`
-                        : `<td>—</td><td>—</td><td>—</td>`;
+                        : `<td>�</td><td>�</td><td>�</td>`;
 
                     if (showPlayerAverages) {
                         const avgPenEff = penTotal > 0 ? Math.round(stats.penButs / penTotal * 100) : null;
@@ -2268,7 +2268,7 @@ let _effInfoPoste = null;
 
             function computeStats(rows) {
                 const buts = rows.filter(r => r[COLS.resultat] === 'But').length;
-                const tirs = rows.filter(r => r[COLS.resultat] === 'Tir raté').length;
+                const tirs = rows.filter(r => r[COLS.resultat] === 'Tir rat�').length;
                 const total = buts + tirs;
                 return {
                     buts: fmt(buts), total: fmt(total),
@@ -2304,7 +2304,7 @@ let _effInfoPoste = null;
 
             // Titre adversaire
             const advClubs = [...new Set(advAll.map(r => r[COLS.club]).filter(Boolean))];
-            document.getElementById('match-adv-title').textContent = advClubs.length === 1 ? '🔴 ' + advClubs[0] : '🔴 ADVERSAIRE';
+            document.getElementById('match-adv-title').textContent = advClubs.length === 1 ? '?? ' + advClubs[0] : '?? ADVERSAIRE';
 
             // Terrain filtered by all filters
             const clubFilter = document.getElementById('filter-club').value;
@@ -2353,7 +2353,7 @@ let _effInfoPoste = null;
                     ctx.strokeStyle = 'white';
                     ctx.lineWidth = 1.5;
                     ctx.stroke();
-                } else if (resultat === 'Tir raté') {
+                } else if (resultat === 'Tir rat�') {
                     ctx.strokeStyle = '#EF4444';
                     ctx.lineWidth = 2.5;
                     ctx.beginPath();
@@ -2397,7 +2397,7 @@ let _effInfoPoste = null;
             });
         }
 
-        // ── Joueurs terrain constants ──────────────────────────────────────────
+        // -- Joueurs terrain constants ------------------------------------------
         let currentSelectedJoueur = null;
 
         const POSTE_COLORS = {
@@ -2410,58 +2410,58 @@ let _effInfoPoste = null;
             PIV: '#F59E0B'
         };
 
-        // Pool de positions par poste (assignées dans l'ordre d'apparition dans la feuille Joueurs)
+        // Pool de positions par poste (assign�es dans l'ordre d'apparition dans la feuille Joueurs)
         const POSTE_POSITIONS = {
             GB:  [ {x:50,y:5},  {x:44,y:3},  {x:56,y:3},  {x:44,y:8},  {x:56,y:8},  {x:50,y:11} ],
-            // AG : 2 côte à côte devant, 1 derrière (triangle)
+            // AG : 2 c�te � c�te devant, 1 derri�re (triangle)
             AG:  [ {x:8,y:18},  {x:15,y:18}, {x:11,y:28}, {x:8,y:38}  ],
             // AD : miroir AG
             AD:  [ {x:92,y:18}, {x:85,y:18}, {x:89,y:28}, {x:92,y:38} ],
             // PIV : ligne de 4 sur la zone 6m
             PIV: [ {x:30,y:22}, {x:43,y:22}, {x:57,y:22}, {x:70,y:22}, {x:50,y:30}, {x:37,y:30} ],
-            // ARG : 2 côte à côte, 3e derrière centré (triangle)
+            // ARG : 2 c�te � c�te, 3e derri�re centr� (triangle)
             ARG: [ {x:18,y:57}, {x:26,y:57}, {x:22,y:66}, {x:18,y:75} ],
             // ARD : miroir ARG
             ARD: [ {x:82,y:57}, {x:74,y:57}, {x:78,y:66}, {x:82,y:75} ],
-            // DC : 2 côte à côte, 3e derrière centré (triangle)
+            // DC : 2 c�te � c�te, 3e derri�re centr� (triangle)
             DC:  [ {x:44,y:60}, {x:56,y:60}, {x:50,y:69}, {x:44,y:78} ],
         };
 
         let JOUEURS_TERRAIN = [
-            // GB — pentagone étalé sans chevauchement (distance min ~8u, r=3.5)
+            // GB � pentagone �tal� sans chevauchement (distance min ~8u, r=3.5)
             { nom: 'Gabriel',  poste: 'GB',  x: 50, y: 5  },
             { nom: 'Simon',    poste: 'GB',  x: 42, y: 1  },
             { nom: 'Enzo',     poste: 'GB',  x: 58, y: 1  },
             { nom: 'Aurele',   poste: 'GB',  x: 42, y: 9  },
             { nom: 'Noah',     poste: 'GB',  x: 58, y: 9  },
-            // AG — triangle côté gauche (2 devant + 1 derrière)
+            // AG � triangle c�t� gauche (2 devant + 1 derri�re)
             { nom: 'PP',       poste: 'AG',  x: 7,  y: 18 },
-            { nom: 'Timéo',    poste: 'AG',  x: 16, y: 18 },
+            { nom: 'Tim�o',    poste: 'AG',  x: 16, y: 18 },
             { nom: 'Jules F',  poste: 'AG',  x: 11, y: 27 },
-            // AD — côté droit espacé
+            // AD � c�t� droit espac�
             { nom: 'Zach',     poste: 'AD',  x: 84, y: 18 },
             { nom: 'Roman',    poste: 'AD',  x: 93, y: 18 },
-            // PIV — ligne de 4 devant la zone 6m
-            { nom: 'Jérémy',   poste: 'PIV', x: 30, y: 22 },
+            // PIV � ligne de 4 devant la zone 6m
+            { nom: 'J�r�my',   poste: 'PIV', x: 30, y: 22 },
             { nom: 'Idris',    poste: 'PIV', x: 43, y: 22 },
             { nom: 'Yoran',    poste: 'PIV', x: 57, y: 22 },
             { nom: 'Cyprien',  poste: 'PIV', x: 70, y: 22 },
-            // ARG — côte à côte derrière 9m gauche
-            { nom: 'Siméo',    poste: 'ARG', x: 18, y: 57 },
+            // ARG � c�te � c�te derri�re 9m gauche
+            { nom: 'Sim�o',    poste: 'ARG', x: 18, y: 57 },
             { nom: 'Hugo',     poste: 'ARG', x: 26, y: 57 },
-            // ARD — triangle derrière 9m droit (2 devant + 1 derrière)
+            // ARD � triangle derri�re 9m droit (2 devant + 1 derri�re)
             { nom: 'Louis',    poste: 'ARD', x: 74, y: 57 },
             { nom: 'Martin',   poste: 'ARD', x: 82, y: 57 },
-            { nom: 'Mattéo',   poste: 'ARD', x: 78, y: 66 },
-            // DC — triangle centre (2 devant + 1 derrière)
+            { nom: 'Matt�o',   poste: 'ARD', x: 78, y: 66 },
+            // DC � triangle centre (2 devant + 1 derri�re)
             { nom: 'Jules',    poste: 'DC',  x: 44, y: 60 },
             { nom: 'Mytchel',  poste: 'DC',  x: 56, y: 60 },
             { nom: 'Leni',     poste: 'DC',  x: 50, y: 69 },
         ];
 
-        // Si l'action à l'index idx est vide, on remonte au dernier renseigné
-        // (cas "2 joueurs / 1 critère" = même action pour les deux)
-        // Fermer modal en cliquant à l'extérieur
+        // Si l'action � l'index idx est vide, on remonte au dernier renseign�
+        // (cas "2 joueurs / 1 crit�re" = m�me action pour les deux)
+        // Fermer modal en cliquant � l'ext�rieur
         document.getElementById('player-modal')?.addEventListener('click', function(e) {
             if (e.target === this) closePlayerModal();
         });
@@ -2513,7 +2513,7 @@ let _effInfoPoste = null;
                 const dotX = drawX + (x / 100) * drawW;
                 const dotY = drawY + (y / 100) * drawH;
                 GARDIEN_DOTS[viewKey].push({ x: dotX, y: dotY, row });
-                const isArret = row[COLS.finalite] === 'Tir arrêté';
+                const isArret = row[COLS.finalite] === 'Tir arr�t�';
                 const s = 6;
                 ctx.save(); ctx.lineCap = 'round';
                 if (isArret) {
@@ -2543,10 +2543,10 @@ let _effInfoPoste = null;
                 if (gardienZoneFilter && row[COLS.field_position] !== gardienZoneFilter) return false;
                 const finalite = row[COLS.finalite] || '';
                 const resultat = row[COLS.resultat] || '';
-                return resultat === 'But' || finalite === 'Tir arrêté';
+                return resultat === 'But' || finalite === 'Tir arr�t�';
             });
 
-            const arrets = filtered.filter(row => row[COLS.finalite] === 'Tir arrêté').length;
+            const arrets = filtered.filter(row => row[COLS.finalite] === 'Tir arr�t�').length;
             const buts   = filtered.filter(row => row[COLS.resultat] === 'But').length;
             const tirsCadres = arrets + buts;
 
@@ -2584,7 +2584,7 @@ let _effInfoPoste = null;
                 const canvasY = (y / 100) * canvas.height;
                 
                 let color = '#EF4444';
-                if (row[COLS.resultat] === 'Tir raté' || row[COLS.finalite] === 'Tir arrêté') color = '#3B82F6';
+                if (row[COLS.resultat] === 'Tir rat�' || row[COLS.finalite] === 'Tir arr�t�') color = '#3B82F6';
                 
                 ctx.beginPath();
                 ctx.arc(canvasX, canvasY, 8, 0, Math.PI * 2);
@@ -2662,9 +2662,9 @@ let _effInfoPoste = null;
             ];
             zones.forEach(([id, r1, r2, a1, a2, lbl]) => svg.appendChild(makeZone(id, r1, r2, a1, a2, lbl)));
 
-            // But à but (rectangle spécial en bas)
+            // But � but (rectangle sp�cial en bas)
             const g = document.createElementNS(NS, 'g');
-            g.setAttribute('class', 'zone-group'); g.dataset.zone = 'But à but';
+            g.setAttribute('class', 'zone-group'); g.dataset.zone = 'But � but';
             const rect = document.createElementNS(NS, 'rect');
             rect.setAttribute('x', 190); rect.setAttribute('y', 258);
             rect.setAttribute('width', 100); rect.setAttribute('height', 26);
@@ -2673,9 +2673,9 @@ let _effInfoPoste = null;
             const t = document.createElementNS(NS, 'text');
             t.setAttribute('x', 240); t.setAttribute('y', 271);
             t.setAttribute('class', 'zone-label'); t.setAttribute('font-size', '8.5');
-            t.textContent = 'But à but';
+            t.textContent = 'But � but';
             g.appendChild(t);
-            g.addEventListener('click', () => toggleImpactZone('But à but'));
+            g.addEventListener('click', () => toggleImpactZone('But � but'));
             svg.appendChild(g);
 
             updateZoneSelectorUI();
@@ -2715,7 +2715,7 @@ let _effInfoPoste = null;
         function toggleEfficaciteMode(btn) {
             impactEfficaciteMode = !impactEfficaciteMode;
             btn.classList.toggle('btn-comparer-active', impactEfficaciteMode);
-            btn.textContent = impactEfficaciteMode ? '✕ Efficacité' : '🎨 Efficacité';
+            btn.textContent = impactEfficaciteMode ? '? Efficacit�' : '?? Efficacit�';
             updateZoneEfficacite();
         }
 
@@ -2738,17 +2738,17 @@ let _effInfoPoste = null;
                 if (isGbSelected) {
                     rows = DATA.filter(r =>
                         r[COLS.club] !== 'FENIX' &&
-                        (r[COLS.finalite] === 'Tir arrêté' || r[COLS.resultat] === 'But') &&
+                        (r[COLS.finalite] === 'Tir arr�t�' || r[COLS.resultat] === 'But') &&
                         r[COLS.field_position] === zone &&
                         matchPlayerName((r[COLS.gardien] || '').toString().trim(), joueurFilter) &&
                         (!selectedMatches.length || selectedMatches.includes(r[COLS.rencontre])) &&
                         (!bilanMZ || bilanMZ.includes(r[COLS.rencontre]))
                     );
-                    positifs = rows.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
+                    positifs = rows.filter(r => r[COLS.finalite] === 'Tir arr�t�').length;
                 } else {
                     rows = DATA.filter(r =>
                         r[COLS.club] === 'FENIX' &&
-                        ['But', 'Tir raté'].includes(r[COLS.resultat]) &&
+                        ['But', 'Tir rat�'].includes(r[COLS.resultat]) &&
                         r[COLS.field_position] === zone &&
                         (!joueurFilter || matchPlayerName((r[COLS.joueur] || '').toString().trim(), joueurFilter)) &&
                         (!selectedMatches.length || selectedMatches.includes(r[COLS.rencontre])) &&
@@ -2776,21 +2776,21 @@ let _effInfoPoste = null;
             const resultatFilter = document.getElementById('filter-impact-resultat').value;
             document.getElementById('impact-rf-tout')?.classList.toggle('pmz-filter-active', resultatFilter === '');
             document.getElementById('impact-rf-but')?.classList.toggle('pmz-filter-active', resultatFilter === 'But');
-            document.getElementById('impact-rf-rate')?.classList.toggle('pmz-filter-active', resultatFilter === 'Tir raté');
+            document.getElementById('impact-rf-rate')?.classList.toggle('pmz-filter-active', resultatFilter === 'Tir rat�');
             const bilanM = impactBilanFilter ? BILANS.find(b => b.nom === impactBilanFilter)?.matchs : null;
 
-            // Stats générales : tous les tirs (avec ou sans coordonnées d'impact)
+            // Stats g�n�rales : tous les tirs (avec ou sans coordonn�es d'impact)
             const filteredAll = DATA.filter(row => {
                 if (row[COLS.club] !== 'FENIX') return false;
-                if (!['But', 'Tir raté'].includes(row[COLS.resultat])) return false;
+                if (!['But', 'Tir rat�'].includes(row[COLS.resultat])) return false;
                 if (joueurFilter && !matchPlayerName((row[COLS.joueur]||'').toString().trim(), joueurFilter)) return false;
                 if (bilanM && !bilanM.includes(row[COLS.rencontre])) return false;
                 return true;
             });
-            // Canvas / zones : uniquement les tirs avec coordonnées d'impact
+            // Canvas / zones : uniquement les tirs avec coordonn�es d'impact
             const filtered = DATA.filter(row => {
                 if (row[COLS.club] !== 'FENIX') return false;
-                if (!['But', 'Tir raté'].includes(row[COLS.resultat])) return false;
+                if (!['But', 'Tir rat�'].includes(row[COLS.resultat])) return false;
                 if (!row[COLS.impact] || !String(row[COLS.impact]).includes(';')) return false;
                 if (joueurFilter && !matchPlayerName((row[COLS.joueur]||'').toString().trim(), joueurFilter)) return false;
                 if (impactZoneFilter && row[COLS.field_position] !== impactZoneFilter) return false;
@@ -2808,7 +2808,7 @@ let _effInfoPoste = null;
             const poste = !impactZoneFilter ? getPlayerPoste(joueurFilter) : null;
             _effInfoPoste = poste;
             if (pct === null) {
-                effEl.textContent = '—'; effEl.style.color = '#94a3b8';
+                effEl.textContent = '�'; effEl.style.color = '#94a3b8';
             } else {
                 effEl.textContent = pct + '%';
                 effEl.style.color = impactZoneFilter ? '#0f172a' : getEffColor(pct, poste);
@@ -2818,11 +2818,11 @@ let _effInfoPoste = null;
             drawImpactCanvas('impact-canvas-face', IMPACT_IMAGES.face, filtered.filter(r => getImpactView(r) === 'face'));
             drawImpactCanvas('impact-canvas-ald',  IMPACT_IMAGES.ald,  filtered.filter(r => getImpactView(r) === 'ald'));
 
-            // Sous-brillance des zones sans données pour le joueur sélectionné
+            // Sous-brillance des zones sans donn�es pour le joueur s�lectionn�
             const zonesAvecDonnees = joueurFilter
                 ? new Set(DATA.filter(r =>
                     r[COLS.club] === 'FENIX' &&
-                    ['But', 'Tir raté'].includes(r[COLS.resultat]) &&
+                    ['But', 'Tir rat�'].includes(r[COLS.resultat]) &&
                     matchPlayerName((r[COLS.joueur]||'').toString().trim(), joueurFilter) &&
                     r[COLS.field_position]
                   ).map(r => r[COLS.field_position]))
@@ -2837,7 +2837,7 @@ let _effInfoPoste = null;
             document.getElementById('filter-impact-resultat').value = val;
             document.getElementById('impact-rf-tout').classList.toggle('pmz-filter-active', val === '');
             document.getElementById('impact-rf-but').classList.toggle('pmz-filter-active', val === 'But');
-            document.getElementById('impact-rf-rate').classList.toggle('pmz-filter-active', val === 'Tir raté');
+            document.getElementById('impact-rf-rate').classList.toggle('pmz-filter-active', val === 'Tir rat�');
             updateImpactPage();
         }
 
@@ -2910,7 +2910,7 @@ let _effInfoPoste = null;
 
         // ===== GRAPH MODAL =====
         let currentGraphTeam = 'fenix';
-        let currentGraphStats = ['possessions']; // Tableau des stats sélectionnées
+        let currentGraphStats = ['possessions']; // Tableau des stats s�lectionn�es
         let currentPeriode = 'all'; // 'all', '1', '2'
         const STAT_COLORS = {
             'possessions':    '#0A2463',
@@ -2923,21 +2923,21 @@ let _effInfoPoste = null;
         };
         const STAT_LABELS = {
             'possessions':    'Possessions',
-            'buts_mis':       'Buts marqués',
-            'buts_pris':      'Buts encaissés',
-            'efficacite':     '% Réussite',
-            'neutralise':     'Neutralisé',
+            'buts_mis':       'Buts marqu�s',
+            'buts_pris':      'Buts encaiss�s',
+            'efficacite':     '% R�ussite',
+            'neutralise':     'Neutralis�',
             'pertes_balle':   'PB',
-            'pct_arrets_gb':  '% Arrêts GB'
+            'pct_arrets_gb':  '% Arr�ts GB'
         };
-        let _graphPoints = null; // stocke coordonnées canvas pour hover
+        let _graphPoints = null; // stocke coordonn�es canvas pour hover
 
         function openGraphModal(team) {
             currentGraphTeam = team;
             currentPeriode = 'all';
             document.getElementById('graph-modal').style.display = 'flex';
             document.getElementById('graph-team-title').textContent = team === 'fenix' ? 'FENIX TOULOUSE' : 'ADVERSAIRE';
-            // Reset : sélectionner seulement "possessions" par défaut
+            // Reset : s�lectionner seulement "possessions" par d�faut
             currentGraphStats = ['possessions'];
             document.querySelectorAll('.graph-filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.stat === 'possessions');
@@ -2945,7 +2945,7 @@ let _effInfoPoste = null;
             document.querySelectorAll('.periode-filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.periode === 'all');
             });
-            // Délai pour s'assurer que le container est rendu
+            // D�lai pour s'assurer que le container est rendu
             setTimeout(drawStatGraph, 50);
         }
 
@@ -2963,7 +2963,7 @@ let _effInfoPoste = null;
         function toggleGraphStat(stat, btn) {
             const index = currentGraphStats.indexOf(stat);
             if (index > -1) {
-                // Si c'est la seule stat sélectionnée, ne pas la désélectionner
+                // Si c'est la seule stat s�lectionn�e, ne pas la d�s�lectionner
                 if (currentGraphStats.length > 1) {
                     currentGraphStats.splice(index, 1);
                     btn.classList.remove('active');
@@ -2991,7 +2991,7 @@ let _effInfoPoste = null;
         function getStatByMatch(matchName, team, stat) {
             let matchData = DATA.filter(row => row[COLS.rencontre] === matchName);
             
-            // Filtrer par période si nécessaire
+            // Filtrer par p�riode si n�cessaire
             if (currentPeriode !== 'all') {
                 matchData = matchData.filter(row => {
                     const periode = row[COLS.periode] ? row[COLS.periode].toString().trim() : '';
@@ -3009,26 +3009,26 @@ let _effInfoPoste = null;
                 case 'buts_mis':
                     return teamData.filter(row => row[COLS.resultat] === 'But').length;
                 case 'buts_pris':
-                    // Buts pris = buts de l'autre équipe
+                    // Buts pris = buts de l'autre �quipe
                     const otherTeamData = team === 'fenix'
                         ? matchData.filter(row => row[COLS.club] !== 'FENIX')
                         : matchData.filter(row => row[COLS.club] === 'FENIX');
                     return otherTeamData.filter(row => row[COLS.resultat] === 'But').length;
                 case 'efficacite':
                     const buts = teamData.filter(row => row[COLS.resultat] === 'But').length;
-                    const tirs = buts + teamData.filter(row => row[COLS.resultat] === 'Tir raté').length;
+                    const tirs = buts + teamData.filter(row => row[COLS.resultat] === 'Tir rat�').length;
                     return tirs > 0 ? Math.round(buts / tirs * 100) : 0;
                 case 'neutralise':
                     return teamData.filter(row => row[COLS.resultat] === 'Jet franc').length;
                 case 'pertes_balle':
                     return teamData.filter(row => row[COLS.resultat] === 'PB').length;
                 case 'pct_arrets_gb': {
-                    // Tirs sur le gardien de l'équipe choisie = lignes de l'équipe adverse
+                    // Tirs sur le gardien de l'�quipe choisie = lignes de l'�quipe adverse
                     const shooters = team === 'fenix'
                         ? matchData.filter(row => row[COLS.club] !== 'FENIX')
                         : matchData.filter(row => row[COLS.club] === 'FENIX');
                     const gbButs   = shooters.filter(row => row[COLS.resultat] === 'But').length;
-                    const gbArrets = shooters.filter(row => row[COLS.finalite] === 'Tir arrêté').length;
+                    const gbArrets = shooters.filter(row => row[COLS.finalite] === 'Tir arr�t�').length;
                     const gbTotal  = gbButs + gbArrets;
                     return gbTotal > 0 ? Math.round(gbArrets / gbTotal * 100) : 0;
                 }
@@ -3049,7 +3049,7 @@ let _effInfoPoste = null;
             const selectedMatches = getSelectedMatches();
             if (selectedMatches.length === 0) return;
             
-            // Collecter les données pour chaque stat sélectionnée
+            // Collecter les donn�es pour chaque stat s�lectionn�e
             const allData = {};
             let globalMax = 1;
             
@@ -3063,9 +3063,9 @@ let _effInfoPoste = null;
                 if (statMax > globalMax) globalMax = statMax;
             });
             
-            // Arrondir le max à un nombre propre avec une marge de 10%
+            // Arrondir le max � un nombre propre avec une marge de 10%
             globalMax = Math.ceil(globalMax * 1.1);
-            // Arrondir à la dizaine supérieure pour une meilleure lisibilité
+            // Arrondir � la dizaine sup�rieure pour une meilleure lisibilit�
             globalMax = Math.ceil(globalMax / 10) * 10;
             if (globalMax < 10) globalMax = 10;
             
@@ -3134,7 +3134,7 @@ let _effInfoPoste = null;
                     ctx.lineWidth = 2;
                     ctx.stroke();
                     
-                    // Valeur au-dessus du point (seulement si une seule stat ou décalage)
+                    // Valeur au-dessus du point (seulement si une seule stat ou d�calage)
                     if (currentGraphStats.length === 1) {
                         ctx.fillStyle = color;
                         ctx.font = 'bold 12px Inter';
@@ -3144,16 +3144,16 @@ let _effInfoPoste = null;
                 });
             });
             
-            // Labels X (nom du match + résultat + score) en diagonale - une seule fois
+            // Labels X (nom du match + r�sultat + score) en diagonale - une seule fois
             const firstStatData = allData[currentGraphStats[0]];
             firstStatData.forEach((point, i) => {
                 const x = padding.left + pointSpacing * (i + 1);
                 ctx.save();
                 ctx.translate(x, canvas.height - padding.bottom + 15);
-                ctx.rotate(-Math.PI / 3); // Angle plus prononcé
+                ctx.rotate(-Math.PI / 3); // Angle plus prononc�
                 ctx.textAlign = 'right';
                 
-                // Nom du match + résultat
+                // Nom du match + r�sultat
                 ctx.font = 'bold 11px Inter';
                 ctx.fillStyle = point.color;
                 ctx.fillText(`${point.match} (${point.result})`, 0, 0);
@@ -3166,7 +3166,7 @@ let _effInfoPoste = null;
                 ctx.restore();
             });
             
-            // Légende en haut
+            // L�gende en haut
             let legendX = padding.left;
             ctx.font = '12px Inter';
             currentGraphStats.forEach(stat => {
@@ -3190,7 +3190,7 @@ let _effInfoPoste = null;
             };
         }
 
-        // ── Hover tooltip ────────────────────────────────────────────────────────
+        // -- Hover tooltip --------------------------------------------------------
         (function() {
             const canvas = document.getElementById('graph-canvas');
             const tooltip = document.getElementById('graph-tooltip');
@@ -3213,10 +3213,10 @@ let _effInfoPoste = null;
 
                 const match = matches[nearestIdx];
                 const { result, color: rColor, score } = getMatchResult(match);
-                let html = `<div style="font-weight:700;margin-bottom:4px;color:${rColor}">${match} — ${result} ${score}</div>`;
+                let html = `<div style="font-weight:700;margin-bottom:4px;color:${rColor}">${match} � ${result} ${score}</div>`;
                 currentGraphStats.forEach(stat => {
-                    const val = allData[stat]?.[nearestIdx]?.value ?? '—';
-                    html += `<div style="display:flex;align-items:center;gap:5px"><span style="color:${STAT_COLORS[stat]};font-size:1rem">●</span><span>${STAT_LABELS[stat]}</span><strong style="margin-left:auto;padding-left:10px">${val}${stat === 'efficacite' ? '%' : ''}</strong></div>`;
+                    const val = allData[stat]?.[nearestIdx]?.value ?? '�';
+                    html += `<div style="display:flex;align-items:center;gap:5px"><span style="color:${STAT_COLORS[stat]};font-size:1rem">?</span><span>${STAT_LABELS[stat]}</span><strong style="margin-left:auto;padding-left:10px">${val}${stat === 'efficacite' ? '%' : ''}</strong></div>`;
                 });
                 tooltip.innerHTML = html;
                 tooltip.style.display = 'block';
@@ -3282,24 +3282,24 @@ let _effInfoPoste = null;
         <div class="graph-modal-content">
             <div class="graph-modal-header">
                 <h2 id="graph-team-title">FENIX TOULOUSE</h2>
-                <button class="graph-modal-close" onclick="closeGraphModal()">✕</button>
+                <button class="graph-modal-close" onclick="closeGraphModal()">?</button>
             </div>
             <div class="graph-modal-filters">
                 <div class="filter-row">
                     <span class="filter-label">Stats:</span>
                     <button class="graph-filter-btn active" data-stat="possessions" onclick="toggleGraphStat('possessions', this)">Possessions</button>
-                    <button class="graph-filter-btn" data-stat="buts_mis" onclick="toggleGraphStat('buts_mis', this)">Buts marqués</button>
-                    <button class="graph-filter-btn" data-stat="buts_pris" onclick="toggleGraphStat('buts_pris', this)">Buts encaissés</button>
-                    <button class="graph-filter-btn" data-stat="efficacite" onclick="toggleGraphStat('efficacite', this)">% Réussite</button>
-                    <button class="graph-filter-btn" data-stat="neutralise" onclick="toggleGraphStat('neutralise', this)">Neutralisé</button>
+                    <button class="graph-filter-btn" data-stat="buts_mis" onclick="toggleGraphStat('buts_mis', this)">Buts marqu�s</button>
+                    <button class="graph-filter-btn" data-stat="buts_pris" onclick="toggleGraphStat('buts_pris', this)">Buts encaiss�s</button>
+                    <button class="graph-filter-btn" data-stat="efficacite" onclick="toggleGraphStat('efficacite', this)">% R�ussite</button>
+                    <button class="graph-filter-btn" data-stat="neutralise" onclick="toggleGraphStat('neutralise', this)">Neutralis�</button>
                     <button class="graph-filter-btn" data-stat="pertes_balle" onclick="toggleGraphStat('pertes_balle', this)">PB</button>
-                    <button class="graph-filter-btn" data-stat="pct_arrets_gb" onclick="toggleGraphStat('pct_arrets_gb', this)">% Arrêts GB</button>
+                    <button class="graph-filter-btn" data-stat="pct_arrets_gb" onclick="toggleGraphStat('pct_arrets_gb', this)">% Arr�ts GB</button>
                 </div>
                 <div class="filter-row">
-                    <span class="filter-label">Période:</span>
+                    <span class="filter-label">P�riode:</span>
                     <button class="periode-filter-btn active" data-periode="all" onclick="changePeriode('all', this)">Match complet</button>
-                    <button class="periode-filter-btn" data-periode="1" onclick="changePeriode('1', this)">1ère Mi-temps</button>
-                    <button class="periode-filter-btn" data-periode="2" onclick="changePeriode('2', this)">2ème Mi-temps</button>
+                    <button class="periode-filter-btn" data-periode="1" onclick="changePeriode('1', this)">1�re Mi-temps</button>
+                    <button class="periode-filter-btn" data-periode="2" onclick="changePeriode('2', this)">2�me Mi-temps</button>
                 </div>
             </div>
             <div class="graph-container" id="graph-container" style="position:relative;">
@@ -3308,16 +3308,16 @@ let _effInfoPoste = null;
             </div>
         </div>
     </div>
-    <!-- Modal info efficacité -->
+    <!-- Modal info efficacit� -->
     <div id="eff-info-modal" onclick="if(event.target===this)closeEffInfoModal()">
         <div class="eff-info-panel">
-            <button class="eff-info-close" onclick="closeEffInfoModal()">✕</button>
-            <h3>% Efficacité au tir — Référence par poste</h3>
-            <div class="eff-subtitle">Réf. LiquiMoly Starligue 2024-25 · Tirs hors penalty · Standards D1</div>
+            <button class="eff-info-close" onclick="closeEffInfoModal()">?</button>
+            <h3>% Efficacit� au tir � R�f�rence par poste</h3>
+            <div class="eff-subtitle">R�f. LiquiMoly Starligue 2024-25 � Tirs hors penalty � Standards D1</div>
             <div class="eff-legend">
-                <div class="eff-legend-item"><span style="color:#dc2626;font-size:1rem;">●</span> Rouge — Non projetable</div>
-                <div class="eff-legend-item"><span style="color:#16a34a;font-size:1rem;">●</span> Vert — Projetable</div>
-                <div class="eff-legend-item"><span style="color:#7C3AED;font-size:1rem;">●</span> Violet — Solide</div>
+                <div class="eff-legend-item"><span style="color:#dc2626;font-size:1rem;">?</span> Rouge � Non projetable</div>
+                <div class="eff-legend-item"><span style="color:#16a34a;font-size:1rem;">?</span> Vert � Projetable</div>
+                <div class="eff-legend-item"><span style="color:#7C3AED;font-size:1rem;">?</span> Violet � Solide</div>
             </div>
             <table class="eff-table" id="eff-info-table">
                 <thead>
@@ -3332,7 +3332,7 @@ let _effInfoPoste = null;
                 <tbody id="eff-info-tbody"></tbody>
             </table>
             <div style="margin-top:0.9rem;font-size:0.68rem;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:0.6rem;">
-                n=11 joueurs/poste · source Starligue.com · tirs hors penalty<br>⚠️ Couleur terrain activée uniquement si ≥ 6 matchs ET ≥ 20 min/match en moyenne
+                n=11 joueurs/poste � source Starligue.com � tirs hors penalty<br>?? Couleur terrain activ�e uniquement si = 6 matchs ET = 20 min/match en moyenne
             </div>
         </div>
     </div>
@@ -3340,7 +3340,7 @@ let _effInfoPoste = null;
     <!-- Zone d'impression fiche joueur -->
     <div id="joueur-print-zone"></div>
 
-    <!-- ── MODE JOUEUR ── barre de navigation ─────────────────────────────── -->
+    <!-- -- MODE JOUEUR -- barre de navigation ------------------------------- -->
     <div id="pm-bar" style="display:none">
         <div class="pm-bar-left">
             <img src="favicon.png" style="width:28px;height:28px;border-radius:50%;flex-shrink:0">
@@ -3355,45 +3355,45 @@ let _effInfoPoste = null;
         </div>
         <div class="pm-tabs">
             <button class="pm-tab-btn active" data-tab="fiche" onclick="pmTab('fiche')">
-                👤 <span class="pm-tab-label">Ma Fiche</span>
+                ?? <span class="pm-tab-label">Ma Fiche</span>
             </button>
             <button class="pm-tab-btn" data-tab="match" onclick="pmTab('match')">
-                📊 <span class="pm-tab-label">Stats Match</span>
+                ?? <span class="pm-tab-label">Stats Match</span>
             </button>
             <button class="pm-tab-btn" data-tab="zones" onclick="pmTab('zones')">
-                💥 <span class="pm-tab-label">Impact</span>
+                ?? <span class="pm-tab-label">Impact</span>
             </button>
         </div>
         <button id="pm-back-btn" onclick="exitPreviewMode()"
                 style="display:none;align-items:center;gap:5px;background:rgba(255,255,255,.2);
                        border:1px solid rgba(255,255,255,.4);border-radius:20px;color:white;
                        font-size:0.75rem;font-weight:700;padding:5px 12px;cursor:pointer;
-                       white-space:nowrap;flex-shrink:0">← Staff</button>
+                       white-space:nowrap;flex-shrink:0">? Staff</button>
         <div style="position:relative;margin-left:6px">
-            <button id="pm-menu-btn" class="pm-menu-btn" onclick="togglePmMenu()">⋯</button>
+            <button id="pm-menu-btn" class="pm-menu-btn" onclick="togglePmMenu()">?</button>
             <div id="pm-menu-dropdown" class="pm-menu-dropdown" style="display:none">
-                <div class="pm-menu-item pm-menu-date" id="pm-menu-import-date">Chargement…</div>
-                <button class="pm-menu-item pm-menu-logout" onclick="playerLogout()">🚪 Déconnexion</button>
+                <div class="pm-menu-item pm-menu-date" id="pm-menu-import-date">Chargement�</div>
+                <button class="pm-menu-item pm-menu-logout" onclick="playerLogout()">?? D�connexion</button>
             </div>
         </div>
     </div>
 
-    <!-- ── MODE JOUEUR ── page fiche joueur ─────────────────────────────────── -->
+    <!-- -- MODE JOUEUR -- page fiche joueur ----------------------------------- -->
     <div id="pm-fiche-page" style="display:none"></div>
 
-    <!-- ── MODAL PREVIEW MODE JOUEUR ────────────────────────────────────────── -->
+    <!-- -- MODAL PREVIEW MODE JOUEUR ------------------------------------------ -->
     <div id="preview-modal" style="display:none;position:fixed;inset:0;z-index:2000;
          background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
         <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:380px;width:90%;
                     box-shadow:0 20px 60px rgba(0,0,0,.25);">
             <h3 style="margin:0 0 6px;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;
-                       letter-spacing:1px;color:#0A2463">👤 Vue joueur</h3>
+                       letter-spacing:1px;color:#0A2463">?? Vue joueur</h3>
             <p style="margin:0 0 18px;font-size:0.83rem;color:#64748B">
-                Choisir un joueur pour prévisualiser ce qu'il voit avec son compte.
+                Choisir un joueur pour pr�visualiser ce qu'il voit avec son compte.
             </p>
             <select id="preview-player-sel" style="width:100%;padding:9px 12px;border:1.5px solid #E2E8F0;
                     border-radius:8px;font-size:0.9rem;margin-bottom:16px;background:#F8FAFC;">
-                <option value="">— Sélectionner un joueur —</option>
+                <option value="">� S�lectionner un joueur �</option>
             </select>
             <div style="display:flex;gap:10px;justify-content:flex-end;">
                 <button onclick="closePreviewModal()"
@@ -3404,21 +3404,21 @@ let _effInfoPoste = null;
                 <button onclick="startPreviewMode()"
                         style="padding:8px 20px;background:#0A2463;color:#fff;border:none;border-radius:8px;
                                cursor:pointer;font-size:0.85rem;font-weight:700">
-                    Voir sa vue →
+                    Voir sa vue ?
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ── MODE JOUEUR ── page stats match ────────────────────────────────── -->
+    <!-- -- MODE JOUEUR -- page stats match ---------------------------------- -->
     <div id="pm-match-page" style="display:none;padding:76px 24px 24px;max-width:1100px;margin:0 auto">
         <div class="pm-stats-header" style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
             <span style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#0A2463;letter-spacing:2px">
-                🏆 STATS DU MATCH
+                ?? STATS DU MATCH
             </span>
             <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                 <div id="pm-bilan-wrap" style="display:none;align-items:center;gap:8px">
-                    <label style="font-size:0.8rem;font-weight:600;color:#64748B">PÉRIODE</label>
+                    <label style="font-size:0.8rem;font-weight:600;color:#64748B">P�RIODE</label>
                     <select id="pm-bilan-sel" onchange="pmBilanSelect()"
                             style="border:1px solid #E2E8F0;border-radius:8px;padding:6px 12px;
                                    font-size:0.85rem;color:#1E293B;background:white;max-width:200px">
@@ -3440,7 +3440,7 @@ let _effInfoPoste = null;
         <div id="pm-match-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:20px"></div>
     </div>
 
-    <!-- ── MODE JOUEUR ── page impact (zones de tir) ─────────────────────── -->
+    <!-- -- MODE JOUEUR -- page impact (zones de tir) ----------------------- -->
     <div id="pm-zones-page" style="display:none;padding:72px 16px 24px;max-width:900px;margin:0 auto">
         <div class="pm-impact-filter">
             <label style="font-size:0.8rem;font-weight:600;color:#64748B">MATCH</label>
@@ -3453,16 +3453,16 @@ let _effInfoPoste = null;
         <div id="pm-zones-content"></div>
     </div>
 
-    <!-- ── STAFF ── modal gestion comptes joueurs ──────────────────────────── -->
+    <!-- -- STAFF -- modal gestion comptes joueurs ---------------------------- -->
     <div id="pa-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
          z-index:2000;align-items:center;justify-content:center">
         <div style="background:white;border-radius:16px;padding:28px;width:480px;max-width:95vw;
                     max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
                 <h2 style="margin:0;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;
-                           color:#0A2463;letter-spacing:1.5px">🔑 COMPTES JOUEURS</h2>
+                           color:#0A2463;letter-spacing:1.5px">?? COMPTES JOUEURS</h2>
                 <button onclick="closePlayerAccountsModal()"
-                        style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#64748B">✕</button>
+                        style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#64748B">?</button>
             </div>
             <!-- Formulaire ajout -->
             <div style="background:#F8FAFC;border-radius:10px;padding:16px;margin-bottom:20px">
@@ -3479,7 +3479,7 @@ let _effInfoPoste = null;
                 <button onclick="savePlayerAccount()"
                         style="width:100%;background:#0A2463;color:white;border:none;border-radius:8px;
                                padding:10px;font-weight:700;cursor:pointer;font-size:0.9rem">
-                    ✅ CRÉER LE COMPTE
+                    ? CR�ER LE COMPTE
                 </button>
             </div>
             <!-- Liste comptes -->

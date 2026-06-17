@@ -4,64 +4,61 @@
 
         // ===== MODULE ANALYSE — ENC_FAMILLE_MAP validé coach 2026-06-17 =====
         const ENC_FAMILLE_MAP = {
-            // MOUVEMENT
-            '8':'Mouvement','1':'Mouvement','Départ':'Mouvement','Depart':'Mouvement',
-            'Pingouin':'Mouvement','5':'Mouvement','9':'Mouvement',
-            'Croisé DC-AR':'Mouvement','Croise DC-AR':'Mouvement','Bis':'Mouvement',
-            // ISOLER
-            'DUEL':'Isoler','Markus':'Isoler',
-            'Écartement':'Isoler','Ecartement':'Isoler',
-            'Renverse':'Isoler','Aix':'Isoler',
-            'Suède':'Isoler','Suede':'Isoler','FIRST':'Isoler',
-            'Suède DC':'Isoler','Suede DC':'Isoler',
-            'PORTO':'Isoler','Gidsel':'Isoler','2 pvts':'Isoler',
-            'LIMOGES':'Isoler','7':'Isoler','ISO':'Isoler',
-            "Départ d'ailier":'Isoler',"Depart ailier":'Isoler',"Départ d’ailier":'Isoler',
+            // ISOLER — finalités qui isolent un défenseur
+            ‘DUEL’:’Isoler’,’Markus’:’Isoler’,
+            ‘Écartement’:’Isoler’,’Ecartement’:’Isoler’,
+            ‘Renverse’:’Isoler’,’Aix’:’Isoler’,
+            ‘Suède’:’Isoler’,’Suede’:’Isoler’,’FIRST’:’Isoler’,
+            ‘Suède DC’:’Isoler’,’Suede DC’:’Isoler’,
+            ‘PORTO’:’Isoler’,’Gidsel’:’Isoler’,’2 pvts’:’Isoler’,
+            ‘LIMOGES’:’Isoler’,’ISO’:’Isoler’,
+            "Départ d’ailier":’Isoler’,"Depart ailier":’Isoler’,
             // RENTRÉE
-            '3':'Rentrée','Szeged':'Rentrée','6':'Rentrée','Ressort':'Rentrée',
-            '+':'Rentrée','110':'Rentrée',
-            '6 OPPOSÉ':'Rentrée','6 OPPOSE':'Rentrée',
-            '90':'Rentrée','3 OPPOSÉ':'Rentrée','3 OPPOSE':'Rentrée',
-            'Flensburg':'Rentrée','POSTE':'Rentrée',
-            'POSTE CROISÉ':'Rentrée','POSTE CROISE':'Rentrée','Maillot':'Rentrée',
+            ‘Szeged’:’Rentrée’,’Ressort’:’Rentrée’,
+            ‘+’:’Rentrée’,’110’:’Rentrée’,
+            ‘6 OPPOSÉ’:’Rentrée’,’6 OPPOSE’:’Rentrée’,
+            ‘90’:’Rentrée’,’3 OPPOSÉ’:’Rentrée’,’3 OPPOSE’:’Rentrée’,
+            ‘Flensburg’:’Rentrée’,’POSTE’:’Rentrée’,
+            ‘POSTE CROISÉ’:’Rentrée’,’POSTE CROISE’:’Rentrée’,’Maillot’:’Rentrée’,
             // JEU PVT
-            'DOUBLE':'Jeu PVT','Rafal':'Jeu PVT','GLISSE':'Jeu PVT',
-            'SKERN':'Jeu PVT','SPANISH':'Jeu PVT','SWITCH':'Jeu PVT','Triangle':'Jeu PVT',
+            ‘DOUBLE’:’Jeu PVT’,’Rafal’:’Jeu PVT’,’GLISSE’:’Jeu PVT’,
+            ‘SKERN’:’Jeu PVT’,’SPANISH’:’Jeu PVT’,’SWITCH’:’Jeu PVT’,’Triangle’:’Jeu PVT’,
             // BLOC PVT
-            'Bloc 4':'Bloc PVT','Bonit':'Bloc PVT','Bloc ext':'Bloc PVT',
-            'Écran 3':'Bloc PVT','Ecran 3':'Bloc PVT',
-            'Julen':'Bloc PVT','2':'Bloc PVT','BLOC 3H':'Bloc PVT','Rares':'Bloc PVT',
-            'Écran 2':'Bloc PVT','Ecran 2':'Bloc PVT',
+            ‘Bloc 4’:’Bloc PVT’,’Bonit’:’Bloc PVT’,’Bloc ext’:’Bloc PVT’,
+            ‘Écran 3’:’Bloc PVT’,’Ecran 3’:’Bloc PVT’,
+            ‘Julen’:’Bloc PVT’,’BLOC 3H’:’Bloc PVT’,’Rares’:’Bloc PVT’,
+            ‘Écran 2’:’Bloc PVT’,’Ecran 2’:’Bloc PVT’,
             // 7VS6
-            '7vs6 Classique':'7vs6','7vs6 12/45':'7vs6','7vs6 12/56':'7vs6',
-            '7vs6 23/45':'7vs6','7vs6 FIRST':'7vs6','7vs6 3pvts':'7vs6',
-            '7vs6 Markus':'7vs6','6 Barthez':'7vs6',
-            '7vs6 1-2/5-6':'7vs6','7vs6 2-3/4-5':'7vs6','7vs5':'7vs6','BARTHEZ':'7vs6',
+            ‘7vs6 Classique’:’7vs6’,’7vs6 12/45’:’7vs6’,’7vs6 12/56’:’7vs6’,
+            ‘7vs6 23/45’:’7vs6’,’7vs6 FIRST’:’7vs6’,’7vs6 3pvts’:’7vs6’,
+            ‘7vs6 Markus’:’7vs6’,’6 Barthez’:’7vs6’,
+            ‘7vs6 1-2/5-6’:’7vs6’,’7vs6 2-3/4-5’:’7vs6’,’7vs5’:’7vs6’,’BARTHEZ’:’7vs6’,
             // FAIRE COURIR
-            'Bretzel':'Faire courir','4':'Faire courir','Course-tir':'Faire courir',
-            'FENIX':'Faire courir','Long':'Faire courir','DK':'Faire courir',
-            'M':'Faire courir','DANI':'Faire courir',
+            ‘Bretzel’:’Faire courir’,’Course-tir’:’Faire courir’,
+            ‘FENIX’:’Faire courir’,’Long’:’Faire courir’,’DK’:’Faire courir’,
+            ‘M’:’Faire courir’,’DANI’:’Faire courir’,
             // SPÉCIAUX
-            'Fake':'Spéciaux','RAPIDO':'Spéciaux','IRUN':'Spéciaux','Kung Fu':'Spéciaux',
-            'Moustache':'Spéciaux','Spéciaux':'Spéciaux','Speciaux':'Spéciaux','Kebab':'Spéciaux',
+            ‘Fake’:’Spéciaux’,’RAPIDO’:’Spéciaux’,’IRUN’:’Spéciaux’,’Kung Fu’:’Spéciaux’,
+            ‘Moustache’:’Spéciaux’,’Spéciaux’:’Spéciaux’,’Speciaux’:’Spéciaux’,’Kebab’:’Spéciaux’,
             // 6VS5
-            'K':'6vs5','Danois':'6vs5','1 rotation':'6vs5',
+            ‘K’:’6vs5’,’Danois’:’6vs5’,’1 rotation’:’6vs5’,
         };
 
-        const ENC_FAMILLES_ORDRE = ['Mouvement','Isoler','Rentrée','Jeu PVT','Bloc PVT','7vs6','Faire courir','Spéciaux','6vs5'];
+        const ENC_FAMILLES_ORDRE = ['Isoler','Rentrée','Jeu PVT','Bloc PVT','7vs6','Faire courir','Spéciaux','6vs5'];
         const ENC_FAMILLE_COLORS = {
-            'Mouvement':'var(--enc-mouvement)','Isoler':'var(--enc-isoler)',
+            'Isoler':'var(--enc-isoler)',
             'Rentrée':'var(--enc-rentree)','Jeu PVT':'var(--enc-jeu-pvt)',
             'Bloc PVT':'var(--enc-bloc-pvt)','7vs6':'var(--enc-7vs6)',
             'Faire courir':'var(--enc-faire-courir)','Spéciaux':'var(--enc-speciaux)',
             '6vs5':'var(--enc-6vs5)','Autre':'var(--enc-autre)',
         };
         const ENC_FAMILLE_IDS = {
-            'Mouvement':'mouvement','Isoler':'isoler','Rentrée':'rentree',
+            'Isoler':'isoler','Rentrée':'rentree',
             'Jeu PVT':'jeu-pvt','Bloc PVT':'bloc-pvt','7vs6':'7vs6',
             'Faire courir':'faire-courir','Spéciaux':'speciaux','6vs5':'6vs5',
         };
 
+        let _momentsCles = [];
         let _encStatsCache = null;
         let _encStatsCacheMatch = null;
         let _gardienFamilleFilter = null;
@@ -119,11 +116,11 @@
             // Générer l'analyse
             generateResume3Points(matchFilter, matchData, hasPeriode);
             generateIndicateurs(matchFilter, matchData, hasPeriode);
+            findMomentsCles(matchFilter, matchData);
             drawTimeline(matchFilter, matchData);
             renderBasculContext(matchData, _lastBasculeResult);
             renderEncFamillesSection(matchData);
             renderGardienEncSection(matchData);
-            findMomentsCles(matchFilter, matchData);
         }
 
         function generateResume3Points(matchName, matchData, hasPeriode) {
@@ -458,58 +455,81 @@
 
             // Overlay momentum + détection bascule (A-04)
             drawMomentumOverlay(ctx, scoreHistory, canvas, padding, roundedMax, maxPos);
+
+            // Marqueurs Moments Clés sur la timeline
+            if (_momentsCles && _momentsCles.length) {
+                _momentsCles.forEach((m, idx) => {
+                    const np = normPos(m.rawPos);
+                    const x = padding.left + (np / maxPos) * graphWidth;
+                    const color = m.type === 'positif' ? '#10B981' : '#DC2626';
+                    ctx.save();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([4, 3]);
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + graphHeight);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = color;
+                    ctx.font = 'bold 9px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`MC${idx + 1}`, x, padding.top + 12);
+                    ctx.restore();
+                });
+            }
         }
 
         function findMomentsCles(matchName, matchData) {
-            const actions = getSortedGoals(matchData).map(g => g.row);
-            
-            if (actions.length < 3) {
+            const sortedGoals = getSortedGoals(matchData);
+            _momentsCles = [];
+
+            if (sortedGoals.length < 3) {
                 document.getElementById('moments-cles').innerHTML = '<p style="color:#6B7280;font-size:0.85rem;">Pas assez de données pour identifier des séquences.</p>';
                 return;
             }
-            
-            // Trouver les séquences
+
             const moments = [];
-            let currentSeq = { team: null, count: 0, start: 0 };
-            
-            actions.forEach((action, i) => {
-                const team = action[COLS.club] === 'FENIX' ? 'FENIX' : 'ADV';
-                
+            let currentSeq = { team: null, count: 0, startIdx: 0 };
+
+            sortedGoals.forEach(({ row, pos }, i) => {
+                const team = row[COLS.club] === 'FENIX' ? 'FENIX' : 'ADV';
                 if (team === currentSeq.team) {
                     currentSeq.count++;
                 } else {
                     if (currentSeq.count >= 3) {
                         moments.push({
-                            text: currentSeq.team === 'FENIX' 
-                                ? `Série de ${currentSeq.count} buts FENIX` 
+                            text: currentSeq.team === 'FENIX'
+                                ? `Série de ${currentSeq.count} buts FENIX`
                                 : `${currentSeq.count} buts encaissés d'affilée`,
-                            type: currentSeq.team === 'FENIX' ? 'positif' : 'negatif'
+                            type: currentSeq.team === 'FENIX' ? 'positif' : 'negatif',
+                            rawPos: sortedGoals[currentSeq.startIdx].pos,
                         });
                     }
-                    currentSeq = { team: team, count: 1, start: i };
+                    currentSeq = { team, count: 1, startIdx: i };
                 }
             });
-            
-            // Vérifier la dernière séquence
             if (currentSeq.count >= 3) {
                 moments.push({
-                    text: currentSeq.team === 'FENIX' 
-                        ? `Série de ${currentSeq.count} buts FENIX` 
+                    text: currentSeq.team === 'FENIX'
+                        ? `Série de ${currentSeq.count} buts FENIX`
                         : `${currentSeq.count} buts encaissés d'affilée`,
-                    type: currentSeq.team === 'FENIX' ? 'positif' : 'negatif'
+                    type: currentSeq.team === 'FENIX' ? 'positif' : 'negatif',
+                    rawPos: sortedGoals[currentSeq.startIdx].pos,
                 });
             }
-            
+
+            _momentsCles = moments;
+
             if (moments.length === 0) {
                 document.getElementById('moments-cles').innerHTML = '<p style="color:#6B7280;font-size:0.85rem;">Pas de séquence marquante détectée.</p>';
                 return;
             }
-            
+
             let html = '<strong style="font-size:0.85rem;color:#333;">Moments clés :</strong> ';
-            moments.forEach(m => {
-                html += `<span class="moment-badge ${m.type}">${m.text}</span> `;
+            moments.forEach((m, idx) => {
+                html += `<span class="moment-badge ${m.type}">MC${idx + 1} — ${m.text}</span> `;
             });
-            
             document.getElementById('moments-cles').innerHTML = html;
         }
 
@@ -830,9 +850,12 @@
         // A-00 — Parser famille enclenchement
         function getEncFamille(encStr) {
             if (!encStr || typeof encStr !== 'string') return 'Autre';
-            const cle = encStr.split(';')[0].trim();
-            if (!cle) return 'Autre';
-            return ENC_FAMILLE_MAP[cle] ?? 'Autre';
+            const parts = encStr.split(';');
+            const finalite = (parts[2] || '').trim();
+            if (finalite) return ENC_FAMILLE_MAP[finalite] ?? 'Autre';
+            const fallback = (parts[0] || '').trim();
+            if (fallback) return ENC_FAMILLE_MAP[fallback] ?? 'Autre';
+            return 'Autre';
         }
 
         function computeEncCoverage(rows) {
@@ -963,9 +986,9 @@
             const byEnc = new Map();
             rows.forEach(r => {
                 const enc = (r[COLS.enclenchement] || '').toString();
-                const parts = enc.split(';');
-                const cle = parts[0].trim() || 'Inconnu';
-                const label = parts.length >= 3 ? parts[2].trim() : cle;
+                const parts = enc.split(';').map(p => p.trim()).filter(p => p);
+                const cle = parts.join('-') || 'Inconnu';
+                const label = cle;
                 if (!byEnc.has(cle)) byEnc.set(cle, { label, tirs:0, buts:0 });
                 const s = byEnc.get(cle);
                 if (r[COLS.resultat] === 'But') { s.buts++; s.tirs++; }
