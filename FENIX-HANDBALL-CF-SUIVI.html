@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=108">
-    <script src="js/utils.js?v=108"></script>
-    <script src="js/impact-images.js?v=108"></script>
-    <script src="js/player-mode.js?v=108"></script>
-    <script src="js/page-joueurs.js?v=108"></script>
-    <script src="js/page-notes-graph.js?v=108"></script>
-    <script src="js/page-analyse.js?v=108"></script>
+    <link rel="stylesheet" href="css/style.css?v=109">
+    <script src="js/utils.js?v=109"></script>
+    <script src="js/impact-images.js?v=109"></script>
+    <script src="js/player-mode.js?v=109"></script>
+    <script src="js/page-joueurs.js?v=109"></script>
+    <script src="js/page-notes-graph.js?v=109"></script>
+    <script src="js/page-analyse.js?v=109"></script>
 </head>
 <body>
 
@@ -429,6 +429,7 @@
                             <canvas id="timeline-canvas"></canvas>
                         </div>
                         <div id="moments-cles" class="moments-cles"></div>
+                        <div id="enc-bascule-section"></div>
                     </div>
 
                     <!-- Analyse comparative -->
@@ -466,6 +467,16 @@
                         </div>
                     </div>
 
+                    <!-- Enclenchements offensifs (A-01/02/03) -->
+                    <div class="analyse-section">
+                        <div id="enc-familles-section"></div>
+                    </div>
+
+                    <!-- Gardien × systèmes adverses (A-06/07) -->
+                    <div class="analyse-section">
+                        <div id="enc-gardien-section"></div>
+                    </div>
+
                     <!-- Chat IA -->
                     <div class="analyse-section">
                         <h3 class="analyse-section-title">💬 Chat IA - Pose tes questions</h3>
@@ -485,6 +496,7 @@
                 </div>
 
                 <div id="analyse-empty">
+                    <div id="enc-saison-section"></div>
                     <div id="saison-correlations"></div>
                     <div class="no-data" style="margin-top:1.5rem">
                         <div class="no-data-icon">🔍</div>

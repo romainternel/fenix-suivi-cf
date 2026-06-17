@@ -2,6 +2,73 @@
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
+        // ===== MODULE ANALYSE — ENC_FAMILLE_MAP validé coach 2026-06-17 =====
+        const ENC_FAMILLE_MAP = {
+            // MOUVEMENT
+            '8':'Mouvement','1':'Mouvement','Départ':'Mouvement','Depart':'Mouvement',
+            'Pingouin':'Mouvement','5':'Mouvement','9':'Mouvement',
+            'Croisé DC-AR':'Mouvement','Croise DC-AR':'Mouvement','Bis':'Mouvement',
+            // ISOLER
+            'DUEL':'Isoler','Markus':'Isoler',
+            'Écartement':'Isoler','Ecartement':'Isoler',
+            'Renverse':'Isoler','Aix':'Isoler',
+            'Suède':'Isoler','Suede':'Isoler','FIRST':'Isoler',
+            'Suède DC':'Isoler','Suede DC':'Isoler',
+            'PORTO':'Isoler','Gidsel':'Isoler','2 pvts':'Isoler',
+            'LIMOGES':'Isoler','7':'Isoler','ISO':'Isoler',
+            "Départ d'ailier":'Isoler',"Depart ailier":'Isoler',"Départ d’ailier":'Isoler',
+            // RENTRÉE
+            '3':'Rentrée','Szeged':'Rentrée','6':'Rentrée','Ressort':'Rentrée',
+            '+':'Rentrée','110':'Rentrée',
+            '6 OPPOSÉ':'Rentrée','6 OPPOSE':'Rentrée',
+            '90':'Rentrée','3 OPPOSÉ':'Rentrée','3 OPPOSE':'Rentrée',
+            'Flensburg':'Rentrée','POSTE':'Rentrée',
+            'POSTE CROISÉ':'Rentrée','POSTE CROISE':'Rentrée','Maillot':'Rentrée',
+            // JEU PVT
+            'DOUBLE':'Jeu PVT','Rafal':'Jeu PVT','GLISSE':'Jeu PVT',
+            'SKERN':'Jeu PVT','SPANISH':'Jeu PVT','SWITCH':'Jeu PVT','Triangle':'Jeu PVT',
+            // BLOC PVT
+            'Bloc 4':'Bloc PVT','Bonit':'Bloc PVT','Bloc ext':'Bloc PVT',
+            'Écran 3':'Bloc PVT','Ecran 3':'Bloc PVT',
+            'Julen':'Bloc PVT','2':'Bloc PVT','BLOC 3H':'Bloc PVT','Rares':'Bloc PVT',
+            'Écran 2':'Bloc PVT','Ecran 2':'Bloc PVT',
+            // 7VS6
+            '7vs6 Classique':'7vs6','7vs6 12/45':'7vs6','7vs6 12/56':'7vs6',
+            '7vs6 23/45':'7vs6','7vs6 FIRST':'7vs6','7vs6 3pvts':'7vs6',
+            '7vs6 Markus':'7vs6','6 Barthez':'7vs6',
+            '7vs6 1-2/5-6':'7vs6','7vs6 2-3/4-5':'7vs6','7vs5':'7vs6','BARTHEZ':'7vs6',
+            // FAIRE COURIR
+            'Bretzel':'Faire courir','4':'Faire courir','Course-tir':'Faire courir',
+            'FENIX':'Faire courir','Long':'Faire courir','DK':'Faire courir',
+            'M':'Faire courir','DANI':'Faire courir',
+            // SPÉCIAUX
+            'Fake':'Spéciaux','RAPIDO':'Spéciaux','IRUN':'Spéciaux','Kung Fu':'Spéciaux',
+            'Moustache':'Spéciaux','Spéciaux':'Spéciaux','Speciaux':'Spéciaux','Kebab':'Spéciaux',
+            // 6VS5
+            'K':'6vs5','Danois':'6vs5','1 rotation':'6vs5',
+        };
+
+        const ENC_FAMILLES_ORDRE = ['Mouvement','Isoler','Rentrée','Jeu PVT','Bloc PVT','7vs6','Faire courir','Spéciaux','6vs5'];
+        const ENC_FAMILLE_COLORS = {
+            'Mouvement':'var(--enc-mouvement)','Isoler':'var(--enc-isoler)',
+            'Rentrée':'var(--enc-rentree)','Jeu PVT':'var(--enc-jeu-pvt)',
+            'Bloc PVT':'var(--enc-bloc-pvt)','7vs6':'var(--enc-7vs6)',
+            'Faire courir':'var(--enc-faire-courir)','Spéciaux':'var(--enc-speciaux)',
+            '6vs5':'var(--enc-6vs5)','Autre':'var(--enc-autre)',
+        };
+        const ENC_FAMILLE_IDS = {
+            'Mouvement':'mouvement','Isoler':'isoler','Rentrée':'rentree',
+            'Jeu PVT':'jeu-pvt','Bloc PVT':'bloc-pvt','7vs6':'7vs6',
+            'Faire courir':'faire-courir','Spéciaux':'speciaux','6vs5':'6vs5',
+        };
+
+        let _encStatsCache = null;
+        let _encStatsCacheMatch = null;
+        let _gardienFamilleFilter = null;
+        let _gardienSelected = null;
+        let _lastBasculeResult = null;
+        let _encStatsSaison = null;
+
         function checkPeriodeData(matchData) {
             const total = matchData.length;
             if (total === 0) return { ok: false, withPeriode: 0, total: 0 };
@@ -53,6 +120,9 @@
             generateResume3Points(matchFilter, matchData, hasPeriode);
             generateIndicateurs(matchFilter, matchData, hasPeriode);
             drawTimeline(matchFilter, matchData);
+            renderBasculContext(matchData, _lastBasculeResult);
+            renderEncFamillesSection(matchData);
+            renderGardienEncSection(matchData);
             findMomentsCles(matchFilter, matchData);
         }
 
@@ -233,8 +303,9 @@
         function drawTimeline(matchName, matchData) {
             const canvas = document.getElementById('timeline-canvas');
             const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
+            const cw = container.clientWidth || container.offsetWidth || 600;
+            canvas.width = Math.max(cw, 200);
+            canvas.height = container.clientHeight || 200;
 
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -384,6 +455,9 @@
             ctx.fillRect(padding.left + 80, canvas.height - 18, 12, 12);
             ctx.fillStyle = '#333';
             ctx.fillText('Adversaire', padding.left + 98, canvas.height - 8);
+
+            // Overlay momentum + détection bascule (A-04)
+            drawMomentumOverlay(ctx, scoreHistory, canvas, padding, roundedMax, maxPos);
         }
 
         function findMomentsCles(matchName, matchData) {
@@ -746,4 +820,471 @@
                     </div>
                 </div>
             `;
+            renderEncSaisonSection();
+        }
+
+        // ====================================================================
+        // MODULE ANALYSE — Fonctions A-00 à A-08
+        // ====================================================================
+
+        // A-00 — Parser famille enclenchement
+        function getEncFamille(encStr) {
+            if (!encStr || typeof encStr !== 'string') return 'Autre';
+            const cle = encStr.split(';')[0].trim();
+            if (!cle) return 'Autre';
+            return ENC_FAMILLE_MAP[cle] ?? 'Autre';
+        }
+
+        function computeEncCoverage(rows) {
+            const avecEnc = rows.filter(r => (r[COLS.enclenchement] || '').toString().trim());
+            const classifiees = avecEnc.filter(r => getEncFamille(r[COLS.enclenchement]) !== 'Autre');
+            const total = avecEnc.length;
+            return { total, classifiees: classifiees.length, pct: total > 0 ? Math.round(classifiees.length / total * 100) : 100 };
+        }
+
+        // A-01 — Calcul stats famille par match
+        function computeEncStats(matchData, isAdv) {
+            const rows = matchData.filter(r => isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX');
+            const FAMILLES = [...ENC_FAMILLES_ORDRE, 'Autre'];
+            const stats = new Map();
+            FAMILLES.forEach(f => stats.set(f, { tirs: 0, buts: 0, pb: 0, eff: 0, possessions: 0 }));
+            rows.forEach(r => {
+                const famille = getEncFamille(r[COLS.enclenchement]);
+                const s = stats.get(famille);
+                const estBut = isAdv ? r[COLS.finalite] === 'But' : r[COLS.resultat] === 'But';
+                const estTirRate = isAdv
+                    ? (r[COLS.finalite] === 'Tir arrêté' || r[COLS.finalite] === 'Tir raté')
+                    : r[COLS.resultat] === 'Tir raté';
+                const estPB = r[COLS.resultat] === 'PB';
+                if ((r[COLS.enclenchement] || '').toString().trim()) s.possessions++;
+                if (estBut) { s.buts++; s.tirs++; }
+                else if (estTirRate) s.tirs++;
+                else if (estPB) s.pb++;
+            });
+            stats.forEach(s => { const d = s.tirs + s.pb; s.eff = d > 0 ? Math.round(s.buts / d * 100) : 0; });
+            return stats;
+        }
+
+        // Stats saison (avec cache)
+        function computeEncStatsSaison(isAdv) {
+            const cacheKey = isAdv ? 'adv' : 'fenix';
+            if (_encStatsSaison && _encStatsSaison.has(cacheKey)) return _encStatsSaison.get(cacheKey);
+            if (!_encStatsSaison) _encStatsSaison = new Map();
+            if (typeof MATCHS === 'undefined' || !MATCHS || !MATCHS.length) { _encStatsSaison.set(cacheKey, new Map()); return _encStatsSaison.get(cacheKey); }
+            const FAMILLES = [...ENC_FAMILLES_ORDRE, 'Autre'];
+            const byFamille = new Map();
+            FAMILLES.forEach(f => byFamille.set(f, { effParMatch: [], matchCount: 0 }));
+            MATCHS.forEach(matchName => {
+                const matchData = DATA.filter(r => r[COLS.rencontre] === matchName);
+                if (!matchData.length) return;
+                const matchStats = computeEncStats(matchData, isAdv);
+                matchStats.forEach((s, famille) => {
+                    if (s.possessions >= 1) { byFamille.get(famille).effParMatch.push(s.eff); byFamille.get(famille).matchCount++; }
+                });
+            });
+            const result = new Map();
+            byFamille.forEach((entry, famille) => {
+                const arr = entry.effParMatch, n = arr.length;
+                if (!n) { result.set(famille, { effMoy: 0, cv: 0, matchCount: 0 }); return; }
+                const mean = arr.reduce((s, v) => s + v, 0) / n;
+                const variance = arr.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / n;
+                const cv = mean > 0 ? Math.sqrt(variance) / mean : 0;
+                result.set(famille, { effMoy: Math.round(mean), cv: Math.round(cv * 100) / 100, matchCount: n });
+            });
+            _encStatsSaison.set(cacheKey, result);
+            return result;
+        }
+
+        // A-01/02/03 — Rendu cards familles
+        function renderEncFamillesSection(matchData) {
+            const container = document.getElementById('enc-familles-section');
+            if (!container) return;
+            const statsMatch = computeEncStats(matchData, false);
+            const statsSaison = computeEncStatsSaison(false);
+            const fenixRows = matchData.filter(r => r[COLS.club] === 'FENIX');
+            const coverage = computeEncCoverage(fenixRows);
+            const totalPoss = fenixRows.filter(r => (r[COLS.enclenchement] || '').toString().trim()).length;
+            const warningHtml = coverage.pct < 80 && coverage.total > 0
+                ? `<div class="enc-coverage-warning">⚠ ${100 - coverage.pct}% des enclenchements non classifiés — ENC_FAMILLE_MAP à mettre à jour.</div>` : '';
+            let cardsHtml = '';
+            ENC_FAMILLES_ORDRE.forEach(famille => {
+                const s = statsMatch.get(famille) || { tirs:0, buts:0, pb:0, eff:0, possessions:0 };
+                const sd = statsSaison.get(famille) || { effMoy:0, cv:0, matchCount:0 };
+                const couleur = ENC_FAMILLE_COLORS[famille];
+                const fid = ENC_FAMILLE_IDS[famille];
+                if (!s.possessions) {
+                    cardsHtml += `<div class="enc-famille-card disabled" id="enc-card-${fid}" style="border-top-color:${couleur};"><div class="enc-card-header"><span class="enc-famille-dot" style="background:${couleur};opacity:0.4"></span><span class="enc-famille-name">${famille}</span></div><div class="enc-famille-vide">Non utilisé</div></div>`;
+                    return;
+                }
+                // Badge A-03
+                let badgeHtml = '';
+                if (sd.matchCount >= 3 && s.possessions >= 5) {
+                    const em = sd.effMoy, ec = s.eff;
+                    if (em > 0 && ec / em >= 1.5) {
+                        badgeHtml = `<div class="enc-badge-faiblesse">⚡ FAIBLESSE ADV<div class="enc-badge-sub">Moy:${em}% → +${ec-em}% ce match</div></div>`;
+                    } else if (em > 0 && Math.abs(ec - em) / em <= 0.10 && sd.cv < 0.20) {
+                        badgeHtml = `<div class="enc-badge-force">⭐ FORCE FENIX<div class="enc-badge-sub">Moy:${em}% (${ec>=em?'+':''}${ec-em}%)</div></div>`;
+                    }
+                } else if (sd.matchCount > 0 && sd.matchCount < 3) {
+                    badgeHtml = `<div class="enc-badge-nodata">○ Min. 3 matchs (${sd.matchCount} joué)</div>`;
+                }
+                // Barre
+                const hasRef = sd.matchCount >= 3;
+                const fillClass = !hasRef ? 'noref' : (s.eff >= sd.effMoy ? 'above' : 'below');
+                const refText = hasRef ? `moy. saison : ${sd.effMoy}%` : 'Pas de référence';
+                const barreHtml = `<div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${Math.min(s.eff,100)}%"></div></div><div class="enc-progress-ref">${refText}</div>`;
+                cardsHtml += `
+                <div class="enc-famille-card" id="enc-card-${fid}" style="border-top-color:${couleur};" onclick="_toggleEncDetail('${fid}')">
+                  <div class="enc-card-header">
+                    <span class="enc-famille-dot" style="background:${couleur};"></span>
+                    <span class="enc-famille-name">${famille}</span>
+                    <span class="enc-card-caret" id="enc-caret-${fid}">▼</span>
+                  </div>
+                  <div class="enc-famille-eff">${s.eff}%</div>
+                  <div class="enc-famille-sublabel">EFF. POSSESSION</div>
+                  <div class="enc-famille-meta">${s.tirs} tirs · ${s.buts} buts · n=${s.possessions}</div>
+                  ${barreHtml}${badgeHtml}
+                  <div class="enc-detail-panel" id="enc-detail-${fid}" style="display:none;">
+                    ${_buildEncDetailTable(matchData, famille)}
+                  </div>
+                </div>`;
+            });
+            container.innerHTML = `
+              <div class="enc-section-header">
+                <span class="enc-section-title">⚡ ENCLENCHEMENTS OFFENSIFS</span>
+                <span class="enc-section-meta">n=${totalPoss} poss. · Couv. ${coverage.pct}%</span>
+              </div>
+              ${warningHtml}
+              <div class="enc-famille-grid">${cardsHtml}</div>`;
+        }
+
+        function _buildEncDetailTable(matchData, famille) {
+            const rows = matchData.filter(r => r[COLS.club] === 'FENIX' && getEncFamille(r[COLS.enclenchement]) === famille);
+            const byEnc = new Map();
+            rows.forEach(r => {
+                const enc = (r[COLS.enclenchement] || '').toString();
+                const parts = enc.split(';');
+                const cle = parts[0].trim() || 'Inconnu';
+                const label = parts.length >= 3 ? parts[2].trim() : cle;
+                if (!byEnc.has(cle)) byEnc.set(cle, { label, tirs:0, buts:0 });
+                const s = byEnc.get(cle);
+                if (r[COLS.resultat] === 'But') { s.buts++; s.tirs++; }
+                else if (r[COLS.resultat] === 'Tir raté') s.tirs++;
+            });
+            if (!byEnc.size) return '<p style="color:#94A3B8;font-size:0.82rem;padding:8px 0">Aucune donnée.</p>';
+            const sorted = [...byEnc.entries()].sort((a, b) => b[1].tirs - a[1].tirs);
+            let tt = 0, tb = 0;
+            sorted.forEach(([, s]) => { tt += s.tirs; tb += s.buts; });
+            const te = tt > 0 ? Math.round(tb / tt * 100) : 0;
+            let lignes = '';
+            sorted.forEach(([, s]) => {
+                const eff = s.tirs > 0 ? Math.round(s.buts / s.tirs * 100) : 0;
+                const c = eff >= 60 ? '#059669' : eff < 40 ? '#DC2626' : '#64748B';
+                lignes += `<tr><td>${s.label}</td><td>${s.tirs}</td><td>${s.buts}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
+            });
+            return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Tirs</th><th>Buts</th><th>Eff.</th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tt}</td><td>${tb}</td><td>${te}%</td></tr></tfoot></table>`;
+        }
+
+        function _toggleEncDetail(fid) {
+            const panel = document.getElementById(`enc-detail-${fid}`);
+            const caret = document.getElementById(`enc-caret-${fid}`);
+            if (!panel) return;
+            const isOpen = panel.style.display !== 'none';
+            panel.style.display = isOpen ? 'none' : 'block';
+            if (caret) caret.textContent = isOpen ? '▼' : '▲';
+        }
+
+        // A-04 — Overlay momentum + détection bascule
+        function detectBasculeMoment(scoreHistory) {
+            if (!scoreHistory || scoreHistory.length < 2) return null;
+            const diffs = scoreHistory.map(p => p.fenix - p.adv);
+            let crossingIdx = -1;
+            for (let i = 1; i < diffs.length; i++) {
+                if (diffs[i-1] >= 0 && diffs[i] < 0) { crossingIdx = i; break; }
+            }
+            let minDiff = 0, minIdx = -1;
+            for (let i = 1; i < diffs.length; i++) {
+                if (diffs[i] < minDiff) { minDiff = diffs[i]; minIdx = i; }
+            }
+            if (crossingIdx === -1 && minIdx === -1) return null;
+            const idx = crossingIdx !== -1 ? crossingIdx : minIdx;
+            return { index: idx, avant: diffs[idx-1] !== undefined ? diffs[idx-1] : 0, apres: diffs[idx] };
+        }
+
+        function drawMomentumOverlay(ctx, scoreHistory, canvas, padding, roundedMax, maxPos) {
+            if (!scoreHistory || scoreHistory.length < 2) return;
+            const gW = canvas.width - padding.left - padding.right;
+            const gH = canvas.height - padding.top - padding.bottom;
+            const diffs = scoreHistory.map(p => p.fenix - p.adv);
+            const maxAbs = Math.max(...diffs.map(Math.abs), 1);
+            const midY = padding.top + gH / 2;
+            const diffToY = d => midY - (d / maxAbs) * (gH / 2) * 0.75;
+            const posToX  = p => padding.left + (p / maxPos) * gW;
+            ctx.save();
+            // Zones colorées
+            const drawZone = (positive) => {
+                ctx.fillStyle = positive ? 'rgba(16,185,129,0.10)' : 'rgba(239,68,68,0.10)';
+                let open = false;
+                ctx.beginPath();
+                scoreHistory.forEach(p => {
+                    const d = p.fenix - p.adv, x = posToX(p.pos);
+                    const inZone = positive ? d > 0 : d < 0;
+                    if (inZone && !open) { ctx.moveTo(x, midY); open = true; }
+                    if (open) ctx.lineTo(x, diffToY(d));
+                    if (!inZone && open) { ctx.lineTo(x, midY); ctx.closePath(); ctx.fill(); ctx.beginPath(); open = false; }
+                });
+                if (open) { ctx.lineTo(posToX(scoreHistory[scoreHistory.length-1].pos), midY); ctx.closePath(); ctx.fill(); }
+            };
+            drawZone(true); drawZone(false);
+            // Ligne zéro tiretée
+            ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+            ctx.beginPath(); ctx.moveTo(padding.left, midY); ctx.lineTo(canvas.width - padding.right, midY); ctx.stroke(); ctx.setLineDash([]);
+            // Courbe d'écart gold
+            ctx.strokeStyle = '#F59E0B'; ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            scoreHistory.forEach((p, i) => { const x = posToX(p.pos), y = diffToY(p.fenix-p.adv); i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
+            ctx.stroke();
+            // Marqueur bascule
+            const bascule = detectBasculeMoment(scoreHistory);
+            _lastBasculeResult = bascule;
+            if (bascule) {
+                const bX = posToX(scoreHistory[bascule.index].pos);
+                ctx.strokeStyle = '#F59E0B'; ctx.lineWidth = 1.5; ctx.setLineDash([5,3]);
+                ctx.beginPath(); ctx.moveTo(bX, padding.top); ctx.lineTo(bX, padding.top + gH); ctx.stroke(); ctx.setLineDash([]);
+                const lbl = 'BASCULE';
+                ctx.font = '700 9px Inter,sans-serif';
+                const tw = ctx.measureText(lbl).width;
+                const lx = Math.min(bX - tw/2, canvas.width - padding.right - tw - 4);
+                ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillRect(lx-2, padding.top+2, tw+4, 13);
+                ctx.fillStyle = '#F59E0B'; ctx.textAlign = 'left'; ctx.fillText(lbl, lx, padding.top+12);
+            }
+            ctx.restore();
+        }
+
+        // A-05 — Section contextuelle bascule
+        function renderBasculContext(matchData, basculeResult) {
+            const container = document.getElementById('enc-bascule-section');
+            if (!container) return;
+            if (!basculeResult) {
+                container.innerHTML = `<div class="enc-bascule-none">✓ Aucune bascule — FENIX a mené du début à la fin.</div>`;
+                return;
+            }
+            const goals = getSortedGoals(matchData);
+            const goalsIdx = Math.max(0, basculeResult.index - 1);
+            const wStart = Math.max(0, goalsIdx - 3), wEnd = Math.min(goals.length - 1, goalsIdx + 3);
+            const runGoals = goals.slice(wStart, wEnd + 1);
+            const advGoals = runGoals.filter(g => g.row[COLS.club] !== 'FENIX');
+            const fenGoals = runGoals.filter(g => g.row[COLS.club] === 'FENIX');
+            const aggrFam = list => {
+                const byFam = new Map();
+                list.forEach(g => {
+                    const fam = getEncFamille(g.row[COLS.enclenchement]);
+                    if (!byFam.has(fam)) byFam.set(fam, { count:0, buts:0 });
+                    const s = byFam.get(fam); s.count++;
+                    if (g.row[COLS.resultat] === 'But') s.buts++;
+                });
+                return [...byFam.entries()].sort((a, b) => b[1].count - a[1].count);
+            };
+            const buildRows = (fams, isAdv) => {
+                if (!fams.length) return '<p style="color:#94A3B8;font-size:0.82rem;">Aucune possession.</p>';
+                const maxB = Math.max(...fams.map(([,s]) => s.buts), 0);
+                return fams.map(([fam, s]) => {
+                    const eff = s.count > 0 ? Math.round(s.buts / s.count * 100) : 0;
+                    const badge = isAdv && s.buts === maxB && maxB > 0 ? `<span style="color:#F59E0B;font-size:0.72rem;font-weight:700"> MAX</span>` : '';
+                    const col = ENC_FAMILLE_COLORS[fam] || '#94A3B8';
+                    return `<div class="enc-bascule-row"><span style="background:${col};width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px;flex-shrink:0"></span>${fam} ×${s.count} → ${s.buts} but${s.buts>1?'s':''} (${eff}%)${badge}</div>`;
+                }).join('');
+            };
+            const avant = basculeResult.avant >= 0 ? `+${basculeResult.avant}` : `${basculeResult.avant}`;
+            const apres = basculeResult.apres >= 0 ? `+${basculeResult.apres}` : `${basculeResult.apres}`;
+            container.innerHTML = `
+              <div class="enc-bascule-wrap">
+                <div class="enc-bascule-header">⚡ BASCULE — Écart : ${avant} → ${apres}</div>
+                <div class="enc-bascule-cols">
+                  <div class="enc-bascule-col">
+                    <div class="enc-bascule-col-title">Adversaire (${advGoals.length} buts)</div>
+                    ${buildRows(aggrFam(advGoals), true)}
+                  </div>
+                  <div class="enc-bascule-col">
+                    <div class="enc-bascule-col-title">FENIX (${fenGoals.length} buts)</div>
+                    ${buildRows(aggrFam(fenGoals), false)}
+                  </div>
+                </div>
+              </div>`;
+        }
+
+        // A-06/07 — Gardien × famille
+        function computeGbEncStats(matchData) {
+            const FAMILLES = [...ENC_FAMILLES_ORDRE, 'Autre'];
+            const byGardien = new Map();
+            matchData.filter(r => r[COLS.club] !== 'FENIX').forEach(r => {
+                const gardien = (r[COLS.gardien] || '').toString().trim();
+                if (!gardien) return;
+                if (!byGardien.has(gardien)) { const m = new Map(); FAMILLES.forEach(f => m.set(f, { arrets:0, tirs:0, pct:0 })); byGardien.set(gardien, m); }
+                const s = byGardien.get(gardien).get(getEncFamille(r[COLS.enclenchement]));
+                const estArret = r[COLS.finalite] === 'Tir arrêté';
+                const estBut = r[COLS.finalite] === 'But' || r[COLS.resultat] === 'But';
+                if (estArret) { s.arrets++; s.tirs++; } else if (estBut) s.tirs++;
+            });
+            byGardien.forEach(famMap => famMap.forEach(s => { s.pct = s.tirs > 0 ? Math.round(s.arrets / s.tirs * 100) : 0; }));
+            return byGardien;
+        }
+
+        function _computeGbMoyenneSaison(gardienName) {
+            if (typeof MATCHS === 'undefined' || !MATCHS) return null;
+            const pcts = [];
+            MATCHS.forEach(matchName => {
+                const gbStats = computeGbEncStats(DATA.filter(r => r[COLS.rencontre] === matchName));
+                if (!gbStats.has(gardienName)) return;
+                let t = 0, a = 0; gbStats.get(gardienName).forEach(s => { t += s.tirs; a += s.arrets; });
+                if (t > 0) pcts.push(Math.round(a / t * 100));
+            });
+            return pcts.length >= 3 ? Math.round(pcts.reduce((s,v) => s+v, 0) / pcts.length) : null;
+        }
+
+        function renderGardienEncSection(matchData) {
+            const container = document.getElementById('enc-gardien-section');
+            if (!container) return;
+            const gbStats = computeGbEncStats(matchData);
+            if (!gbStats.size) { container.innerHTML = `<p style="color:#94A3B8;font-size:0.85rem;">Aucune donnée gardien.</p>`; return; }
+            const gardiens = [...gbStats.keys()];
+            if (!_gardienSelected || !gbStats.has(_gardienSelected)) {
+                let maxTirs = -1;
+                gardiens.forEach(g => { let t = 0; gbStats.get(g).forEach(s => t += s.tirs); if (t > maxTirs) { maxTirs = t; _gardienSelected = g; } });
+            }
+            const moySaison = _computeGbMoyenneSaison(_gardienSelected);
+            const famMap = gbStats.get(_gardienSelected);
+            let totalA = 0, totalT = 0;
+            famMap.forEach(s => { totalA += s.arrets; totalT += s.tirs; });
+            const pctGlobal = totalT > 0 ? Math.round(totalA / totalT * 100) : 0;
+            const selectHtml = gardiens.length >= 2
+                ? `<label class="enc-gardien-select-label">Gardien :</label><select id="enc-gardien-select" onchange="_onGardienChange(this.value)">${gardiens.map(g=>`<option value="${g}" ${g===_gardienSelected?'selected':''}>${g}</option>`).join('')}</select>`
+                : `<strong>${_gardienSelected}</strong>`;
+            let rows = '';
+            ENC_FAMILLES_ORDRE.forEach(famille => {
+                const s = famMap.get(famille) || { arrets:0, tirs:0, pct:0 };
+                if (!s.tirs) return;
+                let sig = `<td class="enc-signal-neutre">—</td>`;
+                if (s.tirs < 3) sig = `<td class="enc-signal-neutre" style="font-style:italic;">(n&lt;3)</td>`;
+                else if (moySaison !== null) {
+                    const diff = s.pct - moySaison;
+                    if (diff < -15) sig = `<td class="enc-signal-alerte">🔴 ALERTE</td>`;
+                    else if (diff > 10) sig = `<td class="enc-signal-bon">✅ BON</td>`;
+                }
+                const rowCls = _gardienFamilleFilter === famille ? 'enc-gardien-row selected' : 'enc-gardien-row';
+                const col = ENC_FAMILLE_COLORS[famille] || '#94A3B8';
+                rows += `<tr class="${rowCls}" data-famille="${famille}" onclick="_onGardienFamilleClick('${famille}')"><td><span style="background:${col};width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px"></span>${famille}</td><td>${s.tirs}</td><td>${s.arrets}</td><td>${s.pct}%</td>${sig}</tr>`;
+            });
+            rows += `<tr class="enc-gardien-total"><td>Total</td><td>${totalT}</td><td>${totalA}</td><td>${pctGlobal}%</td><td>—</td></tr>`;
+            const moyRef = moySaison !== null ? ` · Moy. saison : ${moySaison}%` : '';
+            container.innerHTML = `
+              <div class="enc-section-header">
+                <span class="enc-section-title">GARDIEN × SYSTÈMES ADVERSES</span>
+                <span class="enc-section-meta">% arrêts ce match : <strong>${pctGlobal}%</strong>${moyRef}</span>
+              </div>
+              <div class="enc-gardien-controls">${selectHtml}</div>
+              <div class="enc-gardien-layout">
+                <div class="enc-gardien-table-wrap">
+                  <table><thead><tr><th>Système adverse</th><th>Tirs</th><th>Arr.</th><th>%</th><th>Signal</th></tr></thead><tbody>${rows}</tbody></table>
+                  <p style="font-size:0.72rem;color:#94A3B8;font-style:italic;margin-top:4px;">Clic sur une ligne = filtre heatmap</p>
+                </div>
+                <div id="enc-gardien-heatmap"></div>
+              </div>`;
+            _renderGardienHeatmap(matchData, _gardienFamilleFilter);
+        }
+
+        function _onGardienChange(gardienName) {
+            _gardienSelected = gardienName; _gardienFamilleFilter = null;
+            const matchFilter = document.getElementById('filter-analyse-match').value;
+            renderGardienEncSection(DATA.filter(r => r[COLS.rencontre] === matchFilter));
+        }
+
+        function _onGardienFamilleClick(famille) {
+            _gardienFamilleFilter = _gardienFamilleFilter === famille ? null : famille;
+            document.querySelectorAll('.enc-gardien-row').forEach(tr => {
+                tr.classList.toggle('selected', tr.dataset.famille === _gardienFamilleFilter);
+            });
+            const matchFilter = document.getElementById('filter-analyse-match').value;
+            _renderGardienHeatmap(DATA.filter(r => r[COLS.rencontre] === matchFilter), _gardienFamilleFilter);
+        }
+
+        function _renderGardienHeatmap(matchData, familleFilter) {
+            const hc = document.getElementById('enc-gardien-heatmap');
+            if (!hc) return;
+            let advRows = matchData.filter(r => r[COLS.club] !== 'FENIX' && (r[COLS.finalite]==='But'||r[COLS.finalite]==='Tir arrêté') && r[COLS.gardien] === _gardienSelected);
+            if (familleFilter) advRows = advRows.filter(r => getEncFamille(r[COLS.enclenchement]) === familleFilter);
+            const titre = familleFilter ? `${familleFilter} (${advRows.length} tirs)` : `Tous systèmes (${advRows.length} tirs)`;
+            hc.innerHTML = `<div style="font-size:0.75rem;color:#64748B;margin-bottom:4px;">${titre}</div><canvas id="enc-gardien-canvas" width="160" height="180"></canvas>${familleFilter?`<button onclick="_onGardienFamilleClick(null)" class="enc-filter-reset">Tout afficher</button>`:''}`;
+            _drawMiniZoneCanvas('enc-gardien-canvas', advRows);
+        }
+
+        function _drawMiniZoneCanvas(canvasId, rows) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const ZONE_MAP = { 'HG':0,'HC':1,'HD':2,'MG':3,'MC':4,'MD':5,'BG':6,'BC':7,'BD':8 };
+            const counts = new Array(9).fill(0), buts = new Array(9).fill(0);
+            rows.forEach(r => {
+                const zone = (r[COLS.field_position]||'').toString().trim().toUpperCase();
+                const idx = ZONE_MAP[zone];
+                if (idx !== undefined) { counts[idx]++; if (r[COLS.finalite]==='But') buts[idx]++; }
+            });
+            const cw = canvas.width, ch = canvas.height - 18;
+            const cellW = cw/3, cellH = ch/3;
+            const maxC = Math.max(...counts, 1);
+            for (let i = 0; i < 9; i++) {
+                const col = i%3, row = Math.floor(i/3), x = col*cellW, y = row*cellH, intensity = counts[i]/maxC;
+                ctx.fillStyle = buts[i] > 0 ? `rgba(220,38,38,${0.1+intensity*0.5})` : `rgba(16,185,129,${0.08+intensity*0.3})`;
+                ctx.fillRect(x+1,y+1,cellW-2,cellH-2);
+                ctx.strokeStyle='#CBD5E1'; ctx.lineWidth=1; ctx.strokeRect(x,y,cellW,cellH);
+                if (counts[i] > 0) { ctx.fillStyle='#0F172A'; ctx.font='700 11px Inter,sans-serif'; ctx.textAlign='center'; ctx.fillText(counts[i], x+cellW/2, y+cellH/2+4); }
+            }
+            ctx.fillStyle='#64748B'; ctx.font='8px Inter,sans-serif'; ctx.textAlign='left';
+            ctx.fillText('Rouge=But · Vert=Arrêt', 2, ch+13);
+        }
+
+        // A-08 — Saison V vs D par famille
+        function renderEncSaisonSection() {
+            const container = document.getElementById('enc-saison-section');
+            if (!container) return;
+            if (typeof MATCHS === 'undefined' || !MATCHS || MATCHS.length < 5) {
+                const n = MATCHS ? MATCHS.length : 0;
+                container.innerHTML = `<div class="corr-block"><div class="corr-title">EFFICACITÉ PAR FAMILLE — SAISON</div><p style="color:#64748B;font-size:0.85rem;text-align:center;padding:12px">Données insuffisantes (${n} match${n>1?'s':''} — min. 5).</p></div>`;
+                return;
+            }
+            const FAMILLES = ENC_FAMILLES_ORDRE;
+            const groups = { V: new Map(), D: new Map(), N: new Map() };
+            FAMILLES.forEach(f => { groups.V.set(f,[]); groups.D.set(f,[]); groups.N.set(f,[]); });
+            const countByResult = { V:0, D:0, N:0 };
+            MATCHS.forEach(matchName => {
+                const matchData = DATA.filter(r => r[COLS.rencontre] === matchName);
+                if (!matchData.length) return;
+                const fenB = matchData.filter(r=>r[COLS.club]==='FENIX'&&r[COLS.resultat]==='But').length;
+                const advB = matchData.filter(r=>r[COLS.club]!=='FENIX'&&r[COLS.resultat]==='But').length;
+                const res = fenB>advB?'V':fenB<advB?'D':'N';
+                countByResult[res]++;
+                const matchStats = computeEncStats(matchData, false);
+                FAMILLES.forEach(f => { const s = matchStats.get(f); if (s&&s.possessions>=1) groups[res].get(f).push(s.eff); });
+            });
+            const avg = arr => arr.length ? Math.round(arr.reduce((s,v)=>s+v,0)/arr.length) : null;
+            let rows = '';
+            FAMILLES.forEach(f => {
+                const effV = avg(groups.V.get(f)), effD = avg(groups.D.get(f));
+                const diff = effV!==null&&effD!==null ? effV-effD : null;
+                const fmtCell = (v, arr) => {
+                    if (v===null) return `<td style="text-align:center;color:#94A3B8">—</td>`;
+                    const bg = v>=60?'#D1FAE5':v<40?'#FEE2E2':'transparent';
+                    return `<td style="text-align:center;background:${bg};font-weight:600">${v}%<br><small style="color:#94A3B8;font-weight:400">(n=${arr.length})</small></td>`;
+                };
+                let diffCell = `<td style="text-align:center;color:#94A3B8">—</td>`;
+                if (diff!==null) {
+                    const color = diff>2?'#10B981':diff<-2?'#EF4444':'#64748B';
+                    const arrow = diff>2?'↑':diff<-2?'↓':'→';
+                    diffCell = `<td style="text-align:center;color:${color};font-weight:700">${diff>0?'+':''}${diff}% ${arrow}</td>`;
+                }
+                const col = ENC_FAMILLE_COLORS[f]||'#94A3B8';
+                rows += `<tr><td><span style="background:${col};width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px"></span>${f}</td>${fmtCell(effV,groups.V.get(f))}${fmtCell(effD,groups.D.get(f))}${diffCell}</tr>`;
+            });
+            container.innerHTML = `<div class="corr-block"><div class="corr-title">EFFICACITÉ PAR FAMILLE — SAISON (V=${countByResult.V} · D=${countByResult.D})</div><div style="overflow-x:auto"><table class="corr-table enc-saison-table"><thead><tr><th style="text-align:left">Famille</th><th style="text-align:center;color:#10B981">Eff. V</th><th style="text-align:center;color:#EF4444">Eff. D</th><th style="text-align:center">Diff. V–D</th></tr></thead><tbody>${rows}</tbody></table></div><p style="font-size:0.72rem;color:#64748B;margin-top:8px;">Vert = famille plus efficace en V. Rouge = plus efficace en D (signal à surveiller).</p></div>`;
         }

@@ -12,6 +12,18 @@
             --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
             --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
             --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1);
+            /* Module Analyse — familles enclenchement */
+            --enc-mouvement:    #0EA5E9;
+            --enc-isoler:       #F59E0B;
+            --enc-rentree:      #F97316;
+            --enc-jeu-pvt:      #8B5CF6;
+            --enc-bloc-pvt:     #7C3AED;
+            --enc-7vs6:         #10B981;
+            --enc-faire-courir: #EC4899;
+            --enc-speciaux:     #64748B;
+            --enc-6vs5:         #06B6D4;
+            --enc-autre:        #94A3B8;
+            --bascule-line:     #F59E0B;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2255,3 +2267,162 @@
         .corr-table tbody tr:hover { background: #EFF6FF; }
         .corr-table td { padding: 6px 10px; border-bottom: 1px solid #F1F5F9; }
         .corr-label { color: #334155; font-weight: 500; white-space: nowrap; }
+
+        /* ============================================================
+           MODULE ANALYSE — Enclenchements (v109)
+           ============================================================ */
+
+        /* Section header */
+        .enc-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px; flex-wrap: wrap; gap: 6px;
+        }
+        .enc-section-title {
+            font-family: 'Bebas Neue', cursive; font-size: 1.2rem;
+            letter-spacing: 0.04em; color: var(--fenix-blue);
+        }
+        .enc-section-meta { font-size: 0.72rem; color: #64748B; }
+
+        /* Coverage warning */
+        .enc-coverage-warning {
+            background: #FEF3C7; border-left: 3px solid #F59E0B;
+            padding: 6px 10px; font-size: 0.78rem; color: #92400E;
+            border-radius: 4px; margin-bottom: 10px;
+        }
+
+        /* Grid des cards familles */
+        .enc-famille-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+
+        /* Card famille */
+        .enc-famille-card {
+            background: #fff; border-radius: 8px; border-top: 4px solid #94A3B8;
+            padding: 12px 10px; cursor: pointer; position: relative;
+            box-shadow: var(--shadow-sm); transition: box-shadow 0.15s;
+        }
+        .enc-famille-card:hover { box-shadow: var(--shadow-md); }
+        .enc-famille-card.disabled { opacity: 0.5; cursor: default; }
+
+        .enc-card-header {
+            display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+        }
+        .enc-famille-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .enc-famille-name {
+            font-size: 0.7rem; font-weight: 700; color: #334155;
+            text-transform: uppercase; letter-spacing: 0.04em; flex: 1;
+        }
+        .enc-card-caret { font-size: 0.7rem; color: #94A3B8; }
+
+        .enc-famille-eff {
+            font-family: 'Bebas Neue', cursive; font-size: 2rem;
+            color: var(--fenix-dark); line-height: 1;
+        }
+        .enc-famille-sublabel {
+            font-size: 0.58rem; color: #94A3B8; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 4px;
+        }
+        .enc-famille-meta { font-size: 0.72rem; color: #64748B; margin-bottom: 8px; }
+        .enc-famille-vide { font-size: 0.75rem; color: #94A3B8; font-style: italic; padding: 8px 0; }
+
+        /* Barre de progression */
+        .enc-progress-track {
+            height: 5px; background: #E2E8F0; border-radius: 3px; overflow: hidden; margin: 4px 0 2px;
+        }
+        .enc-progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .enc-progress-fill.above { background: var(--fenix-success); }
+        .enc-progress-fill.below { background: var(--fenix-danger); }
+        .enc-progress-fill.noref { background: #94A3B8; }
+        .enc-progress-ref { font-size: 0.62rem; color: #94A3B8; margin-bottom: 8px; }
+
+        /* Badges */
+        .enc-badge-faiblesse {
+            background: #FEF3C7; border-left: 3px solid #F59E0B;
+            padding: 4px 7px; border-radius: 4px; font-size: 0.68rem;
+            font-weight: 700; color: #92400E; margin-top: 6px;
+        }
+        .enc-badge-force {
+            background: #D1FAE5; border-left: 3px solid #10B981;
+            padding: 4px 7px; border-radius: 4px; font-size: 0.68rem;
+            font-weight: 700; color: #065F46; margin-top: 6px;
+        }
+        .enc-badge-nodata {
+            font-size: 0.65rem; color: #94A3B8; font-style: italic; margin-top: 4px;
+        }
+        .enc-badge-sub { font-size: 0.62rem; font-weight: 400; margin-top: 1px; }
+
+        /* Panel détail (A-02) */
+        .enc-detail-panel { margin-top: 10px; }
+        .enc-detail-table {
+            width: 100%; border-collapse: collapse; font-size: 0.78rem;
+        }
+        .enc-detail-table th {
+            padding: 4px 6px; text-align: center; font-size: 0.65rem;
+            text-transform: uppercase; color: #64748B; border-bottom: 1px solid #E2E8F0;
+        }
+        .enc-detail-table th:first-child { text-align: left; }
+        .enc-detail-table td { padding: 3px 6px; text-align: center; border-bottom: 1px solid #F1F5F9; }
+        .enc-detail-table td:first-child { text-align: left; }
+        .enc-detail-total { font-weight: 700; background: #F8FAFC; }
+
+        /* Section bascule (A-05) */
+        .enc-bascule-wrap {
+            background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px;
+            padding: 12px; margin-top: 8px; font-size: 0.82rem;
+        }
+        .enc-bascule-header {
+            font-weight: 700; color: #92400E; font-size: 0.85rem; margin-bottom: 10px;
+        }
+        .enc-bascule-cols { display: flex; gap: 12px; flex-wrap: wrap; }
+        .enc-bascule-col { flex: 1; min-width: 140px; }
+        .enc-bascule-col-title {
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            color: #64748B; letter-spacing: 0.04em; margin-bottom: 6px;
+        }
+        .enc-bascule-row {
+            display: flex; align-items: center; gap: 4px;
+            padding: 3px 0; font-size: 0.78rem; color: #334155; flex-wrap: wrap;
+        }
+        .enc-bascule-none {
+            color: #059669; font-size: 0.82rem; font-style: italic; padding: 8px 0;
+        }
+
+        /* Section gardien (A-06/07) */
+        .enc-gardien-controls {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .enc-gardien-select-label { font-size: 0.75rem; color: #64748B; }
+        #enc-gardien-select {
+            font-size: 0.82rem; padding: 4px 8px; border: 1px solid #E2E8F0;
+            border-radius: 6px; background: #fff;
+        }
+        .enc-gardien-layout {
+            display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;
+        }
+        .enc-gardien-table-wrap { flex: 1; min-width: 260px; overflow-x: auto; }
+        #enc-gardien-heatmap { min-width: 170px; }
+
+        .enc-gardien-row { cursor: pointer; }
+        .enc-gardien-row:hover td { background: #F8FAFC; }
+        .enc-gardien-row.selected td { background: #FEF3C7; font-weight: 600; }
+        .enc-gardien-total { font-weight: 700; background: #F8FAFC; }
+
+        .enc-signal-alerte { color: #DC2626; font-weight: 700; }
+        .enc-signal-bon    { color: #059669; font-weight: 700; }
+        .enc-signal-neutre { color: #64748B; }
+
+        .enc-filter-reset {
+            margin-top: 6px; font-size: 0.72rem; padding: 3px 8px;
+            border: 1px solid #E2E8F0; border-radius: 4px; background: #fff;
+            cursor: pointer; color: #64748B;
+        }
+        .enc-filter-reset:hover { background: #F1F5F9; }
+
+        /* Saison V vs D (A-08) */
+        .enc-saison-table td:first-child { text-align: left; white-space: nowrap; }
+        .enc-saison-table td { font-size: 0.82rem; }
