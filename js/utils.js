@@ -30,9 +30,13 @@
             return { total, matchs };
         }
 
+        function getSelectedMatch() {
+            return (document.getElementById('filter-match-global') || {}).value || '';
+        }
+
         function getSelectedMatches() {
-            const checkboxes = document.querySelectorAll('.match-checkbox');
-            return [...checkboxes].filter(cb => cb.checked).map(cb => cb.value);
+            const val = getSelectedMatch();
+            return val ? [val] : MATCHS.slice();
         }
 
         function lastNonEmpty(arr, idx) {

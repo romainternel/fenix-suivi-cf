@@ -156,15 +156,18 @@
 
         /* Matchs Bar - Compact */
         .matchs-bar {
-            background: var(--fenix-white);
+            background: #fff;
             border-radius: 12px;
             padding: 0.75rem 1.5rem;
-            box-shadow: var(--shadow-md);
             margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
             border-left: 4px solid var(--fenix-blue);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .matchs-bar-left {

@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=123">
-    <script src="js/utils.js?v=123"></script>
-    <script src="js/impact-images.js?v=123"></script>
-    <script src="js/player-mode.js?v=123"></script>
-    <script src="js/page-joueurs.js?v=123"></script>
-    <script src="js/page-notes-graph.js?v=123"></script>
-    <script src="js/page-analyse.js?v=123"></script>
+    <link rel="stylesheet" href="css/style.css?v=124">
+    <script src="js/utils.js?v=124"></script>
+    <script src="js/impact-images.js?v=124"></script>
+    <script src="js/player-mode.js?v=124"></script>
+    <script src="js/page-joueurs.js?v=124"></script>
+    <script src="js/page-notes-graph.js?v=124"></script>
+    <script src="js/page-analyse.js?v=124"></script>
 </head>
 <body>
 
@@ -123,21 +123,11 @@
                     <div class="matchs-bar-title">MATCHS ANALYSÉS</div>
                     <div class="matchs-count-badge" id="stat-matchs">0</div>
                 </div>
-                <div class="filter-group" style="margin: 0; position: relative;">
-                    <label>Filtrer par rencontre</label>
-                    <div class="multi-select-container">
-                        <button type="button" class="multi-select-btn" id="match-select-btn" onclick="toggleMatchDropdown()">
-                            <span id="match-select-text">Tous les matchs</span>
-                            <span class="dropdown-arrow">▼</span>
-                        </button>
-                        <div class="multi-select-dropdown" id="match-dropdown" style="display: none;">
-                            <label class="checkbox-item">
-                                <input type="checkbox" id="match-all" checked onchange="toggleAllMatches()">
-                                <span>Tous les matchs</span>
-                            </label>
-                            <div id="match-checkboxes"></div>
-                        </div>
-                    </div>
+                <div class="filter-group" style="margin: 0;">
+                    <label>MATCH</label>
+                    <select id="filter-match-global" onchange="onMatchGlobalChange()">
+                        <option value="">Saison complète</option>
+                    </select>
                 </div>
                 <button class="btn-goto-analyse" onclick="goToAnalysePage()">🔍 Analyse</button>
             </div>
@@ -410,14 +400,6 @@
 
             <!-- Bloc Analyse détaillée -->
             <div class="section">
-                <div class="filters">
-                    <div class="filter-group">
-                        <label>Sélectionner un match</label>
-                        <select id="filter-analyse-match" onchange="syncAnalyseFilter()">
-                            <option value="">-- Choisir un match --</option>
-                        </select>
-                    </div>
-                </div>
 
                 <div id="analyse-content" style="display: none;">
                     <div id="periode-warning"></div>
@@ -1076,7 +1058,7 @@ let _effInfoPoste = null;
             // Redraw timeline on orientation change
             window.addEventListener('orientationchange', () => {
                 setTimeout(() => {
-                    if (document.getElementById('filter-analyse-match')?.value &&
+                    if (document.getElementById('filter-match-global')?.value &&
                         document.getElementById('page-analyse')?.classList.contains('active')) {
                         drawTimeline();
                     }
@@ -1491,7 +1473,7 @@ let _effInfoPoste = null;
                     extractUniqueValues();
                     processBilans();
                     populateFilters();
-                    updateMatchSelection();
+                    updateDashboard();
                     showDataLoaded();
                     if (typeof buildPmMatchNav === 'function') buildPmMatchNav();
                     if (typeof isPlayerMode === 'function' && isPlayerMode() && typeof pmTab === 'function') pmTab('fiche');
@@ -1547,7 +1529,7 @@ let _effInfoPoste = null;
                 extractUniqueValues();
                 processBilans();
                 populateFilters();
-                updateMatchSelection();
+                updateDashboard();
                 showDataLoaded();
                 updateImportUI(filename, date);
             } catch(e) {
@@ -1631,24 +1613,17 @@ let _effInfoPoste = null;
                 saisonSelect.style.display = 'block';
             }
 
-            // Multi-select pour le dashboard
-            const matchCheckboxes = document.getElementById('match-checkboxes');
-            if (matchCheckboxes) {
-                matchCheckboxes.innerHTML = '';
-                MATCHS.forEach((m, i) => {
-                    matchCheckboxes.innerHTML += `
-                        <label class="checkbox-item">
-                            <input type="checkbox" class="match-checkbox" value="${m}" checked onchange="updateMatchSelection()">
-                            <span>${m}</span>
-                        </label>
-                    `;
-                });
+            // Select global de match (dashboard + analyse)
+            const globalMatchSel = document.getElementById('filter-match-global');
+            if (globalMatchSel) {
+                globalMatchSel.innerHTML = '<option value="">Saison complète</option>';
+                MATCHS.forEach(m => globalMatchSel.innerHTML += `<option value="${m}">${m}</option>`);
             }
             
             // Autres filtres (select classiques)
             populateMatchPageCheckboxes(MATCHS);
 
-            const matchFilters = ['filter-joueur-match', 'filter-gardien-match', 'filter-note-match', 'filter-analyse-match'];
+            const matchFilters = ['filter-joueur-match', 'filter-gardien-match', 'filter-note-match'];
             matchFilters.forEach(id => {
                 const sel = document.getElementById(id);
                 if (sel) {
@@ -1724,19 +1699,6 @@ let _effInfoPoste = null;
                 geFilter.innerHTML = '<option value="">Tous</option>';
                 geValues.forEach(g => geFilter.innerHTML += `<option value="${g}">${g}</option>`);
             }
-        }
-
-        // Multi-select functions
-        function toggleMatchDropdown() {
-            const dropdown = document.getElementById('match-dropdown');
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function toggleAllMatches() {
-            const allCheckbox = document.getElementById('match-all');
-            const checkboxes = document.querySelectorAll('.match-checkbox');
-            checkboxes.forEach(cb => cb.checked = allCheckbox.checked);
-            updateMatchSelection();
         }
 
         // ---- MATCH PAGE FILTERS ----
@@ -1859,26 +1821,17 @@ let _effInfoPoste = null;
                 ? [...new Set(DATA.filter(row => row[COLS.saison] === saison).map(row => row[COLS.rencontre]).filter(Boolean))]
                 : MATCHS;
 
-            // Mettre à jour les checkboxes du dashboard
-            const matchCheckboxes = document.getElementById('match-checkboxes');
-            if (matchCheckboxes) {
-                matchCheckboxes.innerHTML = '';
-                matchesToShow.forEach(m => {
-                    matchCheckboxes.innerHTML += `
-                        <label class="checkbox-item">
-                            <input type="checkbox" class="match-checkbox" value="${m}" checked onchange="updateMatchSelection()">
-                            <span>${m}</span>
-                        </label>
-                    `;
-                });
-                const allCheckbox = document.getElementById('match-all');
-                if (allCheckbox) allCheckbox.checked = true;
+            // Mettre à jour le select global de match
+            const globalSel = document.getElementById('filter-match-global');
+            if (globalSel) {
+                globalSel.innerHTML = '<option value="">Saison complète</option>';
+                matchesToShow.forEach(m => globalSel.innerHTML += `<option value="${m}">${m}</option>`);
             }
 
             // Mettre à jour les selects de match des autres pages
             populateMatchPageCheckboxes(matchesToShow);
 
-            const matchSelects = ['filter-joueur-match', 'filter-gardien-match', 'filter-note-match', 'filter-analyse-match'];
+            const matchSelects = ['filter-joueur-match', 'filter-gardien-match', 'filter-note-match'];
             matchSelects.forEach(id => {
                 const sel = document.getElementById(id);
                 if (sel) {
@@ -1888,77 +1841,17 @@ let _effInfoPoste = null;
             });
 
             processBilans();
-            updateMatchSelection();
-        }
-
-        let _syncingFilters = false;
-
-        function updateMatchSelection() {
-            const checkboxes = document.querySelectorAll('.match-checkbox');
-            const selectedMatches = [...checkboxes].filter(cb => cb.checked).map(cb => cb.value);
-            const allCheckbox = document.getElementById('match-all');
-            const textSpan = document.getElementById('match-select-text');
-
-            allCheckbox.checked = selectedMatches.length === checkboxes.length;
-
-            if (selectedMatches.length === 0) {
-                textSpan.textContent = 'Aucun match';
-            } else if (selectedMatches.length === MATCHS.length) {
-                textSpan.textContent = 'Tous les matchs';
-            } else if (selectedMatches.length === 1) {
-                textSpan.textContent = selectedMatches[0];
-            } else {
-                textSpan.textContent = `${selectedMatches.length} matchs`;
-            }
-
             updateDashboard();
-
-            // Sync filtre analyse si exactement 1 match sélectionné
-            if (!_syncingFilters) {
-                _syncingFilters = true;
-                const analyseSelect = document.getElementById('filter-analyse-match');
-                if (analyseSelect) {
-                    const newVal = selectedMatches.length === 1 ? selectedMatches[0] : '';
-                    if (analyseSelect.value !== newVal) {
-                        analyseSelect.value = newVal;
-                        updateAnalysePage();
-                    }
-                }
-                _syncingFilters = false;
-            }
         }
 
-        function syncAnalyseFilter() {
-            if (_syncingFilters) return;
-            _syncingFilters = true;
-            const val = document.getElementById('filter-analyse-match').value;
-            // Sync checkboxes du haut
-            document.querySelectorAll('.match-checkbox').forEach(cb => {
-                cb.checked = val ? cb.value === val : true;
-            });
-            const allCb = document.getElementById('match-all');
-            if (allCb) allCb.checked = !val;
-            // Met à jour texte bouton + dashboard (heatmap)
-            updateMatchSelection();
-            // Met à jour la page analyse
-            updateMatchPage();
+        function onMatchGlobalChange() {
+            updateDashboard();
             updateAnalysePage();
-            _syncingFilters = false;
+            if (typeof updateImpactPage === 'function') updateImpactPage();
         }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            document.querySelectorAll('.multi-select-container').forEach(container => {
-                const dropdown = container.querySelector('.multi-select-dropdown');
-                if (dropdown && !container.contains(e.target)) {
-                    dropdown.style.display = 'none';
-                }
-            });
-        });
 
         function setupFilters() {
             document.querySelectorAll('select').forEach(sel => {
-                if (sel.id === 'filter-analyse-match') return; // géré par syncAnalyseFilter
                 sel.addEventListener('change', () => {
                     const page = document.querySelector('.page.active').id.replace('page-', '');
                     refreshPage(page);

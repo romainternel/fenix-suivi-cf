@@ -75,7 +75,7 @@
         }
 
         function updateAnalysePage() {
-            const matchFilter = document.getElementById('filter-analyse-match').value;
+            const matchFilter = document.getElementById('filter-match-global').value;
 
             if (!matchFilter) {
                 document.getElementById('analyse-content').style.display = 'none';
@@ -783,7 +783,7 @@
         }
 
         function saveCoachAnalyse() {
-            const matchFilter = document.getElementById('filter-analyse-match').value;
+            const matchFilter = document.getElementById('filter-match-global').value;
             if (!matchFilter) return;
             
             const analyse = document.getElementById('coach-analyse').value;
@@ -804,7 +804,7 @@
             const message = input.value.trim();
             if (!message) return;
 
-            const matchFilter = document.getElementById('filter-analyse-match').value;
+            const matchFilter = document.getElementById('filter-match-global').value;
             if (!matchFilter) return;
 
             // Ajouter message utilisateur
@@ -1431,7 +1431,7 @@
 
         function _onGardienChange(gardienName) {
             _gardienSelected = gardienName; _gardienFamilleFilter = null;
-            const matchFilter = document.getElementById('filter-analyse-match').value;
+            const matchFilter = document.getElementById('filter-match-global').value;
             renderGardienEncSection(DATA.filter(r => r[COLS.rencontre] === matchFilter));
         }
 
@@ -1440,7 +1440,7 @@
             document.querySelectorAll('.enc-gardien-row').forEach(tr => {
                 tr.classList.toggle('selected', tr.dataset.famille === _gardienFamilleFilter);
             });
-            const matchFilter = document.getElementById('filter-analyse-match').value;
+            const matchFilter = document.getElementById('filter-match-global').value;
             _renderGardienHeatmap(DATA.filter(r => r[COLS.rencontre] === matchFilter), _gardienFamilleFilter);
         }
 
