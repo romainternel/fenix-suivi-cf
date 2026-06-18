@@ -386,24 +386,23 @@
                 .filter(r => r[COLS.club] === 'FENIX' && (r[COLS.resultat] || '').trim())
                 .sort((a, b) => toRaw(a) - toRaw(b));
 
-            let missCount = 0, firstMissRaw = 0, addedOccasion = new Set();
+            const COOLDOWN_3MIN = 180;
+            let missCount = 0, firstMissRaw = 0, lastOccasionRaw = -COOLDOWN_3MIN * 2;
             fenixActions.forEach(r => {
                 if (r[COLS.resultat] === 'But') { missCount = 0; return; }
                 if (missCount === 0) firstMissRaw = toRaw(r);
                 missCount++;
                 if (missCount === 4) {
-                    const key = Math.floor(firstMissRaw / 60);
-                    if (!addedOccasion.has(key)) {
-                        const closestPt = [...pts].reverse().find(p => p.rawPos <= firstMissRaw) || pts[0];
-                        const diffAtSeq = closestPt ? closestPt.fenix - closestPt.adv : 0;
-                        if (diffAtSeq < 0) {
-                            addedOccasion.add(key);
-                            bascules.push({
-                                type: 'occasion-manquee', label: 'Occasion manquée',
-                                rawPos: firstMissRaw, avant: diffAtSeq, apres: diffAtSeq,
-                                description: `À la ${toMin(firstMissRaw)}, FENIX loupe 4 possessions d'affilée (tirs ratés / PB). Le retard stagne à ${fmtD(diffAtSeq)}.`
-                            });
-                        }
+                    const closestPt = [...pts].reverse().find(p => p.rawPos <= firstMissRaw) || pts[0];
+                    const diffAtSeq = closestPt ? closestPt.fenix - closestPt.adv : 0;
+                    const cooldownOk = firstMissRaw - lastOccasionRaw >= COOLDOWN_3MIN;
+                    if (diffAtSeq <= -2 && cooldownOk) {
+                        lastOccasionRaw = firstMissRaw;
+                        bascules.push({
+                            type: 'occasion-manquee', label: 'Occasion manquée',
+                            rawPos: firstMissRaw, avant: diffAtSeq, apres: diffAtSeq,
+                            description: `À la ${toMin(firstMissRaw)}, FENIX loupe 4 possessions d'affilée (tirs ratés / PB). Le retard stagne à ${fmtD(diffAtSeq)}.`
+                        });
                     }
                     missCount = 0;
                 }
@@ -596,52 +595,51 @@
             ctx.fillStyle = '#333';
             ctx.fillText('Adversaire', padding.left + 98, canvas.height - 8);
 
-            // Marqueurs MC sur la timeline
+            // Marqueurs MC — cercle + ligne fine (négatif seulement)
             if (_momentsCles && _momentsCles.length > 0) {
                 _momentsCles.forEach((mc, idx) => {
                     const normX = normPos(mc.rawPos);
                     const x = padding.left + (normX / maxPos) * graphWidth;
                     const color = mc.type === 'positif' ? '#16A34A' : '#DC2626';
-                    ctx.save();
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([6, 4]);
-                    ctx.beginPath();
-                    ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + graphHeight);
-                    ctx.stroke();
-                    ctx.restore();
+                    if (mc.type === 'negatif') {
+                        ctx.save();
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 1;
+                        ctx.globalAlpha = 0.35;
+                        ctx.setLineDash([4, 4]);
+                        ctx.beginPath();
+                        ctx.moveTo(x, padding.top + 14);
+                        ctx.lineTo(x, padding.top + graphHeight);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
                     ctx.fillStyle = color;
-                    ctx.fillRect(x - 14, padding.top - 1, 28, 15);
+                    ctx.beginPath();
+                    ctx.arc(x, padding.top + 8, 8, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 9px Inter';
+                    ctx.font = 'bold 8px Inter';
                     ctx.textAlign = 'center';
-                    ctx.fillText('MC' + (idx + 1), x, padding.top + 11);
+                    ctx.fillText('MC' + (idx + 1), x, padding.top + 12);
                 });
             }
 
-            // Marqueurs bascule ⚡ sur la timeline
+            // Marqueurs bascule ⚡ — badge seul, positionné au milieu du graphe
             if (_bascules && _bascules.length > 0) {
+                const midY = padding.top + graphHeight * 0.5;
                 _bascules.forEach((b, idx) => {
                     const normX = normPos(b.rawPos);
                     const x = padding.left + (normX / maxPos) * graphWidth;
                     const isPositif = b.type === 'reprend-main' || b.type === 'tactique-payante';
                     const color = isPositif ? '#16A34A' : '#F59E0B';
-                    ctx.save();
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 2.5;
-                    ctx.setLineDash([8, 4]);
-                    ctx.beginPath();
-                    ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + graphHeight);
-                    ctx.stroke();
-                    ctx.restore();
                     ctx.fillStyle = color;
-                    ctx.fillRect(x - 16, padding.top + graphHeight - 16, 32, 15);
+                    ctx.beginPath();
+                    ctx.roundRect(x - 14, midY - 8, 28, 16, 4);
+                    ctx.fill();
                     ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 9px Inter';
+                    ctx.font = 'bold 8px Inter';
                     ctx.textAlign = 'center';
-                    ctx.fillText('⚡' + (idx + 1), x, padding.top + graphHeight - 4);
+                    ctx.fillText('⚡' + (idx + 1), x, midY + 5);
                 });
             }
 
@@ -1283,20 +1281,7 @@
             ctx.beginPath();
             scoreHistory.forEach((p, i) => { const x = posToX(p.pos), y = diffToY(p.fenix-p.adv); i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
             ctx.stroke();
-            // Marqueur bascule
-            const bascule = detectBasculeMoment(scoreHistory);
-            _lastBasculeResult = bascule;
-            if (bascule) {
-                const bX = posToX(scoreHistory[bascule.index].pos);
-                ctx.strokeStyle = '#F59E0B'; ctx.lineWidth = 1.5; ctx.setLineDash([5,3]);
-                ctx.beginPath(); ctx.moveTo(bX, padding.top); ctx.lineTo(bX, padding.top + gH); ctx.stroke(); ctx.setLineDash([]);
-                const lbl = 'BASCULE';
-                ctx.font = '700 9px Inter,sans-serif';
-                const tw = ctx.measureText(lbl).width;
-                const lx = Math.min(bX - tw/2, canvas.width - padding.right - tw - 4);
-                ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillRect(lx-2, padding.top+2, tw+4, 13);
-                ctx.fillStyle = '#F59E0B'; ctx.textAlign = 'left'; ctx.fillText(lbl, lx, padding.top+12);
-            }
+            // Bascule désormais gérée par detectAllBascules + marqueurs ⚡ dans drawTimeline
             ctx.restore();
         }
 
