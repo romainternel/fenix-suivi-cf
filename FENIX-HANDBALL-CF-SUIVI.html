@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=122">
-    <script src="js/utils.js?v=122"></script>
-    <script src="js/impact-images.js?v=122"></script>
-    <script src="js/player-mode.js?v=122"></script>
-    <script src="js/page-joueurs.js?v=122"></script>
-    <script src="js/page-notes-graph.js?v=122"></script>
-    <script src="js/page-analyse.js?v=122"></script>
+    <link rel="stylesheet" href="css/style.css?v=123">
+    <script src="js/utils.js?v=123"></script>
+    <script src="js/impact-images.js?v=123"></script>
+    <script src="js/player-mode.js?v=123"></script>
+    <script src="js/page-joueurs.js?v=123"></script>
+    <script src="js/page-notes-graph.js?v=123"></script>
+    <script src="js/page-analyse.js?v=123"></script>
 </head>
 <body>
 
@@ -1929,16 +1929,20 @@ let _effInfoPoste = null;
         }
 
         function syncAnalyseFilter() {
-            updateAnalysePage();
             if (_syncingFilters) return;
             _syncingFilters = true;
             const val = document.getElementById('filter-analyse-match').value;
+            // Sync checkboxes du haut
             document.querySelectorAll('.match-checkbox').forEach(cb => {
                 cb.checked = val ? cb.value === val : true;
             });
             const allCb = document.getElementById('match-all');
             if (allCb) allCb.checked = !val;
+            // Met à jour texte bouton + dashboard (heatmap)
             updateMatchSelection();
+            // Met à jour la page analyse
+            updateMatchPage();
+            updateAnalysePage();
             _syncingFilters = false;
         }
 
@@ -1954,6 +1958,7 @@ let _effInfoPoste = null;
 
         function setupFilters() {
             document.querySelectorAll('select').forEach(sel => {
+                if (sel.id === 'filter-analyse-match') return; // géré par syncAnalyseFilter
                 sel.addEventListener('change', () => {
                     const page = document.querySelector('.page.active').id.replace('page-', '');
                     refreshPage(page);
