@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=126">
-    <script src="js/utils.js?v=126"></script>
-    <script src="js/impact-images.js?v=126"></script>
-    <script src="js/player-mode.js?v=126"></script>
-    <script src="js/page-joueurs.js?v=126"></script>
-    <script src="js/page-notes-graph.js?v=126"></script>
-    <script src="js/page-analyse.js?v=126"></script>
+    <link rel="stylesheet" href="css/style.css?v=127">
+    <script src="js/utils.js?v=127"></script>
+    <script src="js/impact-images.js?v=127"></script>
+    <script src="js/player-mode.js?v=127"></script>
+    <script src="js/page-joueurs.js?v=127"></script>
+    <script src="js/page-notes-graph.js?v=127"></script>
+    <script src="js/page-analyse.js?v=127"></script>
 </head>
 <body>
 
@@ -76,9 +76,6 @@
                 <h1>FENIX HANDBALL CF SUIVI</h1>
                 <select id="filter-saison" onchange="onSaisonChange()" style="margin-top:0.25rem;padding:0.2rem 0.6rem;border:1px solid rgba(255,255,255,0.3);border-radius:6px;background:rgba(255,255,255,0.15);color:white;font-size:0.72rem;font-family:'Inter',sans-serif;cursor:pointer;display:none;">
                     <option value="" style="color:#0A2463">Toutes saisons</option>
-                </select>
-                <select id="filter-match-global" onchange="onMatchGlobalChange()" style="margin-top:0.25rem;padding:0.2rem 0.6rem;border:1px solid rgba(255,255,255,0.3);border-radius:6px;background:rgba(255,255,255,0.15);color:white;font-size:0.72rem;font-family:'Inter',sans-serif;cursor:pointer;display:none;">
-                    <option value="">Saison complète</option>
                 </select>
                 <span>ANALYSE HANDBALL PRO</span>
                 <button id="header-data-badge" class="header-data-badge" onclick="document.getElementById('file-input').click()" style="display:none;"></button>
@@ -243,6 +240,12 @@
             <!-- Bloc Match : terrain + stats équipes -->
             <div class="section">
                 <div class="filters">
+                    <div class="filter-row" style="margin-bottom:0.5rem;grid-column:1/-1;">
+                        <label style="font-size:0.72rem;font-weight:600;color:#64748b;letter-spacing:0.05em;display:block;margin-bottom:0.25rem;">MATCH</label>
+                        <select id="filter-match-global" onchange="onMatchGlobalChange()" style="width:100%;padding:0.3rem 0.6rem;border:1px solid #e2e8f0;border-radius:6px;font-size:0.85rem;font-family:'Inter',sans-serif;background:#fff;color:#1e293b;cursor:pointer;">
+                            <option value="">Saison complète</option>
+                        </select>
+                    </div>
                     <div class="filter-group">
                         <label>Club</label>
                         <select id="filter-club" onchange="updateMatchPage()">
@@ -1599,7 +1602,6 @@ let _effInfoPoste = null;
             if (globalMatchSel) {
                 globalMatchSel.innerHTML = '<option value="">Saison complète</option>';
                 MATCHS.forEach(m => globalMatchSel.innerHTML += `<option value="${m}">${m}</option>`);
-                globalMatchSel.style.display = 'block';
             }
             
             // Autres filtres (select classiques)
