@@ -59,6 +59,7 @@
         };
 
         let _momentsCles = [];
+        let _bascules = [];
         let _encStatsCache = null;
         let _encStatsCacheMatch = null;
         let _gardienFamilleFilter = null;
@@ -117,9 +118,11 @@
             generateResume3Points(matchFilter, matchData, hasPeriode);
             generateIndicateurs(matchFilter, matchData, hasPeriode);
             _momentsCles = [];
+            _bascules = [];
             findMomentsCles(matchFilter, matchData);
+            _bascules = detectAllBascules(getSortedGoals(matchData), matchData);
             drawTimeline(matchFilter, matchData);
-            renderBasculContext(matchData, _lastBasculeResult);
+            renderBasculContext(matchData, _bascules);
             renderEncFamillesSection(matchData);
             renderGardienEncSection(matchData);
         }
@@ -294,6 +297,145 @@
             </div>`;
 
             document.getElementById('indicateurs-grid').innerHTML = html;
+        }
+
+        // ===== DÉTECTION BASCULES =====
+        function detectAllBascules(sortedGoals, matchData) {
+            const bascules = [];
+            if (sortedGoals.length < 3) return bascules;
+
+            const fmtD = d => (d >= 0 ? '+' : '') + d;
+            const toMin = p => Math.floor(p / 60) + "'";
+
+            // Reconstruit le score but par but
+            let fS = 0, aS = 0;
+            const pts = [{ rawPos: 0, fenix: 0, adv: 0, idx: -1 }];
+            sortedGoals.forEach(({ row, pos }, i) => {
+                if (row[COLS.club] === 'FENIX') fS++; else aS++;
+                pts.push({ rawPos: pos, fenix: fS, adv: aS, idx: i, row });
+            });
+            const diffs = pts.map(p => p.fenix - p.adv);
+
+            const getCtx = (gIdx, nBefore, nAfter) => {
+                const s = Math.max(0, gIdx - nBefore), e = Math.min(sortedGoals.length - 1, gIdx + nAfter);
+                return sortedGoals.slice(s, e + 1);
+            };
+
+            // Type 1 — Décrochage (FENIX bascule de ≥0 à <0)
+            for (let i = 1; i < diffs.length; i++) {
+                if (diffs[i-1] >= 0 && diffs[i] < 0) {
+                    const ctx = getCtx(pts[i].idx, 2, 1);
+                    const advButs = ctx.filter(g => g.row[COLS.club] !== 'FENIX').length;
+                    const minB = toMin(pts[i].rawPos), minD = ctx.length > 1 ? toMin(ctx[0].rawPos) : minB;
+                    bascules.push({
+                        type: 'decrochage', label: 'Décrochage',
+                        rawPos: pts[i].rawPos, avant: diffs[i-1], apres: diffs[i],
+                        description: `À la ${minB}, l'adversaire prend les devants (${advButs} but${advButs > 1 ? 's' : ''} encaissés depuis la ${minD}). FENIX bascule de ${fmtD(diffs[i-1])} à ${fmtD(diffs[i])}.`
+                    });
+                }
+            }
+
+            // Type 4 — On reprend la main (FENIX repasse de <0 à ≥0)
+            for (let i = 1; i < diffs.length; i++) {
+                if (diffs[i-1] < 0 && diffs[i] >= 0) {
+                    const ctx = getCtx(pts[i].idx, 3, 0);
+                    const fenButs = ctx.filter(g => g.row[COLS.club] === 'FENIX').length;
+                    const fams = [...new Set(ctx.filter(g => g.row[COLS.club] === 'FENIX')
+                        .map(g => getEncFamille(g.row[COLS.enclenchement])).filter(f => f && f !== 'Autre'))];
+                    const famStr = fams.length ? ` (${fams.join(', ')})` : '';
+                    const minB = toMin(pts[i].rawPos), minD = ctx.length > 1 ? toMin(ctx[0].rawPos) : minB;
+                    bascules.push({
+                        type: 'reprend-main', label: 'On reprend la main',
+                        rawPos: pts[i].rawPos, avant: diffs[i-1], apres: diffs[i],
+                        description: `FENIX marque ${fenButs} but${fenButs > 1 ? 's' : ''}${famStr} entre la ${minD} et la ${minB} et repasse devant. Écart : ${fmtD(diffs[i-1])} → ${fmtD(diffs[i])}.`
+                    });
+                }
+            }
+
+            // Type 2 — Enlisement (pire écart, si FENIX n'a jamais mené)
+            const fenixEverLed = diffs.some(d => d > 0);
+            if (!fenixEverLed) {
+                let minDiff = 0, minIdx = -1;
+                for (let i = 1; i < diffs.length; i++) {
+                    if (diffs[i] < minDiff) { minDiff = diffs[i]; minIdx = i; }
+                }
+                if (minIdx !== -1 && minDiff <= -3) {
+                    const avant = diffs[minIdx - 1] !== undefined ? diffs[minIdx - 1] : 0;
+                    bascules.push({
+                        type: 'enlisement', label: 'Enlisement',
+                        rawPos: pts[minIdx].rawPos, avant, apres: minDiff,
+                        description: `FENIX atteint son pire écart à la ${toMin(pts[minIdx].rawPos)} (${fmtD(minDiff)}). FENIX n'a jamais mené sur ce match.`
+                    });
+                }
+            }
+
+            // Type 3 — Occasion manquée (4+ possessions FENIX ratées en étant derrière)
+            const offset2 = (() => {
+                const g1 = sortedGoals.filter(g => getPeriodeNum(g.row) === 1);
+                const g2 = sortedGoals.filter(g => getPeriodeNum(g.row) === 2);
+                if (!g2.length) return 0;
+                const max1 = g1.length ? Math.max(...g1.map(g => g.pos)) : 0;
+                const min2raw = Math.min(...g2.map(g => parseTimecode(g.row[COLS.position])));
+                return min2raw < max1 ? max1 : 0;
+            })();
+            const toRaw = r => getPeriodeNum(r) === 2
+                ? parseTimecode(r[COLS.position]) + offset2
+                : parseTimecode(r[COLS.position]);
+
+            const fenixActions = matchData
+                .filter(r => r[COLS.club] === 'FENIX' && (r[COLS.resultat] || '').trim())
+                .sort((a, b) => toRaw(a) - toRaw(b));
+
+            let missCount = 0, firstMissRaw = 0, addedOccasion = new Set();
+            fenixActions.forEach(r => {
+                if (r[COLS.resultat] === 'But') { missCount = 0; return; }
+                if (missCount === 0) firstMissRaw = toRaw(r);
+                missCount++;
+                if (missCount === 4) {
+                    const key = Math.floor(firstMissRaw / 60);
+                    if (!addedOccasion.has(key)) {
+                        const closestPt = [...pts].reverse().find(p => p.rawPos <= firstMissRaw) || pts[0];
+                        const diffAtSeq = closestPt ? closestPt.fenix - closestPt.adv : 0;
+                        if (diffAtSeq < 0) {
+                            addedOccasion.add(key);
+                            bascules.push({
+                                type: 'occasion-manquee', label: 'Occasion manquée',
+                                rawPos: firstMissRaw, avant: diffAtSeq, apres: diffAtSeq,
+                                description: `À la ${toMin(firstMissRaw)}, FENIX loupe 4 possessions d'affilée (tirs ratés / PB). Le retard stagne à ${fmtD(diffAtSeq)}.`
+                            });
+                        }
+                    }
+                    missCount = 0;
+                }
+            });
+
+            // Type 5 — Tactique payante (famille soudain très efficace)
+            ENC_FAMILLES_ORDRE.forEach(famille => {
+                const famPoss = matchData.filter(r =>
+                    r[COLS.club] === 'FENIX' &&
+                    getEncFamille(r[COLS.enclenchement]) === famille &&
+                    (r[COLS.resultat] === 'But' || r[COLS.resultat] === 'Tir raté' || (r[COLS.resultat] || '').toUpperCase().includes('PB'))
+                );
+                if (famPoss.length < 6) return;
+                const prior = famPoss.slice(0, -4), recent = famPoss.slice(-4);
+                if (prior.length < 2) return;
+                const priorEff = prior.filter(r => r[COLS.resultat] === 'But').length / prior.length;
+                const recentButs = recent.filter(r => r[COLS.resultat] === 'But').length;
+                const recentEff = recentButs / recent.length;
+                if (priorEff < 0.35 && recentEff >= 0.5 && recentButs >= 2) {
+                    const firstBut = recent.find(r => r[COLS.resultat] === 'But');
+                    const inSorted = firstBut && sortedGoals.find(g => g.row === firstBut);
+                    if (!inSorted) return;
+                    bascules.push({
+                        type: 'tactique-payante', label: 'Tactique payante',
+                        rawPos: inSorted.pos, avant: 0, apres: 0,
+                        description: `"${famille}" devient décisive : ${recentButs} buts sur les 4 dernières possessions (${Math.round(recentEff * 100)}% vs ${Math.round(priorEff * 100)}% avant). Système qui fait la différence.`
+                    });
+                }
+            });
+
+            bascules.sort((a, b) => a.rawPos - b.rawPos);
+            return bascules;
         }
 
         // parseTimecode, getPeriodeNum, getSortedGoals → déplacées dans utils.js
@@ -475,6 +617,31 @@
                     ctx.font = 'bold 9px Inter';
                     ctx.textAlign = 'center';
                     ctx.fillText('MC' + (idx + 1), x, padding.top + 11);
+                });
+            }
+
+            // Marqueurs bascule ⚡ sur la timeline
+            if (_bascules && _bascules.length > 0) {
+                _bascules.forEach((b, idx) => {
+                    const normX = normPos(b.rawPos);
+                    const x = padding.left + (normX / maxPos) * graphWidth;
+                    const isPositif = b.type === 'reprend-main' || b.type === 'tactique-payante';
+                    const color = isPositif ? '#16A34A' : '#F59E0B';
+                    ctx.save();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2.5;
+                    ctx.setLineDash([8, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + graphHeight);
+                    ctx.stroke();
+                    ctx.restore();
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x - 16, padding.top + graphHeight - 16, 32, 15);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 9px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('⚡' + (idx + 1), x, padding.top + graphHeight - 4);
                 });
             }
 
@@ -1133,56 +1300,33 @@
             ctx.restore();
         }
 
-        // A-05 — Section contextuelle bascule
-        function renderBasculContext(matchData, basculeResult) {
+        // A-05 — Section bascules (plusieurs par match)
+        function renderBasculContext(matchData, bascules) {
             const container = document.getElementById('enc-bascule-section');
             if (!container) return;
-            if (!basculeResult) {
-                container.innerHTML = `<div class="enc-bascule-none">✓ Aucune bascule — FENIX a mené du début à la fin.</div>`;
+            if (!bascules || bascules.length === 0) {
+                container.innerHTML = `<div class="enc-bascule-none">✓ Aucune bascule détectée — FENIX a maîtrisé le match.</div>`;
                 return;
             }
-            const goals = getSortedGoals(matchData);
-            const goalsIdx = Math.max(0, basculeResult.index - 1);
-            const wStart = Math.max(0, goalsIdx - 3), wEnd = Math.min(goals.length - 1, goalsIdx + 3);
-            const runGoals = goals.slice(wStart, wEnd + 1);
-            const advGoals = runGoals.filter(g => g.row[COLS.club] !== 'FENIX');
-            const fenGoals = runGoals.filter(g => g.row[COLS.club] === 'FENIX');
-            const aggrFam = list => {
-                const byFam = new Map();
-                list.forEach(g => {
-                    const fam = getEncFamille(g.row[COLS.enclenchement]);
-                    if (!byFam.has(fam)) byFam.set(fam, { count:0, buts:0 });
-                    const s = byFam.get(fam); s.count++;
-                    if (g.row[COLS.resultat] === 'But') s.buts++;
-                });
-                return [...byFam.entries()].sort((a, b) => b[1].count - a[1].count);
-            };
-            const buildRows = (fams, isAdv) => {
-                if (!fams.length) return '<p style="color:#94A3B8;font-size:0.82rem;">Aucune possession.</p>';
-                const maxB = Math.max(...fams.map(([,s]) => s.buts), 0);
-                return fams.map(([fam, s]) => {
-                    const eff = s.count > 0 ? Math.round(s.buts / s.count * 100) : 0;
-                    const badge = isAdv && s.buts === maxB && maxB > 0 ? `<span style="color:#F59E0B;font-size:0.72rem;font-weight:700"> MAX</span>` : '';
-                    const col = ENC_FAMILLE_COLORS[fam] || '#94A3B8';
-                    return `<div class="enc-bascule-row"><span style="background:${col};width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px;flex-shrink:0"></span>${fam} ×${s.count} → ${s.buts} but${s.buts>1?'s':''} (${eff}%)${badge}</div>`;
-                }).join('');
-            };
-            const avant = basculeResult.avant >= 0 ? `+${basculeResult.avant}` : `${basculeResult.avant}`;
-            const apres = basculeResult.apres >= 0 ? `+${basculeResult.apres}` : `${basculeResult.apres}`;
-            container.innerHTML = `
-              <div class="enc-bascule-wrap">
-                <div class="enc-bascule-header">⚡ BASCULE — Écart : ${avant} → ${apres}</div>
-                <div class="enc-bascule-cols">
-                  <div class="enc-bascule-col">
-                    <div class="enc-bascule-col-title">Adversaire (${advGoals.length} buts)</div>
-                    ${buildRows(aggrFam(advGoals), true)}
-                  </div>
-                  <div class="enc-bascule-col">
-                    <div class="enc-bascule-col-title">FENIX (${fenGoals.length} buts)</div>
-                    ${buildRows(aggrFam(fenGoals), false)}
-                  </div>
-                </div>
-              </div>`;
+            const typeColor = t => (t === 'reprend-main' || t === 'tactique-payante') ? '#16A34A' : '#F59E0B';
+            const fmtD = d => (d >= 0 ? '+' : '') + d;
+            let html = '<div class="enc-bascule-list">';
+            bascules.forEach((b, idx) => {
+                const col = typeColor(b.type);
+                const ecart = b.type === 'occasion-manquee'
+                    ? `stagne à ${fmtD(b.avant)}`
+                    : `${fmtD(b.avant)} → ${fmtD(b.apres)}`;
+                html += `
+                  <div class="enc-bascule-item">
+                    <div class="enc-bascule-item-header" style="color:${col}">
+                      ⚡${idx + 1} — ${b.label}
+                      <span class="enc-bascule-ecart">${ecart}</span>
+                    </div>
+                    <div class="enc-bascule-item-desc">${b.description}</div>
+                  </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         // A-06/07 — Gardien × famille

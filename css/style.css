@@ -2370,22 +2370,21 @@
         .enc-detail-total { font-weight: 700; background: #F8FAFC; }
 
         /* Section bascule (A-05) */
-        .enc-bascule-wrap {
+        .enc-bascule-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+        .enc-bascule-item {
             background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px;
-            padding: 12px; margin-top: 8px; font-size: 0.82rem;
+            padding: 10px 12px; font-size: 0.82rem;
         }
-        .enc-bascule-header {
-            font-weight: 700; color: #92400E; font-size: 0.85rem; margin-bottom: 10px;
+        .enc-bascule-item-header {
+            font-weight: 700; font-size: 0.85rem; margin-bottom: 4px;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;
         }
-        .enc-bascule-cols { display: flex; gap: 12px; flex-wrap: wrap; }
-        .enc-bascule-col { flex: 1; min-width: 140px; }
-        .enc-bascule-col-title {
-            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-            color: #64748B; letter-spacing: 0.04em; margin-bottom: 6px;
+        .enc-bascule-ecart {
+            font-size: 0.75rem; font-weight: 600; color: #64748B; background: #F1F5F9;
+            border-radius: 4px; padding: 2px 6px;
         }
-        .enc-bascule-row {
-            display: flex; align-items: center; gap: 4px;
-            padding: 3px 0; font-size: 0.78rem; color: #334155; flex-wrap: wrap;
+        .enc-bascule-item-desc {
+            color: #374151; font-size: 0.80rem; line-height: 1.45;
         }
         .enc-bascule-none {
             color: #059669; font-size: 0.82rem; font-style: italic; padding: 8px 0;
