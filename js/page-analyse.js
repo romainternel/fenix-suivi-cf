@@ -116,8 +116,9 @@
             // Générer l'analyse
             generateResume3Points(matchFilter, matchData, hasPeriode);
             generateIndicateurs(matchFilter, matchData, hasPeriode);
-            drawTimeline(matchFilter, matchData);
+            _momentsCles = [];
             findMomentsCles(matchFilter, matchData);
+            drawTimeline(matchFilter, matchData);
             renderBasculContext(matchData, _lastBasculeResult);
             renderEncFamillesSection(matchData);
             renderGardienEncSection(matchData);
@@ -453,23 +454,47 @@
             ctx.fillStyle = '#333';
             ctx.fillText('Adversaire', padding.left + 98, canvas.height - 8);
 
+            // Marqueurs MC sur la timeline
+            if (_momentsCles && _momentsCles.length > 0) {
+                _momentsCles.forEach((mc, idx) => {
+                    const normX = normPos(mc.rawPos);
+                    const x = padding.left + (normX / maxPos) * graphWidth;
+                    const color = mc.type === 'positif' ? '#16A34A' : '#DC2626';
+                    ctx.save();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([6, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + graphHeight);
+                    ctx.stroke();
+                    ctx.restore();
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x - 14, padding.top - 1, 28, 15);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 9px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('MC' + (idx + 1), x, padding.top + 11);
+                });
+            }
+
             // Overlay momentum + détection bascule (A-04)
             drawMomentumOverlay(ctx, scoreHistory, canvas, padding, roundedMax, maxPos);
         }
 
         function findMomentsCles(matchName, matchData) {
-            const actions = getSortedGoals(matchData).map(g => g.row);
+            const sortedGoals = getSortedGoals(matchData);
 
-            if (actions.length < 3) {
+            if (sortedGoals.length < 3) {
                 document.getElementById('moments-cles').innerHTML = '<p style="color:#6B7280;font-size:0.85rem;">Pas assez de données pour identifier des séquences.</p>';
                 return;
             }
 
             const moments = [];
-            let currentSeq = { team: null, count: 0, start: 0 };
+            let currentSeq = { team: null, count: 0, startPos: 0 };
 
-            actions.forEach((action, i) => {
-                const team = action[COLS.club] === 'FENIX' ? 'FENIX' : 'ADV';
+            sortedGoals.forEach(({ row, pos }) => {
+                const team = row[COLS.club] === 'FENIX' ? 'FENIX' : 'ADV';
                 if (team === currentSeq.team) {
                     currentSeq.count++;
                 } else {
@@ -478,10 +503,11 @@
                             text: currentSeq.team === 'FENIX'
                                 ? `Série de ${currentSeq.count} buts FENIX`
                                 : `${currentSeq.count} buts encaissés d'affilée`,
-                            type: currentSeq.team === 'FENIX' ? 'positif' : 'negatif'
+                            type: currentSeq.team === 'FENIX' ? 'positif' : 'negatif',
+                            rawPos: currentSeq.startPos
                         });
                     }
-                    currentSeq = { team: team, count: 1, start: i };
+                    currentSeq = { team, count: 1, startPos: pos };
                 }
             });
             if (currentSeq.count >= 3) {
@@ -489,9 +515,12 @@
                     text: currentSeq.team === 'FENIX'
                         ? `Série de ${currentSeq.count} buts FENIX`
                         : `${currentSeq.count} buts encaissés d'affilée`,
-                    type: currentSeq.team === 'FENIX' ? 'positif' : 'negatif'
+                    type: currentSeq.team === 'FENIX' ? 'positif' : 'negatif',
+                    rawPos: currentSeq.startPos
                 });
             }
+
+            _momentsCles = moments;
 
             if (moments.length === 0) {
                 document.getElementById('moments-cles').innerHTML = '<p style="color:#6B7280;font-size:0.85rem;">Pas de séquence marquante détectée.</p>';
@@ -499,8 +528,8 @@
             }
 
             let html = '<strong style="font-size:0.85rem;color:#333;">Moments clés :</strong> ';
-            moments.forEach(m => {
-                html += `<span class="moment-badge ${m.type}">${m.text}</span> `;
+            moments.forEach((m, idx) => {
+                html += `<span class="moment-badge ${m.type}">MC${idx + 1} — ${m.text}</span> `;
             });
             document.getElementById('moments-cles').innerHTML = html;
         }
