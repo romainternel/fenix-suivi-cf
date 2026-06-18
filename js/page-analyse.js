@@ -676,33 +676,63 @@
                     return parseTimecode(a[COLS.position]) - parseTimecode(b[COLS.position]);
                 });
 
-            // Signal 1a — Temps fort : FENIX marque 3+ buts sans aucun raté entre
-            let fenStreak = 0, fenStreakRaw = 0;
+            const SEUIL_POSS = 4;
+
+            // Signal 1a — Temps fort ATT : FENIX marque sur 4+ possessions consécutives (ADV ignoré)
+            let fenButStreak = 0, fenButRaw = 0;
             allActions.forEach(r => {
                 if (r[COLS.club] !== 'FENIX') return;
                 if (r[COLS.resultat] === 'But') {
-                    if (fenStreak === 0) fenStreakRaw = toRaw(r);
-                    fenStreak++;
+                    if (fenButStreak === 0) fenButRaw = toRaw(r);
+                    fenButStreak++;
                 } else {
-                    if (fenStreak >= 3) moments.push({ text: `Temps fort — ${fenStreak} buts FENIX de suite`, type: 'positif', rawPos: fenStreakRaw });
-                    fenStreak = 0;
+                    if (fenButStreak >= SEUIL_POSS) moments.push({ text: `Temps fort ATT — ${fenButStreak} buts FENIX de suite`, type: 'positif', rawPos: fenButRaw });
+                    fenButStreak = 0;
                 }
             });
-            if (fenStreak >= 3) moments.push({ text: `Temps fort — ${fenStreak} buts FENIX de suite`, type: 'positif', rawPos: fenStreakRaw });
+            if (fenButStreak >= SEUIL_POSS) moments.push({ text: `Temps fort ATT — ${fenButStreak} buts FENIX de suite`, type: 'positif', rawPos: fenButRaw });
 
-            // Signal 1b — Temps faible : ADV marque 3+ buts sans aucun raté entre
-            let advStreak = 0, advStreakRaw = 0;
+            // Signal 1b — Temps faible ATT : FENIX rate 4+ possessions de suite sans marquer (ADV ignoré)
+            let fenMissStreak = 0, fenMissRaw = 0;
+            allActions.forEach(r => {
+                if (r[COLS.club] !== 'FENIX') return;
+                if (r[COLS.resultat] !== 'But') {
+                    if (fenMissStreak === 0) fenMissRaw = toRaw(r);
+                    fenMissStreak++;
+                } else {
+                    if (fenMissStreak >= SEUIL_POSS) moments.push({ text: `Temps faible ATT — ${fenMissStreak} possessions sans marquer`, type: 'negatif', rawPos: fenMissRaw });
+                    fenMissStreak = 0;
+                }
+            });
+            if (fenMissStreak >= SEUIL_POSS) moments.push({ text: `Temps faible ATT — ${fenMissStreak} possessions sans marquer`, type: 'negatif', rawPos: fenMissRaw });
+
+            // Signal 1c — Temps fort DEF : ADV rate 4+ possessions de suite sans marquer (FENIX ignoré)
+            let advMissStreak = 0, advMissRaw = 0;
+            allActions.forEach(r => {
+                if (r[COLS.club] === 'FENIX') return;
+                if (r[COLS.resultat] !== 'But') {
+                    if (advMissStreak === 0) advMissRaw = toRaw(r);
+                    advMissStreak++;
+                } else {
+                    if (advMissStreak >= SEUIL_POSS) moments.push({ text: `Temps fort DEF — ${advMissStreak} attaques adverses stoppées`, type: 'positif', rawPos: advMissRaw });
+                    advMissStreak = 0;
+                }
+            });
+            if (advMissStreak >= SEUIL_POSS) moments.push({ text: `Temps fort DEF — ${advMissStreak} attaques adverses stoppées`, type: 'positif', rawPos: advMissRaw });
+
+            // Signal 1d — Temps faible DEF : ADV marque sur 4+ possessions consécutives (FENIX ignoré)
+            let advButStreak = 0, advButRaw = 0;
             allActions.forEach(r => {
                 if (r[COLS.club] === 'FENIX') return;
                 if (r[COLS.resultat] === 'But') {
-                    if (advStreak === 0) advStreakRaw = toRaw(r);
-                    advStreak++;
+                    if (advButStreak === 0) advButRaw = toRaw(r);
+                    advButStreak++;
                 } else {
-                    if (advStreak >= 3) moments.push({ text: `Temps faible — ${advStreak} buts encaissés de suite`, type: 'negatif', rawPos: advStreakRaw });
-                    advStreak = 0;
+                    if (advButStreak >= SEUIL_POSS) moments.push({ text: `Temps faible DEF — ${advButStreak} buts encaissés de suite`, type: 'negatif', rawPos: advButRaw });
+                    advButStreak = 0;
                 }
             });
-            if (advStreak >= 3) moments.push({ text: `Temps faible — ${advStreak} buts encaissés de suite`, type: 'negatif', rawPos: advStreakRaw });
+            if (advButStreak >= SEUIL_POSS) moments.push({ text: `Temps faible DEF — ${advButStreak} buts encaissés de suite`, type: 'negatif', rawPos: advButRaw });
 
             // Signal 2 — Silence offensif FENIX >= 5 min (intra-période uniquement)
             const SILENCE_SEUIL = 300;
