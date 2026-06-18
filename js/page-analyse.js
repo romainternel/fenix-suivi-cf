@@ -491,8 +491,9 @@
             }
 
             const moments = [];
-            let currentSeq = { team: null, count: 0, startPos: 0 };
 
+            // Signal 1 — Séries consécutives 3+ buts même camp
+            let currentSeq = { team: null, count: 0, startPos: 0 };
             sortedGoals.forEach(({ row, pos }) => {
                 const team = row[COLS.club] === 'FENIX' ? 'FENIX' : 'ADV';
                 if (team === currentSeq.team) {
@@ -520,6 +521,53 @@
                 });
             }
 
+            // Signal 2 — Silence offensif FENIX >= 5 min (intra-période uniquement)
+            const SILENCE_SEUIL = 300;
+            const fenixGoals = sortedGoals.filter(g => g.row[COLS.club] === 'FENIX');
+            for (let i = 1; i < fenixGoals.length; i++) {
+                if (getPeriodeNum(fenixGoals[i].row) !== getPeriodeNum(fenixGoals[i - 1].row)) continue;
+                const gap = fenixGoals[i].pos - fenixGoals[i - 1].pos;
+                if (gap >= SILENCE_SEUIL) {
+                    moments.push({
+                        text: `Silence offensif ${Math.round(gap / 60)} min`,
+                        type: 'negatif',
+                        rawPos: fenixGoals[i - 1].pos
+                    });
+                }
+            }
+
+            // Signal 3 — Retard critique (premier passage à -3 ou pire)
+            let fScore = 0, aScore = 0, criticalAdded = false;
+            sortedGoals.forEach(({ row, pos }) => {
+                if (row[COLS.club] === 'FENIX') fScore++; else aScore++;
+                if (!criticalAdded && fScore - aScore <= -3) {
+                    moments.push({
+                        text: `Retard critique ${fScore}-${aScore}`,
+                        type: 'negatif',
+                        rawPos: pos
+                    });
+                    criticalAdded = true;
+                }
+            });
+
+            // Signal 4 — Retour au score (après -2 ou pire, retour à égalité ou devant)
+            fScore = 0; aScore = 0;
+            let wasDown = false, comebackAdded = false;
+            sortedGoals.forEach(({ row, pos }) => {
+                if (row[COLS.club] === 'FENIX') fScore++; else aScore++;
+                if (fScore - aScore <= -2) wasDown = true;
+                if (wasDown && !comebackAdded && fScore - aScore >= 0) {
+                    moments.push({
+                        text: `Retour au score ${fScore}-${aScore}`,
+                        type: 'positif',
+                        rawPos: pos
+                    });
+                    comebackAdded = true;
+                    wasDown = false;
+                }
+            });
+
+            moments.sort((a, b) => a.rawPos - b.rawPos);
             _momentsCles = moments;
 
             if (moments.length === 0) {
