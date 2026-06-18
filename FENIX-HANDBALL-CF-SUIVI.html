@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=121">
-    <script src="js/utils.js?v=121"></script>
-    <script src="js/impact-images.js?v=121"></script>
-    <script src="js/player-mode.js?v=121"></script>
-    <script src="js/page-joueurs.js?v=121"></script>
-    <script src="js/page-notes-graph.js?v=121"></script>
-    <script src="js/page-analyse.js?v=121"></script>
+    <link rel="stylesheet" href="css/style.css?v=122">
+    <script src="js/utils.js?v=122"></script>
+    <script src="js/impact-images.js?v=122"></script>
+    <script src="js/player-mode.js?v=122"></script>
+    <script src="js/page-joueurs.js?v=122"></script>
+    <script src="js/page-notes-graph.js?v=122"></script>
+    <script src="js/page-analyse.js?v=122"></script>
 </head>
 <body>
 
@@ -413,7 +413,7 @@
                 <div class="filters">
                     <div class="filter-group">
                         <label>Sélectionner un match</label>
-                        <select id="filter-analyse-match" onchange="updateAnalysePage()">
+                        <select id="filter-analyse-match" onchange="syncAnalyseFilter()">
                             <option value="">-- Choisir un match --</option>
                         </select>
                     </div>
@@ -1891,16 +1891,16 @@ let _effInfoPoste = null;
             updateMatchSelection();
         }
 
+        let _syncingFilters = false;
+
         function updateMatchSelection() {
             const checkboxes = document.querySelectorAll('.match-checkbox');
             const selectedMatches = [...checkboxes].filter(cb => cb.checked).map(cb => cb.value);
             const allCheckbox = document.getElementById('match-all');
             const textSpan = document.getElementById('match-select-text');
 
-            // Update "Tous" checkbox state
             allCheckbox.checked = selectedMatches.length === checkboxes.length;
-            
-            // Update button text
+
             if (selectedMatches.length === 0) {
                 textSpan.textContent = 'Aucun match';
             } else if (selectedMatches.length === MATCHS.length) {
@@ -1910,8 +1910,36 @@ let _effInfoPoste = null;
             } else {
                 textSpan.textContent = `${selectedMatches.length} matchs`;
             }
-            
+
             updateDashboard();
+
+            // Sync filtre analyse si exactement 1 match sélectionné
+            if (!_syncingFilters) {
+                _syncingFilters = true;
+                const analyseSelect = document.getElementById('filter-analyse-match');
+                if (analyseSelect) {
+                    const newVal = selectedMatches.length === 1 ? selectedMatches[0] : '';
+                    if (analyseSelect.value !== newVal) {
+                        analyseSelect.value = newVal;
+                        updateAnalysePage();
+                    }
+                }
+                _syncingFilters = false;
+            }
+        }
+
+        function syncAnalyseFilter() {
+            updateAnalysePage();
+            if (_syncingFilters) return;
+            _syncingFilters = true;
+            const val = document.getElementById('filter-analyse-match').value;
+            document.querySelectorAll('.match-checkbox').forEach(cb => {
+                cb.checked = val ? cb.value === val : true;
+            });
+            const allCb = document.getElementById('match-all');
+            if (allCb) allCb.checked = !val;
+            updateMatchSelection();
+            _syncingFilters = false;
         }
 
         // Close dropdown when clicking outside
