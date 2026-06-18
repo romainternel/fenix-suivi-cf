@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=124">
-    <script src="js/utils.js?v=124"></script>
-    <script src="js/impact-images.js?v=124"></script>
-    <script src="js/player-mode.js?v=124"></script>
-    <script src="js/page-joueurs.js?v=124"></script>
-    <script src="js/page-notes-graph.js?v=124"></script>
-    <script src="js/page-analyse.js?v=124"></script>
+    <link rel="stylesheet" href="css/style.css?v=125">
+    <script src="js/utils.js?v=125"></script>
+    <script src="js/impact-images.js?v=125"></script>
+    <script src="js/player-mode.js?v=125"></script>
+    <script src="js/page-joueurs.js?v=125"></script>
+    <script src="js/page-notes-graph.js?v=125"></script>
+    <script src="js/page-analyse.js?v=125"></script>
 </head>
 <body>
 
@@ -246,22 +246,6 @@
             <!-- Bloc Match : terrain + stats équipes -->
             <div class="section">
                 <div class="filters">
-                    <div class="filter-group" style="position:relative;">
-                        <label>Matchs</label>
-                        <div class="multi-select-container">
-                            <button type="button" class="multi-select-btn" id="match-page-btn" onclick="toggleMatchPageDropdown()">
-                                <span id="match-page-text">Tous les matchs</span>
-                                <span class="dropdown-arrow">▼</span>
-                            </button>
-                            <div class="multi-select-dropdown" id="match-page-dropdown" style="display:none;">
-                                <label class="checkbox-item">
-                                    <input type="checkbox" id="match-page-all" checked onchange="toggleAllMatchPage()">
-                                    <span>Tous les matchs</span>
-                                </label>
-                                <div id="match-page-checkboxes"></div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="filter-group">
                         <label>Club</label>
                         <select id="filter-club" onchange="updateMatchPage()">
@@ -1703,41 +1687,7 @@ let _effInfoPoste = null;
 
         // ---- MATCH PAGE FILTERS ----
 
-        function populateMatchPageCheckboxes(matchList) {
-            const container = document.getElementById('match-page-checkboxes');
-            if (!container) return;
-            container.innerHTML = '';
-            matchList.forEach(m => {
-                container.innerHTML += `<label class="checkbox-item"><input type="checkbox" class="match-page-checkbox" value="${m}" checked onchange="updateMatchPageSelection()"><span>${m}</span></label>`;
-            });
-            const allCb = document.getElementById('match-page-all');
-            if (allCb) allCb.checked = true;
-        }
-
-        function toggleMatchPageDropdown() {
-            const dd = document.getElementById('match-page-dropdown');
-            dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function toggleAllMatchPage() {
-            const checked = document.getElementById('match-page-all').checked;
-            document.querySelectorAll('.match-page-checkbox').forEach(cb => cb.checked = checked);
-            updateMatchPageSelection();
-        }
-
-        function updateMatchPageSelection() {
-            const checkboxes = document.querySelectorAll('.match-page-checkbox');
-            const selected = [...checkboxes].filter(cb => cb.checked).map(cb => cb.value);
-            const allCb = document.getElementById('match-page-all');
-            const textSpan = document.getElementById('match-page-text');
-            allCb.checked = selected.length === checkboxes.length;
-            if (selected.length === 0) textSpan.textContent = 'Aucun match';
-            else if (selected.length === checkboxes.length) textSpan.textContent = 'Tous les matchs';
-            else if (selected.length === 1) textSpan.textContent = selected[0];
-            else textSpan.textContent = selected.length + ' matchs';
-            updateMatchClubFilter(selected);
-            updateMatchPage();
-        }
+        function populateMatchPageCheckboxes() { /* no-op — filtre géré par filter-match-global */ }
 
         function updateMatchClubFilter(selectedMatches) {
             const clubs = new Set();
@@ -1845,6 +1795,7 @@ let _effInfoPoste = null;
         }
 
         function onMatchGlobalChange() {
+            updateMatchClubFilter(getSelectedMatches());
             updateDashboard();
             updateAnalysePage();
             if (typeof updateImpactPage === 'function') updateImpactPage();

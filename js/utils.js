@@ -14,7 +14,7 @@
         }
 
         function getMatchPageSelected() {
-            return [...document.querySelectorAll('.match-page-checkbox:checked')].map(cb => cb.value);
+            return getSelectedMatches();
         }
 
         function getTJData(joueur, selectedMatches) {
