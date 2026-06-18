@@ -676,7 +676,7 @@
                     return parseTimecode(a[COLS.position]) - parseTimecode(b[COLS.position]);
                 });
 
-            const SEUIL_POSS = 4;
+            const SEUIL_POSS = 3;
 
             // Signal 1a — Temps fort ATT : FENIX marque sur 4+ possessions consécutives (ADV ignoré)
             let fenButStreak = 0, fenButRaw = 0;
