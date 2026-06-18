@@ -657,34 +657,52 @@
 
             const moments = [];
 
-            // Signal 1 — Séries consécutives 3+ buts même camp
-            let currentSeq = { team: null, count: 0, startPos: 0 };
-            sortedGoals.forEach(({ row, pos }) => {
-                const team = row[COLS.club] === 'FENIX' ? 'FENIX' : 'ADV';
-                if (team === currentSeq.team) {
-                    currentSeq.count++;
+            // Calcul offset MT2 pour rawPos
+            const _g1 = sortedGoals.filter(g => getPeriodeNum(g.row) === 1);
+            const _g2 = sortedGoals.filter(g => getPeriodeNum(g.row) === 2);
+            const _max1 = _g1.length ? Math.max(..._g1.map(g => g.pos)) : 0;
+            const _min2raw = _g2.length ? Math.min(..._g2.map(g => parseTimecode(g.row[COLS.position]))) : Infinity;
+            const _off2 = _g2.length && _min2raw < _max1 ? _max1 : 0;
+            const toRaw = r => getPeriodeNum(r) === 2
+                ? parseTimecode(r[COLS.position]) + _off2
+                : parseTimecode(r[COLS.position]);
+
+            // Toutes les actions triées par période puis timecode
+            const allActions = matchData
+                .filter(r => (r[COLS.resultat] || '').trim())
+                .sort((a, b) => {
+                    const pA = getPeriodeNum(a), pB = getPeriodeNum(b);
+                    if (pA !== pB) return pA - pB;
+                    return parseTimecode(a[COLS.position]) - parseTimecode(b[COLS.position]);
+                });
+
+            // Signal 1a — Temps fort : FENIX marque 3+ buts sans aucun raté entre
+            let fenStreak = 0, fenStreakRaw = 0;
+            allActions.forEach(r => {
+                if (r[COLS.club] !== 'FENIX') return;
+                if (r[COLS.resultat] === 'But') {
+                    if (fenStreak === 0) fenStreakRaw = toRaw(r);
+                    fenStreak++;
                 } else {
-                    if (currentSeq.count >= 3) {
-                        moments.push({
-                            text: currentSeq.team === 'FENIX'
-                                ? `Série de ${currentSeq.count} buts FENIX`
-                                : `${currentSeq.count} buts encaissés d'affilée`,
-                            type: currentSeq.team === 'FENIX' ? 'positif' : 'negatif',
-                            rawPos: currentSeq.startPos
-                        });
-                    }
-                    currentSeq = { team, count: 1, startPos: pos };
+                    if (fenStreak >= 3) moments.push({ text: `Temps fort — ${fenStreak} buts FENIX de suite`, type: 'positif', rawPos: fenStreakRaw });
+                    fenStreak = 0;
                 }
             });
-            if (currentSeq.count >= 3) {
-                moments.push({
-                    text: currentSeq.team === 'FENIX'
-                        ? `Série de ${currentSeq.count} buts FENIX`
-                        : `${currentSeq.count} buts encaissés d'affilée`,
-                    type: currentSeq.team === 'FENIX' ? 'positif' : 'negatif',
-                    rawPos: currentSeq.startPos
-                });
-            }
+            if (fenStreak >= 3) moments.push({ text: `Temps fort — ${fenStreak} buts FENIX de suite`, type: 'positif', rawPos: fenStreakRaw });
+
+            // Signal 1b — Temps faible : ADV marque 3+ buts sans aucun raté entre
+            let advStreak = 0, advStreakRaw = 0;
+            allActions.forEach(r => {
+                if (r[COLS.club] === 'FENIX') return;
+                if (r[COLS.resultat] === 'But') {
+                    if (advStreak === 0) advStreakRaw = toRaw(r);
+                    advStreak++;
+                } else {
+                    if (advStreak >= 3) moments.push({ text: `Temps faible — ${advStreak} buts encaissés de suite`, type: 'negatif', rawPos: advStreakRaw });
+                    advStreak = 0;
+                }
+            });
+            if (advStreak >= 3) moments.push({ text: `Temps faible — ${advStreak} buts encaissés de suite`, type: 'negatif', rawPos: advStreakRaw });
 
             // Signal 2 — Silence offensif FENIX >= 5 min (intra-période uniquement)
             const SILENCE_SEUIL = 300;
@@ -693,11 +711,7 @@
                 if (getPeriodeNum(fenixGoals[i].row) !== getPeriodeNum(fenixGoals[i - 1].row)) continue;
                 const gap = fenixGoals[i].pos - fenixGoals[i - 1].pos;
                 if (gap >= SILENCE_SEUIL) {
-                    moments.push({
-                        text: `Silence offensif ${Math.round(gap / 60)} min`,
-                        type: 'negatif',
-                        rawPos: fenixGoals[i - 1].pos
-                    });
+                    moments.push({ text: `Silence offensif ${Math.round(gap / 60)} min`, type: 'negatif', rawPos: fenixGoals[i - 1].pos });
                 }
             }
 
@@ -706,11 +720,7 @@
             sortedGoals.forEach(({ row, pos }) => {
                 if (row[COLS.club] === 'FENIX') fScore++; else aScore++;
                 if (!criticalAdded && fScore - aScore <= -3) {
-                    moments.push({
-                        text: `Retard critique ${fScore}-${aScore}`,
-                        type: 'negatif',
-                        rawPos: pos
-                    });
+                    moments.push({ text: `Retard critique ${fScore}-${aScore}`, type: 'negatif', rawPos: pos });
                     criticalAdded = true;
                 }
             });
@@ -722,13 +732,8 @@
                 if (row[COLS.club] === 'FENIX') fScore++; else aScore++;
                 if (fScore - aScore <= -2) wasDown = true;
                 if (wasDown && !comebackAdded && fScore - aScore >= 0) {
-                    moments.push({
-                        text: `Retour au score ${fScore}-${aScore}`,
-                        type: 'positif',
-                        rawPos: pos
-                    });
-                    comebackAdded = true;
-                    wasDown = false;
+                    moments.push({ text: `Retour au score ${fScore}-${aScore}`, type: 'positif', rawPos: pos });
+                    comebackAdded = true; wasDown = false;
                 }
             });
 
