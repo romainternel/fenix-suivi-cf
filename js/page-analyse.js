@@ -1680,6 +1680,7 @@
             // Construire le tableau
             const cols = [
                 { key: 'temps', label: 'Temps', primary: true, special: 'temps' },
+                { key: 'score', label: 'Score', primary: true, special: 'score' },
                 { key: 'joueur', label: 'Joueur', idx: COLS.joueur, primary: true },
                 { key: 'resultat', label: 'Résultat', idx: COLS.resultat, primary: true },
                 { key: 'club', label: 'Club', idx: COLS.club, primary: true },
@@ -1697,15 +1698,33 @@
                 `<th class="${c.advanced ? 'col-advanced' : ''}">${c.label}</th>`
             ).join('');
 
+            // Score initial avant la fenêtre (compte tous les buts du match antérieurs à la 1ère ligne)
+            const windowStart = rows.length ? toRawLocal(rows[0]) : 0;
+            let runFen = 0, runAdv = 0;
+            _md.filter(r => r[COLS.resultat] === 'But' && toRawLocal(r) < windowStart - 1)
+               .forEach(r => { if (r[COLS.club] === 'FENIX') runFen++; else runAdv++; });
+
             const closestPos = area.rawPos;
             const tbody = rows.map(r => {
                 const rawPos = toRawLocal(r);
+                // Mettre à jour le score si c'est un but
+                if (r[COLS.resultat] === 'But') {
+                    if (r[COLS.club] === 'FENIX') runFen++; else runAdv++;
+                }
+                const diff = runFen - runAdv;
+                const scoreColor = diff > 0 ? '#16a34a' : diff < 0 ? '#dc2626' : '#64748b';
+                const scoreStr = `<span style="font-weight:700;color:${scoreColor};white-space:nowrap">${runFen}–${runAdv}</span>`;
+
                 const isHighlight = Math.abs(rawPos - closestPos) < 5;
                 const tds = cols.map(c => {
                     // Colonne temps match
                     if (c.special === 'temps') {
                         const min = fmtMatchMin(rawPos);
                         return `<td style="font-weight:600;color:#0A2463;white-space:nowrap">${min}</td>`;
+                    }
+                    // Colonne score
+                    if (c.special === 'score') {
+                        return `<td style="text-align:center">${scoreStr}</td>`;
                     }
                     let val = (r[c.idx] || '').toString().trim();
                     // Résultat : colorer
