@@ -137,6 +137,8 @@
             findMomentsCles(matchFilter, matchData);
             _bascules = detectAllBascules(getSortedGoals(matchData), matchData);
             drawTimeline(matchFilter, matchData);
+            const _tlCanvas = document.getElementById('timeline-canvas');
+            if (_tlCanvas && !_tlCanvas._tooltipInit) { initTimelineTooltip(); _tlCanvas._tooltipInit = true; }
             renderBasculContext(matchData, _bascules);
             renderEncFamillesSection(matchData);
             renderGardienEncSection(matchData);
@@ -504,7 +506,7 @@
                     : `Score final : ${fenixScore}-${advScore}`;
             }
 
-            const padding = { top: 40, right: 30, bottom: 60, left: 45 };
+            const padding = { top: 40, right: 30, bottom: 70, left: 45 };
             const graphWidth  = logicalW - padding.left - padding.right;
             const graphHeight = logicalH - padding.top  - padding.bottom;
             const maxScore   = Math.max(fenixScore, advScore, 5);
@@ -660,32 +662,77 @@
                 });
             }
 
-            // Marqueurs bascule ⚡ — triangles sous l'axe X
-            if (_bascules && _bascules.length > 0) {
-                _bascules.forEach((b, idx) => {
-                    if (b.rawPos == null && b.rawPos !== 0) return;
-                    const normX = normPos(b.rawPos);
-                    const x = padding.left + (normX / maxPos) * graphWidth;
-                    const y = padding.top + graphHeight + 6; // juste sous l'axe X
+            // Marqueurs bascule ⚡ — triangles sous l'axe X (anti-collision verticale)
+            const basculeXPositions = _bascules.map(b => {
+                if (b.rawPos == null) return null;
+                return padding.left + (normPos(b.rawPos) / maxPos) * graphWidth;
+            });
 
-                    // Triangle pointant vers le haut (drapeau)
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.fillStyle = '#f59e0b'; // orange ambre
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(x - 6, y + 12);
-                    ctx.lineTo(x + 6, y + 12);
-                    ctx.closePath();
-                    ctx.fill();
-
-                    // Numéro en dessous
-                    ctx.font = 'bold 7px Inter, sans-serif';
-                    ctx.fillStyle = '#92400e';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('⚡' + (idx + 1), x, y + 22);
-                    ctx.restore();
-                });
+            const basculeRows = new Array(_bascules.length).fill(0);
+            for (let i = 1; i < basculeXPositions.length; i++) {
+                if (basculeXPositions[i] == null) continue;
+                for (let j = i - 1; j >= 0; j--) {
+                    if (basculeXPositions[j] == null) continue;
+                    if (Math.abs(basculeXPositions[i] - basculeXPositions[j]) < 32) {
+                        basculeRows[i] = basculeRows[j] === 0 ? 1 : 0;
+                        break;
+                    }
+                }
             }
+
+            _bascules.forEach((b, idx) => {
+                if (b.rawPos == null) return;
+                const x = basculeXPositions[idx];
+                if (x == null) return;
+                const row = basculeRows[idx];
+                const baseY = padding.top + graphHeight + 8;
+                const y = baseY + row * 22; // row 0 = premier niveau, row 1 = deuxième niveau
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.fillStyle = '#f59e0b';
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - 6, y + 12);
+                ctx.lineTo(x + 6, y + 12);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.font = 'bold 7px Inter, sans-serif';
+                ctx.fillStyle = '#92400e';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚡' + (idx + 1), x, y + 22);
+                ctx.restore();
+            });
+
+            // Stocker les zones pour le tooltip
+            window._timelineHitAreas = [];
+
+            _momentsCles.forEach((mc, idx) => {
+                const x = padding.left + (normPos(mc.rawPos) / maxPos) * graphWidth;
+                window._timelineHitAreas.push({
+                    type: 'mc',
+                    x, y: padding.top,
+                    w: 10, h: graphHeight,
+                    label: 'MC' + (idx + 1),
+                    text: mc.text,
+                    positif: mc.type === 'positif'
+                });
+            });
+
+            _bascules.forEach((b, idx) => {
+                const x = basculeXPositions[idx];
+                if (x == null) return;
+                const row = basculeRows[idx];
+                const baseY = padding.top + graphHeight + 8;
+                const y = baseY + row * 22;
+                window._timelineHitAreas.push({
+                    type: 'bascule',
+                    x, y,
+                    w: 14, h: 34,
+                    label: '⚡' + (idx + 1) + ' — ' + b.label,
+                    text: b.description || ''
+                });
+            });
 
             // Overlay momentum + détection bascule (A-04)
             drawMomentumOverlay(ctx, scoreHistory, logicalW, logicalH, padding, roundedMax, maxPos);
@@ -1539,4 +1586,40 @@
                 rows += `<tr><td><span style="background:${col};width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px"></span>${f}</td>${fmtCell(effV,groups.V.get(f))}${fmtCell(effD,groups.D.get(f))}${diffCell}</tr>`;
             });
             container.innerHTML = `<div class="corr-block"><div class="corr-title">EFFICACITÉ PAR FAMILLE — SAISON (V=${countByResult.V} · D=${countByResult.D})</div><div style="overflow-x:auto"><table class="corr-table enc-saison-table"><thead><tr><th style="text-align:left">Famille</th><th style="text-align:center;color:#10B981">Eff. V</th><th style="text-align:center;color:#EF4444">Eff. D</th><th style="text-align:center">Diff. V–D</th></tr></thead><tbody>${rows}</tbody></table></div><p style="font-size:0.72rem;color:#64748B;margin-top:8px;">Vert = famille plus efficace en V. Rouge = plus efficace en D (signal à surveiller).</p></div>`;
+        }
+
+        function initTimelineTooltip() {
+            const canvas = document.getElementById('timeline-canvas');
+            if (!canvas) return;
+            const tooltip = document.getElementById('timeline-tooltip');
+            if (!tooltip) return;
+
+            canvas.addEventListener('mousemove', function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const mx = (e.clientX - rect.left);
+                const my = (e.clientY - rect.top);
+
+                const areas = window._timelineHitAreas || [];
+                let found = null;
+                for (const area of areas) {
+                    if (mx >= area.x - area.w / 2 && mx <= area.x + area.w / 2 &&
+                        my >= area.y && my <= area.y + area.h) {
+                        found = area;
+                        break;
+                    }
+                }
+
+                if (found) {
+                    tooltip.innerHTML = `<strong>${found.label}</strong><br>${found.text}`;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (e.clientX + 14) + 'px';
+                    tooltip.style.top = (e.clientY - 10) + 'px';
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            });
+
+            canvas.addEventListener('mouseleave', function() {
+                if (tooltip) tooltip.style.display = 'none';
+            });
         }
