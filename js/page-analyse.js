@@ -305,7 +305,7 @@
             if (sortedGoals.length < 3) return bascules;
 
             const fmtD = d => (d >= 0 ? '+' : '') + d;
-            const toMin = p => Math.floor(p / 60) + "'";
+            const toMin = p => (p != null && !isNaN(p)) ? Math.floor(p / 60) + "'" : '?';
 
             // Reconstruit le score but par but
             let fS = 0, aS = 0;
@@ -445,7 +445,7 @@
             const cw = container.clientWidth || container.offsetWidth || 600;
             const dpr = window.devicePixelRatio || 1;
             const logicalW = Math.max(cw, 300);
-            const logicalH = Math.max(container.clientHeight || 0, 320);
+            const logicalH = Math.max(container.clientHeight || 0, 380);
             canvas.width  = logicalW * dpr;
             canvas.height = logicalH * dpr;
             canvas.style.width  = logicalW + 'px';
@@ -632,25 +632,6 @@
                     ctx.textAlign = 'center';
                     ctx.fillText(idx + 1, x, padding.top - 2);
                     ctx.restore();
-                });
-            }
-
-            // Marqueurs bascule ⚡ — badge seul, positionné en bas du graphe
-            if (_bascules && _bascules.length > 0) {
-                const basculeY = padding.top + graphHeight - 12;
-                _bascules.forEach((b, idx) => {
-                    const normX = normPos(b.rawPos);
-                    const x = padding.left + (normX / maxPos) * graphWidth;
-                    const isPositif = b.type === 'reprend-main' || b.type === 'tactique-payante';
-                    const color = isPositif ? '#16A34A' : '#F59E0B';
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    ctx.roundRect(x - 14, basculeY - 8, 28, 16, 4);
-                    ctx.fill();
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 8px Inter';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('⚡' + (idx + 1), x, basculeY + 5);
                 });
             }
 

@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=130">
-    <script src="js/utils.js?v=130"></script>
-    <script src="js/impact-images.js?v=130"></script>
-    <script src="js/player-mode.js?v=130"></script>
-    <script src="js/page-joueurs.js?v=130"></script>
-    <script src="js/page-notes-graph.js?v=130"></script>
-    <script src="js/page-analyse.js?v=130"></script>
+    <link rel="stylesheet" href="css/style.css?v=131">
+    <script src="js/utils.js?v=131"></script>
+    <script src="js/impact-images.js?v=131"></script>
+    <script src="js/player-mode.js?v=131"></script>
+    <script src="js/page-joueurs.js?v=131"></script>
+    <script src="js/page-notes-graph.js?v=131"></script>
+    <script src="js/page-analyse.js?v=131"></script>
 </head>
 <body>
 
@@ -389,12 +389,22 @@
                     <div id="periode-warning"></div>
                     <!-- Timeline du score -->
                     <div class="analyse-section">
-                        <h3 class="analyse-section-title">📈 Évolution du Score</h3>
+                        <h3 class="analyse-section-title">📈 ÉVOLUTION DU SCORE</h3>
                         <div id="timeline-scores" class="timeline-scores"></div>
                         <div class="timeline-container">
                             <canvas id="timeline-canvas"></canvas>
                         </div>
+                    </div>
+
+                    <!-- Moments clés -->
+                    <div class="analyse-section">
+                        <h3 class="analyse-section-title">🔵 MOMENTS CLÉS</h3>
                         <div id="moments-cles" class="moments-cles"></div>
+                    </div>
+
+                    <!-- Bascules du match -->
+                    <div class="analyse-section">
+                        <h3 class="analyse-section-title">⚡ BASCULES DU MATCH</h3>
                         <div id="enc-bascule-section"></div>
                     </div>
 
