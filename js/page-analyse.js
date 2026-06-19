@@ -711,10 +711,11 @@
 
             _momentsCles.forEach((mc, idx) => {
                 const x = padding.left + (normPos(mc.rawPos) / maxPos) * graphWidth;
+                // Zone réduite au cercle MC (rayon 4px en haut de la ligne, centré sur padding.top + 4)
                 window._timelineHitAreas.push({
                     type: 'mc',
-                    x, y: padding.top,
-                    w: 10, h: graphHeight,
+                    x, y: padding.top + 4 - 8,   // top du cercle (centre - 8px)
+                    w: 16, h: 16,                  // zone 16x16 autour du cercle
                     label: 'MC' + (idx + 1),
                     text: mc.text,
                     positif: mc.type === 'positif'
@@ -734,6 +735,32 @@
                     label: '⚡' + (idx + 1) + ' — ' + b.label,
                     text: b.description || ''
                 });
+            });
+
+            // Points des courbes de score (skip i=0 : point à 0-0 initial)
+            scoreHistory.forEach((p, i) => {
+                if (i === 0) return;
+                const x = padding.left + (p.pos / maxPos) * graphWidth;
+                const yFenix = padding.top + graphHeight - (p.fenix / roundedMax) * graphHeight;
+                const yAdv   = padding.top + graphHeight - (p.adv   / roundedMax) * graphHeight;
+
+                window._timelineHitAreas.push({
+                    type: 'score',
+                    x, y: yFenix,
+                    w: 16, h: 16,
+                    label: `${p.fenix} — ${p.adv}`,
+                    text: `FENIX <strong>${p.fenix}</strong> · Adversaire <strong>${p.adv}</strong>`
+                });
+                // Point adversaire (si suffisamment différent en Y pour éviter doublon)
+                if (Math.abs(yAdv - yFenix) > 8) {
+                    window._timelineHitAreas.push({
+                        type: 'score',
+                        x, y: yAdv,
+                        w: 16, h: 16,
+                        label: `${p.fenix} — ${p.adv}`,
+                        text: `FENIX <strong>${p.fenix}</strong> · Adversaire <strong>${p.adv}</strong>`
+                    });
+                }
             });
 
             // Overlay momentum + détection bascule (A-04)
@@ -1602,17 +1629,41 @@
                 const my = (e.clientY - rect.top);
 
                 const areas = window._timelineHitAreas || [];
+
+                // Priorité 1 : MC et bascules (hit area rectangulaire, y en haut)
                 let found = null;
                 for (const area of areas) {
-                    if (mx >= area.x - area.w / 2 && mx <= area.x + area.w / 2 &&
+                    if ((area.type === 'mc' || area.type === 'bascule') &&
+                        mx >= area.x - area.w / 2 && mx <= area.x + area.w / 2 &&
                         my >= area.y && my <= area.y + area.h) {
                         found = area;
                         break;
                     }
                 }
+                // Priorité 2 : points de score (hit area centrée sur le point)
+                if (!found) {
+                    for (const area of areas) {
+                        if (area.type === 'score' &&
+                            Math.abs(mx - area.x) <= area.w / 2 &&
+                            Math.abs(my - area.y) <= area.h / 2) {
+                            found = area;
+                            break;
+                        }
+                    }
+                }
 
                 if (found) {
-                    tooltip.innerHTML = `<strong>${found.label}</strong><br>${found.text}`;
+                    if (found.type === 'score') {
+                        tooltip.innerHTML = found.text;
+                        tooltip.style.background = 'rgba(15,23,42,0.9)';
+                    } else if (found.type === 'mc') {
+                        const color = found.positif ? '#16a34a' : '#dc2626';
+                        tooltip.innerHTML = `<span style="color:${color};font-weight:700">${found.label}</span><br>${found.text}`;
+                        tooltip.style.background = 'rgba(15,23,42,0.95)';
+                    } else {
+                        tooltip.innerHTML = `<strong style="color:#f59e0b">${found.label}</strong><br>${found.text}`;
+                        tooltip.style.background = 'rgba(15,23,42,0.95)';
+                    }
                     tooltip.style.display = 'block';
                     tooltip.style.left = (e.clientX + 14) + 'px';
                     tooltip.style.top = (e.clientY - 10) + 'px';
