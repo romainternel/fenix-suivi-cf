@@ -1656,18 +1656,30 @@
             const titleText = area.text || area.description || area.label;
             title.innerHTML = `<span style="color:${color}">${area.label}</span> — ${titleText}`;
 
+            // Recalcul offset MT2 (même logique que getSortedGoals) pour normaliser les positions
+            const _md = matchData || [];
+            const _g1 = _md.filter(r => r[COLS.resultat] === 'But' && getPeriodeNum(r) === 1);
+            const _g2 = _md.filter(r => r[COLS.resultat] === 'But' && getPeriodeNum(r) === 2);
+            const _max1 = _g1.length ? Math.max(..._g1.map(r => parseTimecode(r[COLS.position]))) : 0;
+            const _min2 = _g2.length ? Math.min(..._g2.map(r => parseTimecode(r[COLS.position]))) : Infinity;
+            const _off2 = (_g2.length > 0 && _min2 < _max1) ? _max1 : 0;
+            const toRawLocal = r => getPeriodeNum(r) === 2
+                ? parseTimecode(r[COLS.position]) + _off2
+                : parseTimecode(r[COLS.position]);
+
             // Filtrer les possessions sur la fenêtre exacte du signal (startRaw→endRaw), fallback ±90s
             const WIN = 90;
             const hasWindow = area.startRaw != null && area.endRaw != null;
-            const rows = (matchData || []).filter(r => {
-                const pos = parseTimecode(r[COLS.position]);
-                if (pos == null || isNaN(pos)) return false;
-                if (hasWindow) return pos >= area.startRaw - 5 && pos <= area.endRaw + 5;
-                return Math.abs(pos - area.rawPos) <= WIN;
-            }).sort((a, b) => parseTimecode(a[COLS.position]) - parseTimecode(b[COLS.position]));
+            const rows = _md.filter(r => {
+                const rawPos = toRawLocal(r);
+                if (isNaN(rawPos)) return false;
+                if (hasWindow) return rawPos >= area.startRaw - 5 && rawPos <= area.endRaw + 5;
+                return Math.abs(rawPos - area.rawPos) <= WIN;
+            }).sort((a, b) => toRawLocal(a) - toRawLocal(b));
 
             // Construire le tableau
             const cols = [
+                { key: 'temps', label: 'Temps', primary: true, special: 'temps' },
                 { key: 'joueur', label: 'Joueur', idx: COLS.joueur, primary: true },
                 { key: 'resultat', label: 'Résultat', idx: COLS.resultat, primary: true },
                 { key: 'club', label: 'Club', idx: COLS.club, primary: true },
@@ -1687,9 +1699,14 @@
 
             const closestPos = area.rawPos;
             const tbody = rows.map(r => {
-                const pos = parseTimecode(r[COLS.position]);
-                const isHighlight = Math.abs(pos - closestPos) < 5;
+                const rawPos = toRawLocal(r);
+                const isHighlight = Math.abs(rawPos - closestPos) < 5;
                 const tds = cols.map(c => {
+                    // Colonne temps match
+                    if (c.special === 'temps') {
+                        const min = fmtMatchMin(rawPos);
+                        return `<td style="font-weight:600;color:#0A2463;white-space:nowrap">${min}</td>`;
+                    }
                     let val = (r[c.idx] || '').toString().trim();
                     // Résultat : colorer
                     if (c.key === 'resultat') {
