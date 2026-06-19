@@ -504,7 +504,7 @@
                     : `Score final : ${fenixScore}-${advScore}`;
             }
 
-            const padding = { top: 40, right: 30, bottom: 40, left: 45 };
+            const padding = { top: 40, right: 30, bottom: 60, left: 45 };
             const graphWidth  = logicalW - padding.left - padding.right;
             const graphHeight = logicalH - padding.top  - padding.bottom;
             const maxScore   = Math.max(fenixScore, advScore, 5);
@@ -606,15 +606,24 @@
 
             // Légende
             ctx.font = '12px Inter';
+            // Légende dans le padding top (ligne du bas du padding)
+            const legY = padding.top - 14;
             ctx.textAlign = 'left';
             ctx.fillStyle = '#0A2463';
-            ctx.fillRect(padding.left, logicalH - 18, 12, 12);
+            ctx.fillRect(padding.left, legY - 9, 14, 3);
+            ctx.beginPath();
+            ctx.arc(padding.left + 7, legY - 7, 4, 0, Math.PI * 2);
+            ctx.fill();
             ctx.fillStyle = '#333';
-            ctx.fillText('FENIX', padding.left + 18, logicalH - 8);
+            ctx.font = '10px Inter, sans-serif';
+            ctx.fillText('FENIX', padding.left + 18, legY);
             ctx.fillStyle = '#DC2626';
-            ctx.fillRect(padding.left + 80, logicalH - 18, 12, 12);
+            ctx.fillRect(padding.left + 70, legY - 9, 14, 3);
+            ctx.beginPath();
+            ctx.arc(padding.left + 77, legY - 7, 4, 0, Math.PI * 2);
+            ctx.fill();
             ctx.fillStyle = '#333';
-            ctx.fillText('Adversaire', padding.left + 98, logicalH - 8);
+            ctx.fillText('Adversaire', padding.left + 88, legY);
 
             // Marqueurs MC — ligne verticale fine + petit cercle + numéro
             if (_momentsCles && _momentsCles.length > 0) {
