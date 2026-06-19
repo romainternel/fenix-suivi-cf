@@ -2430,30 +2430,73 @@
         .enc-saison-table td { font-size: 0.82rem; }
 
         /* MC Séquences panel (A-09) */
+        #mc-sequences-table {
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
         #mc-sequences-table th {
             background: #0A2463;
             color: white;
-            padding: 6px 10px;
+            padding: 5px 8px;
             text-align: left;
-            font-size: 0.68rem;
-            font-weight: 600;
-            letter-spacing: 0.04em;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
             white-space: nowrap;
+            overflow: hidden;
             position: sticky;
             top: 0;
+            z-index: 2;
+        }
+        /* En-têtes colonnes secondaires (GE, Défense, Enclenchement, Gardien) */
+        #mc-sequences-table th:nth-child(n+7):not(.col-advanced) {
+            background: #1e3a8a;
+            color: #93c5fd;
+            font-size: 0.6rem;
+        }
+        /* Séparateur avant la zone secondaire */
+        #mc-sequences-table th:nth-child(7),
+        #mc-sequences-table td:nth-child(7) {
+            border-left: 2px solid #e2e8f0;
+        }
+        #mc-sequences-table th:nth-child(7) {
+            border-left: 2px solid rgba(255,255,255,0.2);
         }
         #mc-sequences-table td {
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-bottom: 1px solid #f1f5f9;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             color: #334155;
+            vertical-align: middle;
+        }
+        /* Colonnes secondaires : texte atténué */
+        #mc-sequences-table td:nth-child(n+7):not(.col-advanced) {
+            color: #64748b;
+            font-size: 0.72rem;
         }
         #mc-sequences-table tr.mc-highlight td {
             background: #fef9c3;
             font-weight: 600;
         }
-        #mc-sequences-table tr:hover td {
-            background: #f8fafc;
+        #mc-sequences-table tr.mc-highlight td:nth-child(n+7):not(.col-advanced) {
+            color: #475569;
         }
+        #mc-sequences-table tr:hover td { background: #f8fafc; }
+        #mc-sequences-table tr.mc-highlight:hover td { background: #fef08a; }
+        #mc-sequences-table tbody tr:nth-child(even) td { background: #fafafa; }
+        #mc-sequences-table tr.mc-highlight td,
+        #mc-sequences-table tr.mc-highlight:nth-child(even) td { background: #fef9c3; }
+        /* Colonnes avancées */
         .col-advanced { display: none; }
         .show-advanced .col-advanced { display: table-cell; }
+        #mc-sequences-table th.col-advanced {
+            background: #172554;
+            color: #60a5fa;
+            font-size: 0.58rem;
+            border-left: 2px solid rgba(255,255,255,0.1);
+        }

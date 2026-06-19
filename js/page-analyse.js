@@ -1698,6 +1698,12 @@
                 `<th class="${c.advanced ? 'col-advanced' : ''}">${c.label}</th>`
             ).join('');
 
+            // Largeurs fixes par colonne (même ordre que cols)
+            const colWidths = ['48px','58px','88px','76px','54px','68px','36px','80px','110px','72px','90px','80px','80px'];
+            const colgroup = '<colgroup>' + cols.map((c, i) =>
+                `<col class="${c.advanced ? 'col-advanced' : ''}" style="width:${colWidths[i] || 'auto'}">`
+            ).join('') + '</colgroup>';
+
             // Score initial avant la fenêtre (compte tous les buts du match antérieurs à la 1ère ligne)
             const windowStart = rows.length ? toRawLocal(rows[0]) : 0;
             let runFen = 0, runAdv = 0;
@@ -1705,22 +1711,28 @@
                .forEach(r => { if (r[COLS.club] === 'FENIX') runFen++; else runAdv++; });
 
             const closestPos = area.rawPos;
+            let prevScore = '';
             const tbody = rows.map(r => {
                 const rawPos = toRawLocal(r);
                 // Mettre à jour le score si c'est un but
                 if (r[COLS.resultat] === 'But') {
                     if (r[COLS.club] === 'FENIX') runFen++; else runAdv++;
                 }
+                const currentScore = `${runFen}–${runAdv}`;
                 const diff = runFen - runAdv;
                 const scoreColor = diff > 0 ? '#16a34a' : diff < 0 ? '#dc2626' : '#64748b';
-                const scoreStr = `<span style="font-weight:700;color:${scoreColor};white-space:nowrap">${runFen}–${runAdv}</span>`;
+                // Afficher le score uniquement quand il change
+                const scoreStr = currentScore !== prevScore
+                    ? `<span style="font-weight:700;color:${scoreColor}">${currentScore}</span>`
+                    : `<span style="color:#cbd5e1;font-size:0.7rem">·</span>`;
+                prevScore = currentScore;
 
                 const isHighlight = Math.abs(rawPos - closestPos) < 5;
                 const tds = cols.map(c => {
                     // Colonne temps match
                     if (c.special === 'temps') {
                         const min = fmtMatchMin(rawPos);
-                        return `<td style="font-weight:600;color:#0A2463;white-space:nowrap">${min}</td>`;
+                        return `<td style="font-weight:600;color:#0A2463">${min}</td>`;
                     }
                     // Colonne score
                     if (c.special === 'score') {
@@ -1732,17 +1744,19 @@
                         const color = val === 'But' ? '#16a34a' : val === 'PB' ? '#f59e0b' : val === 'Tir raté' ? '#dc2626' : '#334155';
                         val = `<span style="color:${color};font-weight:600">${val || '—'}</span>`;
                     }
-                    // Club : badge
+                    // Club : badge abrégé
                     if (c.key === 'club') {
-                        const bg = val === 'FENIX' ? '#0A2463' : '#dc2626';
-                        val = `<span style="background:${bg};color:white;padding:1px 6px;border-radius:4px;font-size:0.65rem;">${val || '—'}</span>`;
+                        const isFenix = val === 'FENIX';
+                        const bg = isFenix ? '#0A2463' : '#dc2626';
+                        const abbr = isFenix ? 'FNX' : (val.slice(0, 3).toUpperCase() || '?');
+                        val = `<span style="background:${bg};color:white;padding:1px 5px;border-radius:3px;font-size:0.62rem;font-weight:700;letter-spacing:0.03em">${abbr}</span>`;
                     }
                     return `<td class="${c.advanced ? 'col-advanced' : ''}">${val || '—'}</td>`;
                 }).join('');
                 return `<tr class="${isHighlight ? 'mc-highlight' : ''}">${tds}</tr>`;
             }).join('');
 
-            table.innerHTML = `<thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody>`;
+            table.innerHTML = colgroup + `<thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody>`;
             if (_mcAdvancedCols) table.closest('div').classList.add('show-advanced');
             else table.closest('div').classList.remove('show-advanced');
 
