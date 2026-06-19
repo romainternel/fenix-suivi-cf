@@ -1763,6 +1763,8 @@
         function closeMCPanel() {
             const panel = document.getElementById('mc-sequences-panel');
             if (panel) panel.style.display = 'none';
+            const canvas = document.getElementById('timeline-canvas');
+            if (canvas) canvas.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function toggleMCAdvancedCols() {
