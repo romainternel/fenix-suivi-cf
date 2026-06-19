@@ -886,7 +886,7 @@
             // Signal 5 — Occasion de prendre la tête manquée
             // 2+ ratés FENIX consécutifs quand diff ≥ -1, sans but adverse entre les ratés
             {
-                const SEUIL_OCPM = 2;
+                const SEUIL_OCPM = 3;
                 const COOLDOWN_OCPM = 240;
                 const MISS_OCPM = new Set(['Tir raté', 'PB', 'PO']);
                 let ocFen = 0, ocAdv = 0;
