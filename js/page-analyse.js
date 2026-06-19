@@ -387,16 +387,14 @@
             }
 
             // Type 3 — Occasion manquée (4+ possessions FENIX ratées en étant derrière)
-            const offset2 = (() => {
-                const g1 = sortedGoals.filter(g => getPeriodeNum(g.row) === 1);
-                const g2 = sortedGoals.filter(g => getPeriodeNum(g.row) === 2);
-                if (!g2.length) return 0;
-                const max1 = g1.length ? Math.max(...g1.map(g => g.pos)) : 0;
-                const min2raw = Math.min(...g2.map(g => parseTimecode(g.row[COLS.position])));
-                return min2raw < max1 ? max1 : 0;
-            })();
+            // Calcul de l'offset une seule fois, cohérent avec getSortedGoals
+            const _g1raw = matchData.filter(r => r[COLS.resultat] === 'But' && getPeriodeNum(r) === 1);
+            const _g2raw = matchData.filter(r => r[COLS.resultat] === 'But' && getPeriodeNum(r) === 2);
+            const _max1raw = _g1raw.length ? Math.max(..._g1raw.map(r => parseTimecode(r[COLS.position]))) : 0;
+            const _min2raw = _g2raw.length ? Math.min(..._g2raw.map(r => parseTimecode(r[COLS.position]))) : Infinity;
+            const _offsetP2 = (_g2raw.length > 0 && _min2raw < _max1raw) ? _max1raw : 0;
             const toRaw = r => getPeriodeNum(r) === 2
-                ? parseTimecode(r[COLS.position]) + offset2
+                ? parseTimecode(r[COLS.position]) + _offsetP2
                 : parseTimecode(r[COLS.position]);
 
             const fenixActions = matchData
