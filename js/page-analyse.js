@@ -347,9 +347,12 @@
                     const ctx = getCtx(pts[i].idx, 2, 1);
                     const advButs = ctx.filter(g => g.row[COLS.club] !== 'FENIX').length;
                     const minB = toMin(pts[i].rawPos), minD = ctx.length > 1 ? toMin(ctx[0].pos) : minB;
+                    const startRaw = ctx.length ? ctx[0].pos : pts[i].rawPos;
+                    const endRaw = ctx.length ? ctx[ctx.length - 1].pos : pts[i].rawPos;
                     bascules.push({
-                        type: 'decrochage', label: 'Décrochage',
+                        type: 'decrochage', label: 'Décrochage', positif: false,
                         rawPos: pts[i].rawPos, avant: diffs[i-1], apres: diffs[i],
+                        startRaw, endRaw,
                         description: `À la ${minB}, l'adversaire prend les devants (${advButs} but${advButs > 1 ? 's' : ''} encaissés depuis la ${minD}). FENIX bascule de ${fmtD(diffs[i-1])} à ${fmtD(diffs[i])}.`
                     });
                 }
@@ -366,9 +369,12 @@
                         .map(g => getEncFamille(g.row[COLS.enclenchement])).filter(f => f && f !== 'Autre'))];
                     const famStr = fams.length ? ` (${fams.join(', ')})` : '';
                     const minB = toMin(pts[i].rawPos), minD = ctx.length > 1 ? toMin(ctx[0].pos) : minB;
+                    const startRaw = ctx.length ? ctx[0].pos : pts[i].rawPos;
+                    const endRaw = ctx.length ? ctx[ctx.length - 1].pos : pts[i].rawPos;
                     bascules.push({
-                        type: 'reprend-main', label: 'On reprend la main',
+                        type: 'reprend-main', label: 'On reprend la main', positif: true,
                         rawPos: pts[i].rawPos, avant: diffs[i-1], apres: diffs[i],
+                        startRaw, endRaw,
                         description: `FENIX marque ${fenButs} but${fenButs > 1 ? 's' : ''}${famStr} entre la ${minD} et la ${minB} et repasse devant. Écart : ${fmtD(diffs[i-1])} → ${fmtD(diffs[i])}.`
                     });
                 }
@@ -383,10 +389,12 @@
                 }
                 if (minIdx !== -1 && minDiff <= -3) {
                     const avant = diffs[minIdx - 1] !== undefined ? diffs[minIdx - 1] : 0;
+                    const rp = pts[minIdx].rawPos;
                     bascules.push({
-                        type: 'enlisement', label: 'Enlisement',
-                        rawPos: pts[minIdx].rawPos, avant, apres: minDiff,
-                        description: `FENIX atteint son pire écart à la ${toMin(pts[minIdx].rawPos)} (${fmtD(minDiff)}). FENIX n'a jamais mené sur ce match.`
+                        type: 'enlisement', label: 'Enlisement', positif: false,
+                        rawPos: rp, avant, apres: minDiff,
+                        startRaw: rp - 90, endRaw: rp + 90,
+                        description: `FENIX atteint son pire écart à la ${toMin(rp)} (${fmtD(minDiff)}). FENIX n'a jamais mené sur ce match.`
                     });
                 }
             }
@@ -407,11 +415,12 @@
                 .sort((a, b) => toRaw(a) - toRaw(b));
 
             const COOLDOWN_3MIN = 180;
-            let missCount = 0, firstMissRaw = 0, lastOccasionRaw = -COOLDOWN_3MIN * 2;
+            let missCount = 0, firstMissRaw = 0, lastMissRaw = 0, lastOccasionRaw = -COOLDOWN_3MIN * 2;
             fenixActions.forEach(r => {
                 if (r[COLS.resultat] === 'But') { missCount = 0; return; }
                 if (missCount === 0) firstMissRaw = toRaw(r);
                 missCount++;
+                lastMissRaw = toRaw(r);
                 if (missCount === 4) {
                     const closestPt = [...pts].reverse().find(p => p.rawPos <= firstMissRaw) || pts[0];
                     const diffAtSeq = closestPt ? closestPt.fenix - closestPt.adv : 0;
@@ -419,8 +428,9 @@
                     if (diffAtSeq <= -2 && cooldownOk) {
                         lastOccasionRaw = firstMissRaw;
                         bascules.push({
-                            type: 'occasion-manquee', label: 'Occasion manquée',
+                            type: 'occasion-manquee', label: 'Occasion manquée', positif: false,
                             rawPos: firstMissRaw, avant: diffAtSeq, apres: diffAtSeq,
+                            startRaw: firstMissRaw, endRaw: lastMissRaw,
                             description: `À la ${toMin(firstMissRaw)}, FENIX loupe 4 possessions d'affilée (tirs ratés / PB). Le retard stagne à ${fmtD(diffAtSeq)}.`
                         });
                     }
@@ -445,9 +455,12 @@
                     const firstBut = recent.find(r => r[COLS.resultat] === 'But');
                     const inSorted = firstBut && sortedGoals.find(g => g.row === firstBut);
                     if (!inSorted) return;
+                    const startRaw = toRaw(recent[0]);
+                    const endRaw = toRaw(recent[recent.length - 1]);
                     bascules.push({
-                        type: 'tactique-payante', label: 'Tactique payante',
+                        type: 'tactique-payante', label: 'Tactique payante', positif: true,
                         rawPos: inSorted.pos, avant: 0, apres: 0,
+                        startRaw, endRaw,
                         description: `"${famille}" devient décisive : ${recentButs} buts sur les 4 dernières possessions (${Math.round(recentEff * 100)}% vs ${Math.round(priorEff * 100)}% avant). Système qui fait la différence.`
                     });
                 }
@@ -720,7 +733,9 @@
                     label: 'MC' + (idx + 1),
                     text: mc.text,
                     positif: mc.type === 'positif',
-                    rawPos: mc.rawPos
+                    rawPos: mc.rawPos,
+                    startRaw: mc.startRaw,
+                    endRaw: mc.endRaw
                 });
             });
 
@@ -734,8 +749,12 @@
                     type: 'bascule',
                     x, y,
                     w: 14, h: 34,
-                    label: '⚡' + (idx + 1) + ' — ' + b.label,
-                    text: b.description || ''
+                    label: '⚡ ' + b.label,
+                    text: b.description || '',
+                    positif: b.positif,
+                    rawPos: b.rawPos,
+                    startRaw: b.startRaw,
+                    endRaw: b.endRaw
                 });
             });
 
@@ -802,32 +821,34 @@
             const SEUIL_POSS = 4;
 
             // Signal 1a — Temps fort ATT : FENIX marque sur 4+ possessions consécutives (ADV ignoré)
-            let fenButStreak = 0, fenButRaw = 0;
+            let fenButStreak = 0, fenButRaw = 0, fenButEndRaw = 0;
             allActions.forEach(r => {
                 if (r[COLS.club] !== 'FENIX') return;
                 if (r[COLS.resultat] === 'But') {
                     if (fenButStreak === 0) fenButRaw = toRaw(r);
                     fenButStreak++;
+                    fenButEndRaw = toRaw(r);
                 } else {
-                    if (fenButStreak >= SEUIL_POSS) moments.push({ text: `Temps fort ATT — ${fenButStreak} buts FENIX de suite`, type: 'positif', rawPos: fenButRaw });
+                    if (fenButStreak >= SEUIL_POSS) moments.push({ text: `Temps fort ATT — ${fenButStreak} buts FENIX de suite`, type: 'positif', rawPos: fenButRaw, startRaw: fenButRaw, endRaw: fenButEndRaw });
                     fenButStreak = 0;
                 }
             });
-            if (fenButStreak >= SEUIL_POSS) moments.push({ text: `Temps fort ATT — ${fenButStreak} buts FENIX de suite`, type: 'positif', rawPos: fenButRaw });
+            if (fenButStreak >= SEUIL_POSS) moments.push({ text: `Temps fort ATT — ${fenButStreak} buts FENIX de suite`, type: 'positif', rawPos: fenButRaw, startRaw: fenButRaw, endRaw: fenButEndRaw });
 
             // Signal 1c — Temps fort DEF : ADV rate 4+ possessions de suite sans marquer (FENIX ignoré)
-            let advMissStreak = 0, advMissRaw = 0;
+            let advMissStreak = 0, advMissRaw = 0, advMissEndRaw = 0;
             allActions.forEach(r => {
                 if (r[COLS.club] === 'FENIX') return;
                 if (r[COLS.resultat] !== 'But') {
                     if (advMissStreak === 0) advMissRaw = toRaw(r);
                     advMissStreak++;
+                    advMissEndRaw = toRaw(r);
                 } else {
-                    if (advMissStreak >= SEUIL_POSS) moments.push({ text: `Temps fort DEF — ${advMissStreak} attaques adverses stoppées`, type: 'positif', rawPos: advMissRaw });
+                    if (advMissStreak >= SEUIL_POSS) moments.push({ text: `Temps fort DEF — ${advMissStreak} attaques adverses stoppées`, type: 'positif', rawPos: advMissRaw, startRaw: advMissRaw, endRaw: advMissEndRaw });
                     advMissStreak = 0;
                 }
             });
-            if (advMissStreak >= SEUIL_POSS) moments.push({ text: `Temps fort DEF — ${advMissStreak} attaques adverses stoppées`, type: 'positif', rawPos: advMissRaw });
+            if (advMissStreak >= SEUIL_POSS) moments.push({ text: `Temps fort DEF — ${advMissStreak} attaques adverses stoppées`, type: 'positif', rawPos: advMissRaw, startRaw: advMissRaw, endRaw: advMissEndRaw });
 
             // Signal 2 — Silence offensif FENIX >= 5 min (intra-période uniquement)
             const SILENCE_SEUIL = 300;
@@ -836,7 +857,7 @@
                 if (getPeriodeNum(fenixGoals[i].row) !== getPeriodeNum(fenixGoals[i - 1].row)) continue;
                 const gap = fenixGoals[i].pos - fenixGoals[i - 1].pos;
                 if (gap >= SILENCE_SEUIL) {
-                    moments.push({ text: `Silence offensif ${Math.round(gap / 60)} min`, type: 'negatif', rawPos: fenixGoals[i - 1].pos });
+                    moments.push({ text: `Silence offensif ${Math.round(gap / 60)} min`, type: 'negatif', rawPos: fenixGoals[i - 1].pos, startRaw: fenixGoals[i - 1].pos, endRaw: fenixGoals[i].pos });
                 }
             }
 
@@ -845,7 +866,7 @@
             sortedGoals.forEach(({ row, pos }) => {
                 if (row[COLS.club] === 'FENIX') fScore++; else aScore++;
                 if (!criticalAdded && fScore - aScore <= -3) {
-                    moments.push({ text: `Retard critique ${fScore}-${aScore}`, type: 'negatif', rawPos: pos });
+                    moments.push({ text: `Retard critique ${fScore}-${aScore}`, type: 'negatif', rawPos: pos, startRaw: pos - 90, endRaw: pos + 90 });
                     criticalAdded = true;
                 }
             });
@@ -857,7 +878,7 @@
                 if (row[COLS.club] === 'FENIX') fScore++; else aScore++;
                 if (fScore - aScore <= -2) wasDown = true;
                 if (wasDown && !comebackAdded && fScore - aScore >= 0) {
-                    moments.push({ text: `Retour au score ${fScore}-${aScore}`, type: 'positif', rawPos: pos });
+                    moments.push({ text: `Retour au score ${fScore}-${aScore}`, type: 'positif', rawPos: pos, startRaw: pos - 90, endRaw: pos + 90 });
                     comebackAdded = true; wasDown = false;
                 }
             });
@@ -1632,13 +1653,17 @@
 
             // Titre
             const color = area.positif ? '#16a34a' : '#dc2626';
-            title.innerHTML = `<span style="color:${color}">${area.label}</span> — ${area.text}`;
+            const titleText = area.text || area.description || area.label;
+            title.innerHTML = `<span style="color:${color}">${area.label}</span> — ${titleText}`;
 
-            // Filtrer les possessions ±90s autour du rawPos
+            // Filtrer les possessions sur la fenêtre exacte du signal (startRaw→endRaw), fallback ±90s
             const WIN = 90;
+            const hasWindow = area.startRaw != null && area.endRaw != null;
             const rows = (matchData || []).filter(r => {
                 const pos = parseTimecode(r[COLS.position]);
-                return pos != null && !isNaN(pos) && Math.abs(pos - area.rawPos) <= WIN;
+                if (pos == null || isNaN(pos)) return false;
+                if (hasWindow) return pos >= area.startRaw - 5 && pos <= area.endRaw + 5;
+                return Math.abs(pos - area.rawPos) <= WIN;
             }).sort((a, b) => parseTimecode(a[COLS.position]) - parseTimecode(b[COLS.position]));
 
             // Construire le tableau
@@ -1777,9 +1802,18 @@
                 );
                 if (mc) {
                     showMCSequences(mc, window._currentMatchData);
-                } else {
-                    // Clic ailleurs ferme le panel
-                    closeMCPanel();
+                    return;
                 }
+                const bascule = areas.find(a =>
+                    a.type === 'bascule' &&
+                    mx >= a.x - a.w / 2 && mx <= a.x + a.w / 2 &&
+                    my >= a.y && my <= a.y + a.h
+                );
+                if (bascule) {
+                    showMCSequences(bascule, window._currentMatchData);
+                    return;
+                }
+                // Clic ailleurs ferme le panel
+                closeMCPanel();
             });
         }
