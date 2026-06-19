@@ -341,6 +341,8 @@
             // Type 1 — Décrochage (FENIX bascule de ≥0 à <0)
             for (let i = 1; i < diffs.length; i++) {
                 if (diffs[i-1] >= 0 && diffs[i] < 0) {
+                    // Skip si on vient directement de 0-0 (première action du match)
+                    if (diffs[i-1] === 0 && pts[i-1].rawPos === 0) continue;
                     const ctx = getCtx(pts[i].idx, 2, 1);
                     const advButs = ctx.filter(g => g.row[COLS.club] !== 'FENIX').length;
                     const minB = toMin(pts[i].rawPos), minD = ctx.length > 1 ? toMin(ctx[0].pos) : minB;
@@ -355,6 +357,8 @@
             // Type 4 — On reprend la main (FENIX repasse de <0 à ≥0)
             for (let i = 1; i < diffs.length; i++) {
                 if (diffs[i-1] < 0 && diffs[i] >= 0) {
+                    // Skip si on vient directement de 0-0 (première action du match)
+                    if (diffs[i-1] === 0 && pts[i-1].rawPos === 0) continue;
                     const ctx = getCtx(pts[i].idx, 3, 0);
                     const fenButs = ctx.filter(g => g.row[COLS.club] === 'FENIX').length;
                     const fams = [...new Set(ctx.filter(g => g.row[COLS.club] === 'FENIX')
