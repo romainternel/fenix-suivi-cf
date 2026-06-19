@@ -343,7 +343,7 @@
                 if (diffs[i-1] >= 0 && diffs[i] < 0) {
                     const ctx = getCtx(pts[i].idx, 2, 1);
                     const advButs = ctx.filter(g => g.row[COLS.club] !== 'FENIX').length;
-                    const minB = toMin(pts[i].rawPos), minD = ctx.length > 1 ? toMin(ctx[0].rawPos) : minB;
+                    const minB = toMin(pts[i].rawPos), minD = ctx.length > 1 ? toMin(ctx[0].pos) : minB;
                     bascules.push({
                         type: 'decrochage', label: 'Décrochage',
                         rawPos: pts[i].rawPos, avant: diffs[i-1], apres: diffs[i],
@@ -360,7 +360,7 @@
                     const fams = [...new Set(ctx.filter(g => g.row[COLS.club] === 'FENIX')
                         .map(g => getEncFamille(g.row[COLS.enclenchement])).filter(f => f && f !== 'Autre'))];
                     const famStr = fams.length ? ` (${fams.join(', ')})` : '';
-                    const minB = toMin(pts[i].rawPos), minD = ctx.length > 1 ? toMin(ctx[0].rawPos) : minB;
+                    const minB = toMin(pts[i].rawPos), minD = ctx.length > 1 ? toMin(ctx[0].pos) : minB;
                     bascules.push({
                         type: 'reprend-main', label: 'On reprend la main',
                         rawPos: pts[i].rawPos, avant: diffs[i-1], apres: diffs[i],
