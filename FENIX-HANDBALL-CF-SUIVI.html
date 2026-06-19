@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=128">
-    <script src="js/utils.js?v=128"></script>
-    <script src="js/impact-images.js?v=128"></script>
-    <script src="js/player-mode.js?v=128"></script>
-    <script src="js/page-joueurs.js?v=128"></script>
-    <script src="js/page-notes-graph.js?v=128"></script>
-    <script src="js/page-analyse.js?v=128"></script>
+    <link rel="stylesheet" href="css/style.css?v=129">
+    <script src="js/utils.js?v=129"></script>
+    <script src="js/impact-images.js?v=129"></script>
+    <script src="js/player-mode.js?v=129"></script>
+    <script src="js/page-joueurs.js?v=129"></script>
+    <script src="js/page-notes-graph.js?v=129"></script>
+    <script src="js/page-analyse.js?v=129"></script>
 </head>
 <body>
 
@@ -1707,6 +1707,14 @@ let _effInfoPoste = null;
             const dd = document.getElementById('match-resultat-dropdown');
             dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
         }
+
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('match-resultat-btn')?.closest('.multi-select-container');
+            const dd = document.getElementById('match-resultat-dropdown');
+            if (dd && container && !container.contains(e.target)) {
+                dd.style.display = 'none';
+            }
+        });
 
         function toggleAllResultat() {
             const checked = document.getElementById('match-resultat-all').checked;
