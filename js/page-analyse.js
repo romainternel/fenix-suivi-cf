@@ -62,6 +62,21 @@
         let _bascules = [];
         let _encStatsCache = null;
         let _encStatsCacheMatch = null;
+
+        // Normalisation temps vidéo → minutes de match (0-60)
+        // Mise à jour par drawTimeline, utilisée par renderBasculContext et findMomentsCles
+        let _timeNorm = { max1: 0, maxAll: 1, hasTwo: false };
+        function posToMatchMin(pos) {
+            const { max1, maxAll, hasTwo } = _timeNorm;
+            if (!hasTwo || maxAll <= 0) return Math.floor(pos / 60);
+            if (pos <= max1) return max1 > 0 ? Math.round((pos / max1) * 30) : 0;
+            return Math.round(30 + ((pos - max1) / Math.max(maxAll - max1, 1)) * 30);
+        }
+        function fmtMatchMin(pos) {
+            if (pos == null || isNaN(pos)) return '?';
+            const m = posToMatchMin(pos);
+            return m + "'";
+        }
         let _gardienFamilleFilter = null;
         let _gardienSelected = null;
         let _lastBasculeResult = null;
@@ -305,7 +320,7 @@
             if (sortedGoals.length < 3) return bascules;
 
             const fmtD = d => (d >= 0 ? '+' : '') + d;
-            const toMin = p => (p != null && !isNaN(p)) ? Math.floor(p / 60) + "'" : '?';
+            const toMin = p => fmtMatchMin(p);
 
             // Reconstruit le score but par but
             let fS = 0, aS = 0;
@@ -463,6 +478,7 @@
             const max1   = g1Pos.length ? Math.max(...g1Pos) : 0;
             const maxAll = Math.max(...sortedGoals.map(g => g.pos), 1);
             const hasTwo = g1Pos.length > 0 && g2Pos.length > 0;
+            _timeNorm = { max1, maxAll, hasTwo };
 
             function normPos(pos) {
                 if (!hasTwo) return (pos / maxAll) * 60;
