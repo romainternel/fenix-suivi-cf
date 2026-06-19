@@ -738,27 +738,28 @@
             });
 
             // Points des courbes de score (skip i=0 : point à 0-0 initial)
+            const advLabel = document.getElementById('adversaire-title-text')?.textContent?.trim() || 'Adversaire';
             scoreHistory.forEach((p, i) => {
                 if (i === 0) return;
                 const x = padding.left + (p.pos / maxPos) * graphWidth;
                 const yFenix = padding.top + graphHeight - (p.fenix / roundedMax) * graphHeight;
                 const yAdv   = padding.top + graphHeight - (p.adv   / roundedMax) * graphHeight;
+                const scoreText = `FENIX <strong>${p.fenix}</strong> · ${advLabel} <strong>${p.adv}</strong>`;
 
                 window._timelineHitAreas.push({
                     type: 'score',
                     x, y: yFenix,
                     w: 16, h: 16,
                     label: `${p.fenix} — ${p.adv}`,
-                    text: `FENIX <strong>${p.fenix}</strong> · Adversaire <strong>${p.adv}</strong>`
+                    text: scoreText
                 });
-                // Point adversaire (si suffisamment différent en Y pour éviter doublon)
                 if (Math.abs(yAdv - yFenix) > 8) {
                     window._timelineHitAreas.push({
                         type: 'score',
                         x, y: yAdv,
                         w: 16, h: 16,
                         label: `${p.fenix} — ${p.adv}`,
-                        text: `FENIX <strong>${p.fenix}</strong> · Adversaire <strong>${p.adv}</strong>`
+                        text: scoreText
                     });
                 }
             });
