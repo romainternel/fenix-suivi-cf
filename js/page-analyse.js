@@ -136,6 +136,7 @@
             _bascules = [];
             findMomentsCles(matchFilter, matchData);
             _bascules = detectAllBascules(getSortedGoals(matchData), matchData);
+            window._currentMatchData = matchData;
             drawTimeline(matchFilter, matchData);
             const _tlCanvas = document.getElementById('timeline-canvas');
             if (_tlCanvas && !_tlCanvas._tooltipInit) { initTimelineTooltip(); _tlCanvas._tooltipInit = true; }
@@ -718,7 +719,8 @@
                     w: 16, h: 16,                  // zone 16x16 autour du cercle
                     label: 'MC' + (idx + 1),
                     text: mc.text,
-                    positif: mc.type === 'positif'
+                    positif: mc.type === 'positif',
+                    rawPos: mc.rawPos
                 });
             });
 
@@ -1618,6 +1620,92 @@
             container.innerHTML = `<div class="corr-block"><div class="corr-title">EFFICACITÉ PAR FAMILLE — SAISON (V=${countByResult.V} · D=${countByResult.D})</div><div style="overflow-x:auto"><table class="corr-table enc-saison-table"><thead><tr><th style="text-align:left">Famille</th><th style="text-align:center;color:#10B981">Eff. V</th><th style="text-align:center;color:#EF4444">Eff. D</th><th style="text-align:center">Diff. V–D</th></tr></thead><tbody>${rows}</tbody></table></div><p style="font-size:0.72rem;color:#64748B;margin-top:8px;">Vert = famille plus efficace en V. Rouge = plus efficace en D (signal à surveiller).</p></div>`;
         }
 
+        let _mcAdvancedCols = false;
+        let _mcSequencesMatchData = null;
+
+        function showMCSequences(area, matchData) {
+            _mcSequencesMatchData = matchData;
+            const panel = document.getElementById('mc-sequences-panel');
+            const table = document.getElementById('mc-sequences-table');
+            const title = document.getElementById('mc-sequences-title');
+            if (!panel || !table) return;
+
+            // Titre
+            const color = area.positif ? '#16a34a' : '#dc2626';
+            title.innerHTML = `<span style="color:${color}">${area.label}</span> — ${area.text}`;
+
+            // Filtrer les possessions ±90s autour du rawPos
+            const WIN = 90;
+            const rows = (matchData || []).filter(r => {
+                const pos = parseTimecode(r[COLS.position]);
+                return pos != null && !isNaN(pos) && Math.abs(pos - area.rawPos) <= WIN;
+            }).sort((a, b) => parseTimecode(a[COLS.position]) - parseTimecode(b[COLS.position]));
+
+            // Construire le tableau
+            const cols = [
+                { key: 'club', label: 'Club', idx: COLS.club, primary: true },
+                { key: 'resultat', label: 'Résultat', idx: COLS.resultat, primary: true },
+                { key: 'phase_att', label: 'Phase', idx: COLS.phase_att, primary: true },
+                { key: 'action_joueur', label: 'Action joueur', idx: COLS.action_joueur, primary: true },
+                { key: 'joueur', label: 'Joueur', idx: COLS.joueur, primary: false },
+                { key: 'ge', label: 'GE', idx: COLS.ge, primary: false },
+                { key: 'defense_attaquee', label: 'Défense', idx: COLS.defense_attaquee, primary: false },
+                { key: 'enclenchement', label: 'Enclenchement', idx: COLS.enclenchement, primary: false },
+                { key: 'gardien', label: 'Gardien', idx: COLS.gardien, primary: false },
+                { key: 'action_att', label: 'Action ATT', idx: COLS.action_att, primary: false, advanced: true },
+                { key: 'action_def', label: 'Action DEF', idx: COLS.action_def, primary: false, advanced: true },
+            ];
+
+            const thead = cols.map(c =>
+                `<th class="${c.advanced ? 'col-advanced' : ''}">${c.label}</th>`
+            ).join('');
+
+            const closestPos = area.rawPos;
+            const tbody = rows.map(r => {
+                const pos = parseTimecode(r[COLS.position]);
+                const isHighlight = Math.abs(pos - closestPos) < 5;
+                const tds = cols.map(c => {
+                    let val = (r[c.idx] || '').toString().trim();
+                    // Résultat : colorer
+                    if (c.key === 'resultat') {
+                        const color = val === 'But' ? '#16a34a' : val === 'PB' ? '#f59e0b' : val === 'Tir raté' ? '#dc2626' : '#334155';
+                        val = `<span style="color:${color};font-weight:600">${val || '—'}</span>`;
+                    }
+                    // Club : badge
+                    if (c.key === 'club') {
+                        const bg = val === 'FENIX' ? '#0A2463' : '#dc2626';
+                        val = `<span style="background:${bg};color:white;padding:1px 6px;border-radius:4px;font-size:0.65rem;">${val || '—'}</span>`;
+                    }
+                    return `<td class="${c.advanced ? 'col-advanced' : ''}">${val || '—'}</td>`;
+                }).join('');
+                return `<tr class="${isHighlight ? 'mc-highlight' : ''}">${tds}</tr>`;
+            }).join('');
+
+            table.innerHTML = `<thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody>`;
+            if (_mcAdvancedCols) table.closest('div').classList.add('show-advanced');
+            else table.closest('div').classList.remove('show-advanced');
+
+            panel.style.display = 'block';
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function closeMCPanel() {
+            const panel = document.getElementById('mc-sequences-panel');
+            if (panel) panel.style.display = 'none';
+        }
+
+        function toggleMCAdvancedCols() {
+            _mcAdvancedCols = !_mcAdvancedCols;
+            const table = document.getElementById('mc-sequences-table');
+            const btn = document.getElementById('mc-sequences-toggle');
+            if (table) {
+                const wrapper = table.closest('div');
+                if (_mcAdvancedCols) wrapper.classList.add('show-advanced');
+                else wrapper.classList.remove('show-advanced');
+            }
+            if (btn) btn.style.background = _mcAdvancedCols ? '#e0e7ff' : 'white';
+        }
+
         function initTimelineTooltip() {
             const canvas = document.getElementById('timeline-canvas');
             if (!canvas) return;
@@ -1675,5 +1763,23 @@
 
             canvas.addEventListener('mouseleave', function() {
                 if (tooltip) tooltip.style.display = 'none';
+            });
+
+            canvas.addEventListener('click', function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+                const areas = window._timelineHitAreas || [];
+                const mc = areas.find(a =>
+                    a.type === 'mc' &&
+                    mx >= a.x - a.w / 2 && mx <= a.x + a.w / 2 &&
+                    my >= a.y && my <= a.y + a.h
+                );
+                if (mc) {
+                    showMCSequences(mc, window._currentMatchData);
+                } else {
+                    // Clic ailleurs ferme le panel
+                    closeMCPanel();
+                }
             });
         }

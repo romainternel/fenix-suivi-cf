@@ -2428,3 +2428,32 @@
         /* Saison V vs D (A-08) */
         .enc-saison-table td:first-child { text-align: left; white-space: nowrap; }
         .enc-saison-table td { font-size: 0.82rem; }
+
+        /* MC Séquences panel (A-09) */
+        #mc-sequences-table th {
+            background: #0A2463;
+            color: white;
+            padding: 6px 10px;
+            text-align: left;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+        }
+        #mc-sequences-table td {
+            padding: 5px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            white-space: nowrap;
+            color: #334155;
+        }
+        #mc-sequences-table tr.mc-highlight td {
+            background: #fef9c3;
+            font-weight: 600;
+        }
+        #mc-sequences-table tr:hover td {
+            background: #f8fafc;
+        }
+        .col-advanced { display: none; }
+        .show-advanced .col-advanced { display: table-cell; }
