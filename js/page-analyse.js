@@ -1646,13 +1646,13 @@
                 { key: 'club', label: 'Club', idx: COLS.club, primary: true },
                 { key: 'resultat', label: 'Résultat', idx: COLS.resultat, primary: true },
                 { key: 'phase_att', label: 'Phase', idx: COLS.phase_att, primary: true },
-                { key: 'action_joueur', label: 'Action joueur', idx: COLS.action_joueur, primary: true },
                 { key: 'joueur', label: 'Joueur', idx: COLS.joueur, primary: false },
                 { key: 'ge', label: 'GE', idx: COLS.ge, primary: false },
                 { key: 'defense_attaquee', label: 'Défense', idx: COLS.defense_attaquee, primary: false },
                 { key: 'enclenchement', label: 'Enclenchement', idx: COLS.enclenchement, primary: false },
                 { key: 'gardien', label: 'Gardien', idx: COLS.gardien, primary: false },
                 { key: 'action_att', label: 'Action ATT', idx: COLS.action_att, primary: false, advanced: true },
+                { key: 'action_joueur', label: 'Action joueur', idx: COLS.action_joueur, primary: false, advanced: true },
                 { key: 'action_def', label: 'Action DEF', idx: COLS.action_def, primary: false, advanced: true },
             ];
 
