@@ -635,6 +635,33 @@
                 });
             }
 
+            // Marqueurs bascule ⚡ — triangles sous l'axe X
+            if (_bascules && _bascules.length > 0) {
+                _bascules.forEach((b, idx) => {
+                    if (b.rawPos == null && b.rawPos !== 0) return;
+                    const normX = normPos(b.rawPos);
+                    const x = padding.left + (normX / maxPos) * graphWidth;
+                    const y = padding.top + graphHeight + 6; // juste sous l'axe X
+
+                    // Triangle pointant vers le haut (drapeau)
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.fillStyle = '#f59e0b'; // orange ambre
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x - 6, y + 12);
+                    ctx.lineTo(x + 6, y + 12);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Numéro en dessous
+                    ctx.font = 'bold 7px Inter, sans-serif';
+                    ctx.fillStyle = '#92400e';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('⚡' + (idx + 1), x, y + 22);
+                    ctx.restore();
+                });
+            }
+
             // Overlay momentum + détection bascule (A-04)
             drawMomentumOverlay(ctx, scoreHistory, logicalW, logicalH, padding, roundedMax, maxPos);
         }
