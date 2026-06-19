@@ -443,11 +443,16 @@
             const canvas = document.getElementById('timeline-canvas');
             const container = canvas.parentElement;
             const cw = container.clientWidth || container.offsetWidth || 600;
-            canvas.width = Math.max(cw, 200);
-            canvas.height = container.clientHeight || 200;
-
+            const dpr = window.devicePixelRatio || 1;
+            const logicalW = Math.max(cw, 300);
+            const logicalH = Math.max(container.clientHeight || 0, 320);
+            canvas.width  = logicalW * dpr;
+            canvas.height = logicalH * dpr;
+            canvas.style.width  = logicalW + 'px';
+            canvas.style.height = logicalH + 'px';
             const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, logicalW, logicalH);
 
             const sortedGoals = getSortedGoals(matchData);
             if (sortedGoals.length === 0) return;
@@ -484,8 +489,8 @@
             }
 
             const padding = { top: 40, right: 30, bottom: 40, left: 45 };
-            const graphWidth  = canvas.width  - padding.left - padding.right;
-            const graphHeight = canvas.height - padding.top  - padding.bottom;
+            const graphWidth  = logicalW - padding.left - padding.right;
+            const graphHeight = logicalH - padding.top  - padding.bottom;
             const maxScore   = Math.max(fenixScore, advScore, 5);
             const roundedMax = Math.ceil(maxScore / 5) * 5;
             const maxPos     = 60;
@@ -497,7 +502,7 @@
                 const y = padding.top + (graphHeight * (5 - i) / 5);
                 ctx.beginPath();
                 ctx.moveTo(padding.left, y);
-                ctx.lineTo(canvas.width - padding.right, y);
+                ctx.lineTo(logicalW - padding.right, y);
                 ctx.stroke();
             }
 
@@ -577,56 +582,62 @@
             ctx.font = 'bold 16px Inter';
             ctx.textAlign = 'right';
             ctx.fillStyle = '#0A2463';
-            ctx.fillText(fenixScore, canvas.width - padding.right - 30, padding.top - 15);
+            ctx.fillText(fenixScore, logicalW - padding.right - 30, padding.top - 15);
             ctx.fillStyle = '#6B7280';
-            ctx.fillText('-', canvas.width - padding.right - 20, padding.top - 15);
+            ctx.fillText('-', logicalW - padding.right - 20, padding.top - 15);
             ctx.fillStyle = '#DC2626';
-            ctx.fillText(advScore, canvas.width - padding.right, padding.top - 15);
+            ctx.fillText(advScore, logicalW - padding.right, padding.top - 15);
 
             // Légende
             ctx.font = '12px Inter';
             ctx.textAlign = 'left';
             ctx.fillStyle = '#0A2463';
-            ctx.fillRect(padding.left, canvas.height - 18, 12, 12);
+            ctx.fillRect(padding.left, logicalH - 18, 12, 12);
             ctx.fillStyle = '#333';
-            ctx.fillText('FENIX', padding.left + 18, canvas.height - 8);
+            ctx.fillText('FENIX', padding.left + 18, logicalH - 8);
             ctx.fillStyle = '#DC2626';
-            ctx.fillRect(padding.left + 80, canvas.height - 18, 12, 12);
+            ctx.fillRect(padding.left + 80, logicalH - 18, 12, 12);
             ctx.fillStyle = '#333';
-            ctx.fillText('Adversaire', padding.left + 98, canvas.height - 8);
+            ctx.fillText('Adversaire', padding.left + 98, logicalH - 8);
 
-            // Marqueurs MC — cercle + ligne fine (négatif seulement)
+            // Marqueurs MC — ligne verticale fine + petit cercle + numéro
             if (_momentsCles && _momentsCles.length > 0) {
                 _momentsCles.forEach((mc, idx) => {
                     const normX = normPos(mc.rawPos);
                     const x = padding.left + (normX / maxPos) * graphWidth;
-                    const color = mc.type === 'positif' ? '#16A34A' : '#DC2626';
-                    if (mc.type === 'negatif') {
-                        ctx.save();
-                        ctx.strokeStyle = color;
-                        ctx.lineWidth = 1;
-                        ctx.globalAlpha = 0.35;
-                        ctx.setLineDash([4, 4]);
-                        ctx.beginPath();
-                        ctx.moveTo(x, padding.top + 14);
-                        ctx.lineTo(x, padding.top + graphHeight);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-                    ctx.fillStyle = color;
+                    const isPositif = mc.type === 'positif';
+
+                    // Ligne verticale fine
+                    ctx.save();
                     ctx.beginPath();
-                    ctx.arc(x, padding.top + 8, 8, 0, Math.PI * 2);
+                    ctx.strokeStyle = isPositif ? 'rgba(22,163,74,0.6)' : 'rgba(220,38,38,0.6)';
+                    ctx.lineWidth = 1.5;
+                    if (!isPositif) {
+                        ctx.setLineDash([3, 3]);
+                    }
+                    ctx.moveTo(x, padding.top + 4);
+                    ctx.lineTo(x, padding.top + graphHeight);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Petit cercle en haut de la ligne
+                    ctx.beginPath();
+                    ctx.fillStyle = isPositif ? '#16a34a' : '#dc2626';
+                    ctx.arc(x, padding.top + 4, 4, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 8px Inter';
+
+                    // Numéro MC en petit au-dessus
+                    ctx.font = 'bold 7px Inter, sans-serif';
+                    ctx.fillStyle = isPositif ? '#16a34a' : '#dc2626';
                     ctx.textAlign = 'center';
-                    ctx.fillText('MC' + (idx + 1), x, padding.top + 12);
+                    ctx.fillText(idx + 1, x, padding.top - 2);
+                    ctx.restore();
                 });
             }
 
-            // Marqueurs bascule ⚡ — badge seul, positionné au milieu du graphe
+            // Marqueurs bascule ⚡ — badge seul, positionné en bas du graphe
             if (_bascules && _bascules.length > 0) {
-                const midY = padding.top + graphHeight * 0.5;
+                const basculeY = padding.top + graphHeight - 12;
                 _bascules.forEach((b, idx) => {
                     const normX = normPos(b.rawPos);
                     const x = padding.left + (normX / maxPos) * graphWidth;
@@ -634,17 +645,17 @@
                     const color = isPositif ? '#16A34A' : '#F59E0B';
                     ctx.fillStyle = color;
                     ctx.beginPath();
-                    ctx.roundRect(x - 14, midY - 8, 28, 16, 4);
+                    ctx.roundRect(x - 14, basculeY - 8, 28, 16, 4);
                     ctx.fill();
                     ctx.fillStyle = '#fff';
                     ctx.font = 'bold 8px Inter';
                     ctx.textAlign = 'center';
-                    ctx.fillText('⚡' + (idx + 1), x, midY + 5);
+                    ctx.fillText('⚡' + (idx + 1), x, basculeY + 5);
                 });
             }
 
             // Overlay momentum + détection bascule (A-04)
-            drawMomentumOverlay(ctx, scoreHistory, canvas, padding, roundedMax, maxPos);
+            drawMomentumOverlay(ctx, scoreHistory, logicalW, logicalH, padding, roundedMax, maxPos);
         }
 
         function findMomentsCles(matchName, matchData) {
@@ -676,7 +687,7 @@
                     return parseTimecode(a[COLS.position]) - parseTimecode(b[COLS.position]);
                 });
 
-            const SEUIL_POSS = 3;
+            const SEUIL_POSS = 4;
 
             // Signal 1a — Temps fort ATT : FENIX marque sur 4+ possessions consécutives (ADV ignoré)
             let fenButStreak = 0, fenButRaw = 0;
@@ -692,20 +703,6 @@
             });
             if (fenButStreak >= SEUIL_POSS) moments.push({ text: `Temps fort ATT — ${fenButStreak} buts FENIX de suite`, type: 'positif', rawPos: fenButRaw });
 
-            // Signal 1b — Temps faible ATT : FENIX rate 4+ possessions de suite sans marquer (ADV ignoré)
-            let fenMissStreak = 0, fenMissRaw = 0;
-            allActions.forEach(r => {
-                if (r[COLS.club] !== 'FENIX') return;
-                if (r[COLS.resultat] !== 'But') {
-                    if (fenMissStreak === 0) fenMissRaw = toRaw(r);
-                    fenMissStreak++;
-                } else {
-                    if (fenMissStreak >= SEUIL_POSS) moments.push({ text: `Temps faible ATT — ${fenMissStreak} possessions sans marquer`, type: 'negatif', rawPos: fenMissRaw });
-                    fenMissStreak = 0;
-                }
-            });
-            if (fenMissStreak >= SEUIL_POSS) moments.push({ text: `Temps faible ATT — ${fenMissStreak} possessions sans marquer`, type: 'negatif', rawPos: fenMissRaw });
-
             // Signal 1c — Temps fort DEF : ADV rate 4+ possessions de suite sans marquer (FENIX ignoré)
             let advMissStreak = 0, advMissRaw = 0;
             allActions.forEach(r => {
@@ -719,20 +716,6 @@
                 }
             });
             if (advMissStreak >= SEUIL_POSS) moments.push({ text: `Temps fort DEF — ${advMissStreak} attaques adverses stoppées`, type: 'positif', rawPos: advMissRaw });
-
-            // Signal 1d — Temps faible DEF : ADV marque sur 4+ possessions consécutives (FENIX ignoré)
-            let advButStreak = 0, advButRaw = 0;
-            allActions.forEach(r => {
-                if (r[COLS.club] === 'FENIX') return;
-                if (r[COLS.resultat] === 'But') {
-                    if (advButStreak === 0) advButRaw = toRaw(r);
-                    advButStreak++;
-                } else {
-                    if (advButStreak >= SEUIL_POSS) moments.push({ text: `Temps faible DEF — ${advButStreak} buts encaissés de suite`, type: 'negatif', rawPos: advButRaw });
-                    advButStreak = 0;
-                }
-            });
-            if (advButStreak >= SEUIL_POSS) moments.push({ text: `Temps faible DEF — ${advButStreak} buts encaissés de suite`, type: 'negatif', rawPos: advButRaw });
 
             // Signal 2 — Silence offensif FENIX >= 5 min (intra-période uniquement)
             const SILENCE_SEUIL = 300;
@@ -1283,10 +1266,10 @@
             return { index: idx, avant: diffs[idx-1] !== undefined ? diffs[idx-1] : 0, apres: diffs[idx] };
         }
 
-        function drawMomentumOverlay(ctx, scoreHistory, canvas, padding, roundedMax, maxPos) {
+        function drawMomentumOverlay(ctx, scoreHistory, logicalW, logicalH, padding, roundedMax, maxPos) {
             if (!scoreHistory || scoreHistory.length < 2) return;
-            const gW = canvas.width - padding.left - padding.right;
-            const gH = canvas.height - padding.top - padding.bottom;
+            const gW = logicalW - padding.left - padding.right;
+            const gH = logicalH - padding.top - padding.bottom;
             const diffs = scoreHistory.map(p => p.fenix - p.adv);
             const maxAbs = Math.max(...diffs.map(Math.abs), 1);
             const midY = padding.top + gH / 2;
@@ -1310,7 +1293,7 @@
             drawZone(true); drawZone(false);
             // Ligne zéro tiretée
             ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
-            ctx.beginPath(); ctx.moveTo(padding.left, midY); ctx.lineTo(canvas.width - padding.right, midY); ctx.stroke(); ctx.setLineDash([]);
+            ctx.beginPath(); ctx.moveTo(padding.left, midY); ctx.lineTo(logicalW - padding.right, midY); ctx.stroke(); ctx.setLineDash([]);
             // Courbe d'écart gold
             ctx.strokeStyle = '#F59E0B'; ctx.lineWidth = 1.5;
             ctx.beginPath();
