@@ -883,6 +883,74 @@
                 }
             });
 
+            // Signal 5 — Occasion de prendre la tête manquée
+            // 2+ ratés FENIX consécutifs quand diff ≥ -1, sans but adverse entre les ratés
+            {
+                const SEUIL_OCPM = 2;
+                const COOLDOWN_OCPM = 240;
+                const MISS_OCPM = new Set(['Tir raté', 'PB', 'PO']);
+                let ocFen = 0, ocAdv = 0;
+                let ocStreak = 0, ocFirstRaw = 0, ocEndRaw = 0;
+                let ocFenAtFirst = 0, ocAdvAtFirst = 0, ocPeriod = null;
+                let lastOcpmRaw = -COOLDOWN_OCPM * 2;
+
+                allActions.forEach(r => {
+                    const rp = toRaw(r);
+                    const res = (r[COLS.resultat] || '').trim();
+                    const club = r[COLS.club];
+                    const period = getPeriodeNum(r);
+
+                    if (res === 'But') {
+                        if (club === 'FENIX') ocFen++; else ocAdv++;
+                        ocStreak = 0; // but (marqué ou encaissé) rompt la séquence
+                        return;
+                    }
+
+                    if (club !== 'FENIX' || !MISS_OCPM.has(res)) return;
+
+                    const diff = ocFen - ocAdv;
+
+                    if (ocStreak === 0) {
+                        if (diff >= -1) {
+                            ocStreak = 1;
+                            ocFirstRaw = rp;
+                            ocEndRaw = rp;
+                            ocFenAtFirst = ocFen;
+                            ocAdvAtFirst = ocAdv;
+                            ocPeriod = period;
+                        }
+                    } else if (period === ocPeriod) {
+                        ocStreak++;
+                        ocEndRaw = rp;
+                        if (ocStreak >= SEUIL_OCPM) {
+                            const cooldownOk = ocFirstRaw - lastOcpmRaw >= COOLDOWN_OCPM;
+                            if (cooldownOk) {
+                                lastOcpmRaw = ocFirstRaw;
+                                const context = ocFenAtFirst - ocAdvAtFirst === 0
+                                    ? `à égalité (${ocFenAtFirst}-${ocAdvAtFirst}), FENIX aurait pu prendre l'avantage`
+                                    : `à -1 (${ocFenAtFirst}-${ocAdvAtFirst}), FENIX aurait pu égaliser puis mener`;
+                                moments.push({
+                                    text: `Occasion manquée — ${ocStreak} ratés FENIX de suite, ${context}`,
+                                    type: 'negatif',
+                                    rawPos: ocFirstRaw,
+                                    startRaw: ocFirstRaw,
+                                    endRaw: ocEndRaw
+                                });
+                            }
+                            ocStreak = 0;
+                        }
+                    } else {
+                        // Nouvelle période : reset et redémarre si conditions ok
+                        ocStreak = diff >= -1 ? 1 : 0;
+                        if (ocStreak) {
+                            ocFirstRaw = rp; ocEndRaw = rp;
+                            ocFenAtFirst = ocFen; ocAdvAtFirst = ocAdv;
+                            ocPeriod = period;
+                        }
+                    }
+                });
+            }
+
             moments.sort((a, b) => a.rawPos - b.rawPos);
             _momentsCles = moments;
 
