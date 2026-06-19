@@ -1643,10 +1643,10 @@
 
             // Construire le tableau
             const cols = [
-                { key: 'club', label: 'Club', idx: COLS.club, primary: true },
+                { key: 'joueur', label: 'Joueur', idx: COLS.joueur, primary: true },
                 { key: 'resultat', label: 'Résultat', idx: COLS.resultat, primary: true },
+                { key: 'club', label: 'Club', idx: COLS.club, primary: true },
                 { key: 'phase_att', label: 'Phase', idx: COLS.phase_att, primary: true },
-                { key: 'joueur', label: 'Joueur', idx: COLS.joueur, primary: false },
                 { key: 'ge', label: 'GE', idx: COLS.ge, primary: false },
                 { key: 'defense_attaquee', label: 'Défense', idx: COLS.defense_attaquee, primary: false },
                 { key: 'enclenchement', label: 'Enclenchement', idx: COLS.enclenchement, primary: false },
