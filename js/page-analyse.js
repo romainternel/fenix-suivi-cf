@@ -1698,11 +1698,7 @@
                 `<th class="${c.advanced ? 'col-advanced' : ''}">${c.label}</th>`
             ).join('');
 
-            // Largeurs fixes par colonne (même ordre que cols)
-            const colWidths = ['48px','58px','88px','76px','54px','68px','36px','80px','110px','72px','90px','80px','80px'];
-            const colgroup = '<colgroup>' + cols.map((c, i) =>
-                `<col class="${c.advanced ? 'col-advanced' : ''}" style="width:${colWidths[i] || 'auto'}">`
-            ).join('') + '</colgroup>';
+            const colgroup = '';
 
             // Score initial avant la fenêtre (compte tous les buts du match antérieurs à la 1ère ligne)
             const windowStart = rows.length ? toRawLocal(rows[0]) : 0;
