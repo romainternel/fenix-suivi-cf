@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>FENIX CF — Référence MC & Bascules</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #1e293b; padding: 2rem; }
+  h1 { font-size: 1.4rem; font-weight: 800; color: #0A2463; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 0.8rem; color: #64748b; margin-bottom: 2rem; }
+  .section { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .badge { display: inline-block; font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; vertical-align: middle; }
+  .badge-positif { background: #dcfce7; color: #166534; }
+  .badge-negatif { background: #fee2e2; color: #991b1b; }
+  .badge-neutre  { background: #e0e7ff; color: #3730a3; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { background: #f8fafc; color: #64748b; font-weight: 600; text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; }
+  td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .signal-name { font-weight: 600; color: #0A2463; }
+  .condition { font-family: monospace; font-size: 0.78rem; background: #f8fafc; padding: 0.2rem 0.4rem; border-radius: 4px; }
+  .note { font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem; }
+  .bascule-icon { font-size: 1.1rem; }
+  .threshold-box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 1rem; font-size: 0.82rem; }
+  .threshold-box strong { color: #c2410c; }
+  .footer { font-size: 0.72rem; color: #94a3b8; text-align: center; margin-top: 2rem; }
+  @media print { body { background: white; padding: 1rem; } .section { box-shadow: none; border: 1px solid #e2e8f0; } }
+</style>
+</head>
+<body>
+
+<h1>FENIX HANDBALL CF — Référence Analyse Match</h1>
+<p class="subtitle">Critères de détection des Moments Clés (MC) et Bascules · Généré le 19/06/2026</p>
+
+<!-- MOMENTS CLÉS -->
+<div class="section">
+  <div class="section-title">
+    <span style="background:#0A2463;color:white;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;">MC</span>
+    Moments Clés — Séquences de jeu significatives
+  </div>
+  <p style="font-size:0.82rem;color:#64748b;margin-bottom:1rem;">Un MC est déclenché quand une équipe enchaîne plusieurs actions consécutives du même type, ou lors d'un événement tactique isolé (silence, retard, retour).</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Signal</th>
+        <th>Condition de déclenchement</th>
+        <th>Sens</th>
+        <th>Type</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="signal-name">Temps fort ATT</td>
+        <td><span class="condition">FENIX marque ≥ SEUIL buts consécutifs</span><div class="note">Sans échec entre les buts (PB ou tir raté interrompt la série)</div></td>
+        <td>Momentum offensif FENIX</td>
+        <td><span class="badge badge-positif">Positif</span></td>
+      </tr>
+      <tr>
+        <td class="signal-name">Temps faible ATT</td>
+        <td><span class="condition">FENIX rate ≥ SEUIL possessions consécutives</span><div class="note">Tirs ratés, PB, PO sans marquer</div></td>
+        <td>Panne offensive FENIX</td>
+        <td><span class="badge badge-negatif">Négatif</span></td>
+      </tr>
+      <tr>
+        <td class="signal-name">Temps fort DEF</td>
+        <td><span class="condition">Adversaire rate ≥ SEUIL attaques consécutives</span><div class="note">Stoppées par la défense ou le gardien</div></td>
+        <td>Dominance défensive FENIX</td>
+        <td><span class="badge badge-positif">Positif</span></td>
+      </tr>
+      <tr>
+        <td class="signal-name">Temps faible DEF</td>
+        <td><span class="condition">Adversaire marque ≥ SEUIL buts consécutifs</span><div class="note">Sans stop défensif entre les buts</div></td>
+        <td>Faiblesse défensive FENIX</td>
+        <td><span class="badge badge-negatif">Négatif</span></td>
+      </tr>
+      <tr>
+        <td class="signal-name">Silence offensif</td>
+        <td><span class="condition">FENIX ne marque pas pendant ≥ 5 minutes</span><div class="note">Calculé en secondes réelles, intra-période seulement</div></td>
+        <td>Stagnation offensive</td>
+        <td><span class="badge badge-negatif">Négatif</span></td>
+      </tr>
+      <tr>
+        <td class="signal-name">Retard critique</td>
+        <td><span class="condition">FENIX passe à -3 ou pire pour la 1ère fois</span><div class="note">Un seul par match par construction</div></td>
+        <td>Seuil psychologique franchi</td>
+        <td><span class="badge badge-negatif">Négatif</span></td>
+      </tr>
+      <tr>
+        <td class="signal-name">Retour au score</td>
+        <td><span class="condition">FENIX revient à 0 ou + après avoir été à -2</span><div class="note">Momentum psychologique fort</div></td>
+        <td>Résilience / retournement</td>
+        <td><span class="badge badge-positif">Positif</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="threshold-box">
+    <strong>Seuil actuel SEUIL_POSS = 3</strong> — série consécutive de 3 actions pour déclencher un MC de type Temps fort/faible.<br>
+    <span style="color:#64748b;">Recommandation audit : passer à 4 pour réduire le bruit statistique (3 consécutifs est trop fréquent en N1).</span>
+  </div>
+</div>
+
+<!-- BASCULES -->
+<div class="section">
+  <div class="section-title">
+    <span style="font-size:1.2rem;">⚡</span>
+    Bascules — Moments de rupture dans l'équilibre du match
+  </div>
+  <p style="font-size:0.82rem;color:#64748b;margin-bottom:1rem;">Une Bascule marque un changement de dynamique structurel dans le match — soit un passage de signe du score, soit un enchaînement qui modifie l'équilibre. Affichées sur le graph comme badges ⚡.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Nom</th>
+        <th>Condition de déclenchement</th>
+        <th>Lecture coach</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>⚡1</td>
+        <td class="signal-name">Décrochage</td>
+        <td><span class="condition">FENIX passe d'un écart ≥ 0 à un écart &lt; 0</span></td>
+        <td>On vient de perdre l'avantage. Identifier l'enchaînement qui a causé le retournement.</td>
+      </tr>
+      <tr>
+        <td>⚡2</td>
+        <td class="signal-name">Enlisement</td>
+        <td><span class="condition">Pire écart ≤ -3 ET FENIX n'a jamais mené dans ce match</span></td>
+        <td>On est en difficulté structurelle dès le départ. Pas de momentum favorable à exploiter.</td>
+      </tr>
+      <tr>
+        <td>⚡3</td>
+        <td class="signal-name">Occasion manquée</td>
+        <td><span class="condition">≥ 4 ratés FENIX consécutifs alors qu'on est à -2 ou pire · Cooldown 3 min</span></td>
+        <td>On aurait pu revenir mais on a gâché les possessions au pire moment.</td>
+      </tr>
+      <tr>
+        <td>⚡4</td>
+        <td class="signal-name">On reprend la main</td>
+        <td><span class="condition">FENIX repasse d'un écart &lt; 0 à un écart ≥ 0</span></td>
+        <td>Retournement positif. Quelle séquence a permis ce retour ? Reproduire.</td>
+      </tr>
+      <tr>
+        <td>⚡5</td>
+        <td class="signal-name">Tactique payante</td>
+        <td><span class="condition">Une famille d'enclenchement passe de &lt; 35% à ≥ 50% d'efficacité récente · min 6 possessions</span></td>
+        <td>Un système de jeu devient soudainement dominant. Exploiter en fin de match.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- DISTINCTION MC vs BASCULE -->
+<div class="section">
+  <div class="section-title">🔍 Distinction MC vs Bascule</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Critère</th>
+        <th>Moment Clé (MC)</th>
+        <th>Bascule ⚡</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Nature</strong></td>
+        <td>Séquence répétée (streak de possession)</td>
+        <td>Changement de signe / rupture structurelle</td>
+      </tr>
+      <tr>
+        <td><strong>Fréquence</strong></td>
+        <td>4-10 par match (avec seuil 4)</td>
+        <td>1-5 par match</td>
+      </tr>
+      <tr>
+        <td><strong>Visuel graph</strong></td>
+        <td>Ligne verticale fine en haut</td>
+        <td>Badge ⚡ en bas du graph</td>
+      </tr>
+      <tr>
+        <td><strong>Question coach</strong></td>
+        <td>"Quand a-t-on eu des séries ?"</td>
+        <td>"Quand le match a-t-il basculé ?"</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- LÉGENDE COULEURS -->
+<div class="section">
+  <div class="section-title">🎨 Légende couleurs</div>
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:0.82rem;">
+    <div style="display:flex;align-items:center;gap:0.4rem;"><div style="width:14px;height:14px;border-radius:50%;background:#166534;"></div> Positif FENIX</div>
+    <div style="display:flex;align-items:center;gap:0.4rem;"><div style="width:14px;height:14px;border-radius:50%;background:#dc2626;"></div> Négatif / Alerte</div>
+    <div style="display:flex;align-items:center;gap:0.4rem;"><div style="width:14px;height:14px;border-radius:3px;background:#f59e0b;"></div> ⚡ Bascule</div>
+    <div style="display:flex;align-items:center;gap:0.4rem;"><div style="width:30px;height:3px;background:#0A2463;border-radius:2px;"></div> Score FENIX</div>
+    <div style="display:flex;align-items:center;gap:0.4rem;"><div style="width:30px;height:3px;background:#dc2626;border-radius:2px;"></div> Score Adversaire</div>
+    <div style="display:flex;align-items:center;gap:0.4rem;"><div style="width:30px;height:3px;background:#f59e0b;border-radius:2px;border-top:2px dashed #f59e0b;"></div> Différentiel</div>
+  </div>
+</div>
+
+<p class="footer">FENIX HANDBALL CF SUIVI · Document interne · Critères v129 · Juin 2026</p>
+
+</body>
+</html>
