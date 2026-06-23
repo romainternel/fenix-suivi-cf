@@ -455,12 +455,10 @@
                     const firstBut = recent.find(r => r[COLS.resultat] === 'But');
                     const inSorted = firstBut && sortedGoals.find(g => g.row === firstBut);
                     if (!inSorted) return;
-                    const startRaw = toRaw(recent[0]);
-                    const endRaw = toRaw(recent[recent.length - 1]);
                     bascules.push({
                         type: 'tactique-payante', label: 'Tactique payante', positif: true,
                         rawPos: inSorted.pos, avant: 0, apres: 0,
-                        startRaw, endRaw,
+                        seqRows: recent, // les 4 possessions exactes, utilisées directement dans le tableau
                         description: `"${famille}" devient décisive : ${recentButs} buts sur les 4 dernières possessions (${Math.round(recentEff * 100)}% vs ${Math.round(priorEff * 100)}% avant). Système qui fait la différence.`
                     });
                 }
@@ -754,7 +752,8 @@
                     positif: b.positif,
                     rawPos: b.rawPos,
                     startRaw: b.startRaw,
-                    endRaw: b.endRaw
+                    endRaw: b.endRaw,
+                    seqRows: b.seqRows || null
                 });
             });
 
@@ -1735,15 +1734,21 @@
                 ? parseTimecode(r[COLS.position]) + _off2
                 : parseTimecode(r[COLS.position]);
 
-            // Filtrer les possessions sur la fenêtre exacte du signal (startRaw→endRaw), fallback ±90s
+            // Filtrer les possessions : lignes directes si seqRows présent, sinon fenêtre startRaw→endRaw, fallback ±90s
             const WIN = 90;
-            const hasWindow = area.startRaw != null && area.endRaw != null;
-            const rows = _md.filter(r => {
-                const rawPos = toRawLocal(r);
-                if (isNaN(rawPos)) return false;
-                if (hasWindow) return rawPos >= area.startRaw - 5 && rawPos <= area.endRaw + 5;
-                return Math.abs(rawPos - area.rawPos) <= WIN;
-            }).sort((a, b) => toRawLocal(a) - toRawLocal(b));
+            let rows;
+            if (area.seqRows && area.seqRows.length > 0) {
+                rows = [...area.seqRows].sort((a, b) => toRawLocal(a) - toRawLocal(b));
+            } else {
+                const s = area.startRaw, e = area.endRaw;
+                const hasWindow = s != null && e != null && Math.min(s, e) !== Math.max(s, e);
+                rows = _md.filter(r => {
+                    const rawPos = toRawLocal(r);
+                    if (isNaN(rawPos)) return false;
+                    if (hasWindow) return rawPos >= Math.min(s, e) - 5 && rawPos <= Math.max(s, e) + 5;
+                    return Math.abs(rawPos - area.rawPos) <= WIN;
+                }).sort((a, b) => toRawLocal(a) - toRawLocal(b));
+            }
 
             // Construire le tableau
             const cols = [
