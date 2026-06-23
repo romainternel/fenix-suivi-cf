@@ -1,4 +1,4 @@
-        // ===== PAGE ANALYSE — v157 =====
+        // ===== PAGE ANALYSE — v158 =====
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
@@ -1434,23 +1434,24 @@
                 const parts = enc.split(';').map(p => p.trim()).filter(p => p);
                 const cle = parts.join('-') || 'Inconnu';
                 const label = cle;
-                if (!byEnc.has(cle)) byEnc.set(cle, { label, tirs:0, buts:0 });
+                if (!byEnc.has(cle)) byEnc.set(cle, { label, tirs:0, buts:0, pb:0 });
                 const s = byEnc.get(cle);
                 if (r[COLS.resultat] === 'But') { s.buts++; s.tirs++; }
                 else if (r[COLS.resultat] === 'Tir raté') s.tirs++;
+                else if (r[COLS.resultat] === 'PB') s.pb++;
             });
             if (!byEnc.size) return '<p style="color:#94A3B8;font-size:0.82rem;padding:8px 0">Aucune donnée.</p>';
             const sorted = [...byEnc.entries()].sort((a, b) => b[1].tirs - a[1].tirs);
-            let tt = 0, tb = 0;
-            sorted.forEach(([, s]) => { tt += s.tirs; tb += s.buts; });
+            let tt = 0, tb = 0, tp = 0;
+            sorted.forEach(([, s]) => { tt += s.tirs; tb += s.buts; tp += s.pb; });
             const te = tt > 0 ? Math.round(tb / tt * 100) : 0;
             let lignes = '';
             sorted.forEach(([, s]) => {
                 const eff = s.tirs > 0 ? Math.round(s.buts / s.tirs * 100) : 0;
                 const c = eff >= 60 ? '#059669' : eff < 40 ? '#DC2626' : '#64748B';
-                lignes += `<tr><td>${s.label}</td><td>${s.tirs}</td><td>${s.buts}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
+                lignes += `<tr><td>${s.label}</td><td>${s.buts}</td><td>${s.tirs}</td><td>${s.pb}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
             });
-            return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Tirs</th><th>Buts</th><th>Eff.</th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tt}</td><td>${tb}</td><td>${te}%</td></tr></tfoot></table>`;
+            return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Buts</th><th>Tirs</th><th>PB</th><th>Eff.</th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tt}</td><td>${tp}</td><td>${te}%</td></tr></tfoot></table>`;
         }
 
         function _toggleEncDetail(fid) {

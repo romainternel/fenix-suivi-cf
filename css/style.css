@@ -2365,7 +2365,7 @@
         }
         .enc-detail-table th {
             padding: 4px 6px; text-align: center; font-size: 0.65rem;
-            text-transform: uppercase; color: #64748B; border-bottom: 1px solid #E2E8F0;
+            text-transform: uppercase; color: #1E293B; font-weight: 700; border-bottom: 2px solid #CBD5E1;
         }
         .enc-detail-table th:first-child { text-align: left; }
         .enc-detail-table td { padding: 3px 6px; text-align: center; border-bottom: 1px solid #F1F5F9; }
