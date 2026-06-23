@@ -1,9 +1,14 @@
-        // ===== PAGE ANALYSE — v156 =====
+        // ===== PAGE ANALYSE — v157 =====
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
-        // ===== MODULE ANALYSE — ENC_FAMILLE_MAP validé coach 2026-06-23 =====
+        // ===== MODULE ANALYSE — ENC_FAMILLE_MAP validé coach 2026-06-23 (ref: feuille Enclenchements) =====
         const ENC_FAMILLE_MAP = {
+            // MOUVEMENT — jeux de mouvement numérotés + transitions
+            '1':'Mouvement','5':'Mouvement','8':'Mouvement','9':'Mouvement',
+            'Pingouin':'Mouvement','Bis':'Mouvement',
+            'Départ':'Mouvement','Depart':'Mouvement',
+            'Croisé DC-AR':'Mouvement','Croise DC-AR':'Mouvement',
             // ISOLER — finalités qui isolent un défenseur
             'DUEL':'Isoler','Markus':'Isoler',
             'Écartement':'Isoler','Ecartement':'Isoler',
@@ -13,8 +18,9 @@
             'PORTO':'Isoler','Gidsel':'Isoler','2 pvts':'Isoler',
             'LIMOGES':'Isoler','ISO':'Isoler',
             "Départ d'ailier":'Isoler',"Depart ailier":'Isoler',
-            'Départ':'Isoler','Croisé DC-AR':'Isoler',
+            '7':'Isoler',
             // RENTRÉE
+            '3':'Rentrée','6':'Rentrée',
             'Szeged':'Rentrée','Ressort':'Rentrée',
             '+':'Rentrée','110':'Rentrée',
             '6 OPPOSÉ':'Rentrée','6 OPPOSE':'Rentrée',
@@ -22,10 +28,11 @@
             'Flensburg':'Rentrée','POSTE':'Rentrée',
             'POSTE CROISÉ':'Rentrée','POSTE CROISE':'Rentrée','Maillot':'Rentrée',
             // JEU PVT
+            '0':'Jeu PVT',
             'DOUBLE':'Jeu PVT','Double':'Jeu PVT','Rafal':'Jeu PVT','GLISSE':'Jeu PVT',
             'SKERN':'Jeu PVT','SPANISH':'Jeu PVT','Spanish':'Jeu PVT','SWITCH':'Jeu PVT','Triangle':'Jeu PVT',
-            '0':'Jeu PVT',
             // BLOC PVT
+            '2':'Bloc PVT',
             'Bloc 4':'Bloc PVT','Bonit':'Bloc PVT','Bloc ext':'Bloc PVT',
             'Écran 3':'Bloc PVT','Ecran 3':'Bloc PVT',
             'Julen':'Bloc PVT','BLOC 3H':'Bloc PVT','Rares':'Bloc PVT',
@@ -36,10 +43,10 @@
             '7vs6 Markus':'7vs6','6 Barthez':'7vs6',
             '7vs6 1-2/5-6':'7vs6','7vs6 2-3/4-5':'7vs6','7vs5':'7vs6','BARTHEZ':'7vs6',
             // FAIRE COURIR
+            '4':'Faire courir',
             'Bretzel':'Faire courir','Course-tir':'Faire courir','Course-Tir':'Faire courir',
             'FENIX':'Faire courir','Long':'Faire courir','DK':'Faire courir',
             'M':'Faire courir','DANI':'Faire courir',
-            'RECUP':'Faire courir','recup':'Faire courir','Tir en appuis':'Faire courir',
             // SPÉCIAUX
             'Fake':'Spéciaux','RAPIDO':'Spéciaux','IRUN':'Spéciaux',
             'Kung Fu':'Spéciaux','Kung fu':'Spéciaux',
@@ -48,8 +55,9 @@
             'K':'6vs5','Danois':'6vs5','1 rotation':'6vs5',
         };
 
-        const ENC_FAMILLES_ORDRE = ['Isoler','Rentrée','Jeu PVT','Bloc PVT','7vs6','Faire courir','Spéciaux','6vs5'];
+        const ENC_FAMILLES_ORDRE = ['Mouvement','Isoler','Rentrée','Jeu PVT','Bloc PVT','7vs6','Faire courir','Spéciaux','6vs5'];
         const ENC_FAMILLE_COLORS = {
+            'Mouvement':'var(--enc-mouvement)',
             'Isoler':'var(--enc-isoler)',
             'Rentrée':'var(--enc-rentree)','Jeu PVT':'var(--enc-jeu-pvt)',
             'Bloc PVT':'var(--enc-bloc-pvt)','7vs6':'var(--enc-7vs6)',
@@ -57,6 +65,7 @@
             '6vs5':'var(--enc-6vs5)','Autre':'var(--enc-autre)',
         };
         const ENC_FAMILLE_IDS = {
+            'Mouvement':'mouvement',
             'Isoler':'isoler','Rentrée':'rentree',
             'Jeu PVT':'jeu-pvt','Bloc PVT':'bloc-pvt','7vs6':'7vs6',
             'Faire courir':'faire-courir','Spéciaux':'speciaux','6vs5':'6vs5',
