@@ -1,8 +1,8 @@
-        // ===== PAGE ANALYSE — v112 =====
+        // ===== PAGE ANALYSE — v156 =====
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
-        // ===== MODULE ANALYSE — ENC_FAMILLE_MAP validé coach 2026-06-17 =====
+        // ===== MODULE ANALYSE — ENC_FAMILLE_MAP validé coach 2026-06-23 =====
         const ENC_FAMILLE_MAP = {
             // ISOLER — finalités qui isolent un défenseur
             'DUEL':'Isoler','Markus':'Isoler',
@@ -13,6 +13,7 @@
             'PORTO':'Isoler','Gidsel':'Isoler','2 pvts':'Isoler',
             'LIMOGES':'Isoler','ISO':'Isoler',
             "Départ d'ailier":'Isoler',"Depart ailier":'Isoler',
+            'Départ':'Isoler','Croisé DC-AR':'Isoler',
             // RENTRÉE
             'Szeged':'Rentrée','Ressort':'Rentrée',
             '+':'Rentrée','110':'Rentrée',
@@ -21,8 +22,9 @@
             'Flensburg':'Rentrée','POSTE':'Rentrée',
             'POSTE CROISÉ':'Rentrée','POSTE CROISE':'Rentrée','Maillot':'Rentrée',
             // JEU PVT
-            'DOUBLE':'Jeu PVT','Rafal':'Jeu PVT','GLISSE':'Jeu PVT',
-            'SKERN':'Jeu PVT','SPANISH':'Jeu PVT','SWITCH':'Jeu PVT','Triangle':'Jeu PVT',
+            'DOUBLE':'Jeu PVT','Double':'Jeu PVT','Rafal':'Jeu PVT','GLISSE':'Jeu PVT',
+            'SKERN':'Jeu PVT','SPANISH':'Jeu PVT','Spanish':'Jeu PVT','SWITCH':'Jeu PVT','Triangle':'Jeu PVT',
+            '0':'Jeu PVT',
             // BLOC PVT
             'Bloc 4':'Bloc PVT','Bonit':'Bloc PVT','Bloc ext':'Bloc PVT',
             'Écran 3':'Bloc PVT','Ecran 3':'Bloc PVT',
@@ -34,12 +36,14 @@
             '7vs6 Markus':'7vs6','6 Barthez':'7vs6',
             '7vs6 1-2/5-6':'7vs6','7vs6 2-3/4-5':'7vs6','7vs5':'7vs6','BARTHEZ':'7vs6',
             // FAIRE COURIR
-            'Bretzel':'Faire courir','Course-tir':'Faire courir',
+            'Bretzel':'Faire courir','Course-tir':'Faire courir','Course-Tir':'Faire courir',
             'FENIX':'Faire courir','Long':'Faire courir','DK':'Faire courir',
             'M':'Faire courir','DANI':'Faire courir',
+            'RECUP':'Faire courir','recup':'Faire courir','Tir en appuis':'Faire courir',
             // SPÉCIAUX
-            'Fake':'Spéciaux','RAPIDO':'Spéciaux','IRUN':'Spéciaux','Kung Fu':'Spéciaux',
-            'Moustache':'Spéciaux','Spéciaux':'Spéciaux','Speciaux':'Spéciaux','Kebab':'Spéciaux',
+            'Fake':'Spéciaux','RAPIDO':'Spéciaux','IRUN':'Spéciaux',
+            'Kung Fu':'Spéciaux','Kung fu':'Spéciaux',
+            'Moustache':'Spéciaux','Spéciaux':'Spéciaux','Speciaux':'Spéciaux','Spécial':'Spéciaux','Kebab':'Spéciaux',
             // 6VS5
             'K':'6vs5','Danois':'6vs5','1 rotation':'6vs5',
         };
@@ -1280,14 +1284,14 @@
         // ====================================================================
 
         // A-00 — Parser famille enclenchement
+        // Format: SITUATION;PLAY;VARIANT — check variant (p2) first, then play (p1), then situation (p0)
         function getEncFamille(encStr) {
             if (!encStr || typeof encStr !== 'string') return 'Autre';
             const parts = encStr.split(';');
-            const finalite = (parts[2] || '').trim();
-            if (finalite) return ENC_FAMILLE_MAP[finalite] ?? 'Autre';
-            const fallback = (parts[0] || '').trim();
-            if (fallback) return ENC_FAMILLE_MAP[fallback] ?? 'Autre';
-            return 'Autre';
+            const p0 = (parts[0] || '').trim();
+            const p1 = (parts[1] || '').trim();
+            const p2 = (parts[2] || '').trim();
+            return ENC_FAMILLE_MAP[p2] || ENC_FAMILLE_MAP[p1] || ENC_FAMILLE_MAP[p0] || 'Autre';
         }
 
         function computeEncCoverage(rows) {
