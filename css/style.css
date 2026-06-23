@@ -2414,6 +2414,13 @@
         .enc-badge-mini.faiblesse { background: #FEF3C7; color: #92400E; }
         .enc-badge-mini.force { background: #D1FAE5; color: #065F46; }
 
+        /* Légende matrice 2x2 */
+        .enc-legend-grid { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+        .enc-legend-item { font-size: 0.68rem; color: #334155; white-space: nowrap; }
+
+        /* Sublabel lisible dans mini-card */
+        .enc-card-mini .enc-famille-sublabel { font-size: 0.55rem; margin-bottom: 2px; }
+
         /* Panel détail (A-02) — legacy inline */
         .enc-detail-panel { margin-top: 10px; }
         .enc-detail-table {

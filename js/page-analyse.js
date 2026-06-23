@@ -1,4 +1,4 @@
-        // ===== PAGE ANALYSE — v161 =====
+        // ===== PAGE ANALYSE — v162 =====
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
@@ -1401,7 +1401,8 @@
                 <div class="enc-card-mini" id="enc-card-${fid}" style="border-top-color:${couleur}" onclick="_selectEncFamille('${famille}','${fid}')">
                     <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${couleur}"></span><span class="enc-famille-name">${famille}</span></div>
                     <div class="enc-famille-eff">${s.eff}%</div>
-                    <div class="enc-famille-meta">${s.buts}b · ${s.tirs}t · n=${s.possessions}</div>
+                    <div class="enc-famille-sublabel">RÉUSSITE TIRS</div>
+                    <div class="enc-famille-meta">${s.buts} buts · ${s.tirs} tirs · ${s.possessions} poss.</div>
                     <div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${Math.min(s.eff,100)}%"></div></div>
                     <div class="enc-progress-ref">${refText}</div>
                     ${badgeHtml}
@@ -1422,7 +1423,8 @@
                                 <button class="enc-toggle-btn${mode==='matrice'?' active':''}" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
                                 <button class="enc-toggle-btn${mode==='radar'?' active':''}" onclick="_setEncGraphMode('radar')">Radar</button>
                             </div>
-                            <canvas id="enc-radar-canvas" width="340" height="320" style="display:block;margin:0 auto;max-width:100%"></canvas>
+                            <canvas id="enc-radar-canvas" width="340" height="290" style="display:block;margin:0 auto;max-width:100%"></canvas>
+                            <div id="enc-matrix-legend" style="margin-top:8px"></div>
                         </div>
                         <div id="enc-detail-wrap" style="display:none">
                             <div class="enc-detail-header-bar" id="enc-detail-header"></div>
@@ -1450,7 +1452,7 @@
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             const W = canvas.width, H = canvas.height;
-            const PAD = { top: 28, right: 16, bottom: 36, left: 36 };
+            const PAD = { top: 26, right: 14, bottom: 32, left: 34 };
             const pw = W - PAD.left - PAD.right, ph = H - PAD.top - PAD.bottom;
             const stats = window._encCurrentStatsMatch;
             if (!stats) return;
@@ -1465,59 +1467,66 @@
             const possArr = used.map(f => (stats.get(f)||{possessions:0}).possessions);
             const maxP = Math.max(...possArr, 1);
             const avgP = possArr.reduce((a,b)=>a+b,0) / possArr.length;
-            const EFF_MID = 50; // axe fixe à 50%
+            const EFF_MID = 50;
             const xS = v => PAD.left + (v / maxP) * pw;
             const yS = v => PAD.top + ph - Math.min(1, v / 100) * ph;
             const mx = xS(avgP), my = yS(EFF_MID);
             // Quadrant backgrounds
             const zones = [
-                { x:PAD.left, y:PAD.top, w:mx-PAD.left, h:my-PAD.top, bg:'rgba(219,234,254,0.35)', label:'Sous-utilisé 💡', ta:'left', tx:PAD.left+5, ty:PAD.top+5 },
-                { x:mx, y:PAD.top, w:PAD.left+pw-mx, h:my-PAD.top, bg:'rgba(209,250,229,0.45)', label:'Exploiter ⭐', ta:'right', tx:PAD.left+pw-5, ty:PAD.top+5 },
-                { x:PAD.left, y:my, w:mx-PAD.left, h:PAD.top+ph-my, bg:'rgba(241,245,249,0.3)', label:'Abandonner', ta:'left', tx:PAD.left+5, ty:PAD.top+ph-8 },
-                { x:mx, y:my, w:PAD.left+pw-mx, h:PAD.top+ph-my, bg:'rgba(254,243,199,0.5)', label:'Corriger ⚠', ta:'right', tx:PAD.left+pw-5, ty:PAD.top+ph-8 },
+                { x:PAD.left, y:PAD.top,    w:mx-PAD.left,        h:my-PAD.top,           bg:'rgba(219,234,254,0.4)', label:'Sous-utilisé', ta:'left',  tx:PAD.left+4,      ty:PAD.top+4 },
+                { x:mx,       y:PAD.top,    w:PAD.left+pw-mx,     h:my-PAD.top,           bg:'rgba(209,250,229,0.5)', label:'Exploiter ⭐', ta:'right', tx:PAD.left+pw-4,   ty:PAD.top+4 },
+                { x:PAD.left, y:my,         w:mx-PAD.left,        h:PAD.top+ph-my,        bg:'rgba(241,245,249,0.3)', label:'Abandonner',   ta:'left',  tx:PAD.left+4,      ty:PAD.top+ph-12 },
+                { x:mx,       y:my,         w:PAD.left+pw-mx,     h:PAD.top+ph-my,        bg:'rgba(254,243,199,0.55)', label:'Corriger ⚠',  ta:'right', tx:PAD.left+pw-4,   ty:PAD.top+ph-12 },
             ];
             zones.forEach(z => {
                 ctx.fillStyle = z.bg; ctx.fillRect(z.x, z.y, z.w, z.h);
-                ctx.font = 'bold 8px system-ui'; ctx.fillStyle = '#94A3B8';
+                ctx.font = 'bold 8px system-ui'; ctx.fillStyle = 'rgba(100,116,139,0.8)';
                 ctx.textAlign = z.ta; ctx.textBaseline = 'top';
                 ctx.fillText(z.label, z.tx, z.ty);
             });
-            // Quadrant lines
+            // Quadrant dividers
             ctx.setLineDash([4,3]); ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(mx, PAD.top); ctx.lineTo(mx, PAD.top+ph); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(PAD.left, my); ctx.lineTo(PAD.left+pw, my); ctx.stroke();
             ctx.setLineDash([]);
-            // Axes border
+            // Border
             ctx.strokeStyle = '#CBD5E1'; ctx.lineWidth = 1;
             ctx.strokeRect(PAD.left, PAD.top, pw, ph);
-            // Y axis labels
+            // Y axis ticks
             ctx.font = '8px system-ui'; ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-            [0,25,50,75,100].forEach(v => { ctx.fillText(v+'%', PAD.left-4, yS(v)); });
-            // X axis label
+            [0, 50, 100].forEach(v => { ctx.fillText(v+'%', PAD.left-4, yS(v)); });
+            // Axis legends
+            ctx.fillStyle = '#64748B'; ctx.font = '8px system-ui';
             ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-            ctx.fillText('← Utilisation (nb possessions) →', PAD.left+pw/2, PAD.top+ph+6);
-            // Eff axis label (vertical)
-            ctx.save(); ctx.translate(10, PAD.top+ph/2); ctx.rotate(-Math.PI/2);
-            ctx.textBaseline = 'top'; ctx.fillText('← Efficacité % →', 0, 0); ctx.restore();
-            // Dots + labels
-            const abbr = {'Faire courir':'F.courir','Mouvement':'Mvt','Spéciaux':'Spéc.','Bloc PVT':'Bloc','Jeu PVT':'Jeu PVT'};
+            ctx.fillText('← Utilisation FENIX (possessions) →', PAD.left+pw/2, PAD.top+ph+5);
+            ctx.save(); ctx.translate(9, PAD.top+ph/2); ctx.rotate(-Math.PI/2);
+            ctx.textBaseline = 'top'; ctx.fillText('Efficacité (% buts/tirs) →', 0, 0); ctx.restore();
+            // Dots — colored circles with number inside, NO text label (legend below)
+            const DOT_R = 13;
             used.forEach(f => {
                 const s = stats.get(f)||{possessions:0,eff:0};
                 const x = xS(s.possessions), y = yS(s.eff||0);
                 const col = getHex(f);
-                ctx.beginPath(); ctx.arc(x, y, 8, 0, 2*Math.PI);
+                ctx.beginPath(); ctx.arc(x, y, DOT_R, 0, 2*Math.PI);
                 ctx.fillStyle = col; ctx.fill();
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-                // n= inside dot
-                ctx.font = 'bold 7px system-ui'; ctx.fillStyle = '#fff';
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                // possessions count inside dot
+                ctx.font = `bold ${s.possessions >= 10 ? 9 : 10}px system-ui`;
+                ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText(s.possessions, x, y);
-                // name label below dot
-                const name = abbr[f]||f;
-                ctx.font = 'bold 8.5px system-ui'; ctx.fillStyle = '#1E293B';
-                ctx.textBaseline = 'top';
-                ctx.fillText(name, x, y+11);
             });
+            // Legend HTML (below canvas)
+            const leg = document.getElementById('enc-matrix-legend');
+            if (leg) {
+                const abbr = {'Faire courir':'F.courir','Mouvement':'Mvt','Spéciaux':'Spéc.'};
+                const items = used.map(f => {
+                    const s = stats.get(f)||{eff:0};
+                    const col = getHex(f);
+                    const name = abbr[f]||f;
+                    return `<span class="enc-legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col};vertical-align:middle;margin-right:3px"></span>${name} <span style="color:#64748B;font-size:0.6rem">${s.eff}%</span></span>`;
+                });
+                leg.innerHTML = `<div class="enc-legend-grid">${items.join('')}</div>`;
+            }
         }
 
         function _selectEncFamille(famille, fid) {
