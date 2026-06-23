@@ -1,4 +1,4 @@
-        // ===== PAGE ANALYSE — v158 =====
+        // ===== PAGE ANALYSE — v159 =====
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
@@ -1363,7 +1363,7 @@
             return result;
         }
 
-        // A-01/02/03 — Rendu cards familles
+        // A-01/02/03 — Rendu section enclenchements (layout 2 colonnes + radar)
         function renderEncFamillesSection(matchData) {
             const container = document.getElementById('enc-familles-section');
             if (!container) return;
@@ -1372,6 +1372,10 @@
             const fenixRows = matchData.filter(r => r[COLS.club] === 'FENIX');
             const coverage = computeEncCoverage(fenixRows);
             const totalPoss = fenixRows.filter(r => (r[COLS.enclenchement] || '').toString().trim()).length;
+            window._encCurrentMatchData = matchData;
+            window._encCurrentStatsMatch = statsMatch;
+            window._encSelectedFamille = null;
+            if (window._encGraphMode === undefined) window._encGraphMode = 'utilisation';
             const warningHtml = coverage.pct < 80 && coverage.total > 0
                 ? `<div class="enc-coverage-warning">⚠ ${100 - coverage.pct}% des enclenchements non classifiés — ENC_FAMILLE_MAP à mettre à jour.</div>` : '';
             let cardsHtml = '';
@@ -1381,49 +1385,155 @@
                 const couleur = ENC_FAMILLE_COLORS[famille];
                 const fid = ENC_FAMILLE_IDS[famille];
                 if (!s.possessions) {
-                    cardsHtml += `<div class="enc-famille-card disabled" id="enc-card-${fid}" style="border-top-color:${couleur};"><div class="enc-card-header"><span class="enc-famille-dot" style="background:${couleur};opacity:0.4"></span><span class="enc-famille-name">${famille}</span></div><div class="enc-famille-vide">Non utilisé</div></div>`;
+                    cardsHtml += `<div class="enc-card-mini disabled" style="border-top-color:${couleur}"><div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${couleur};opacity:0.35"></span><span class="enc-famille-name">${famille}</span></div><div class="enc-famille-vide">Non utilisé</div></div>`;
                     return;
                 }
-                // Badge A-03
                 let badgeHtml = '';
                 if (sd.matchCount >= 3 && s.possessions >= 5) {
                     const em = sd.effMoy, ec = s.eff;
-                    if (em > 0 && ec / em >= 1.5) {
-                        badgeHtml = `<div class="enc-badge-faiblesse">⚡ FAIBLESSE ADV<div class="enc-badge-sub">Moy:${em}% → +${ec-em}% ce match</div></div>`;
-                    } else if (em > 0 && Math.abs(ec - em) / em <= 0.10 && sd.cv < 0.20) {
-                        badgeHtml = `<div class="enc-badge-force">⭐ FORCE FENIX<div class="enc-badge-sub">Moy:${em}% (${ec>=em?'+':''}${ec-em}%)</div></div>`;
-                    }
-                } else if (sd.matchCount > 0 && sd.matchCount < 3) {
-                    badgeHtml = `<div class="enc-badge-nodata">○ Min. 3 matchs (${sd.matchCount} joué)</div>`;
+                    if (em > 0 && ec / em >= 1.5) badgeHtml = `<div class="enc-badge-mini faiblesse">⚡ FAIBLESSE ADV</div>`;
+                    else if (em > 0 && Math.abs(ec - em) / em <= 0.10 && sd.cv < 0.20) badgeHtml = `<div class="enc-badge-mini force">⭐ FORCE</div>`;
                 }
-                // Barre
                 const hasRef = sd.matchCount >= 3;
                 const fillClass = !hasRef ? 'noref' : (s.eff >= sd.effMoy ? 'above' : 'below');
-                const refText = hasRef ? `moy. saison : ${sd.effMoy}%` : 'Pas de référence';
-                const barreHtml = `<div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${Math.min(s.eff,100)}%"></div></div><div class="enc-progress-ref">${refText}</div>`;
+                const refText = hasRef ? `moy. ${sd.effMoy}%` : '—';
                 cardsHtml += `
-                <div class="enc-famille-card" id="enc-card-${fid}" style="border-top-color:${couleur};" onclick="_toggleEncDetail('${fid}')">
-                  <div class="enc-card-header">
-                    <span class="enc-famille-dot" style="background:${couleur};"></span>
-                    <span class="enc-famille-name">${famille}</span>
-                    <span class="enc-card-caret" id="enc-caret-${fid}">▼</span>
-                  </div>
-                  <div class="enc-famille-eff">${s.eff}%</div>
-                  <div class="enc-famille-sublabel">EFF. POSSESSION</div>
-                  <div class="enc-famille-meta">${s.tirs} tirs · ${s.buts} buts · n=${s.possessions}</div>
-                  ${barreHtml}${badgeHtml}
-                  <div class="enc-detail-panel" id="enc-detail-${fid}" style="display:none;">
-                    ${_buildEncDetailTable(matchData, famille)}
-                  </div>
+                <div class="enc-card-mini" id="enc-card-${fid}" style="border-top-color:${couleur}" onclick="_selectEncFamille('${famille}','${fid}')">
+                    <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${couleur}"></span><span class="enc-famille-name">${famille}</span></div>
+                    <div class="enc-famille-eff">${s.eff}%</div>
+                    <div class="enc-famille-meta">${s.buts}b · ${s.tirs}t · n=${s.possessions}</div>
+                    <div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${Math.min(s.eff,100)}%"></div></div>
+                    <div class="enc-progress-ref">${refText}</div>
+                    ${badgeHtml}
                 </div>`;
             });
+            const modeUtil = window._encGraphMode === 'utilisation';
             container.innerHTML = `
-              <div class="enc-section-header">
-                <span class="enc-section-title">⚡ ENCLENCHEMENTS OFFENSIFS</span>
-                <span class="enc-section-meta">n=${totalPoss} poss. · Couv. ${coverage.pct}%</span>
-              </div>
-              ${warningHtml}
-              <div class="enc-famille-grid">${cardsHtml}</div>`;
+                <div class="enc-section-header">
+                    <span class="enc-section-title">⚡ ENCLENCHEMENTS OFFENSIFS</span>
+                    <span class="enc-section-meta">n=${totalPoss} poss. · Couv. ${coverage.pct}%</span>
+                </div>
+                ${warningHtml}
+                <div class="enc-body">
+                    <div class="enc-cards-grid">${cardsHtml}</div>
+                    <div class="enc-right-panel" id="enc-right-panel">
+                        <div id="enc-graph-wrap">
+                            <div class="enc-graph-toggle">
+                                <button class="enc-toggle-btn${modeUtil?' active':''}" onclick="_setEncGraphMode('utilisation')">Utilisation</button>
+                                <button class="enc-toggle-btn${!modeUtil?' active':''}" onclick="_setEncGraphMode('efficacite')">Efficacité</button>
+                            </div>
+                            <canvas id="enc-radar-canvas" width="300" height="300" style="display:block;margin:0 auto;max-width:100%"></canvas>
+                        </div>
+                        <div id="enc-detail-wrap" style="display:none">
+                            <div class="enc-detail-header-bar" id="enc-detail-header"></div>
+                            <div id="enc-detail-content"></div>
+                        </div>
+                    </div>
+                </div>`;
+            requestAnimationFrame(() => _drawEncRadar());
+        }
+
+        function _setEncGraphMode(mode) {
+            window._encGraphMode = mode;
+            document.querySelectorAll('.enc-toggle-btn').forEach((b, i) =>
+                b.classList.toggle('active', (mode === 'utilisation') === (i === 0)));
+            _drawEncRadar();
+        }
+
+        function _selectEncFamille(famille, fid) {
+            const prev = window._encSelectedFamille;
+            if (prev) document.getElementById(`enc-card-${prev}`)?.classList.remove('selected');
+            if (prev === fid) {
+                window._encSelectedFamille = null;
+                document.getElementById('enc-graph-wrap').style.display = '';
+                document.getElementById('enc-detail-wrap').style.display = 'none';
+                return;
+            }
+            window._encSelectedFamille = fid;
+            document.getElementById(`enc-card-${fid}`)?.classList.add('selected');
+            const couleur = ENC_FAMILLE_COLORS[famille];
+            const s = window._encCurrentStatsMatch?.get(famille) || { eff:0, possessions:0 };
+            document.getElementById('enc-detail-header').innerHTML = `
+                <button class="enc-detail-back" onclick="_closeEncDetail()">✕</button>
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${couleur};vertical-align:middle;margin-right:6px"></span>
+                <strong style="text-transform:uppercase;font-size:0.85rem">${famille}</strong>
+                <span style="color:#64748B;font-size:0.75rem;margin-left:8px">${s.eff}% · n=${s.possessions}</span>`;
+            document.getElementById('enc-detail-content').innerHTML = _buildEncDetailTable(window._encCurrentMatchData, famille);
+            document.getElementById('enc-graph-wrap').style.display = 'none';
+            document.getElementById('enc-detail-wrap').style.display = '';
+        }
+
+        function _closeEncDetail() {
+            if (window._encSelectedFamille) {
+                document.getElementById(`enc-card-${window._encSelectedFamille}`)?.classList.remove('selected');
+                window._encSelectedFamille = null;
+            }
+            document.getElementById('enc-graph-wrap').style.display = '';
+            document.getElementById('enc-detail-wrap').style.display = 'none';
+        }
+
+        function _drawEncRadar() {
+            const canvas = document.getElementById('enc-radar-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+            const cx = W / 2, cy = H / 2;
+            const R = 82, LABEL_R = 105;
+            const mode = window._encGraphMode || 'utilisation';
+            const stats = window._encCurrentStatsMatch;
+            if (!stats) return;
+            ctx.clearRect(0, 0, W, H);
+            const familles = ENC_FAMILLES_ORDRE;
+            const N = familles.length;
+            const rootStyle = getComputedStyle(document.documentElement);
+            const getHex = f => {
+                const v = (ENC_FAMILLE_COLORS[f] || '').replace('var(','').replace(')','').trim();
+                return rootStyle.getPropertyValue(v).trim() || '#94A3B8';
+            };
+            let values;
+            if (mode === 'utilisation') {
+                const maxP = Math.max(1, ...familles.map(f => (stats.get(f)||{possessions:0}).possessions));
+                values = familles.map(f => (stats.get(f)||{possessions:0}).possessions / maxP);
+            } else {
+                values = familles.map(f => Math.min(1, ((stats.get(f)||{eff:0}).eff||0) / 100));
+            }
+            const angles = familles.map((_, i) => (i / N) * 2 * Math.PI - Math.PI / 2);
+            // Grid rings
+            [0.33, 0.67, 1.0].forEach((r, ri) => {
+                ctx.beginPath();
+                angles.forEach((a, i) => { const x=cx+r*R*Math.cos(a),y=cy+r*R*Math.sin(a); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+                ctx.closePath();
+                ctx.strokeStyle = ri===2 ? '#CBD5E1' : '#EEF1F5'; ctx.lineWidth = ri===2 ? 1.5 : 1; ctx.stroke();
+            });
+            // Axes
+            angles.forEach(a => { ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a)); ctx.strokeStyle='#E2E8F0'; ctx.lineWidth=1; ctx.stroke(); });
+            // Data polygon
+            ctx.beginPath();
+            angles.forEach((a,i) => { const v=values[i],x=cx+v*R*Math.cos(a),y=cy+v*R*Math.sin(a); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+            ctx.closePath(); ctx.fillStyle='rgba(10,36,99,0.1)'; ctx.fill(); ctx.strokeStyle='#0A2463'; ctx.lineWidth=2; ctx.stroke();
+            // Dots at data points
+            angles.forEach((a,i) => {
+                if (!values[i]) return;
+                const x=cx+values[i]*R*Math.cos(a), y=cy+values[i]*R*Math.sin(a);
+                ctx.beginPath(); ctx.arc(x,y,4,0,2*Math.PI); ctx.fillStyle=getHex(familles[i]); ctx.fill();
+            });
+            // Labels
+            const abbr = {'Faire courir':'F.courir','Mouvement':'Mvt','Spéciaux':'Spéc.','Bloc PVT':'Bloc PVT','Jeu PVT':'Jeu PVT'};
+            ctx.textBaseline = 'middle';
+            angles.forEach((a,i) => {
+                const lx = cx + LABEL_R*Math.cos(a), ly = cy + LABEL_R*Math.sin(a);
+                const cosA = Math.cos(a);
+                const align = Math.abs(cosA)<0.25 ? 'center' : (cosA>0 ? 'left' : 'right');
+                const xOff = align==='left' ? 3 : align==='right' ? -3 : 0;
+                const name = abbr[familles[i]] || familles[i];
+                const s = stats.get(familles[i]) || {possessions:0,eff:0};
+                const val = mode==='utilisation' ? `${s.possessions}p` : `${s.eff}%`;
+                ctx.textAlign = align;
+                ctx.font = 'bold 8.5px system-ui,sans-serif'; ctx.fillStyle = getHex(familles[i]);
+                ctx.fillText(name, lx+xOff, ly-5);
+                ctx.font = '8px system-ui,sans-serif'; ctx.fillStyle = '#64748B';
+                ctx.fillText(val, lx+xOff, ly+6);
+            });
         }
 
         function _buildEncDetailTable(matchData, famille) {
@@ -1452,15 +1562,6 @@
                 lignes += `<tr><td>${s.label}</td><td>${s.buts}</td><td>${s.tirs}</td><td>${s.pb}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
             });
             return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Buts</th><th>Tirs</th><th>PB</th><th>Eff.</th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tt}</td><td>${tp}</td><td>${te}%</td></tr></tfoot></table>`;
-        }
-
-        function _toggleEncDetail(fid) {
-            const panel = document.getElementById(`enc-detail-${fid}`);
-            const caret = document.getElementById(`enc-caret-${fid}`);
-            if (!panel) return;
-            const isOpen = panel.style.display !== 'none';
-            panel.style.display = isOpen ? 'none' : 'block';
-            if (caret) caret.textContent = isOpen ? '▼' : '▲';
         }
 
         // A-04 — Overlay momentum + détection bascule
