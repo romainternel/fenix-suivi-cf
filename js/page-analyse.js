@@ -1,4 +1,4 @@
-        // ===== PAGE ANALYSE — v162 =====
+        // ===== PAGE ANALYSE — v163 =====
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
@@ -1367,15 +1367,17 @@
         function renderEncFamillesSection(matchData) {
             const container = document.getElementById('enc-familles-section');
             if (!container) return;
-            const statsMatch = computeEncStats(matchData, false);
-            const statsSaison = computeEncStatsSaison(false);
-            const fenixRows = matchData.filter(r => r[COLS.club] === 'FENIX');
-            const coverage = computeEncCoverage(fenixRows);
-            const totalPoss = fenixRows.filter(r => (r[COLS.enclenchement] || '').toString().trim()).length;
+            if (window._encTeamMode === undefined) window._encTeamMode = 'fenix';
+            if (window._encGraphMode === undefined) window._encGraphMode = 'matrice';
+            const isAdv = window._encTeamMode === 'adv';
+            const statsMatch = computeEncStats(matchData, isAdv);
+            const statsSaison = computeEncStatsSaison(isAdv);
+            const teamRows = matchData.filter(r => isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX');
+            const coverage = computeEncCoverage(teamRows);
+            const totalPoss = teamRows.filter(r => (r[COLS.enclenchement] || '').toString().trim()).length;
             window._encCurrentMatchData = matchData;
             window._encCurrentStatsMatch = statsMatch;
             window._encSelectedFamille = null;
-            if (window._encGraphMode === undefined) window._encGraphMode = 'matrice';
             const warningHtml = coverage.pct < 80 && coverage.total > 0
                 ? `<div class="enc-coverage-warning">⚠ ${100 - coverage.pct}% des enclenchements non classifiés — ENC_FAMILLE_MAP à mettre à jour.</div>` : '';
             let cardsHtml = '';
@@ -1401,7 +1403,7 @@
                 <div class="enc-card-mini" id="enc-card-${fid}" style="border-top-color:${couleur}" onclick="_selectEncFamille('${famille}','${fid}')">
                     <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${couleur}"></span><span class="enc-famille-name">${famille}</span></div>
                     <div class="enc-famille-eff">${s.eff}%</div>
-                    <div class="enc-famille-sublabel">RÉUSSITE TIRS</div>
+                    <div class="enc-famille-sublabel">${sublabelCard}</div>
                     <div class="enc-famille-meta">${s.buts} buts · ${s.tirs} tirs · ${s.possessions} poss.</div>
                     <div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${Math.min(s.eff,100)}%"></div></div>
                     <div class="enc-progress-ref">${refText}</div>
@@ -1409,9 +1411,18 @@
                 </div>`;
             });
             const mode = window._encGraphMode;
+            const titleIcon = isAdv ? '🛡' : '⚡';
+            const titleLabel = isAdv ? 'DÉFENSE FENIX — enclenchements adversaires' : 'ENCLENCHEMENTS OFFENSIFS FENIX';
+            const sublabelCard = isAdv ? 'RÉUSSITE ADV.' : 'RÉUSSITE TIRS';
             container.innerHTML = `
                 <div class="enc-section-header">
-                    <span class="enc-section-title">⚡ ENCLENCHEMENTS OFFENSIFS</span>
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                        <span class="enc-section-title">${titleIcon} ${titleLabel}</span>
+                        <div class="enc-team-toggle">
+                            <button class="enc-team-btn${!isAdv?' active':''}" onclick="_setEncTeamMode('fenix')">⚡ Attaque</button>
+                            <button class="enc-team-btn${isAdv?' active':''}" onclick="_setEncTeamMode('adv')">🛡 Défense</button>
+                        </div>
+                    </div>
                     <span class="enc-section-meta">n=${totalPoss} poss. · Couv. ${coverage.pct}%</span>
                 </div>
                 ${warningHtml}
@@ -1433,6 +1444,12 @@
                     </div>
                 </div>`;
             requestAnimationFrame(() => _drawEncChart());
+        }
+
+        function _setEncTeamMode(mode) {
+            window._encTeamMode = mode;
+            window._encSelectedFamille = null;
+            if (window._encCurrentMatchData) renderEncFamillesSection(window._encCurrentMatchData);
         }
 
         function _setEncGraphMode(mode) {
@@ -1547,7 +1564,7 @@
                 <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${couleur};vertical-align:middle;margin-right:6px"></span>
                 <strong style="text-transform:uppercase;font-size:0.85rem">${famille}</strong>
                 <span style="color:#64748B;font-size:0.75rem;margin-left:8px">${s.eff}% · n=${s.possessions}</span>`;
-            document.getElementById('enc-detail-content').innerHTML = _buildEncDetailTable(window._encCurrentMatchData, famille);
+            document.getElementById('enc-detail-content').innerHTML = _buildEncDetailTable(window._encCurrentMatchData, famille, window._encTeamMode === 'adv');
             document.getElementById('enc-graph-wrap').style.display = 'none';
             document.getElementById('enc-detail-wrap').style.display = '';
         }
@@ -1625,8 +1642,8 @@
             });
         }
 
-        function _buildEncDetailTable(matchData, famille) {
-            const rows = matchData.filter(r => r[COLS.club] === 'FENIX' && getEncFamille(r[COLS.enclenchement]) === famille);
+        function _buildEncDetailTable(matchData, famille, isAdv) {
+            const rows = matchData.filter(r => (isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX') && getEncFamille(r[COLS.enclenchement]) === famille);
             const byEnc = new Map();
             rows.forEach(r => {
                 const enc = (r[COLS.enclenchement] || '').toString();
@@ -1635,9 +1652,10 @@
                 const label = cle;
                 if (!byEnc.has(cle)) byEnc.set(cle, { label, tirs:0, buts:0, pb:0 });
                 const s = byEnc.get(cle);
-                if (r[COLS.resultat] === 'But') { s.buts++; s.tirs++; }
-                else if (r[COLS.resultat] === 'Tir raté') s.tirs++;
-                else if (r[COLS.resultat] === 'PB') s.pb++;
+                const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');
+                if (res === 'But') { s.buts++; s.tirs++; }
+                else if (res === 'Tir raté' || res === 'Tir arrêté') s.tirs++;
+                else if (res === 'PB' || r[COLS.resultat] === 'PB') s.pb++;
             });
             if (!byEnc.size) return '<p style="color:#94A3B8;font-size:0.82rem;padding:8px 0">Aucune donnée.</p>';
             const sorted = [...byEnc.entries()].sort((a, b) => b[1].tirs - a[1].tirs);
