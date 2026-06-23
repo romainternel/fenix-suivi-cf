@@ -2362,7 +2362,7 @@
         .enc-body { display: flex; gap: 14px; align-items: flex-start; }
         .enc-cards-grid {
             display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 8px; flex: 0 0 auto; width: 56%; min-width: 0;
+            gap: 7px; flex: 0 0 auto; width: 46%; min-width: 0;
         }
         .enc-right-panel {
             flex: 1; background: #fff; border-radius: 10px;
@@ -2421,7 +2421,7 @@
         }
         .enc-detail-table th {
             padding: 4px 6px; text-align: center; font-size: 0.65rem;
-            text-transform: uppercase; color: #1E293B; font-weight: 700; border-bottom: 2px solid #CBD5E1;
+            text-transform: uppercase; background: #0A2463; color: #fff; font-weight: 700;
         }
         .enc-detail-table th:first-child { text-align: left; }
         .enc-detail-table td { padding: 3px 6px; text-align: center; border-bottom: 1px solid #F1F5F9; }

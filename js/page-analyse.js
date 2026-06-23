@@ -1,4 +1,4 @@
-        // ===== PAGE ANALYSE — v159 =====
+        // ===== PAGE ANALYSE — v160 =====
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
@@ -1422,7 +1422,7 @@
                                 <button class="enc-toggle-btn${modeUtil?' active':''}" onclick="_setEncGraphMode('utilisation')">Utilisation</button>
                                 <button class="enc-toggle-btn${!modeUtil?' active':''}" onclick="_setEncGraphMode('efficacite')">Efficacité</button>
                             </div>
-                            <canvas id="enc-radar-canvas" width="300" height="300" style="display:block;margin:0 auto;max-width:100%"></canvas>
+                            <canvas id="enc-radar-canvas" width="340" height="320" style="display:block;margin:0 auto;max-width:100%"></canvas>
                         </div>
                         <div id="enc-detail-wrap" style="display:none">
                             <div class="enc-detail-header-bar" id="enc-detail-header"></div>
@@ -1478,7 +1478,7 @@
             const ctx = canvas.getContext('2d');
             const W = canvas.width, H = canvas.height;
             const cx = W / 2, cy = H / 2;
-            const R = 82, LABEL_R = 105;
+            const R = 96, LABEL_R = 122;
             const mode = window._encGraphMode || 'utilisation';
             const stats = window._encCurrentStatsMatch;
             if (!stats) return;
