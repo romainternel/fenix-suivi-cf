@@ -1773,18 +1773,27 @@
 
             const colgroup = '';
 
-            // Score initial avant la fenêtre (compte tous les buts du match antérieurs à la 1ère ligne)
+            // En mode seqRows (lignes éparpillées), on recalcule le score exact à chaque ligne depuis matchData
+            const isSeqRowsMode = !!area.seqRows;
+
+            // Score initial avant la 1ère ligne (mode continu)
             const windowStart = rows.length ? toRawLocal(rows[0]) : 0;
             let runFen = 0, runAdv = 0;
-            _md.filter(r => r[COLS.resultat] === 'But' && toRawLocal(r) < windowStart - 1)
-               .forEach(r => { if (r[COLS.club] === 'FENIX') runFen++; else runAdv++; });
+            if (!isSeqRowsMode) {
+                _md.filter(r => r[COLS.resultat] === 'But' && toRawLocal(r) < windowStart - 1)
+                   .forEach(r => { if (r[COLS.club] === 'FENIX') runFen++; else runAdv++; });
+            }
 
             const closestPos = area.rawPos;
             let prevScore = '';
             const tbody = rows.map(r => {
                 const rawPos = toRawLocal(r);
-                // Mettre à jour le score si c'est un but
-                if (r[COLS.resultat] === 'But') {
+                if (isSeqRowsMode) {
+                    // Recalcul depuis _md pour chaque ligne (buts jusqu'à et y compris cette ligne)
+                    runFen = 0; runAdv = 0;
+                    _md.filter(x => x[COLS.resultat] === 'But' && toRawLocal(x) <= rawPos)
+                       .forEach(x => { if (x[COLS.club] === 'FENIX') runFen++; else runAdv++; });
+                } else if (r[COLS.resultat] === 'But') {
                     if (r[COLS.club] === 'FENIX') runFen++; else runAdv++;
                 }
                 const currentScore = `${runFen}–${runAdv}`;
