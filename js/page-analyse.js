@@ -1508,8 +1508,8 @@
                     </div>
                     <div class="enc-graph-toggle enc-graph-toggle--header">
                         <button class="enc-toggle-btn${mode!=='matrice'?' active':''}" data-mode="pie" onclick="_setEncGraphMode('pie')">Vue générale</button>
-                        <span class="enc-info-btn" onclick="_toggleEncGraphInfo()" title="Comprendre le graphique" style="${mode!=='matrice'?'visibility:hidden':''}">i</span>
                         <button class="enc-toggle-btn${mode==='matrice'?' active':''}" data-mode="matrice" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
+                        <span class="enc-info-btn" onclick="if(window._encGraphMode==='matrice')_toggleEncGraphInfo()" title="Comprendre la matrice" style="${mode!=='matrice'?'opacity:0.3;cursor:default':''}">i</span>
                     </div>
                 </div>
                 ${warningHtml}
@@ -1543,12 +1543,10 @@
             window._encGraphMode = mode;
             document.querySelectorAll('.enc-toggle-btn[data-mode]').forEach(b =>
                 b.classList.toggle('active', b.dataset.mode === mode));
-            // Masquer le i en vue générale (pas d'info pertinente)
             const infoBtn = document.querySelector('.enc-graph-toggle--header .enc-info-btn');
-            if (infoBtn) infoBtn.style.visibility = mode !== 'matrice' ? 'hidden' : '';
+            if (infoBtn) infoBtn.style.opacity = mode !== 'matrice' ? '0.3' : '1';
             const mib = document.getElementById('enc-matrix-info-box');
             if (mib) mib.style.display = 'none';
-            // RAF pour laisser le DOM afficher le canvas avant de mesurer clientWidth
             requestAnimationFrame(() => _drawEncChart());
         }
 
@@ -1571,25 +1569,25 @@
             if (!canvas) return;
             const wrap = canvas.parentElement;
             if (wrap && wrap.clientWidth > 0) {
-                const cw = Math.max(300, wrap.clientWidth - 28);
+                const cw = Math.max(340, wrap.clientWidth - 16);
                 canvas.width = cw;
-                canvas.height = Math.min(Math.round(cw * 0.88), 370);
+                canvas.height = Math.min(Math.round(cw * 0.85), 420);
             }
             const statsMatch = window._encCurrentStatsMatch;
             const totalPoss = window._encCurrentTotalPoss;
             if (!statsMatch || !totalPoss) return;
-            // Résoudre les var(--enc-xxx) CSS → hex (canvas 2D ne lit pas les variables CSS)
-            const rootStyle = getComputedStyle(document.documentElement);
-            const getHex = f => {
-                const raw = ENC_FAMILLE_COLORS[f] || '#94A3B8';
-                if (!raw.startsWith('var(')) return raw;
-                return rootStyle.getPropertyValue(raw.slice(4, -1).trim()).trim() || '#94A3B8';
+            // Table hex locale — canvas 2D ne résout pas var(--css)
+            const PIE_HEX = {
+                'Mouvement':'#0EA5E9','Isoler':'#F59E0B','Rentrée':'#F97316',
+                'Jeu PVT':'#8B5CF6','Bloc PVT':'#7C3AED','7vs6':'#10B981',
+                'Faire courir':'#EC4899','Spéciaux':'#64748B','6vs5':'#06B6D4',
+                'Rebond':'#84CC16','Autre':'#94A3B8'
             };
             const slices = [];
             [...ENC_FAMILLES_ORDRE, 'Autre'].forEach(famille => {
                 const s = statsMatch.get(famille);
                 if (s && s.possessions > 0)
-                    slices.push({ famille, poss: s.possessions, color: getHex(famille) });
+                    slices.push({ famille, poss: s.possessions, color: PIE_HEX[famille] || '#94A3B8' });
             });
             if (!slices.length) return;
 
@@ -1597,9 +1595,9 @@
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
 
-            // Pie centered, radius capped so labels have room
-            const margin = 78;
-            const pieR = Math.min((W - 2 * margin) / 2, (H - 2 * margin) / 2, 118);
+            // Pie centré, margin plus grande pour les labels
+            const margin = 86;
+            const pieR = Math.min((W - 2 * margin) / 2, (H - 2 * margin) / 2, 160);
             const cx = W / 2, cy = H / 2;
 
             // Compute slice angles
