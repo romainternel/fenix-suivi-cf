@@ -15,13 +15,13 @@
             'Renverse':'Isoler','Aix':'Isoler',
             'Suède':'Isoler','Suede':'Isoler','FIRST':'Isoler',
             'Suède DC':'Isoler','Suede DC':'Isoler',
-            'PORTO':'Isoler','Gidsel':'Isoler','2 pvts':'Isoler',
+            'PORTO':'Isoler','Gidsel':'Isoler','2 pvts':'Isoler','Szeged':'Isoler',
             'LIMOGES':'Isoler','ISO':'Isoler',
             "Départ d'ailier":'Isoler',"Depart ailier":'Isoler',
             '7':'Isoler',
             // RENTRÉE
             '3':'Rentrée','6':'Rentrée',
-            'Szeged':'Rentrée','Ressort':'Rentrée',
+            'Ressort':'Rentrée',
             '+':'Rentrée','110':'Rentrée',
             '6 OPPOSÉ':'Rentrée','6 OPPOSE':'Rentrée',
             '90':'Rentrée','3 OPPOSÉ':'Rentrée','3 OPPOSE':'Rentrée',
@@ -53,22 +53,24 @@
             'Moustache':'Spéciaux','Spéciaux':'Spéciaux','Speciaux':'Spéciaux','Spécial':'Spéciaux','Kebab':'Spéciaux',
             // 6VS5
             'K':'6vs5','Danois':'6vs5','1 rotation':'6vs5',
+            // REBOND — récupération offensive après tir/rebond
+            'Recup':'Rebond','RECUP':'Rebond','recup':'Rebond',
         };
 
-        const ENC_FAMILLES_ORDRE = ['Mouvement','Isoler','Rentrée','Jeu PVT','Bloc PVT','7vs6','Faire courir','Spéciaux','6vs5'];
+        const ENC_FAMILLES_ORDRE = ['Mouvement','Isoler','Rentrée','Jeu PVT','Bloc PVT','7vs6','Faire courir','Spéciaux','6vs5','Rebond'];
         const ENC_FAMILLE_COLORS = {
             'Mouvement':'var(--enc-mouvement)',
             'Isoler':'var(--enc-isoler)',
             'Rentrée':'var(--enc-rentree)','Jeu PVT':'var(--enc-jeu-pvt)',
             'Bloc PVT':'var(--enc-bloc-pvt)','7vs6':'var(--enc-7vs6)',
             'Faire courir':'var(--enc-faire-courir)','Spéciaux':'var(--enc-speciaux)',
-            '6vs5':'var(--enc-6vs5)','Autre':'var(--enc-autre)',
+            '6vs5':'var(--enc-6vs5)','Rebond':'var(--enc-rebond)','Autre':'var(--enc-autre)',
         };
         const ENC_FAMILLE_IDS = {
             'Mouvement':'mouvement',
             'Isoler':'isoler','Rentrée':'rentree',
             'Jeu PVT':'jeu-pvt','Bloc PVT':'bloc-pvt','7vs6':'7vs6',
-            'Faire courir':'faire-courir','Spéciaux':'speciaux','6vs5':'6vs5',
+            'Faire courir':'faire-courir','Spéciaux':'speciaux','6vs5':'6vs5','Rebond':'rebond',
         };
 
         let _momentsCles = [];
