@@ -1397,6 +1397,7 @@
             window._encCurrentStatsMatch = statsMatch;
             window._encCurrentStatsSaison = statsSaison;
             window._encCurrentTotalPoss = totalPoss;
+            window._encIsMatchSpecifique = !!(document.getElementById('filter-match-global')?.value);
             window._encSelectedFamille = null;
             const sublabelCard = isAdv ? 'RÉUSSITE ADV.' : 'RÉUSSITE POSS.';
             const warningHtml = coverage.pct < 80 && coverage.total > 0
@@ -1828,7 +1829,8 @@
                     ? Math.min(1, totalPoss > 0 ? s.possessions / totalPoss : 0)
                     : Math.min(1, (s.eff||0) / 100);
             });
-            const saisonVals = statsSaison ? familles.map(f => {
+            const isSpecifique = !!window._encIsMatchSpecifique;
+            const saisonVals = (statsSaison && isSpecifique) ? familles.map(f => {
                 const sd = statsSaison.get(f) || {utilisMoy:0,effMoy:0};
                 return mode === 'utilisation'
                     ? Math.min(1, (sd.utilisMoy||0) / 100)
@@ -1893,11 +1895,17 @@
             // Légende dans le footer
             const leg = document.getElementById('enc-matrix-legend');
             if (leg) {
-                leg.innerHTML = `<div style="display:flex;align-items:center;gap:16px;font-size:0.72rem;color:#475569">
-                    <span><span style="display:inline-block;width:18px;height:2px;background:#0A2463;vertical-align:middle;margin-right:4px;border-radius:1px"></span>Match actuel</span>
-                    <span><span style="display:inline-block;width:18px;border-top:2px dashed #94A3B8;vertical-align:middle;margin-right:4px"></span>Moy. saison</span>
-                    <span style="color:#94A3B8;font-size:0.68rem">${mode === 'utilisation' ? 'Utilisation %' : 'Efficacité %'}</span>
-                </div>`;
+                const modeLabel = mode === 'utilisation' ? 'Utilisation %' : 'Efficacité %';
+                leg.innerHTML = isSpecifique
+                    ? `<div style="display:flex;align-items:center;gap:16px;font-size:0.72rem;color:#475569">
+                        <span><span style="display:inline-block;width:18px;height:2px;background:#0A2463;vertical-align:middle;margin-right:4px;border-radius:1px"></span>Match actuel</span>
+                        <span><span style="display:inline-block;width:18px;border-top:2px dashed #94A3B8;vertical-align:middle;margin-right:4px"></span>Moy. saison</span>
+                        <span style="color:#94A3B8;font-size:0.68rem">${modeLabel}</span>
+                      </div>`
+                    : `<div style="display:flex;align-items:center;gap:10px;font-size:0.72rem;color:#475569">
+                        <span><span style="display:inline-block;width:18px;height:2px;background:#0A2463;vertical-align:middle;margin-right:4px;border-radius:1px"></span>Saison complète</span>
+                        <span style="color:#94A3B8;font-size:0.68rem">${modeLabel}</span>
+                      </div>`;
             }
         }
 
