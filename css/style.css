@@ -2387,7 +2387,7 @@
         }
         .enc-right-panel {
             flex: 1; background: #fff; border-radius: 10px;
-            box-shadow: var(--shadow-sm); padding: 12px 14px;
+            box-shadow: var(--shadow-sm); padding: 8px 14px 10px;
             min-width: 160px; position: sticky; top: 108px; align-self: flex-start;
         }
 
@@ -2404,6 +2404,13 @@
         .enc-card-mini .enc-famille-meta { margin-bottom: 4px; }
         .enc-card-mini-header { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
 
+        /* Footer row : légende + couverture */
+        .enc-footer-row {
+            display: flex; align-items: center; gap: 10px;
+            margin-top: 10px; padding-top: 8px;
+            border-top: 1px solid #F1F5F9;
+        }
+
         /* Toggle Attaque / Défense */
         .enc-team-toggle { display: flex; gap: 4px; }
         .enc-team-btn {
@@ -2416,6 +2423,7 @@
 
         /* Boutons toggle radar */
         .enc-graph-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
+        .enc-graph-toggle--header { margin-bottom: 0; align-items: center; }
         .enc-toggle-btn {
             flex: 1; padding: 5px 8px; border: 1px solid #CBD5E1;
             background: #F8FAFC; border-radius: 6px; font-size: 0.7rem;

@@ -1444,26 +1444,28 @@
                             <button class="enc-team-btn${isAdv?' active':''}" onclick="_setEncTeamMode('adv')">🛡 Défense</button>
                         </div>
                     </div>
-                    <span class="enc-section-meta">n=${totalPoss} poss. · Couv. ${coverage.pct}%</span>
+                    <div class="enc-graph-toggle enc-graph-toggle--header">
+                        <button class="enc-toggle-btn${mode==='matrice'?' active':''}" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
+                        <span class="enc-info-btn" onclick="_toggleEncMatrixInfo()" title="Comprendre la matrice">i</span>
+                        <button class="enc-toggle-btn${mode==='radar'?' active':''}" onclick="_setEncGraphMode('radar')">Radar</button>
+                    </div>
                 </div>
                 ${warningHtml}
                 <div class="enc-body">
                     <div class="enc-cards-grid">${cardsHtml}</div>
                     <div class="enc-right-panel" id="enc-right-panel">
                         <div id="enc-graph-wrap" style="position:relative">
-                            <div class="enc-graph-toggle" style="align-items:center">
-                                <button class="enc-toggle-btn${mode==='matrice'?' active':''}" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
-                                <span class="enc-info-btn" onclick="_toggleEncMatrixInfo()" title="Comprendre la matrice">i</span>
-                                <button class="enc-toggle-btn${mode==='radar'?' active':''}" onclick="_setEncGraphMode('radar')">Radar</button>
-                            </div>
                             <canvas id="enc-radar-canvas" width="340" height="290" style="display:block;margin:0 auto;max-width:100%"></canvas>
-                            <div id="enc-matrix-legend" style="margin-top:8px"></div>
                         </div>
                         <div id="enc-detail-wrap" style="display:none">
                             <div class="enc-detail-header-bar" id="enc-detail-header"></div>
                             <div id="enc-detail-content"></div>
                         </div>
                     </div>
+                </div>
+                <div class="enc-footer-row">
+                    <div id="enc-matrix-legend" style="flex:1"></div>
+                    <span class="enc-section-meta">n=${totalPoss} poss. · Couv. ${coverage.pct}%</span>
                 </div>`;
             requestAnimationFrame(() => _drawEncChart());
         }
