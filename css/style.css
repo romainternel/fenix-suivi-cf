@@ -2370,6 +2370,12 @@
         .enc-progress-fill.below { background: var(--fenix-danger); }
         .enc-progress-fill.noref { background: #94A3B8; }
         .enc-progress-ref { font-size: 0.62rem; color: #94A3B8; margin-bottom: 8px; }
+        .enc-stat-pair { display: flex; align-items: flex-start; gap: 6px; margin: 5px 0 2px; }
+        .enc-stat-main-val { font-size: 1.05rem; font-weight: 700; color: #1E293B; line-height: 1; }
+        .enc-stat-sec-val { font-size: 0.82rem; font-weight: 600; color: #94A3B8; line-height: 1; }
+        .enc-stat-pair-label { font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94A3B8; margin-top: 2px; }
+        .enc-stat-sep { color: #CBD5E1; padding-top: 1px; font-size: 0.9rem; line-height: 1.2; }
+        .enc-footnote { font-size: 0.57rem; color: #94A3B8; margin-top: 1px; margin-bottom: 3px; line-height: 1.4; }
 
         /* Badges */
         .enc-badge-faiblesse {

@@ -1416,10 +1416,10 @@
                 <div id="enc-cards-info-box" style="display:none;position:absolute;top:20px;right:0;width:100%;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.74rem;line-height:1.7;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
                     <strong style="font-size:0.8rem;color:#0A2463">Lire les cartes</strong><br>
                     <b>Grand %</b> — Utilisation : part des poss. equipe jouees avec cette famille<br>
-                    <b>X/Y tirs · Z% tir</b> — Reussite pure au tir : buts / (buts + rates/arretes)<br>
+                    <b>Barre</b> — verte si eff. encl. &ge; moy. saison, rouge si en-dessous<br>
                     <b>N% encl.</b> — Eff. enclenchement : (Buts + PO) / Possessions<br>
-                    <b>moy. eff. encl.</b> — Reference saison : moyenne match par match de l'eff. encl.<br>
-                    <b>Barre</b> — verte si eff. encl. &ge; moy. saison, rouge si en-dessous
+                    <b>N% tir</b> — Reussite pure au tir : buts / (buts + rates/arretes)<br>
+                    <b>Np · ▲/▼ delta</b> — nb possessions + ecart vs moy. saison (vert = au-dessus)
                 </div>
             </div>`;
             let cardsHtml = cardsInfoHtml;
@@ -1451,15 +1451,23 @@
                 }
                 const hasRef = sd.matchCount >= 3;
                 const fillClass = !hasRef ? 'noref' : (s.eff >= sd.effMoy ? 'above' : 'below');
-                const refText = hasRef ? `moy. eff. encl. ${sd.effMoy}%` : '—';
+                const delta = hasRef ? s.eff - sd.effMoy : null;
+                const deltaHtml = delta === null ? ''
+                    : delta > 0 ? ` · <span style="color:#10B981;font-weight:600">▲ +${delta}pts</span>`
+                    : delta < 0 ? ` · <span style="color:#EF4444;font-weight:600">▼ ${delta}pts</span>`
+                    : ` · <span style="color:#94A3B8">=moy.</span>`;
                 cardsHtml += `
                 <div class="enc-card-mini" id="enc-card-${fid}" style="border-top-color:${couleur}" onclick="_selectEncFamille('${famille}','${fid}')">
                     <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${couleur}"></span><span class="enc-famille-name">${famille}</span></div>
                     <div class="enc-famille-eff">${utilisPct}%</div>
                     <div class="enc-famille-sublabel">UTILISATION</div>
-                    <div class="enc-famille-meta">${s.buts}/${totalTirs} tirs · ${tirEff}% tir / ${s.eff}% encl. · ${s.possessions} poss.</div>
                     <div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${utilisPct}%"></div></div>
-                    <div class="enc-progress-ref">${refText}</div>
+                    <div class="enc-stat-pair">
+                        <div><div class="enc-stat-main-val">${s.eff}%</div><div class="enc-stat-pair-label">encl.</div></div>
+                        <div class="enc-stat-sep">·</div>
+                        <div><div class="enc-stat-sec-val">${tirEff}%</div><div class="enc-stat-pair-label">tir</div></div>
+                    </div>
+                    <div class="enc-footnote">${s.possessions}p${deltaHtml}</div>
                     ${badgeHtml}
                 </div>`;
             });
@@ -1476,9 +1484,13 @@
                     <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${cAutre}"></span><span class="enc-famille-name">Non classifié</span></div>
                     <div class="enc-famille-eff">${utilisAutrePct}%</div>
                     <div class="enc-famille-sublabel">UTILISATION</div>
-                    <div class="enc-famille-meta">${sAutre.buts}/${totalTirsAutre} tirs · ${tirEffAutre}% tir / ${enclEffAutre}% encl. · ${sAutre.possessions} poss.</div>
                     <div class="enc-progress-track"><div class="enc-progress-fill noref" style="width:${utilisAutrePct}%"></div></div>
-                    <div class="enc-progress-ref">—</div>
+                    <div class="enc-stat-pair">
+                        <div><div class="enc-stat-main-val">${enclEffAutre}%</div><div class="enc-stat-pair-label">encl.</div></div>
+                        <div class="enc-stat-sep">·</div>
+                        <div><div class="enc-stat-sec-val">${tirEffAutre}%</div><div class="enc-stat-pair-label">tir</div></div>
+                    </div>
+                    <div class="enc-footnote">${sAutre.possessions}p</div>
                 </div>`;
             }
             const mode = window._encGraphMode;
