@@ -1509,7 +1509,7 @@
                     <div class="enc-graph-toggle enc-graph-toggle--header">
                         <button class="enc-toggle-btn${mode!=='matrice'?' active':''}" data-mode="pie" onclick="_setEncGraphMode('pie')">Vue générale</button>
                         <button class="enc-toggle-btn${mode==='matrice'?' active':''}" data-mode="matrice" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
-                        <span class="enc-info-btn" onclick="if(window._encGraphMode==='matrice')_toggleEncGraphInfo()" title="Comprendre la matrice" style="${mode!=='matrice'?'opacity:0.3;cursor:default':''}">i</span>
+                        <span class="enc-info-btn" id="enc-graph-info-btn" onclick="if(window._encGraphMode==='matrice')_toggleEncGraphInfo()" title="Comprendre la matrice" style="opacity:${mode!=='matrice'?'0.3':'1'}">i</span>
                     </div>
                 </div>
                 ${warningHtml}
@@ -1543,7 +1543,7 @@
             window._encGraphMode = mode;
             document.querySelectorAll('.enc-toggle-btn[data-mode]').forEach(b =>
                 b.classList.toggle('active', b.dataset.mode === mode));
-            const infoBtn = document.querySelector('.enc-graph-toggle--header .enc-info-btn');
+            const infoBtn = document.getElementById('enc-graph-info-btn');
             if (infoBtn) infoBtn.style.opacity = mode !== 'matrice' ? '0.3' : '1';
             const mib = document.getElementById('enc-matrix-info-box');
             if (mib) mib.style.display = 'none';
@@ -1569,9 +1569,11 @@
             if (!canvas) return;
             const wrap = canvas.parentElement;
             if (wrap && wrap.clientWidth > 0) {
-                const cw = Math.max(380, wrap.clientWidth - 16);
+                const cw = Math.max(300, wrap.clientWidth - 28);
                 canvas.width = cw;
-                canvas.height = Math.min(Math.round(cw * 1.05), 560);
+                canvas.height = cw; // carré comme la matrice
+                canvas.style.width  = cw + 'px';
+                canvas.style.height = cw + 'px';
             }
             const statsMatch = window._encCurrentStatsMatch;
             const totalPoss = window._encCurrentTotalPoss;
@@ -1594,9 +1596,9 @@
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
 
-            const marginH = 110, marginV = 70;
-            const pieR = Math.min((W - 2 * marginH) / 2, (H - 2 * marginV) / 2, 200);
-            const cx = W / 2, cy = H / 2 + 10;
+            // Canvas carré : pieR = 28% du côté, labels ont ~22% de chaque côté
+            const pieR = Math.min(W * 0.28, 210);
+            const cx = W / 2, cy = H / 2;
 
             let angle = -Math.PI / 2;
             const computed = slices.map(slice => {
