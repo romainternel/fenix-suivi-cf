@@ -1571,7 +1571,7 @@
             if (wrap && wrap.clientWidth > 0) {
                 const cw = Math.max(300, wrap.clientWidth - 28);
                 canvas.width = cw;
-                canvas.height = cw; // carré comme la matrice
+                canvas.height = cw; // carré
                 canvas.style.width  = cw + 'px';
                 canvas.style.height = cw + 'px';
             }
@@ -1596,8 +1596,8 @@
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
 
-            // Canvas carré : pieR = 28% du côté, labels ont ~22% de chaque côté
-            const pieR = Math.min(W * 0.28, 210);
+            // Géométrie : pieR = 30% du côté (cap 220), labels ~70% de l'espace restant
+            const pieR = Math.min(W * 0.30, 220);
             const cx = W / 2, cy = H / 2;
 
             let angle = -Math.PI / 2;
@@ -1609,7 +1609,7 @@
                 return { ...slice, frac, start, sweep };
             });
 
-            // Draw slices
+            // Dessiner les tranches
             computed.forEach(s => {
                 ctx.beginPath();
                 ctx.moveTo(cx, cy);
@@ -1618,21 +1618,21 @@
                 ctx.fillStyle = s.color;
                 ctx.fill();
                 ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2.5;
+                ctx.lineWidth = 2;
                 ctx.stroke();
             });
 
-            // Separate inner labels (big slices) from peripheral (small)
+            // Séparer labels intérieurs (≥ 12%) et périphériques (2–12%)
             const peripheral = [];
             computed.forEach(s => {
                 if (s.frac < 0.02) return;
                 const mid = s.start + s.sweep / 2;
                 const pct = Math.round(s.frac * 100);
-                const name = s.famille === 'Autre' ? 'Autre' : s.famille;
+                const name = s.famille;
                 const isRight = Math.cos(mid) >= 0;
 
-                if (s.frac >= 0.10) {
-                    // Label intérieur pour les grandes tranches
+                if (s.frac >= 0.12) {
+                    // Label intérieur : nom bold blanc + % blanc
                     const lx = cx + Math.cos(mid) * pieR * 0.62;
                     const ly = cy + Math.sin(mid) * pieR * 0.62;
                     ctx.textAlign = 'center';
@@ -1644,31 +1644,38 @@
                     ctx.textBaseline = 'top';
                     ctx.fillText(pct + '%', lx, ly);
                 } else {
-                    // Label périphérique — on calcule y provisoire, on espacera après
-                    const radialLen = pieR * 0.32;
-                    const p2x = cx + Math.cos(mid) * (pieR + radialLen);
-                    const p2y = cy + Math.sin(mid) * (pieR + radialLen);
-                    peripheral.push({ s, mid, pct, name, isRight, p2x, p2y: p2y });
+                    // Label périphérique — radialLen fixe 20px, kinkLen fixe 12px
+                    const radialLen = 20;
+                    const rawX = cx + Math.cos(mid) * (pieR + radialLen);
+                    const rawY = cy + Math.sin(mid) * (pieR + radialLen);
+                    peripheral.push({ s, mid, pct, name, isRight, rawX, rawY, adjustedY: rawY });
                 }
             });
 
-            // Anti-chevauchement : tri vertical + espacement min 15px par côté
+            // Anti-chevauchement : tri par rawY, espacement min 14px par côté
             ['left', 'right'].forEach(side => {
-                const items = peripheral
-                    .filter(l => (side === 'right') === l.isRight)
-                    .sort((a, b) => a.p2y - b.p2y);
-                items.forEach((item, i) => {
-                    if (i > 0 && item.p2y - items[i - 1].p2y < 15)
-                        item.p2y = items[i - 1].p2y + 15;
+                const group = peripheral
+                    .filter(l => l.isRight === (side === 'right'))
+                    .sort((a, b) => a.rawY - b.rawY);
+                group.forEach((item, i) => {
+                    if (i > 0 && item.rawY - group[i - 1].adjustedY < 14)
+                        item.adjustedY = group[i - 1].adjustedY + 14;
+                    else
+                        item.adjustedY = item.rawY;
                 });
             });
 
-            // Draw peripheral labels
-            peripheral.forEach(({ s, mid, pct, name, isRight, p2x, p2y }) => {
+            // Dessiner les labels périphériques avec ligne coudée
+            const kinkLen = 12;
+            peripheral.forEach(({ s, mid, pct, name, isRight, rawX, adjustedY }) => {
+                // Point de départ sur l'arc (ancré sur la bonne tranche)
                 const p1x = cx + Math.cos(mid) * (pieR + 4);
                 const p1y = cy + Math.sin(mid) * (pieR + 4);
-                const kink = 14;
-                const p3x = p2x + (isRight ? kink : -kink);
+                // Point intermédiaire (position radiale brute, y ajusté)
+                const p2x = rawX;
+                const p2y = adjustedY;
+                // Point final (coude horizontal)
+                const p3x = p2x + (isRight ? kinkLen : -kinkLen);
 
                 ctx.strokeStyle = s.color;
                 ctx.lineWidth = 1;
@@ -1680,14 +1687,16 @@
 
                 const tx = p3x + (isRight ? 3 : -3);
                 ctx.textAlign = isRight ? 'left' : 'right';
+                // Nom bold 9px
                 ctx.fillStyle = '#1E293B';
-                ctx.font = 'bold 9.5px Inter,sans-serif';
+                ctx.font = 'bold 9px Inter,sans-serif';
                 ctx.textBaseline = 'bottom';
-                ctx.fillText(name, tx, p2y + 1);
+                ctx.fillText(name, tx, p2y);
+                // % gris 8.5px
                 ctx.fillStyle = '#475569';
-                ctx.font = '9px Inter,sans-serif';
+                ctx.font = '8.5px Inter,sans-serif';
                 ctx.textBaseline = 'top';
-                ctx.fillText(pct + '%', tx, p2y + 1);
+                ctx.fillText(pct + '%', tx, p2y);
             });
         }
 
