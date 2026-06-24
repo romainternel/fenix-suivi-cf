@@ -94,6 +94,8 @@
         let _gardienSelected = null;
         let _lastBasculeResult = null;
         let _encStatsSaison = null;
+        let _ENC_FAMILLE_CUSTOM = {};
+        try { _ENC_FAMILLE_CUSTOM = JSON.parse(localStorage.getItem('enc_famille_custom') || '{}'); } catch(e) {}
 
         function checkPeriodeData(matchData) {
             const total = matchData.length;
@@ -1295,11 +1297,17 @@
         // A-00 — Parser famille enclenchement
         // Format: SITUATION;PLAY;VARIANT — check variant (p2) first, then play (p1), then situation (p0)
         function getEncFamille(encStr) {
-            if (!encStr || typeof encStr !== 'string') return 'Autre';
-            const parts = encStr.split(';');
+            if (encStr === null || encStr === undefined) return 'Autre';
+            const str = encStr.toString().trim();
+            if (!str) return 'Autre';
+            if (_ENC_FAMILLE_CUSTOM[str]) return _ENC_FAMILLE_CUSTOM[str];
+            const parts = str.split(';');
             const p0 = (parts[0] || '').trim();
             const p1 = (parts[1] || '').trim();
             const p2 = (parts[2] || '').trim();
+            if (p2 && _ENC_FAMILLE_CUSTOM[p2]) return _ENC_FAMILLE_CUSTOM[p2];
+            if (p1 && _ENC_FAMILLE_CUSTOM[p1]) return _ENC_FAMILLE_CUSTOM[p1];
+            if (p0 && _ENC_FAMILLE_CUSTOM[p0]) return _ENC_FAMILLE_CUSTOM[p0];
             return ENC_FAMILLE_MAP[p2] || ENC_FAMILLE_MAP[p1] || ENC_FAMILLE_MAP[p0] || 'Autre';
         }
 
@@ -1654,6 +1662,11 @@
             const panel = document.getElementById('enc-unclassified-panel');
             if (!panel) return;
             if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+            _buildUnclassifiedPanel(panel);
+            panel.style.display = '';
+        }
+
+        function _buildUnclassifiedPanel(panel) {
             const isAdv = window._encTeamMode === 'adv';
             const matchData = window._encCurrentMatchData;
             if (!matchData) return;
@@ -1668,16 +1681,39 @@
                 byEnc.set(enc, (byEnc.get(enc) || 0) + 1);
             });
             if (!byEnc.size) {
-                panel.innerHTML = '<p style="color:#64748B;font-size:0.8rem;padding:6px 0">Aucun enclenchement non classifié.</p>';
-            } else {
-                const sorted = [...byEnc.entries()].sort((a, b) => b[1] - a[1]);
-                const lignes = sorted.map(([enc, cnt]) => `<tr><td>${enc}</td><td style="text-align:center;font-weight:600">${cnt}</td></tr>`).join('');
-                panel.innerHTML = `<table class="enc-detail-table" style="margin-top:0">
-                    <thead><tr><th>Enclenchement non classifié</th><th style="width:50px">Nb</th></tr></thead>
-                    <tbody>${lignes}</tbody>
-                </table>`;
+                panel.innerHTML = '<p style="color:#64748B;font-size:0.8rem;padding:6px 0">✓ Tous les enclenchements sont classifiés.</p>';
+                return;
             }
-            panel.style.display = '';
+            const famOpts = ENC_FAMILLES_ORDRE.map(f => `<option value="${f}">${f}</option>`).join('');
+            const sorted = [...byEnc.entries()].sort((a, b) => b[1] - a[1]);
+            const lignes = sorted.map(([enc, cnt]) => {
+                const encEsc = enc.replace(/'/g, "\\'");
+                return `<tr>
+                    <td>${enc}</td>
+                    <td style="text-align:center;font-weight:600">${cnt}</td>
+                    <td><select class="enc-assign-select" onchange="_assignEncFamille('${encEsc}', this.value)">
+                        <option value="">— assigner —</option>${famOpts}
+                    </select></td>
+                </tr>`;
+            }).join('');
+            panel.innerHTML = `<table class="enc-detail-table" style="margin-top:0">
+                <thead><tr><th>Enclenchement non classifié</th><th style="width:40px">Nb</th><th style="width:160px">Famille</th></tr></thead>
+                <tbody>${lignes}</tbody>
+            </table>`;
+        }
+
+        function _assignEncFamille(enc, famille) {
+            if (!famille) return;
+            _ENC_FAMILLE_CUSTOM[enc] = famille;
+            try { localStorage.setItem('enc_famille_custom', JSON.stringify(_ENC_FAMILLE_CUSTOM)); } catch(e) {}
+            _encStatsSaison = null; // invalider cache saison
+            if (window._encCurrentMatchData) {
+                renderEncFamillesSection(window._encCurrentMatchData);
+                requestAnimationFrame(() => {
+                    const panel = document.getElementById('enc-unclassified-panel');
+                    if (panel) { _buildUnclassifiedPanel(panel); panel.style.display = ''; }
+                });
+            }
         }
 
         function _drawEncRadar() {
