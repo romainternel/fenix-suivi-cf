@@ -1492,7 +1492,7 @@
                     </div>
                 </div>
                 <div class="enc-footer-row">
-                    <div id="enc-matrix-legend" style="flex:1"></div>
+                    <div id="enc-matrix-legend" style="margin-left:auto"></div>
                     <span class="enc-section-meta">n=${totalPoss} poss. · Couv. ${coverage.pct}%</span>
                 </div>`;
             requestAnimationFrame(() => _drawEncChart());
