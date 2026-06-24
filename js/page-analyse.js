@@ -1304,9 +1304,10 @@
         }
 
         function computeEncCoverage(rows) {
-            const avecEnc = rows.filter(r => (r[COLS.enclenchement] || '').toString().trim());
-            const classifiees = avecEnc.filter(r => getEncFamille(r[COLS.enclenchement]) !== 'Autre');
-            const total = avecEnc.length;
+            // possession col non-vide = vraie fin de possession (exclut Jet franc, Pen post-PO, etc.)
+            const possessions = rows.filter(r => (r[COLS.possession] || '').toString().trim());
+            const classifiees = possessions.filter(r => getEncFamille(r[COLS.enclenchement]) !== 'Autre');
+            const total = possessions.length;
             return { total, classifiees: classifiees.length, pct: total > 0 ? Math.round(classifiees.length / total * 100) : 100 };
         }
 
@@ -1317,10 +1318,11 @@
             const stats = new Map();
             FAMILLES.forEach(f => stats.set(f, { tirs: 0, buts: 0, pb: 0, po: 0, eff: 0, possessions: 0 }));
             rows.forEach(r => {
+                if (!(r[COLS.possession] || '').toString().trim()) return; // sub-event (Jet franc, Pen post-PO…) — pas une possession
                 const famille = getEncFamille(r[COLS.enclenchement]);
                 const s = stats.get(famille);
                 const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');
-                if ((r[COLS.enclenchement] || '').toString().trim()) s.possessions++;
+                s.possessions++;
                 if (res === 'But') { s.buts++; s.tirs++; }
                 else if (res === 'Tir raté' || res === 'Tir arrêté') s.tirs++;
                 else if (res === 'PB') s.pb++;
@@ -1371,7 +1373,7 @@
             const statsSaison = computeEncStatsSaison(isAdv);
             const teamRows = matchData.filter(r => isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX');
             const coverage = computeEncCoverage(teamRows);
-            const totalPoss = teamRows.filter(r => (r[COLS.enclenchement] || '').toString().trim()).length;
+            const totalPoss = teamRows.filter(r => (r[COLS.possession] || '').toString().trim()).length;
             window._encCurrentMatchData = matchData;
             window._encCurrentStatsMatch = statsMatch;
             window._encSelectedFamille = null;
@@ -1706,7 +1708,10 @@
         }
 
         function _buildEncDetailTable(matchData, famille, isAdv) {
-            const rows = matchData.filter(r => (isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX') && getEncFamille(r[COLS.enclenchement]) === famille);
+            const rows = matchData.filter(r =>
+                (isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX') &&
+                (r[COLS.possession] || '').toString().trim() &&
+                getEncFamille(r[COLS.enclenchement]) === famille);
             const byEnc = new Map();
             rows.forEach(r => {
                 const enc = (r[COLS.enclenchement] || '').toString();
