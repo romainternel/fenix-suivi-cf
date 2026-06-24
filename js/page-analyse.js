@@ -1569,7 +1569,7 @@
             if (!canvas) return;
             const wrap = canvas.parentElement;
             if (wrap && wrap.clientWidth > 0) {
-                const cw = Math.min(Math.max(300, wrap.clientWidth - 28), 576);
+                const cw = Math.min(Math.max(300, wrap.clientWidth - 28), 1200);
                 canvas.width = cw;
                 canvas.height = cw;
                 canvas.style.width  = cw + 'px';
@@ -1596,8 +1596,8 @@
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
 
-            // Géométrie : pieR = 30% du côté (cap 264), labels ~70% de l'espace restant
-            const pieR = Math.min(W * 0.30, 264);
+            // Géométrie : pieR = 42% du côté (cap 500), labels ~58% de l'espace restant
+            const pieR = Math.min(W * 0.42, 500);
             const cx = W / 2, cy = H / 2;
 
             let angle = -Math.PI / 2;
