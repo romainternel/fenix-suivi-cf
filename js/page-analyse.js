@@ -1961,7 +1961,7 @@
                 const c = eff >= 60 ? '#059669' : eff < 40 ? '#DC2626' : '#64748B';
                 lignes += `<tr><td>${s.label}</td><td>${s.buts}</td><td>${s.po}</td><td>${s.tirs}</td><td>${s.pb}</td><td>${s.possessions}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
             });
-            return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Buts</th><th>PO</th><th>Ratés</th><th>PB</th><th>Poss.</th><th>Eff. <span title="Efficacité = (Buts + PO) ÷ Possessions" style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:#94A3B8;color:#fff;font-size:9px;font-weight:700;cursor:help;vertical-align:middle;line-height:1">i</span></th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tpo}</td><td>${tt}</td><td>${tp}</td><td>${tposs}</td><td>${te}%</td></tr></tfoot></table>`;
+            return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Buts</th><th>PO</th><th>Ratés</th><th>PB</th><th>Poss.</th><th>Eff. <span title="(Buts + PO) / Possessions - le PO compte comme efficace" style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:#94A3B8;color:#fff;font-size:9px;font-weight:700;cursor:help;vertical-align:middle;line-height:1">i</span></th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tpo}</td><td>${tt}</td><td>${tp}</td><td>${tposs}</td><td>${te}%</td></tr></tfoot></table>`;
         }
 
         // A-04 — Overlay momentum + détection bascule
