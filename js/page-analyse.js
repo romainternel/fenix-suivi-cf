@@ -112,8 +112,8 @@
             if (!matchFilter) {
                 document.getElementById('analyse-content').style.display = 'none';
                 document.getElementById('analyse-empty').style.display = 'block';
-                generateSeasonCorrelations();
                 renderEncFamillesSection(DATA);
+                generateSeasonCorrelations();
                 return;
             }
 
@@ -1632,24 +1632,30 @@
         function _selectEncFamille(famille, fid) {
             const prev = window._encSelectedFamille;
             if (prev) document.getElementById(`enc-card-${prev}`)?.classList.remove('selected');
+            const gw = document.getElementById('enc-graph-wrap');
+            const dw = document.getElementById('enc-detail-wrap');
+            if (!gw || !dw) return;
             if (prev === fid) {
                 window._encSelectedFamille = null;
-                document.getElementById('enc-graph-wrap').style.display = '';
-                document.getElementById('enc-detail-wrap').style.display = 'none';
+                gw.style.display = '';
+                dw.style.display = 'none';
+                requestAnimationFrame(() => _drawEncChart());
                 return;
             }
             window._encSelectedFamille = fid;
             document.getElementById(`enc-card-${fid}`)?.classList.add('selected');
             const couleur = ENC_FAMILLE_COLORS[famille];
             const s = window._encCurrentStatsMatch?.get(famille) || { eff:0, possessions:0 };
-            document.getElementById('enc-detail-header').innerHTML = `
+            const dh = document.getElementById('enc-detail-header');
+            const dc = document.getElementById('enc-detail-content');
+            if (dh) dh.innerHTML = `
                 <button class="enc-detail-back" onclick="_closeEncDetail()">✕</button>
                 <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${couleur};vertical-align:middle;margin-right:6px"></span>
                 <strong style="text-transform:uppercase;font-size:0.85rem">${famille}</strong>
                 <span style="color:#64748B;font-size:0.75rem;margin-left:8px">${s.eff}% · n=${s.possessions}</span>`;
-            document.getElementById('enc-detail-content').innerHTML = _buildEncDetailTable(window._encCurrentMatchData, famille, window._encTeamMode === 'adv');
-            document.getElementById('enc-graph-wrap').style.display = 'none';
-            document.getElementById('enc-detail-wrap').style.display = '';
+            if (dc) dc.innerHTML = _buildEncDetailTable(window._encCurrentMatchData, famille, window._encTeamMode === 'adv');
+            gw.style.display = 'none';
+            dw.style.display = '';
         }
 
         function _closeEncDetail() {
@@ -1657,8 +1663,11 @@
                 document.getElementById(`enc-card-${window._encSelectedFamille}`)?.classList.remove('selected');
                 window._encSelectedFamille = null;
             }
-            document.getElementById('enc-graph-wrap').style.display = '';
-            document.getElementById('enc-detail-wrap').style.display = 'none';
+            const gw = document.getElementById('enc-graph-wrap');
+            const dw = document.getElementById('enc-detail-wrap');
+            if (gw) gw.style.display = '';
+            if (dw) dw.style.display = 'none';
+            requestAnimationFrame(() => _drawEncChart());
         }
 
         function _initEncMatrixHover() {
