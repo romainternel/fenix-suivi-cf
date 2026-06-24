@@ -113,6 +113,7 @@
                 document.getElementById('analyse-content').style.display = 'none';
                 document.getElementById('analyse-empty').style.display = 'block';
                 generateSeasonCorrelations();
+                renderEncFamillesSection(DATA);
                 return;
             }
 
@@ -1383,7 +1384,8 @@
 
         // A-01/02/03 — Rendu section enclenchements (layout 2 colonnes + radar)
         function renderEncFamillesSection(matchData) {
-            const container = document.getElementById('enc-familles-section');
+            const analyseContentVisible = document.getElementById('analyse-content')?.style.display !== 'none';
+            const container = document.getElementById(analyseContentVisible ? 'enc-familles-section' : 'enc-familles-section-saison');
             if (!container) return;
             if (window._encTeamMode === undefined) window._encTeamMode = 'fenix';
             if (window._encGraphMode === undefined) window._encGraphMode = 'matrice';
