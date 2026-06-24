@@ -1352,23 +1352,30 @@
             if (typeof MATCHS === 'undefined' || !MATCHS || !MATCHS.length) { _encStatsSaison.set(cacheKey, new Map()); return _encStatsSaison.get(cacheKey); }
             const FAMILLES = [...ENC_FAMILLES_ORDRE, 'Autre'];
             const byFamille = new Map();
-            FAMILLES.forEach(f => byFamille.set(f, { effParMatch: [], matchCount: 0 }));
+            FAMILLES.forEach(f => byFamille.set(f, { effParMatch: [], utilisParMatch: [], matchCount: 0 }));
             MATCHS.forEach(matchName => {
                 const matchData = DATA.filter(r => r[COLS.rencontre] === matchName);
                 if (!matchData.length) return;
                 const matchStats = computeEncStats(matchData, isAdv);
+                const teamRowsM = matchData.filter(r => isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX');
+                const totalPossM = teamRowsM.filter(r => (r[COLS.possession] || '').toString().trim()).length;
                 matchStats.forEach((s, famille) => {
-                    if (s.possessions >= 1) { byFamille.get(famille).effParMatch.push(s.eff); byFamille.get(famille).matchCount++; }
+                    if (s.possessions >= 1) {
+                        byFamille.get(famille).effParMatch.push(s.eff);
+                        byFamille.get(famille).utilisParMatch.push(totalPossM > 0 ? s.possessions / totalPossM * 100 : 0);
+                        byFamille.get(famille).matchCount++;
+                    }
                 });
             });
             const result = new Map();
             byFamille.forEach((entry, famille) => {
                 const arr = entry.effParMatch, n = arr.length;
-                if (!n) { result.set(famille, { effMoy: 0, cv: 0, matchCount: 0 }); return; }
+                if (!n) { result.set(famille, { effMoy: 0, utilisMoy: 0, cv: 0, matchCount: 0 }); return; }
                 const mean = arr.reduce((s, v) => s + v, 0) / n;
                 const variance = arr.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / n;
                 const cv = mean > 0 ? Math.sqrt(variance) / mean : 0;
-                result.set(famille, { effMoy: Math.round(mean), cv: Math.round(cv * 100) / 100, matchCount: n });
+                const utilisMoy = entry.utilisParMatch.reduce((s,v)=>s+v,0) / n;
+                result.set(famille, { effMoy: Math.round(mean), utilisMoy: Math.round(utilisMoy), cv: Math.round(cv * 100) / 100, matchCount: n });
             });
             _encStatsSaison.set(cacheKey, result);
             return result;
@@ -1388,6 +1395,8 @@
             const totalPoss = teamRows.filter(r => (r[COLS.possession] || '').toString().trim()).length;
             window._encCurrentMatchData = matchData;
             window._encCurrentStatsMatch = statsMatch;
+            window._encCurrentStatsSaison = statsSaison;
+            window._encCurrentTotalPoss = totalPoss;
             window._encSelectedFamille = null;
             const sublabelCard = isAdv ? 'RÉUSSITE ADV.' : 'RÉUSSITE POSS.';
             const warningHtml = coverage.pct < 80 && coverage.total > 0
@@ -1768,46 +1777,62 @@
             const LABEL_R = Math.min(W, H) * 0.41;
             const mode = window._encGraphMode || 'utilisation';
             const stats = window._encCurrentStatsMatch;
+            const statsSaison = window._encCurrentStatsSaison;
+            const totalPoss = window._encCurrentTotalPoss || 1;
             if (!stats) return;
             ctx.clearRect(0, 0, W, H);
             const familles = ENC_FAMILLES_ORDRE;
             const N = familles.length;
+            const angles = familles.map((_, i) => (i / N) * 2 * Math.PI - Math.PI / 2);
             const rootStyle = getComputedStyle(document.documentElement);
             const getHex = f => {
                 const v = (ENC_FAMILLE_COLORS[f] || '').replace('var(','').replace(')','').trim();
                 return rootStyle.getPropertyValue(v).trim() || '#94A3B8';
             };
-            let values;
-            if (mode === 'utilisation') {
-                const maxP = Math.max(1, ...familles.map(f => (stats.get(f)||{possessions:0}).possessions));
-                values = familles.map(f => (stats.get(f)||{possessions:0}).possessions / maxP);
-            } else {
-                values = familles.map(f => Math.min(1, ((stats.get(f)||{eff:0}).eff||0) / 100));
-            }
-            const angles = familles.map((_, i) => (i / N) * 2 * Math.PI - Math.PI / 2);
-            // Grid rings
+            // Valeurs match et saison (0-1)
+            const matchVals = familles.map(f => {
+                const s = stats.get(f) || {possessions:0,eff:0};
+                return mode === 'utilisation'
+                    ? Math.min(1, totalPoss > 0 ? s.possessions / totalPoss : 0)
+                    : Math.min(1, (s.eff||0) / 100);
+            });
+            const saisonVals = statsSaison ? familles.map(f => {
+                const sd = statsSaison.get(f) || {utilisMoy:0,effMoy:0};
+                return mode === 'utilisation'
+                    ? Math.min(1, (sd.utilisMoy||0) / 100)
+                    : Math.min(1, (sd.effMoy||0) / 100);
+            }) : null;
+            // Grilles
             [0.33, 0.67, 1.0].forEach((r, ri) => {
                 ctx.beginPath();
                 angles.forEach((a, i) => { const x=cx+r*R*Math.cos(a),y=cy+r*R*Math.sin(a); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
                 ctx.closePath();
                 ctx.strokeStyle = ri===2 ? '#CBD5E1' : '#EEF1F5'; ctx.lineWidth = ri===2 ? 1.5 : 1; ctx.stroke();
             });
-            // Axes
             angles.forEach(a => { ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a)); ctx.strokeStyle='#E2E8F0'; ctx.lineWidth=1; ctx.stroke(); });
-            // Data polygon
+            // Polygone saison (derrière, pointillé gris)
+            if (saisonVals && saisonVals.some(v => v > 0)) {
+                ctx.beginPath();
+                angles.forEach((a,i) => { const v=saisonVals[i],x=cx+v*R*Math.cos(a),y=cy+v*R*Math.sin(a); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+                ctx.closePath();
+                ctx.fillStyle='rgba(148,163,184,0.08)'; ctx.fill();
+                ctx.setLineDash([5,4]); ctx.strokeStyle='#94A3B8'; ctx.lineWidth=1.5; ctx.stroke(); ctx.setLineDash([]);
+            }
+            // Polygone match (devant, plein)
             ctx.beginPath();
-            angles.forEach((a,i) => { const v=values[i],x=cx+v*R*Math.cos(a),y=cy+v*R*Math.sin(a); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+            angles.forEach((a,i) => { const v=matchVals[i],x=cx+v*R*Math.cos(a),y=cy+v*R*Math.sin(a); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
             ctx.closePath(); ctx.fillStyle='rgba(10,36,99,0.1)'; ctx.fill(); ctx.strokeStyle='#0A2463'; ctx.lineWidth=2; ctx.stroke();
-            // Dots at data points
+            // Points match
             const dotR = Math.max(4, Math.round(R * 0.045));
             angles.forEach((a,i) => {
-                if (!values[i]) return;
-                const x=cx+values[i]*R*Math.cos(a), y=cy+values[i]*R*Math.sin(a);
+                if (!matchVals[i]) return;
+                const x=cx+matchVals[i]*R*Math.cos(a), y=cy+matchVals[i]*R*Math.sin(a);
                 ctx.beginPath(); ctx.arc(x,y,dotR,0,2*Math.PI); ctx.fillStyle=getHex(familles[i]); ctx.fill();
             });
-            // Labels
+            // Labels : nom + valeur match + valeur saison (plus petite, grise)
             const fMain = Math.max(9, Math.round(R * 0.088));
             const fSub  = Math.max(8, fMain - 1);
+            const fTiny = Math.max(7, fSub - 1);
             const lyOff = Math.round(fMain * 0.65);
             const abbr = {'Faire courir':'F.courir','Mouvement':'Mvt','Spéciaux':'Spéc.','Bloc PVT':'Bloc PVT','Jeu PVT':'Jeu PVT'};
             ctx.textBaseline = 'middle';
@@ -1818,13 +1843,30 @@
                 const xOff = align==='left' ? 3 : align==='right' ? -3 : 0;
                 const name = abbr[familles[i]] || familles[i];
                 const s = stats.get(familles[i]) || {possessions:0,eff:0};
-                const val = mode==='utilisation' ? `${s.possessions}p` : `${s.eff}%`;
+                const matchLabel = mode==='utilisation'
+                    ? `${Math.round(matchVals[i]*100)}%`
+                    : `${s.eff||0}%`;
                 ctx.textAlign = align;
                 ctx.font = `bold ${fMain}px system-ui,sans-serif`; ctx.fillStyle = getHex(familles[i]);
-                ctx.fillText(name, lx+xOff, ly-lyOff);
-                ctx.font = `${fSub}px system-ui,sans-serif`; ctx.fillStyle = '#64748B';
-                ctx.fillText(val, lx+xOff, ly+lyOff);
+                ctx.fillText(name, lx+xOff, ly - lyOff);
+                ctx.font = `${fSub}px system-ui,sans-serif`; ctx.fillStyle = '#1e293b';
+                ctx.fillText(matchLabel, lx+xOff, ly + lyOff);
+                if (saisonVals) {
+                    const sd = statsSaison.get(familles[i]) || {utilisMoy:0,effMoy:0};
+                    const saisonLabel = mode==='utilisation' ? `${sd.utilisMoy||0}% S` : `${sd.effMoy||0}% S`;
+                    ctx.font = `${fTiny}px system-ui,sans-serif`; ctx.fillStyle = '#94A3B8';
+                    ctx.fillText(saisonLabel, lx+xOff, ly + lyOff + fSub + 2);
+                }
             });
+            // Légende dans le footer
+            const leg = document.getElementById('enc-matrix-legend');
+            if (leg) {
+                leg.innerHTML = `<div style="display:flex;align-items:center;gap:16px;font-size:0.72rem;color:#475569">
+                    <span><span style="display:inline-block;width:18px;height:2px;background:#0A2463;vertical-align:middle;margin-right:4px;border-radius:1px"></span>Match actuel</span>
+                    <span><span style="display:inline-block;width:18px;border-top:2px dashed #94A3B8;vertical-align:middle;margin-right:4px"></span>Moy. saison</span>
+                    <span style="color:#94A3B8;font-size:0.68rem">${mode === 'utilisation' ? 'Utilisation %' : 'Efficacité %'}</span>
+                </div>`;
+            }
         }
 
         function _buildEncDetailTable(matchData, famille, isAdv) {
