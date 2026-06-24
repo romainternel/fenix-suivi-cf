@@ -2400,9 +2400,8 @@
             gap: 7px; flex: 0 0 auto; width: 36%; min-width: 0; align-self: flex-start;
         }
         .enc-right-panel {
-            flex: 1; background: #fff; border-radius: 10px;
-            box-shadow: var(--shadow-sm); padding: 8px 14px 10px;
-            min-width: 160px; position: sticky; top: 108px;
+            flex: 1; background: transparent;
+            padding: 0; min-width: 160px; position: sticky; top: 108px;
             display: flex; align-items: flex-start; justify-content: center;
         }
 
