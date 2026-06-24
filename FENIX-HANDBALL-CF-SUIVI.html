@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=176">
-    <script src="js/utils.js?v=176"></script>
-    <script src="js/impact-images.js?v=176"></script>
-    <script src="js/player-mode.js?v=176"></script>
-    <script src="js/page-joueurs.js?v=176"></script>
-    <script src="js/page-notes-graph.js?v=176"></script>
-    <script src="js/page-analyse.js?v=176"></script>
+    <link rel="stylesheet" href="css/style.css?v=177">
+    <script src="js/utils.js?v=177"></script>
+    <script src="js/impact-images.js?v=177"></script>
+    <script src="js/player-mode.js?v=177"></script>
+    <script src="js/page-joueurs.js?v=177"></script>
+    <script src="js/page-notes-graph.js?v=177"></script>
+    <script src="js/page-analyse.js?v=177"></script>
 </head>
 <body>
 
@@ -235,53 +235,53 @@
 
         <!-- Analyse Page -->
         <div class="page" id="page-analyse">
-            <!-- Barre sticky match -->
+            <!-- Barre sticky : match + filtres -->
             <div id="analyse-sticky-bar">
-                <span style="font-size:0.7rem;font-weight:700;color:#64748b;letter-spacing:0.06em;white-space:nowrap;">MATCH</span>
-                <select id="filter-match-global" onchange="onMatchGlobalChange()" style="padding:0.3rem 0.6rem;border:1px solid #e2e8f0;border-radius:6px;font-size:0.85rem;color:#1e293b;background:#fff;cursor:pointer;min-width:200px;max-width:340px;">
-                    <option value="">Saison complète</option>
-                </select>
-            </div>
-            <!-- Bloc Match : terrain + stats équipes -->
-            <div class="section">
-                <div class="filters">
-                    <div class="filter-group">
-                        <label>Club</label>
-                        <select id="filter-club" onchange="updateMatchPage()">
-                            <option value="">Tous</option>
-                            <option value="FENIX">FENIX</option>
-                        </select>
-                    </div>
-                    <div class="filter-group" style="position:relative;">
-                        <label>Résultat</label>
-                        <div class="multi-select-container">
-                            <button type="button" class="multi-select-btn" id="match-resultat-btn" onclick="toggleResultatDropdown()">
-                                <span id="match-resultat-text">Tous</span>
-                                <span class="dropdown-arrow">▼</span>
-                            </button>
-                            <div class="multi-select-dropdown" id="match-resultat-dropdown" style="display:none;">
-                                <label class="checkbox-item">
-                                    <input type="checkbox" id="match-resultat-all" checked onchange="toggleAllResultat()">
-                                    <span>Tous</span>
-                                </label>
-                                <div id="match-resultat-checkboxes">
-                                    <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="But" checked onchange="updateResultatSelection()"><span>But</span></label>
-                                    <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="Tir raté" checked onchange="updateResultatSelection()"><span>Tir raté</span></label>
-                                    <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="PB" checked onchange="updateResultatSelection()"><span>PB</span></label>
-                                    <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="PO" checked onchange="updateResultatSelection()"><span>PO</span></label>
-                                    <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="Jet franc" checked onchange="updateResultatSelection()"><span>Jet franc</span></label>
-                                </div>
+                <div class="sticky-filter-group">
+                    <span class="sticky-filter-label">MATCH</span>
+                    <select id="filter-match-global" onchange="onMatchGlobalChange()" class="sticky-select" style="min-width:160px;max-width:260px;">
+                        <option value="">Saison complète</option>
+                    </select>
+                </div>
+                <div class="sticky-sep"></div>
+                <div class="sticky-filter-group">
+                    <span class="sticky-filter-label">CLUB</span>
+                    <select id="filter-club" onchange="updateMatchPage()" class="sticky-select">
+                        <option value="">Tous</option>
+                        <option value="FENIX">FENIX</option>
+                    </select>
+                </div>
+                <div class="sticky-filter-group" style="position:relative;">
+                    <span class="sticky-filter-label">RÉSULTAT</span>
+                    <div class="multi-select-container sticky-multi">
+                        <button type="button" class="multi-select-btn sticky-multi-btn" id="match-resultat-btn" onclick="toggleResultatDropdown()">
+                            <span id="match-resultat-text">Tous</span>
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+                        <div class="multi-select-dropdown" id="match-resultat-dropdown" style="display:none;">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="match-resultat-all" checked onchange="toggleAllResultat()">
+                                <span>Tous</span>
+                            </label>
+                            <div id="match-resultat-checkboxes">
+                                <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="But" checked onchange="updateResultatSelection()"><span>But</span></label>
+                                <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="Tir raté" checked onchange="updateResultatSelection()"><span>Tir raté</span></label>
+                                <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="PB" checked onchange="updateResultatSelection()"><span>PB</span></label>
+                                <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="PO" checked onchange="updateResultatSelection()"><span>PO</span></label>
+                                <label class="checkbox-item"><input type="checkbox" class="resultat-checkbox" value="Jet franc" checked onchange="updateResultatSelection()"><span>Jet franc</span></label>
                             </div>
                         </div>
                     </div>
-                    <div class="filter-group">
-                        <label>GE</label>
-                        <select id="filter-ge" onchange="updateMatchPage()">
-                            <option value="">Tous</option>
-                        </select>
-                    </div>
                 </div>
-
+                <div class="sticky-filter-group">
+                    <span class="sticky-filter-label">GE</span>
+                    <select id="filter-ge" onchange="updateMatchPage()" class="sticky-select">
+                        <option value="">Tous</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Bloc Match : terrain + stats équipes -->
+            <div class="section">
                 <div class="match-card-bar">
                     <button class="btn-match-avg" id="btn-match-avg" onclick="toggleMatchCardAvg()">TOTAUX</button>
                 </div>
