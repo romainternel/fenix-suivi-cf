@@ -1569,12 +1569,11 @@
         function _drawEncPie() {
             const canvas = document.getElementById('enc-pie-canvas');
             if (!canvas) return;
-            // Auto-resize to container
             const wrap = canvas.parentElement;
             if (wrap && wrap.clientWidth > 0) {
-                const cw = Math.max(280, wrap.clientWidth - 28);
+                const cw = Math.max(300, wrap.clientWidth - 28);
                 canvas.width = cw;
-                canvas.height = Math.min(Math.round(cw * 0.82), 340);
+                canvas.height = Math.min(Math.round(cw * 0.88), 370);
             }
             const statsMatch = window._encCurrentStatsMatch;
             const totalPoss = window._encCurrentTotalPoss;
@@ -1582,58 +1581,77 @@
             const slices = [];
             [...ENC_FAMILLES_ORDRE, 'Autre'].forEach(famille => {
                 const s = statsMatch.get(famille);
-                if (s && s.possessions > 0) {
+                if (s && s.possessions > 0)
                     slices.push({ famille, poss: s.possessions, color: ENC_FAMILLE_COLORS[famille] || '#94A3B8' });
-                }
             });
             if (!slices.length) return;
+
             const ctx = canvas.getContext('2d');
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
-            // Pie occupies left 55% of canvas, legend right 45%
-            const pieR = Math.min(H / 2 - 8, W * 0.27);
-            const cx = W * 0.27 + 4, cy = H / 2;
+
+            // Pie centered, radius capped so labels have room
+            const margin = 78;
+            const pieR = Math.min((W - 2 * margin) / 2, (H - 2 * margin) / 2, 118);
+            const cx = W / 2, cy = H / 2;
+
+            // Compute slice angles
             let angle = -Math.PI / 2;
-            slices.forEach(slice => {
+            const computed = slices.map(slice => {
                 const frac = slice.poss / totalPoss;
                 const sweep = frac * 2 * Math.PI;
+                const start = angle;
+                angle += sweep;
+                return { ...slice, frac, start, sweep };
+            });
+
+            // Draw slices
+            computed.forEach(s => {
                 ctx.beginPath();
                 ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, pieR, angle, angle + sweep);
+                ctx.arc(cx, cy, pieR, s.start, s.start + s.sweep);
                 ctx.closePath();
-                ctx.fillStyle = slice.color;
+                ctx.fillStyle = s.color;
                 ctx.fill();
                 ctx.strokeStyle = '#fff';
                 ctx.lineWidth = 2;
                 ctx.stroke();
-                if (frac > 0.06) {
-                    const mid = angle + sweep / 2;
-                    const lx = cx + Math.cos(mid) * pieR * 0.65;
-                    const ly = cy + Math.sin(mid) * pieR * 0.65;
-                    ctx.fillStyle = '#fff';
-                    ctx.font = `bold ${Math.max(9, Math.round(pieR * 0.14))}px Inter,sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(Math.round(frac * 100) + '%', lx, ly);
-                }
-                angle += sweep;
             });
-            // Legend to the right
-            const legendX = cx + pieR + 14;
-            const lh = Math.min(22, Math.floor((H - 8) / slices.length));
-            let legendY = Math.max(6, (H - slices.length * lh) / 2);
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            slices.forEach(slice => {
-                const frac = slice.poss / totalPoss;
-                const pct = Math.round(frac * 100);
-                ctx.fillStyle = slice.color;
-                ctx.fillRect(legendX, legendY + 2, 10, 10);
-                ctx.fillStyle = '#374151';
-                ctx.font = `${Math.max(9, lh - 8)}px Inter,sans-serif`;
-                const name = slice.famille === 'Autre' ? 'Non classifié' : slice.famille;
-                ctx.fillText(`${name}  ${pct}%`, legendX + 14, legendY + 7);
-                legendY += lh;
+
+            // Peripheral labels with kink lines
+            computed.forEach(s => {
+                if (s.frac < 0.025) return; // skip slivers
+                const mid = s.start + s.sweep / 2;
+                const pct = Math.round(s.frac * 100);
+                const name = s.famille === 'Autre' ? 'Autre' : s.famille;
+                const isRight = Math.cos(mid) >= 0;
+
+                // Line: arc edge → radial point → horizontal kink
+                const p1x = cx + Math.cos(mid) * (pieR + 4);
+                const p1y = cy + Math.sin(mid) * (pieR + 4);
+                const p2x = cx + Math.cos(mid) * (pieR + 16);
+                const p2y = cy + Math.sin(mid) * (pieR + 16);
+                const p3x = p2x + (isRight ? 10 : -10);
+
+                ctx.strokeStyle = '#94A3B8';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(p1x, p1y);
+                ctx.lineTo(p2x, p2y);
+                ctx.lineTo(p3x, p2y);
+                ctx.stroke();
+
+                // Name (bold) above anchor, % below
+                const tx = p3x + (isRight ? 3 : -3);
+                ctx.textAlign = isRight ? 'left' : 'right';
+                ctx.fillStyle = '#1E293B';
+                ctx.font = 'bold 8.5px Inter,sans-serif';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(name, tx, p2y + 1);
+                ctx.fillStyle = '#475569';
+                ctx.font = '8.5px Inter,sans-serif';
+                ctx.textBaseline = 'top';
+                ctx.fillText(pct + '%', tx, p2y + 1);
             });
         }
 
