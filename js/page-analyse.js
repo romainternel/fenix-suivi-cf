@@ -1596,8 +1596,8 @@
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
 
-            // Géométrie : pieR = 42% du côté (cap 500), labels ~58% de l'espace restant
-            const pieR = Math.min(W * 0.42, 500);
+            // Géométrie : pieR = 36% du côté (cap 425), labels ~64% de l'espace restant
+            const pieR = Math.min(W * 0.36, 425);
             const cx = W / 2, cy = H / 2;
 
             let angle = -Math.PI / 2;
