@@ -1323,8 +1323,8 @@
                 const s = stats.get(famille);
                 const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');
                 s.possessions++;
-                if (res === 'But') { s.buts++; s.tirs++; }
-                else if (res === 'Tir raté' || res === 'Tir arrêté') s.tirs++;
+                if (res === 'But') s.buts++;
+                else if (res === 'Tir raté' || res === 'Tir arrêté') s.tirs++; // tirs = ratés seulement
                 else if (res === 'PB') s.pb++;
                 else if (res === 'PO') s.po++;
             });
@@ -1381,7 +1381,10 @@
             const warningHtml = coverage.pct < 80 && coverage.total > 0
                 ? `<div class="enc-coverage-warning">⚠ ${100 - coverage.pct}% des enclenchements non classifiés — ENC_FAMILLE_MAP à mettre à jour.</div>` : '';
             let cardsHtml = '';
-            ENC_FAMILLES_ORDRE.forEach(famille => {
+            const famillesToRender = [...ENC_FAMILLES_ORDRE].sort((a, b) =>
+                ((statsMatch.get(b)||{possessions:0}).possessions) - ((statsMatch.get(a)||{possessions:0}).possessions)
+            );
+            famillesToRender.forEach(famille => {
                 const s = statsMatch.get(famille) || { tirs:0, buts:0, pb:0, po:0, eff:0, possessions:0 };
                 const sd = statsSaison.get(famille) || { effMoy:0, cv:0, matchCount:0 };
                 const couleur = ENC_FAMILLE_COLORS[famille];
@@ -1390,6 +1393,9 @@
                     cardsHtml += `<div class="enc-card-mini disabled" style="border-top-color:${couleur}"><div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${couleur};opacity:0.35"></span><span class="enc-famille-name">${famille}</span></div><div class="enc-famille-vide">Non utilisé</div></div>`;
                     return;
                 }
+                const utilisPct = totalPoss > 0 ? Math.round(s.possessions / totalPoss * 100) : 0;
+                const totalTirs = s.buts + s.tirs; // tirs = ratés seulement
+                const tirEff = totalTirs > 0 ? Math.round(s.buts / totalTirs * 100) : 0;
                 let badgeHtml = '';
                 if (sd.matchCount >= 3 && s.possessions >= 5) {
                     const em = sd.effMoy, ec = s.eff;
@@ -1403,14 +1409,14 @@
                 }
                 const hasRef = sd.matchCount >= 3;
                 const fillClass = !hasRef ? 'noref' : (s.eff >= sd.effMoy ? 'above' : 'below');
-                const refText = hasRef ? `moy. ${sd.effMoy}%` : '—';
+                const refText = hasRef ? `moy. eff. ${sd.effMoy}%` : '—';
                 cardsHtml += `
                 <div class="enc-card-mini" id="enc-card-${fid}" style="border-top-color:${couleur}" onclick="_selectEncFamille('${famille}','${fid}')">
                     <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${couleur}"></span><span class="enc-famille-name">${famille}</span></div>
-                    <div class="enc-famille-eff">${s.eff}%</div>
-                    <div class="enc-famille-sublabel">${sublabelCard}</div>
-                    <div class="enc-famille-meta">${s.buts} b · ${s.po} PO · ${s.possessions} poss.</div>
-                    <div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${Math.min(s.eff,100)}%"></div></div>
+                    <div class="enc-famille-eff">${utilisPct}%</div>
+                    <div class="enc-famille-sublabel">UTILISATION</div>
+                    <div class="enc-famille-meta">${s.buts}/${totalTirs} tirs · ${tirEff}% · ${s.possessions} poss.</div>
+                    <div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${utilisPct}%"></div></div>
                     <div class="enc-progress-ref">${refText}</div>
                     ${badgeHtml}
                 </div>`;
@@ -1722,8 +1728,8 @@
                 const s = byEnc.get(cle);
                 const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');
                 s.possessions++;
-                if (res === 'But') { s.buts++; s.tirs++; }
-                else if (res === 'Tir raté' || res === 'Tir arrêté') s.tirs++;
+                if (res === 'But') s.buts++;
+                else if (res === 'Tir raté' || res === 'Tir arrêté') s.tirs++; // tirs = ratés seulement
                 else if (res === 'PB') s.pb++;
                 else if (res === 'PO') s.po++;
             });
@@ -1738,7 +1744,7 @@
                 const c = eff >= 60 ? '#059669' : eff < 40 ? '#DC2626' : '#64748B';
                 lignes += `<tr><td>${s.label}</td><td>${s.buts}</td><td>${s.po}</td><td>${s.tirs}</td><td>${s.pb}</td><td>${s.possessions}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
             });
-            return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Buts</th><th>PO</th><th>Tirs</th><th>PB</th><th>Poss.</th><th>Eff.</th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tpo}</td><td>${tt}</td><td>${tp}</td><td>${tposs}</td><td>${te}%</td></tr></tfoot></table>`;
+            return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Buts</th><th>PO</th><th>Ratés</th><th>PB</th><th>Poss.</th><th>Eff.</th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tpo}</td><td>${tt}</td><td>${tp}</td><td>${tposs}</td><td>${te}%</td></tr></tfoot></table>`;
         }
 
         // A-04 — Overlay momentum + détection bascule
