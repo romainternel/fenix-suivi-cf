@@ -1593,7 +1593,9 @@
                 ctx.font = `bold ${s.possessions >= 10 ? 9 : 10}px system-ui`;
                 ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText(s.possessions, x, y);
-                window._encMatrixDots.push({ x, y, famille: f, eff: s.eff||0, possessions: s.possessions });
+                const totalPossMatrix = window._encCurrentTotalPoss || 1;
+                const utilisPctMatrix = Math.round(s.possessions / totalPossMatrix * 100);
+                window._encMatrixDots.push({ x, y, famille: f, eff: s.eff||0, possessions: s.possessions, utilisPct: utilisPctMatrix });
             });
             // Zone labels drawn LAST (on top of dots) with white bg for legibility
             ctx.font = `bold ${fAxis}px system-ui`;
@@ -1669,7 +1671,7 @@
                 const dots = window._encMatrixDots || [];
                 const found = dots.find(d => Math.sqrt((cx-d.x)**2+(cy-d.y)**2) <= 15);
                 if (found) {
-                    tip.innerHTML = `<strong>${found.famille}</strong> — ${found.eff}% · ${found.possessions} poss.`;
+                    tip.innerHTML = `<strong>${found.famille}</strong> · ${found.possessions} poss. (${found.utilisPct}% util.) · eff. ${found.eff}%`;
                     tip.style.display = 'block';
                     tip.style.left = (e.clientX + 14) + 'px';
                     tip.style.top = (e.clientY - 12) + 'px';
