@@ -1697,9 +1697,13 @@
                 box.id = 'enc-radar-info-box';
                 box.style.cssText = 'position:absolute;top:30px;left:0;right:0;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.75rem;line-height:1.7;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)';
                 box.innerHTML = `<strong style="font-size:0.8rem;color:#0A2463">Lire le radar</strong><br>
-                    <b>Chaque axe</b> — une famille d'enclenchement<br>
-                    <b style="color:#0A2463">━ Polygone bleu</b> — match actuel<br>
-                    <b style="color:#94A3B8">╍ Polygone gris</b> — moyenne de la saison<br><br>
+                    <b style="color:#0A2463">━ Match actuel</b> — valeur affichée en <span style="color:#1e293b;font-weight:700">noir</span> sur chaque axe<br>
+                    <b style="color:#94A3B8">╍ Moy. saison</b> — valeur affichée en <span style="color:#94A3B8;font-weight:700">gris · X% S</span> sous chaque axe<br>
+                    <span style="display:inline-block;margin:5px 0 6px 10px;background:#F8FAFC;border-radius:5px;padding:3px 8px;font-size:0.72rem">
+                        ex. <b style="color:#F59E0B">Isoler</b> &nbsp;
+                        <span style="color:#1e293b;font-weight:700">39%</span>
+                        <span style="color:#94A3B8"> · 32% S</span>
+                    </span><br>
                     <b>Mode Utilisation</b> — % de possessions jouées avec cette famille<br>
                     <b>Mode Efficacité</b> — (buts + PO) / possessions<br><br>
                     <span style="color:#475569">Un axe <em>saillant</em> vs la saison = famille sur-représentée sur ce match.<br>
