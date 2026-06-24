@@ -1570,10 +1570,12 @@
             const wrap = canvas.parentElement;
             if (wrap && wrap.clientWidth > 0) {
                 const cw = Math.min(Math.max(300, wrap.clientWidth - 28), 1200);
+                const pieRPrev = Math.min(cw * 0.29, 340);
+                const ch = Math.round(2 * pieRPrev + 115); // hauteur = diamètre + marges labels haut/bas
                 canvas.width = cw;
-                canvas.height = cw;
+                canvas.height = ch;
                 canvas.style.width  = cw + 'px';
-                canvas.style.height = cw + 'px';
+                canvas.style.height = ch + 'px';
             }
             const statsMatch = window._encCurrentStatsMatch;
             const totalPoss = window._encCurrentTotalPoss;
@@ -1596,9 +1598,9 @@
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
 
-            // Géométrie : pieR = 29% du côté (cap 340), labels ~71% de l'espace restant
+            // Géométrie : pieR = 29% de la largeur (cap 340), cy collé en haut avec marge labels
             const pieR = Math.min(W * 0.29, 340);
-            const cx = W / 2, cy = H / 2;
+            const cx = W / 2, cy = pieR + 55;
 
             let angle = -Math.PI / 2;
             const computed = slices.map(slice => {
