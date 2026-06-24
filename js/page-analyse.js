@@ -70,7 +70,7 @@
             'Mouvement':'mouvement',
             'Isoler':'isoler','Rentrée':'rentree',
             'Jeu PVT':'jeu-pvt','Bloc PVT':'bloc-pvt','7vs6':'7vs6',
-            'Faire courir':'faire-courir','Spéciaux':'speciaux','6vs5':'6vs5','Rebond':'rebond',
+            'Faire courir':'faire-courir','Spéciaux':'speciaux','6vs5':'6vs5','Rebond':'rebond','Autre':'autre',
         };
 
         let _momentsCles = [];
@@ -1329,7 +1329,9 @@
             FAMILLES.forEach(f => stats.set(f, { tirs: 0, buts: 0, pb: 0, po: 0, eff: 0, possessions: 0 }));
             rows.forEach(r => {
                 if (!(r[COLS.possession] || '').toString().trim()) return; // sub-event (Jet franc, Pen post-PO…) — pas une possession
-                const famille = getEncFamille(r[COLS.enclenchement]);
+                const encRaw = (r[COLS.enclenchement] || '').toString().trim();
+                if (!encRaw) return; // pas d'enc renseigné → ignoré (ni classifié, ni "Autre")
+                const famille = getEncFamille(encRaw);
                 const s = stats.get(famille);
                 const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');
                 s.possessions++;
@@ -1432,6 +1434,23 @@
                     ${badgeHtml}
                 </div>`;
             });
+            // Carte "Non classifié" : enc non vides sans famille connue
+            const sAutre = statsMatch.get('Autre') || { tirs:0, buts:0, pb:0, po:0, eff:0, possessions:0 };
+            if (sAutre.possessions > 0) {
+                const cAutre = ENC_FAMILLE_COLORS['Autre'] || 'var(--enc-autre)';
+                const utilisAutrePct = totalPoss > 0 ? Math.round(sAutre.possessions / totalPoss * 100) : 0;
+                const totalTirsAutre = sAutre.buts + sAutre.tirs;
+                const tirEffAutre = totalTirsAutre > 0 ? Math.round(sAutre.buts / totalTirsAutre * 100) : 0;
+                cardsHtml += `
+                <div class="enc-card-mini" id="enc-card-autre" style="border-top-color:${cAutre}" onclick="_selectEncFamille('Autre','autre')">
+                    <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${cAutre}"></span><span class="enc-famille-name">Non classifié</span></div>
+                    <div class="enc-famille-eff">${utilisAutrePct}%</div>
+                    <div class="enc-famille-sublabel">UTILISATION</div>
+                    <div class="enc-famille-meta">${sAutre.buts}/${totalTirsAutre} tirs · ${tirEffAutre}% · ${sAutre.possessions} poss.</div>
+                    <div class="enc-progress-track"><div class="enc-progress-fill noref" style="width:${utilisAutrePct}%"></div></div>
+                    <div class="enc-progress-ref">—</div>
+                </div>`;
+            }
             const mode = window._encGraphMode;
             const titleIcon = isAdv ? '🛡' : '⚡';
             const titleLabel = isAdv ? 'DÉFENSE FENIX — enclenchements adversaires' : 'ENCLENCHEMENTS OFFENSIFS FENIX';
@@ -1812,6 +1831,7 @@
             const rows = matchData.filter(r =>
                 (isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX') &&
                 (r[COLS.possession] || '').toString().trim() &&
+                (r[COLS.enclenchement] || '').toString().trim() && // enc vide → ignoré
                 getEncFamille(r[COLS.enclenchement]) === famille);
             const byEnc = new Map();
             rows.forEach(r => {
