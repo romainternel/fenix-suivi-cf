@@ -2403,7 +2403,7 @@
             flex: 1; background: #fff; border-radius: 10px;
             box-shadow: var(--shadow-sm); padding: 8px 14px 10px;
             min-width: 160px; position: sticky; top: 108px;
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: flex-start; justify-content: center;
         }
 
         /* Cards compactes */

@@ -1569,7 +1569,7 @@
             if (!canvas) return;
             const wrap = canvas.parentElement;
             if (wrap && wrap.clientWidth > 0) {
-                const cw = Math.min(Math.max(300, wrap.clientWidth - 28), 480);
+                const cw = Math.min(Math.max(300, wrap.clientWidth - 28), 576);
                 canvas.width = cw;
                 canvas.height = cw;
                 canvas.style.width  = cw + 'px';
@@ -1596,8 +1596,8 @@
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
 
-            // Géométrie : pieR = 30% du côté (cap 220), labels ~70% de l'espace restant
-            const pieR = Math.min(W * 0.30, 220);
+            // Géométrie : pieR = 30% du côté (cap 264), labels ~70% de l'espace restant
+            const pieR = Math.min(W * 0.30, 264);
             const cx = W / 2, cy = H / 2;
 
             let angle = -Math.PI / 2;
@@ -1637,10 +1637,10 @@
                     const ly = cy + Math.sin(mid) * pieR * 0.62;
                     ctx.textAlign = 'center';
                     ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 14px Inter,sans-serif';
+                    ctx.font = 'bold 17px Inter,sans-serif';
                     ctx.textBaseline = 'bottom';
                     ctx.fillText(name, lx, ly);
-                    ctx.font = '12px Inter,sans-serif';
+                    ctx.font = '14px Inter,sans-serif';
                     ctx.textBaseline = 'top';
                     ctx.fillText(pct + '%', lx, ly);
                 } else {
@@ -1652,14 +1652,14 @@
                 }
             });
 
-            // Anti-chevauchement : tri par rawY, espacement min 14px par côté
+            // Anti-chevauchement : tri par rawY, espacement min 26px par côté
             ['left', 'right'].forEach(side => {
                 const group = peripheral
                     .filter(l => l.isRight === (side === 'right'))
                     .sort((a, b) => a.rawY - b.rawY);
                 group.forEach((item, i) => {
-                    if (i > 0 && item.rawY - group[i - 1].adjustedY < 22)
-                        item.adjustedY = group[i - 1].adjustedY + 22;
+                    if (i > 0 && item.rawY - group[i - 1].adjustedY < 26)
+                        item.adjustedY = group[i - 1].adjustedY + 26;
                     else
                         item.adjustedY = item.rawY;
                 });
@@ -1688,11 +1688,11 @@
                 const tx = p3x + (isRight ? 3 : -3);
                 ctx.textAlign = isRight ? 'left' : 'right';
                 ctx.fillStyle = '#1E293B';
-                ctx.font = 'bold 12px Inter,sans-serif';
+                ctx.font = 'bold 14px Inter,sans-serif';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(name, tx, p2y);
                 ctx.fillStyle = '#475569';
-                ctx.font = '10.5px Inter,sans-serif';
+                ctx.font = '12.5px Inter,sans-serif';
                 ctx.textBaseline = 'top';
                 ctx.fillText(pct + '%', tx, p2y);
             });
