@@ -1507,8 +1507,9 @@
                         </div>
                     </div>
                     <div class="enc-graph-toggle enc-graph-toggle--header">
-                        <button class="enc-toggle-btn${mode==='matrice'?' active':''}" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
-                        <span class="enc-info-btn" onclick="_toggleEncGraphInfo()" title="Comprendre le graphique">i</span>
+                        <button class="enc-toggle-btn${mode!=='matrice'?' active':''}" data-mode="pie" onclick="_setEncGraphMode('pie')">Vue générale</button>
+                        <span class="enc-info-btn" onclick="_toggleEncGraphInfo()" title="Comprendre le graphique" style="${mode!=='matrice'?'visibility:hidden':''}">i</span>
+                        <button class="enc-toggle-btn${mode==='matrice'?' active':''}" data-mode="matrice" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
                     </div>
                 </div>
                 ${warningHtml}
@@ -1540,11 +1541,15 @@
 
         function _setEncGraphMode(mode) {
             window._encGraphMode = mode;
-            document.querySelectorAll('.enc-toggle-btn').forEach(b =>
-                b.classList.toggle('active', mode === 'matrice'));
+            document.querySelectorAll('.enc-toggle-btn[data-mode]').forEach(b =>
+                b.classList.toggle('active', b.dataset.mode === mode));
+            // Masquer le i en vue générale (pas d'info pertinente)
+            const infoBtn = document.querySelector('.enc-graph-toggle--header .enc-info-btn');
+            if (infoBtn) infoBtn.style.visibility = mode !== 'matrice' ? 'hidden' : '';
             const mib = document.getElementById('enc-matrix-info-box');
             if (mib) mib.style.display = 'none';
-            _drawEncChart();
+            // RAF pour laisser le DOM afficher le canvas avant de mesurer clientWidth
+            requestAnimationFrame(() => _drawEncChart());
         }
 
         function _drawEncChart() {
