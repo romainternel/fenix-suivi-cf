@@ -1415,11 +1415,12 @@
                 <span class="enc-info-btn" onclick="_toggleEncCardsInfo()" title="Lire les cartes">i</span>
                 <div id="enc-cards-info-box" style="display:none;position:absolute;top:20px;right:0;width:100%;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.74rem;line-height:1.7;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
                     <strong style="font-size:0.8rem;color:#0A2463">Lire les cartes</strong><br>
-                    <b>Grand %</b> — Utilisation : part des poss. equipe jouees avec cette famille<br>
-                    <b>Barre</b> — verte si eff. encl. &ge; moy. saison, rouge si en-dessous<br>
-                    <b>N% encl.</b> — Eff. enclenchement : (Buts + PO) / Possessions<br>
-                    <b>N% tir</b> — Reussite pure au tir : buts / (buts + rates/arretes)<br>
-                    <b>Np · ▲/▼ delta</b> — nb possessions + ecart vs moy. saison (vert = au-dessus)
+                    <b>Grand %</b> — Utilisation : part des possessions equipe jouees avec cette famille<br>
+                    <b>Barre coloree</b> — verte si eff. encl. &ge; moy. saison, rouge si en-dessous, grise si pas assez de matchs<br>
+                    <b>% encl. (gras)</b> — Efficacite enclenchement = (Buts + PO) / Possessions (le PO compte comme efficace)<br>
+                    <b>% tir (gris)</b> — Reussite au tir = Buts / (Buts + Rates + Arretes)<br>
+                    <b>Np</b> — Nombre de possessions jouees avec cette famille<br>
+                    <b>▲/▼ pts</b> — Ecart vs moy. saison (vert = au-dessus, rouge = en-dessous)
                 </div>
             </div>`;
             let cardsHtml = cardsInfoHtml;
@@ -1516,7 +1517,8 @@
                     <div class="enc-cards-grid">${cardsHtml}</div>
                     <div class="enc-right-panel" id="enc-right-panel">
                         <div id="enc-graph-wrap" style="position:relative">
-                            <canvas id="enc-radar-canvas" width="340" height="290" style="display:block;margin:0 auto;max-width:100%"></canvas>
+                            <canvas id="enc-radar-canvas" width="340" height="260" style="display:block;margin:0 auto;max-width:100%"></canvas>
+                            <canvas id="enc-pie-canvas" width="260" height="130" style="display:block;margin:4px auto 0;max-width:100%"></canvas>
                         </div>
                         <div id="enc-detail-wrap" style="display:none">
                             <div class="enc-detail-header-bar" id="enc-detail-header"></div>
@@ -1551,6 +1553,70 @@
         function _drawEncChart() {
             if (window._encGraphMode === 'radar') _drawEncRadar();
             else _drawEncMatrix();
+            _drawEncPie();
+        }
+
+        function _drawEncPie() {
+            const canvas = document.getElementById('enc-pie-canvas');
+            if (!canvas) return;
+            const statsMatch = window._encCurrentStatsMatch;
+            const totalPoss = window._encCurrentTotalPoss;
+            if (!statsMatch || !totalPoss) return;
+            const slices = [];
+            [...ENC_FAMILLES_ORDRE, 'Autre'].forEach(famille => {
+                const s = statsMatch.get(famille);
+                if (s && s.possessions > 0) {
+                    slices.push({ famille, poss: s.possessions, color: ENC_FAMILLE_COLORS[famille] || '#94A3B8' });
+                }
+            });
+            if (!slices.length) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+            const pieR = Math.min(H / 2, W / 3) - 2;
+            const cx = pieR + 4, cy = H / 2;
+            let angle = -Math.PI / 2;
+            slices.forEach(slice => {
+                const frac = slice.poss / totalPoss;
+                const sweep = frac * 2 * Math.PI;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, pieR, angle, angle + sweep);
+                ctx.closePath();
+                ctx.fillStyle = slice.color;
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                if (frac > 0.07) {
+                    const mid = angle + sweep / 2;
+                    const lx = cx + Math.cos(mid) * pieR * 0.65;
+                    const ly = cy + Math.sin(mid) * pieR * 0.65;
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 8px Inter,sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(Math.round(frac * 100) + '%', lx, ly);
+                }
+                angle += sweep;
+            });
+            // Legend to the right
+            const legendX = cx + pieR + 10;
+            let legendY = 6;
+            const lh = 13;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            slices.forEach(slice => {
+                if (legendY + lh > H) return;
+                const frac = slice.poss / totalPoss;
+                ctx.fillStyle = slice.color;
+                ctx.fillRect(legendX, legendY + 1, 8, 8);
+                ctx.fillStyle = '#374151';
+                ctx.font = '8px Inter,sans-serif';
+                const label = (slice.famille === 'Autre' ? 'Non classifié' : slice.famille) + ' ' + Math.round(frac * 100) + '%';
+                ctx.fillText(label, legendX + 11, legendY + 5);
+                legendY += lh;
+            });
         }
 
         function _drawEncMatrix() {
