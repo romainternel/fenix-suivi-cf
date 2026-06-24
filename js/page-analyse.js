@@ -1385,7 +1385,12 @@
         // A-01/02/03 — Rendu section enclenchements (layout 2 colonnes + radar)
         function renderEncFamillesSection(matchData) {
             const analyseContentVisible = document.getElementById('analyse-content')?.style.display !== 'none';
-            const container = document.getElementById(analyseContentVisible ? 'enc-familles-section' : 'enc-familles-section-saison');
+            const containerId = analyseContentVisible ? 'enc-familles-section' : 'enc-familles-section-saison';
+            const otherId     = analyseContentVisible ? 'enc-familles-section-saison' : 'enc-familles-section';
+            // Vider l'autre conteneur pour éviter les doublons d'IDs (enc-radar-canvas, etc.)
+            const otherEl = document.getElementById(otherId);
+            if (otherEl) otherEl.innerHTML = '';
+            const container = document.getElementById(containerId);
             if (!container) return;
             if (window._encTeamMode === undefined) window._encTeamMode = 'fenix';
             if (window._encGraphMode === undefined) window._encGraphMode = 'matrice';
