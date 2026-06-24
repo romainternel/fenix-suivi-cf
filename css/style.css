@@ -157,32 +157,31 @@
         /* Matchs Bar - Compact */
         .matchs-bar {
             background: #fff;
-            border-radius: 12px;
-            padding: 0.75rem 1.5rem;
-            margin-bottom: 1.5rem;
-            display: flex;
+            border-radius: 8px;
+            padding: 4px 10px 4px 8px;
+            margin-bottom: 1rem;
+            display: inline-flex;
             align-items: center;
-            justify-content: space-between;
-            border-left: 4px solid var(--fenix-blue);
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            gap: 7px;
+            border: 1px solid #E2E8F0;
+            border-left: 3px solid var(--fenix-blue);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
 
-        .matchs-bar-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .matchs-bar-icon { font-size: 1.3rem; }
+        .matchs-bar-icon { font-size: 0.95rem; }
 
         .matchs-bar-title {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.1rem;
+            font-size: 0.88rem;
             color: var(--fenix-blue);
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
+        }
+
+        .matchs-bar .matchs-count-badge {
+            font-size: 1rem;
+            padding: 1px 8px;
+            min-width: auto;
+            border-radius: 5px;
         }
 
         .matchs-count-badge {

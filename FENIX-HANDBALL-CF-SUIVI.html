@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=165">
-    <script src="js/utils.js?v=165"></script>
-    <script src="js/impact-images.js?v=165"></script>
-    <script src="js/player-mode.js?v=165"></script>
-    <script src="js/page-joueurs.js?v=165"></script>
-    <script src="js/page-notes-graph.js?v=165"></script>
-    <script src="js/page-analyse.js?v=165"></script>
+    <link rel="stylesheet" href="css/style.css?v=166">
+    <script src="js/utils.js?v=166"></script>
+    <script src="js/impact-images.js?v=166"></script>
+    <script src="js/player-mode.js?v=166"></script>
+    <script src="js/page-joueurs.js?v=166"></script>
+    <script src="js/page-notes-graph.js?v=166"></script>
+    <script src="js/page-analyse.js?v=166"></script>
 </head>
 <body>
 
@@ -83,6 +83,7 @@
         </div>
         <nav class="nav">
             <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
+            <button class="nav-btn" data-page="analyse">🔍 Analyse</button>
             <button class="nav-btn" data-page="joueurs">👥 Joueurs</button>
             <span class="nav-separator"></span>
             <button id="btn-player-accounts" onclick="openPlayerAccountsModal()">🔑 Comptes</button>
@@ -118,12 +119,9 @@
 
             <!-- Matchs Section - COMPACT comme import -->
             <div class="matchs-bar" id="matchs-section" style="display: none;">
-                <div class="matchs-bar-left">
-                    <div class="matchs-bar-icon">🏆</div>
-                    <div class="matchs-bar-title">MATCHS ANALYSÉS</div>
-                    <div class="matchs-count-badge" id="stat-matchs">0</div>
-                </div>
-                <button class="btn-goto-analyse" onclick="goToAnalysePage()">🔍 Analyse</button>
+                <span class="matchs-bar-icon">🏆</span>
+                <span class="matchs-bar-title">MATCHS ANALYSÉS</span>
+                <span class="matchs-count-badge" id="stat-matchs">0</span>
             </div>
 
             <!-- Team Cards -->
@@ -1356,8 +1354,10 @@ let _effInfoPoste = null;
 
         function goToAnalysePage() {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.nav-btn[data-page="analyse"]')?.classList.add('active');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-analyse').classList.add('active');
+            document.getElementById('joueurs-subnav').style.display = 'none';
             if (DATA.length > 0) refreshPage('analyse');
         }
 
@@ -1504,7 +1504,7 @@ let _effInfoPoste = null;
 
         function showDataLoaded() {
             document.getElementById('import-section').classList.add('has-data');
-            document.getElementById('matchs-section').style.display = 'flex';
+            document.getElementById('matchs-section').style.display = 'inline-flex';
             document.getElementById('team-cards').style.display = 'grid';
             document.getElementById('players-section').style.display = 'block';
         }
