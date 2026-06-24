@@ -1410,7 +1410,19 @@
             const warningHtml = coverage.pct < 80 && coverage.total > 0
                 ? `<div class="enc-coverage-warning enc-coverage-clickable" onclick="_toggleUnclassifiedPanel()">⚠ ${100 - coverage.pct}% des enclenchements non classifiés — <u>cliquer pour voir le détail</u></div>
                    <div id="enc-unclassified-panel" style="display:none;margin-bottom:10px"></div>` : '';
-            let cardsHtml = '';
+            const cardsInfoHtml = `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;position:relative;margin-bottom:2px">
+                <span style="font-size:0.62rem;font-weight:700;color:#94A3B8;letter-spacing:0.07em;text-transform:uppercase">Familles</span>
+                <span class="enc-info-btn" onclick="_toggleEncCardsInfo()" title="Lire les cartes">i</span>
+                <div id="enc-cards-info-box" style="display:none;position:absolute;top:20px;right:0;width:100%;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.74rem;line-height:1.7;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+                    <strong style="font-size:0.8rem;color:#0A2463">Lire les cartes</strong><br>
+                    <b>Grand %</b> — Utilisation : part des poss. equipe jouees avec cette famille<br>
+                    <b>X/Y tirs · Z% tir</b> — Reussite pure au tir : buts / (buts + rates/arretes)<br>
+                    <b>N% encl.</b> — Eff. enclenchement : (Buts + PO) / Possessions<br>
+                    <b>moy. eff. encl.</b> — Reference saison : moyenne match par match de l'eff. encl.<br>
+                    <b>Barre</b> — verte si eff. encl. &ge; moy. saison, rouge si en-dessous
+                </div>
+            </div>`;
+            let cardsHtml = cardsInfoHtml;
             const famillesToRender = [...ENC_FAMILLES_ORDRE].sort((a, b) =>
                 ((statsMatch.get(b)||{possessions:0}).possessions) - ((statsMatch.get(a)||{possessions:0}).possessions)
             );
@@ -1424,7 +1436,7 @@
                     return;
                 }
                 const utilisPct = totalPoss > 0 ? Math.round(s.possessions / totalPoss * 100) : 0;
-                const totalTirs = s.buts + s.tirs; // tirs = ratés seulement
+                const totalTirs = s.buts + s.tirs;
                 const tirEff = totalTirs > 0 ? Math.round(s.buts / totalTirs * 100) : 0;
                 let badgeHtml = '';
                 if (sd.matchCount >= 3 && s.possessions >= 5) {
@@ -1439,13 +1451,13 @@
                 }
                 const hasRef = sd.matchCount >= 3;
                 const fillClass = !hasRef ? 'noref' : (s.eff >= sd.effMoy ? 'above' : 'below');
-                const refText = hasRef ? `moy. eff. ${sd.effMoy}%` : '—';
+                const refText = hasRef ? `moy. eff. encl. ${sd.effMoy}%` : '—';
                 cardsHtml += `
                 <div class="enc-card-mini" id="enc-card-${fid}" style="border-top-color:${couleur}" onclick="_selectEncFamille('${famille}','${fid}')">
                     <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${couleur}"></span><span class="enc-famille-name">${famille}</span></div>
                     <div class="enc-famille-eff">${utilisPct}%</div>
                     <div class="enc-famille-sublabel">UTILISATION</div>
-                    <div class="enc-famille-meta">${s.buts}/${totalTirs} tirs · ${tirEff}% · ${s.possessions} poss.</div>
+                    <div class="enc-famille-meta">${s.buts}/${totalTirs} tirs · ${tirEff}% tir / ${s.eff}% encl. · ${s.possessions} poss.</div>
                     <div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${utilisPct}%"></div></div>
                     <div class="enc-progress-ref">${refText}</div>
                     ${badgeHtml}
@@ -1458,12 +1470,13 @@
                 const utilisAutrePct = totalPoss > 0 ? Math.round(sAutre.possessions / totalPoss * 100) : 0;
                 const totalTirsAutre = sAutre.buts + sAutre.tirs;
                 const tirEffAutre = totalTirsAutre > 0 ? Math.round(sAutre.buts / totalTirsAutre * 100) : 0;
+                const enclEffAutre = sAutre.possessions > 0 ? Math.round((sAutre.buts + sAutre.po) / sAutre.possessions * 100) : 0;
                 cardsHtml += `
                 <div class="enc-card-mini" id="enc-card-autre" style="border-top-color:${cAutre}" onclick="_selectEncFamille('Autre','autre')">
                     <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${cAutre}"></span><span class="enc-famille-name">Non classifié</span></div>
                     <div class="enc-famille-eff">${utilisAutrePct}%</div>
                     <div class="enc-famille-sublabel">UTILISATION</div>
-                    <div class="enc-famille-meta">${sAutre.buts}/${totalTirsAutre} tirs · ${tirEffAutre}% · ${sAutre.possessions} poss.</div>
+                    <div class="enc-famille-meta">${sAutre.buts}/${totalTirsAutre} tirs · ${tirEffAutre}% tir / ${enclEffAutre}% encl. · ${sAutre.possessions} poss.</div>
                     <div class="enc-progress-track"><div class="enc-progress-fill noref" style="width:${utilisAutrePct}%"></div></div>
                     <div class="enc-progress-ref">—</div>
                 </div>`;
@@ -1750,6 +1763,12 @@
                 if (wrap) wrap.appendChild(box);
                 return;
             }
+            box.style.display = box.style.display === 'none' ? '' : 'none';
+        }
+
+        function _toggleEncCardsInfo() {
+            const box = document.getElementById('enc-cards-info-box');
+            if (!box) return;
             box.style.display = box.style.display === 'none' ? '' : 'none';
         }
 
