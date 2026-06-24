@@ -1578,11 +1578,18 @@
             const statsMatch = window._encCurrentStatsMatch;
             const totalPoss = window._encCurrentTotalPoss;
             if (!statsMatch || !totalPoss) return;
+            // Résoudre les var(--enc-xxx) CSS → hex (canvas 2D ne lit pas les variables CSS)
+            const rootStyle = getComputedStyle(document.documentElement);
+            const getHex = f => {
+                const raw = ENC_FAMILLE_COLORS[f] || '#94A3B8';
+                if (!raw.startsWith('var(')) return raw;
+                return rootStyle.getPropertyValue(raw.slice(4, -1).trim()).trim() || '#94A3B8';
+            };
             const slices = [];
             [...ENC_FAMILLES_ORDRE, 'Autre'].forEach(famille => {
                 const s = statsMatch.get(famille);
                 if (s && s.possessions > 0)
-                    slices.push({ famille, poss: s.possessions, color: ENC_FAMILLE_COLORS[famille] || '#94A3B8' });
+                    slices.push({ famille, poss: s.possessions, color: getHex(famille) });
             });
             if (!slices.length) return;
 
@@ -1623,8 +1630,8 @@
                 if (s.frac < 0.025) return; // skip slivers
                 const mid = s.start + s.sweep / 2;
                 const pct = Math.round(s.frac * 100);
-                const name = s.famille === 'Autre' ? 'Autre' : s.famille;
                 const isRight = Math.cos(mid) >= 0;
+                const showName = s.frac >= 0.07; // nom complet seulement si tranche >= 7%
 
                 // Line: arc edge → radial point → horizontal kink
                 const p1x = cx + Math.cos(mid) * (pieR + 4);
@@ -1633,7 +1640,7 @@
                 const p2y = cy + Math.sin(mid) * (pieR + 16);
                 const p3x = p2x + (isRight ? 10 : -10);
 
-                ctx.strokeStyle = '#94A3B8';
+                ctx.strokeStyle = s.color;
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(p1x, p1y);
@@ -1641,17 +1648,25 @@
                 ctx.lineTo(p3x, p2y);
                 ctx.stroke();
 
-                // Name (bold) above anchor, % below
                 const tx = p3x + (isRight ? 3 : -3);
                 ctx.textAlign = isRight ? 'left' : 'right';
-                ctx.fillStyle = '#1E293B';
-                ctx.font = 'bold 8.5px Inter,sans-serif';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText(name, tx, p2y + 1);
-                ctx.fillStyle = '#475569';
-                ctx.font = '8.5px Inter,sans-serif';
-                ctx.textBaseline = 'top';
-                ctx.fillText(pct + '%', tx, p2y + 1);
+                if (showName) {
+                    const name = s.famille === 'Autre' ? 'Autre' : s.famille;
+                    ctx.fillStyle = '#1E293B';
+                    ctx.font = 'bold 8.5px Inter,sans-serif';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(name, tx, p2y + 1);
+                    ctx.fillStyle = '#475569';
+                    ctx.font = '8.5px Inter,sans-serif';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(pct + '%', tx, p2y + 1);
+                } else {
+                    // petite tranche : juste le % centré sur la ligne
+                    ctx.fillStyle = '#374151';
+                    ctx.font = 'bold 8px Inter,sans-serif';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(pct + '%', tx, p2y);
+                }
             });
         }
 
