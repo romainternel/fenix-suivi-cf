@@ -2291,6 +2291,8 @@
             padding: 6px 10px; font-size: 0.78rem; color: #92400E;
             border-radius: 4px; margin-bottom: 10px;
         }
+        .enc-coverage-clickable { cursor: pointer; user-select: none; }
+        .enc-coverage-clickable:hover { background: #FDE68A; }
 
         /* Grid des cards familles */
         .enc-famille-grid {

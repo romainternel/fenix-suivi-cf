@@ -1379,7 +1379,8 @@
             window._encSelectedFamille = null;
             const sublabelCard = isAdv ? 'RÉUSSITE ADV.' : 'RÉUSSITE POSS.';
             const warningHtml = coverage.pct < 80 && coverage.total > 0
-                ? `<div class="enc-coverage-warning">⚠ ${100 - coverage.pct}% des enclenchements non classifiés — ENC_FAMILLE_MAP à mettre à jour.</div>` : '';
+                ? `<div class="enc-coverage-warning enc-coverage-clickable" onclick="_toggleUnclassifiedPanel()">⚠ ${100 - coverage.pct}% des enclenchements non classifiés — <u>cliquer pour voir le détail</u></div>
+                   <div id="enc-unclassified-panel" style="display:none;margin-bottom:10px"></div>` : '';
             let cardsHtml = '';
             const famillesToRender = [...ENC_FAMILLES_ORDRE].sort((a, b) =>
                 ((statsMatch.get(b)||{possessions:0}).possessions) - ((statsMatch.get(a)||{possessions:0}).possessions)
@@ -1647,6 +1648,36 @@
                 return;
             }
             box.style.display = box.style.display === 'none' ? '' : 'none';
+        }
+
+        function _toggleUnclassifiedPanel() {
+            const panel = document.getElementById('enc-unclassified-panel');
+            if (!panel) return;
+            if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+            const isAdv = window._encTeamMode === 'adv';
+            const matchData = window._encCurrentMatchData;
+            if (!matchData) return;
+            const rows = matchData.filter(r =>
+                (isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX') &&
+                (r[COLS.possession] || '').toString().trim() &&
+                getEncFamille(r[COLS.enclenchement]) === 'Autre'
+            );
+            const byEnc = new Map();
+            rows.forEach(r => {
+                const enc = (r[COLS.enclenchement] || '').toString().trim() || '(vide)';
+                byEnc.set(enc, (byEnc.get(enc) || 0) + 1);
+            });
+            if (!byEnc.size) {
+                panel.innerHTML = '<p style="color:#64748B;font-size:0.8rem;padding:6px 0">Aucun enclenchement non classifié.</p>';
+            } else {
+                const sorted = [...byEnc.entries()].sort((a, b) => b[1] - a[1]);
+                const lignes = sorted.map(([enc, cnt]) => `<tr><td>${enc}</td><td style="text-align:center;font-weight:600">${cnt}</td></tr>`).join('');
+                panel.innerHTML = `<table class="enc-detail-table" style="margin-top:0">
+                    <thead><tr><th>Enclenchement non classifié</th><th style="width:50px">Nb</th></tr></thead>
+                    <tbody>${lignes}</tbody>
+                </table>`;
+            }
+            panel.style.display = '';
         }
 
         function _drawEncRadar() {
