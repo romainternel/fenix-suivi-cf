@@ -1569,14 +1569,13 @@
             if (!canvas) return;
             const wrap = canvas.parentElement;
             if (wrap && wrap.clientWidth > 0) {
-                const cw = Math.max(340, wrap.clientWidth - 16);
+                const cw = Math.max(380, wrap.clientWidth - 16);
                 canvas.width = cw;
-                canvas.height = Math.min(Math.round(cw * 0.85), 420);
+                canvas.height = Math.min(Math.round(cw * 1.05), 560);
             }
             const statsMatch = window._encCurrentStatsMatch;
             const totalPoss = window._encCurrentTotalPoss;
             if (!statsMatch || !totalPoss) return;
-            // Table hex locale — canvas 2D ne résout pas var(--css)
             const PIE_HEX = {
                 'Mouvement':'#0EA5E9','Isoler':'#F59E0B','Rentrée':'#F97316',
                 'Jeu PVT':'#8B5CF6','Bloc PVT':'#7C3AED','7vs6':'#10B981',
@@ -1595,12 +1594,10 @@
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
 
-            // Pie centré, margin plus grande pour les labels
-            const margin = 86;
-            const pieR = Math.min((W - 2 * margin) / 2, (H - 2 * margin) / 2, 160);
-            const cx = W / 2, cy = H / 2;
+            const marginH = 110, marginV = 70;
+            const pieR = Math.min((W - 2 * marginH) / 2, (H - 2 * marginV) / 2, 200);
+            const cx = W / 2, cy = H / 2 + 10;
 
-            // Compute slice angles
             let angle = -Math.PI / 2;
             const computed = slices.map(slice => {
                 const frac = slice.poss / totalPoss;
@@ -1619,24 +1616,57 @@
                 ctx.fillStyle = s.color;
                 ctx.fill();
                 ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2.5;
                 ctx.stroke();
             });
 
-            // Peripheral labels with kink lines
+            // Separate inner labels (big slices) from peripheral (small)
+            const peripheral = [];
             computed.forEach(s => {
-                if (s.frac < 0.025) return; // skip slivers
+                if (s.frac < 0.02) return;
                 const mid = s.start + s.sweep / 2;
                 const pct = Math.round(s.frac * 100);
+                const name = s.famille === 'Autre' ? 'Autre' : s.famille;
                 const isRight = Math.cos(mid) >= 0;
-                const showName = s.frac >= 0.07; // nom complet seulement si tranche >= 7%
 
-                // Line: arc edge → radial point → horizontal kink
+                if (s.frac >= 0.10) {
+                    // Label intérieur pour les grandes tranches
+                    const lx = cx + Math.cos(mid) * pieR * 0.62;
+                    const ly = cy + Math.sin(mid) * pieR * 0.62;
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 10.5px Inter,sans-serif';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(name, lx, ly);
+                    ctx.font = '9px Inter,sans-serif';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(pct + '%', lx, ly);
+                } else {
+                    // Label périphérique — on calcule y provisoire, on espacera après
+                    const radialLen = pieR * 0.32;
+                    const p2x = cx + Math.cos(mid) * (pieR + radialLen);
+                    const p2y = cy + Math.sin(mid) * (pieR + radialLen);
+                    peripheral.push({ s, mid, pct, name, isRight, p2x, p2y: p2y });
+                }
+            });
+
+            // Anti-chevauchement : tri vertical + espacement min 15px par côté
+            ['left', 'right'].forEach(side => {
+                const items = peripheral
+                    .filter(l => (side === 'right') === l.isRight)
+                    .sort((a, b) => a.p2y - b.p2y);
+                items.forEach((item, i) => {
+                    if (i > 0 && item.p2y - items[i - 1].p2y < 15)
+                        item.p2y = items[i - 1].p2y + 15;
+                });
+            });
+
+            // Draw peripheral labels
+            peripheral.forEach(({ s, mid, pct, name, isRight, p2x, p2y }) => {
                 const p1x = cx + Math.cos(mid) * (pieR + 4);
                 const p1y = cy + Math.sin(mid) * (pieR + 4);
-                const p2x = cx + Math.cos(mid) * (pieR + 16);
-                const p2y = cy + Math.sin(mid) * (pieR + 16);
-                const p3x = p2x + (isRight ? 10 : -10);
+                const kink = 14;
+                const p3x = p2x + (isRight ? kink : -kink);
 
                 ctx.strokeStyle = s.color;
                 ctx.lineWidth = 1;
@@ -1648,23 +1678,14 @@
 
                 const tx = p3x + (isRight ? 3 : -3);
                 ctx.textAlign = isRight ? 'left' : 'right';
-                if (showName) {
-                    const name = s.famille === 'Autre' ? 'Autre' : s.famille;
-                    ctx.fillStyle = '#1E293B';
-                    ctx.font = 'bold 8.5px Inter,sans-serif';
-                    ctx.textBaseline = 'bottom';
-                    ctx.fillText(name, tx, p2y + 1);
-                    ctx.fillStyle = '#475569';
-                    ctx.font = '8.5px Inter,sans-serif';
-                    ctx.textBaseline = 'top';
-                    ctx.fillText(pct + '%', tx, p2y + 1);
-                } else {
-                    // petite tranche : juste le % centré sur la ligne
-                    ctx.fillStyle = '#374151';
-                    ctx.font = 'bold 8px Inter,sans-serif';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(pct + '%', tx, p2y);
-                }
+                ctx.fillStyle = '#1E293B';
+                ctx.font = 'bold 9.5px Inter,sans-serif';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(name, tx, p2y + 1);
+                ctx.fillStyle = '#475569';
+                ctx.font = '9px Inter,sans-serif';
+                ctx.textBaseline = 'top';
+                ctx.fillText(pct + '%', tx, p2y + 1);
             });
         }
 
