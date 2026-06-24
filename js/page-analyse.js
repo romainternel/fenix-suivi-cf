@@ -1489,6 +1489,15 @@
         function _drawEncMatrix() {
             const canvas = document.getElementById('enc-radar-canvas');
             if (!canvas) return;
+            // Auto-resize to container
+            const wrap = canvas.parentElement;
+            if (wrap && wrap.clientWidth > 0) {
+                const cw = Math.max(300, wrap.clientWidth - 28);
+                canvas.width = cw;
+                canvas.height = Math.round(cw * 0.72);
+                canvas.style.width = cw + 'px';
+                canvas.style.height = canvas.height + 'px';
+            }
             const ctx = canvas.getContext('2d');
             const W = canvas.width, H = canvas.height;
             const PAD = { top: 26, right: 14, bottom: 32, left: 34 };
@@ -1528,10 +1537,11 @@
             ctx.strokeStyle = '#CBD5E1'; ctx.lineWidth = 1;
             ctx.strokeRect(PAD.left, PAD.top, pw, ph);
             // Y axis ticks
-            ctx.font = '8px system-ui'; ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+            const fAxis = Math.max(8, Math.round(W * 0.014));
+            ctx.font = `${fAxis}px system-ui`; ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
             [0, 50, 100].forEach(v => { ctx.fillText(v+'%', PAD.left-4, yS(v)); });
             // Axis legends
-            ctx.fillStyle = '#64748B'; ctx.font = '8px system-ui';
+            ctx.fillStyle = '#64748B'; ctx.font = `${fAxis}px system-ui`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'top';
             ctx.fillText('← Utilisation FENIX (possessions) →', PAD.left+pw/2, PAD.top+ph+5);
             ctx.save(); ctx.translate(9, PAD.top+ph/2); ctx.rotate(-Math.PI/2);
@@ -1552,7 +1562,7 @@
                 window._encMatrixDots.push({ x, y, famille: f, eff: s.eff||0, possessions: s.possessions });
             });
             // Zone labels drawn LAST (on top of dots) with white bg for legibility
-            ctx.font = 'bold 8px system-ui';
+            ctx.font = `bold ${fAxis}px system-ui`;
             zones.forEach(z => {
                 ctx.textAlign = z.ta; ctx.textBaseline = 'top';
                 const tw = ctx.measureText(z.label).width;
@@ -1721,10 +1731,20 @@
         function _drawEncRadar() {
             const canvas = document.getElementById('enc-radar-canvas');
             if (!canvas) return;
+            // Auto-resize to container
+            const wrap = canvas.parentElement;
+            if (wrap && wrap.clientWidth > 0) {
+                const cw = Math.max(300, wrap.clientWidth - 28);
+                canvas.width = cw;
+                canvas.height = Math.round(cw * 0.72);
+                canvas.style.width = cw + 'px';
+                canvas.style.height = canvas.height + 'px';
+            }
             const ctx = canvas.getContext('2d');
             const W = canvas.width, H = canvas.height;
             const cx = W / 2, cy = H / 2;
-            const R = 96, LABEL_R = 122;
+            const R = Math.min(W, H) * 0.30;
+            const LABEL_R = Math.min(W, H) * 0.41;
             const mode = window._encGraphMode || 'utilisation';
             const stats = window._encCurrentStatsMatch;
             if (!stats) return;
@@ -1758,12 +1778,16 @@
             angles.forEach((a,i) => { const v=values[i],x=cx+v*R*Math.cos(a),y=cy+v*R*Math.sin(a); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
             ctx.closePath(); ctx.fillStyle='rgba(10,36,99,0.1)'; ctx.fill(); ctx.strokeStyle='#0A2463'; ctx.lineWidth=2; ctx.stroke();
             // Dots at data points
+            const dotR = Math.max(4, Math.round(R * 0.045));
             angles.forEach((a,i) => {
                 if (!values[i]) return;
                 const x=cx+values[i]*R*Math.cos(a), y=cy+values[i]*R*Math.sin(a);
-                ctx.beginPath(); ctx.arc(x,y,4,0,2*Math.PI); ctx.fillStyle=getHex(familles[i]); ctx.fill();
+                ctx.beginPath(); ctx.arc(x,y,dotR,0,2*Math.PI); ctx.fillStyle=getHex(familles[i]); ctx.fill();
             });
             // Labels
+            const fMain = Math.max(9, Math.round(R * 0.088));
+            const fSub  = Math.max(8, fMain - 1);
+            const lyOff = Math.round(fMain * 0.65);
             const abbr = {'Faire courir':'F.courir','Mouvement':'Mvt','Spéciaux':'Spéc.','Bloc PVT':'Bloc PVT','Jeu PVT':'Jeu PVT'};
             ctx.textBaseline = 'middle';
             angles.forEach((a,i) => {
@@ -1775,10 +1799,10 @@
                 const s = stats.get(familles[i]) || {possessions:0,eff:0};
                 const val = mode==='utilisation' ? `${s.possessions}p` : `${s.eff}%`;
                 ctx.textAlign = align;
-                ctx.font = 'bold 8.5px system-ui,sans-serif'; ctx.fillStyle = getHex(familles[i]);
-                ctx.fillText(name, lx+xOff, ly-5);
-                ctx.font = '8px system-ui,sans-serif'; ctx.fillStyle = '#64748B';
-                ctx.fillText(val, lx+xOff, ly+6);
+                ctx.font = `bold ${fMain}px system-ui,sans-serif`; ctx.fillStyle = getHex(familles[i]);
+                ctx.fillText(name, lx+xOff, ly-lyOff);
+                ctx.font = `${fSub}px system-ui,sans-serif`; ctx.fillStyle = '#64748B';
+                ctx.fillText(val, lx+xOff, ly+lyOff);
             });
         }
 

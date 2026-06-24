@@ -96,8 +96,8 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.55rem 0;
-            margin: -0.5rem 0 1.25rem 0;
+            padding: 0.55rem 1.25rem;
+            margin: -0.5rem -2rem 1.25rem -2rem;
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
 
@@ -2380,10 +2380,10 @@
         .enc-badge-sub { font-size: 0.62rem; font-weight: 400; margin-top: 1px; }
 
         /* Layout 2 colonnes enclenchements */
-        .enc-body { display: flex; gap: 14px; align-items: flex-start; }
+        .enc-body { display: flex; gap: 16px; align-items: flex-start; }
         .enc-cards-grid {
             display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 7px; flex: 0 0 auto; width: 46%; min-width: 0;
+            gap: 7px; flex: 0 0 auto; width: 36%; min-width: 0;
         }
         .enc-right-panel {
             flex: 1; background: #fff; border-radius: 10px;
