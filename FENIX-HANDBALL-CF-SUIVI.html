@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=171">
-    <script src="js/utils.js?v=171"></script>
-    <script src="js/impact-images.js?v=171"></script>
-    <script src="js/player-mode.js?v=171"></script>
-    <script src="js/page-joueurs.js?v=171"></script>
-    <script src="js/page-notes-graph.js?v=171"></script>
-    <script src="js/page-analyse.js?v=171"></script>
+    <link rel="stylesheet" href="css/style.css?v=172">
+    <script src="js/utils.js?v=172"></script>
+    <script src="js/impact-images.js?v=172"></script>
+    <script src="js/player-mode.js?v=172"></script>
+    <script src="js/page-joueurs.js?v=172"></script>
+    <script src="js/page-notes-graph.js?v=172"></script>
+    <script src="js/page-analyse.js?v=172"></script>
 </head>
 <body>
 
@@ -235,14 +235,15 @@
 
         <!-- Analyse Page -->
         <div class="page" id="page-analyse">
+            <!-- Barre sticky match -->
+            <div id="analyse-sticky-bar">
+                <span style="font-size:0.7rem;font-weight:700;color:#64748b;letter-spacing:0.06em;white-space:nowrap;">MATCH</span>
+                <select id="filter-match-global" onchange="onMatchGlobalChange()" style="padding:0.3rem 0.6rem;border:1px solid #e2e8f0;border-radius:6px;font-size:0.85rem;color:#1e293b;background:#fff;cursor:pointer;min-width:200px;max-width:340px;">
+                    <option value="">Saison complète</option>
+                </select>
+            </div>
             <!-- Bloc Match : terrain + stats équipes -->
             <div class="section">
-                <div style="margin-bottom:0.75rem;">
-                    <label style="display:block;font-size:0.72rem;font-weight:600;color:#64748b;letter-spacing:0.05em;margin-bottom:0.25rem;">MATCH</label>
-                    <select id="filter-match-global" onchange="onMatchGlobalChange()" style="width:100%;max-width:320px;padding:0.35rem 0.6rem;border:1px solid #e2e8f0;border-radius:6px;font-size:0.85rem;color:#1e293b;background:#fff;cursor:pointer;">
-                        <option value="">Saison complète</option>
-                    </select>
-                </div>
                 <div class="filters">
                     <div class="filter-group">
                         <label>Club</label>
@@ -1054,6 +1055,10 @@ let _effInfoPoste = null;
             setupFileInput();
             setupFilters();
             loadFromLocalStorage();
+            // Ajuster le top de la barre sticky selon la hauteur réelle de la header
+            const hdr = document.querySelector('.header');
+            const stickyBar = document.getElementById('analyse-sticky-bar');
+            if (hdr && stickyBar) stickyBar.style.top = hdr.offsetHeight + 'px';
             // Redraw impact canvases on resize
             if (typeof ResizeObserver !== 'undefined') {
                 const impactObs = new ResizeObserver(() => {
