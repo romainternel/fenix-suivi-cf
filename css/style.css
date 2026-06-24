@@ -2394,15 +2394,16 @@
         .enc-badge-sub { font-size: 0.62rem; font-weight: 400; margin-top: 1px; }
 
         /* Layout 2 colonnes enclenchements */
-        .enc-body { display: flex; gap: 16px; align-items: flex-start; }
+        .enc-body { display: flex; gap: 16px; align-items: stretch; }
         .enc-cards-grid {
             display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 7px; flex: 0 0 auto; width: 36%; min-width: 0;
+            gap: 7px; flex: 0 0 auto; width: 36%; min-width: 0; align-self: flex-start;
         }
         .enc-right-panel {
             flex: 1; background: #fff; border-radius: 10px;
             box-shadow: var(--shadow-sm); padding: 8px 14px 10px;
-            min-width: 160px; position: sticky; top: 108px; align-self: flex-start;
+            min-width: 160px; position: sticky; top: 108px;
+            display: flex; align-items: center; justify-content: center;
         }
 
         /* Cards compactes */

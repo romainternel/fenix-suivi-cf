@@ -1516,9 +1516,9 @@
                 <div class="enc-body">
                     <div class="enc-cards-grid">${cardsHtml}</div>
                     <div class="enc-right-panel" id="enc-right-panel">
-                        <div id="enc-graph-wrap" style="position:relative">
-                            <canvas id="enc-pie-canvas" width="340" height="280" style="display:block;margin:0 auto;max-width:100%"></canvas>
-                            <canvas id="enc-radar-canvas" width="340" height="280" style="display:none;margin:0 auto;max-width:100%"></canvas>
+                        <div id="enc-graph-wrap" style="position:relative;display:flex;align-items:center;justify-content:center;width:100%">
+                            <canvas id="enc-pie-canvas" width="340" height="280" style="display:block;max-width:100%"></canvas>
+                            <canvas id="enc-radar-canvas" width="340" height="280" style="display:none;max-width:100%"></canvas>
                         </div>
                         <div id="enc-detail-wrap" style="display:none">
                             <div class="enc-detail-header-bar" id="enc-detail-header"></div>
@@ -1569,9 +1569,9 @@
             if (!canvas) return;
             const wrap = canvas.parentElement;
             if (wrap && wrap.clientWidth > 0) {
-                const cw = Math.max(300, wrap.clientWidth - 28);
+                const cw = Math.min(Math.max(300, wrap.clientWidth - 28), 480);
                 canvas.width = cw;
-                canvas.height = cw; // carré
+                canvas.height = cw;
                 canvas.style.width  = cw + 'px';
                 canvas.style.height = cw + 'px';
             }
@@ -1637,10 +1637,10 @@
                     const ly = cy + Math.sin(mid) * pieR * 0.62;
                     ctx.textAlign = 'center';
                     ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 10.5px Inter,sans-serif';
+                    ctx.font = 'bold 14px Inter,sans-serif';
                     ctx.textBaseline = 'bottom';
                     ctx.fillText(name, lx, ly);
-                    ctx.font = '9px Inter,sans-serif';
+                    ctx.font = '12px Inter,sans-serif';
                     ctx.textBaseline = 'top';
                     ctx.fillText(pct + '%', lx, ly);
                 } else {
@@ -1658,8 +1658,8 @@
                     .filter(l => l.isRight === (side === 'right'))
                     .sort((a, b) => a.rawY - b.rawY);
                 group.forEach((item, i) => {
-                    if (i > 0 && item.rawY - group[i - 1].adjustedY < 14)
-                        item.adjustedY = group[i - 1].adjustedY + 14;
+                    if (i > 0 && item.rawY - group[i - 1].adjustedY < 22)
+                        item.adjustedY = group[i - 1].adjustedY + 22;
                     else
                         item.adjustedY = item.rawY;
                 });
@@ -1687,14 +1687,12 @@
 
                 const tx = p3x + (isRight ? 3 : -3);
                 ctx.textAlign = isRight ? 'left' : 'right';
-                // Nom bold 9px
                 ctx.fillStyle = '#1E293B';
-                ctx.font = 'bold 9px Inter,sans-serif';
+                ctx.font = 'bold 12px Inter,sans-serif';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(name, tx, p2y);
-                // % gris 8.5px
                 ctx.fillStyle = '#475569';
-                ctx.font = '8.5px Inter,sans-serif';
+                ctx.font = '10.5px Inter,sans-serif';
                 ctx.textBaseline = 'top';
                 ctx.fillText(pct + '%', tx, p2y);
             });
