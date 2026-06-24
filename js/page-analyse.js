@@ -1315,21 +1315,18 @@
             const rows = matchData.filter(r => isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX');
             const FAMILLES = [...ENC_FAMILLES_ORDRE, 'Autre'];
             const stats = new Map();
-            FAMILLES.forEach(f => stats.set(f, { tirs: 0, buts: 0, pb: 0, eff: 0, possessions: 0 }));
+            FAMILLES.forEach(f => stats.set(f, { tirs: 0, buts: 0, pb: 0, po: 0, eff: 0, possessions: 0 }));
             rows.forEach(r => {
                 const famille = getEncFamille(r[COLS.enclenchement]);
                 const s = stats.get(famille);
-                const estBut = isAdv ? r[COLS.finalite] === 'But' : r[COLS.resultat] === 'But';
-                const estTirRate = isAdv
-                    ? (r[COLS.finalite] === 'Tir arrêté' || r[COLS.finalite] === 'Tir raté')
-                    : r[COLS.resultat] === 'Tir raté';
-                const estPB = r[COLS.resultat] === 'PB';
+                const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');
                 if ((r[COLS.enclenchement] || '').toString().trim()) s.possessions++;
-                if (estBut) { s.buts++; s.tirs++; }
-                else if (estTirRate) s.tirs++;
-                else if (estPB) s.pb++;
+                if (res === 'But') { s.buts++; s.tirs++; }
+                else if (res === 'Tir raté' || res === 'Tir arrêté') s.tirs++;
+                else if (res === 'PB') s.pb++;
+                else if (res === 'PO') s.po++;
             });
-            stats.forEach(s => { const d = s.tirs + s.pb; s.eff = d > 0 ? Math.round(s.buts / d * 100) : 0; });
+            stats.forEach(s => { s.eff = s.possessions > 0 ? Math.round((s.buts + s.po) / s.possessions * 100) : 0; });
             return stats;
         }
 
@@ -1378,11 +1375,12 @@
             window._encCurrentMatchData = matchData;
             window._encCurrentStatsMatch = statsMatch;
             window._encSelectedFamille = null;
+            const sublabelCard = isAdv ? 'RÉUSSITE ADV.' : 'RÉUSSITE POSS.';
             const warningHtml = coverage.pct < 80 && coverage.total > 0
                 ? `<div class="enc-coverage-warning">⚠ ${100 - coverage.pct}% des enclenchements non classifiés — ENC_FAMILLE_MAP à mettre à jour.</div>` : '';
             let cardsHtml = '';
             ENC_FAMILLES_ORDRE.forEach(famille => {
-                const s = statsMatch.get(famille) || { tirs:0, buts:0, pb:0, eff:0, possessions:0 };
+                const s = statsMatch.get(famille) || { tirs:0, buts:0, pb:0, po:0, eff:0, possessions:0 };
                 const sd = statsSaison.get(famille) || { effMoy:0, cv:0, matchCount:0 };
                 const couleur = ENC_FAMILLE_COLORS[famille];
                 const fid = ENC_FAMILLE_IDS[famille];
@@ -1404,7 +1402,7 @@
                     <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:${couleur}"></span><span class="enc-famille-name">${famille}</span></div>
                     <div class="enc-famille-eff">${s.eff}%</div>
                     <div class="enc-famille-sublabel">${sublabelCard}</div>
-                    <div class="enc-famille-meta">${s.buts} buts · ${s.tirs} tirs · ${s.possessions} poss.</div>
+                    <div class="enc-famille-meta">${s.buts} b · ${s.po} PO · ${s.possessions} poss.</div>
                     <div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${Math.min(s.eff,100)}%"></div></div>
                     <div class="enc-progress-ref">${refText}</div>
                     ${badgeHtml}
@@ -1413,7 +1411,6 @@
             const mode = window._encGraphMode;
             const titleIcon = isAdv ? '🛡' : '⚡';
             const titleLabel = isAdv ? 'DÉFENSE FENIX — enclenchements adversaires' : 'ENCLENCHEMENTS OFFENSIFS FENIX';
-            const sublabelCard = isAdv ? 'RÉUSSITE ADV.' : 'RÉUSSITE TIRS';
             container.innerHTML = `
                 <div class="enc-section-header">
                     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -1517,7 +1514,7 @@
             ctx.textAlign = 'center'; ctx.textBaseline = 'top';
             ctx.fillText('← Utilisation FENIX (possessions) →', PAD.left+pw/2, PAD.top+ph+5);
             ctx.save(); ctx.translate(9, PAD.top+ph/2); ctx.rotate(-Math.PI/2);
-            ctx.textBaseline = 'top'; ctx.fillText('Efficacité (% buts/tirs) →', 0, 0); ctx.restore();
+            ctx.textBaseline = 'top'; ctx.fillText('Efficacité (b+PO)/poss. →', 0, 0); ctx.restore();
             // Dots — colored circles with number inside, NO text label (legend below)
             const DOT_R = 13;
             used.forEach(f => {
@@ -1650,25 +1647,27 @@
                 const parts = enc.split(';').map(p => p.trim()).filter(p => p);
                 const cle = parts.join('-') || 'Inconnu';
                 const label = cle;
-                if (!byEnc.has(cle)) byEnc.set(cle, { label, tirs:0, buts:0, pb:0 });
+                if (!byEnc.has(cle)) byEnc.set(cle, { label, tirs:0, buts:0, pb:0, po:0, possessions:0 });
                 const s = byEnc.get(cle);
                 const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');
+                s.possessions++;
                 if (res === 'But') { s.buts++; s.tirs++; }
                 else if (res === 'Tir raté' || res === 'Tir arrêté') s.tirs++;
-                else if (res === 'PB' || r[COLS.resultat] === 'PB') s.pb++;
+                else if (res === 'PB') s.pb++;
+                else if (res === 'PO') s.po++;
             });
             if (!byEnc.size) return '<p style="color:#94A3B8;font-size:0.82rem;padding:8px 0">Aucune donnée.</p>';
-            const sorted = [...byEnc.entries()].sort((a, b) => b[1].tirs - a[1].tirs);
-            let tt = 0, tb = 0, tp = 0;
-            sorted.forEach(([, s]) => { tt += s.tirs; tb += s.buts; tp += s.pb; });
-            const te = tt > 0 ? Math.round(tb / tt * 100) : 0;
+            const sorted = [...byEnc.entries()].sort((a, b) => b[1].possessions - a[1].possessions);
+            let tt = 0, tb = 0, tp = 0, tpo = 0, tposs = 0;
+            sorted.forEach(([, s]) => { tt += s.tirs; tb += s.buts; tp += s.pb; tpo += s.po; tposs += s.possessions; });
+            const te = tposs > 0 ? Math.round((tb + tpo) / tposs * 100) : 0;
             let lignes = '';
             sorted.forEach(([, s]) => {
-                const eff = s.tirs > 0 ? Math.round(s.buts / s.tirs * 100) : 0;
+                const eff = s.possessions > 0 ? Math.round((s.buts + s.po) / s.possessions * 100) : 0;
                 const c = eff >= 60 ? '#059669' : eff < 40 ? '#DC2626' : '#64748B';
-                lignes += `<tr><td>${s.label}</td><td>${s.buts}</td><td>${s.tirs}</td><td>${s.pb}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
+                lignes += `<tr><td>${s.label}</td><td>${s.buts}</td><td>${s.po}</td><td>${s.tirs}</td><td>${s.pb}</td><td>${s.possessions}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
             });
-            return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Buts</th><th>Tirs</th><th>PB</th><th>Eff.</th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tt}</td><td>${tp}</td><td>${te}%</td></tr></tfoot></table>`;
+            return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Buts</th><th>PO</th><th>Tirs</th><th>PB</th><th>Poss.</th><th>Eff.</th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tpo}</td><td>${tt}</td><td>${tp}</td><td>${tposs}</td><td>${te}%</td></tr></tfoot></table>`;
         }
 
         // A-04 — Overlay momentum + détection bascule
