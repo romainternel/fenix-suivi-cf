@@ -1474,7 +1474,7 @@
                     </div>
                     <div class="enc-graph-toggle enc-graph-toggle--header">
                         <button class="enc-toggle-btn${mode==='matrice'?' active':''}" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
-                        <span class="enc-info-btn" onclick="_toggleEncMatrixInfo()" title="Comprendre la matrice">i</span>
+                        <span class="enc-info-btn" onclick="_toggleEncGraphInfo()" title="Comprendre le graphique">i</span>
                         <button class="enc-toggle-btn${mode==='radar'?' active':''}" onclick="_setEncGraphMode('radar')">Radar</button>
                     </div>
                 </div>
@@ -1508,6 +1508,10 @@
             window._encGraphMode = mode;
             document.querySelectorAll('.enc-toggle-btn').forEach((b, i) =>
                 b.classList.toggle('active', (mode === 'matrice') === (i === 0)));
+            // Fermer les boîtes d'info au changement de mode
+            ['enc-matrix-info-box','enc-radar-info-box'].forEach(id => {
+                const b = document.getElementById(id); if (b) b.style.display = 'none';
+            });
             _drawEncChart();
         }
 
@@ -1676,6 +1680,32 @@
                 }
             });
             canvas.addEventListener('mouseleave', () => { const t = document.getElementById('enc-matrix-tooltip'); if (t) t.style.display = 'none'; });
+        }
+
+        function _toggleEncGraphInfo() {
+            if ((window._encGraphMode || 'matrice') === 'radar') _toggleEncRadarInfo();
+            else _toggleEncMatrixInfo();
+        }
+
+        function _toggleEncRadarInfo() {
+            let box = document.getElementById('enc-radar-info-box');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'enc-radar-info-box';
+                box.style.cssText = 'position:absolute;top:30px;left:0;right:0;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.75rem;line-height:1.7;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)';
+                box.innerHTML = `<strong style="font-size:0.8rem;color:#0A2463">Lire le radar</strong><br>
+                    <b>Chaque axe</b> — une famille d'enclenchement<br>
+                    <b style="color:#0A2463">━ Polygone bleu</b> — match actuel<br>
+                    <b style="color:#94A3B8">╍ Polygone gris</b> — moyenne de la saison<br><br>
+                    <b>Mode Utilisation</b> — % de possessions jouées avec cette famille<br>
+                    <b>Mode Efficacité</b> — (buts + PO) / possessions<br><br>
+                    <span style="color:#475569">Un axe <em>saillant</em> vs la saison = famille sur-représentée sur ce match.<br>
+                    Un axe <em>rentrant</em> = famille moins utilisée / efficace que d'habitude.</span>`;
+                const wrap = document.getElementById('enc-graph-wrap');
+                if (wrap) wrap.appendChild(box);
+                return;
+            }
+            box.style.display = box.style.display === 'none' ? '' : 'none';
         }
 
         function _toggleEncMatrixInfo() {
