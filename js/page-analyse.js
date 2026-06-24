@@ -1494,7 +1494,7 @@
             if (wrap && wrap.clientWidth > 0) {
                 const cw = Math.max(300, wrap.clientWidth - 28);
                 canvas.width = cw;
-                canvas.height = Math.round(cw * 0.72);
+                canvas.height = Math.max(220, Math.min(Math.round(cw * 0.50), 430));
                 canvas.style.width = cw + 'px';
                 canvas.style.height = canvas.height + 'px';
             }
@@ -1736,7 +1736,7 @@
             if (wrap && wrap.clientWidth > 0) {
                 const cw = Math.max(300, wrap.clientWidth - 28);
                 canvas.width = cw;
-                canvas.height = Math.round(cw * 0.72);
+                canvas.height = Math.max(220, Math.min(Math.round(cw * 0.50), 430));
                 canvas.style.width = cw + 'px';
                 canvas.style.height = canvas.height + 'px';
             }

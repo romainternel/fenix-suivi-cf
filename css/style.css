@@ -2388,7 +2388,7 @@
         .enc-right-panel {
             flex: 1; background: #fff; border-radius: 10px;
             box-shadow: var(--shadow-sm); padding: 12px 14px;
-            min-width: 160px; position: sticky; top: 10px; align-self: flex-start;
+            min-width: 160px; position: sticky; top: 108px; align-self: flex-start;
         }
 
         /* Cards compactes */
