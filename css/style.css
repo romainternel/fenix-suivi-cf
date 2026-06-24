@@ -2401,7 +2401,7 @@
         }
         .enc-right-panel {
             flex: 1; background: transparent;
-            padding: 0; min-width: 160px; position: sticky; top: 108px;
+            padding: 0; min-width: 160px; align-self: flex-start;
             display: flex; align-items: flex-start; justify-content: center;
         }
 
