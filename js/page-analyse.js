@@ -1393,7 +1393,7 @@
             const container = document.getElementById(containerId);
             if (!container) return;
             if (window._encTeamMode === undefined) window._encTeamMode = 'fenix';
-            if (window._encGraphMode === undefined) window._encGraphMode = 'matrice';
+            if (window._encGraphMode === undefined) window._encGraphMode = 'pie';
             const isAdv = window._encTeamMode === 'adv';
             const statsMatch = computeEncStats(matchData, isAdv);
             const statsSaison = computeEncStatsSaison(isAdv);
@@ -1509,7 +1509,6 @@
                     <div class="enc-graph-toggle enc-graph-toggle--header">
                         <button class="enc-toggle-btn${mode==='matrice'?' active':''}" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
                         <span class="enc-info-btn" onclick="_toggleEncGraphInfo()" title="Comprendre le graphique">i</span>
-                        <button class="enc-toggle-btn${mode==='radar'?' active':''}" onclick="_setEncGraphMode('radar')">Radar</button>
                     </div>
                 </div>
                 ${warningHtml}
@@ -1517,8 +1516,8 @@
                     <div class="enc-cards-grid">${cardsHtml}</div>
                     <div class="enc-right-panel" id="enc-right-panel">
                         <div id="enc-graph-wrap" style="position:relative">
-                            <canvas id="enc-radar-canvas" width="340" height="260" style="display:block;margin:0 auto;max-width:100%"></canvas>
-                            <canvas id="enc-pie-canvas" width="260" height="130" style="display:block;margin:4px auto 0;max-width:100%"></canvas>
+                            <canvas id="enc-pie-canvas" width="340" height="280" style="display:block;margin:0 auto;max-width:100%"></canvas>
+                            <canvas id="enc-radar-canvas" width="340" height="280" style="display:none;margin:0 auto;max-width:100%"></canvas>
                         </div>
                         <div id="enc-detail-wrap" style="display:none">
                             <div class="enc-detail-header-bar" id="enc-detail-header"></div>
@@ -1541,24 +1540,37 @@
 
         function _setEncGraphMode(mode) {
             window._encGraphMode = mode;
-            document.querySelectorAll('.enc-toggle-btn').forEach((b, i) =>
-                b.classList.toggle('active', (mode === 'matrice') === (i === 0)));
-            // Fermer les boîtes d'info au changement de mode
-            ['enc-matrix-info-box','enc-radar-info-box'].forEach(id => {
-                const b = document.getElementById(id); if (b) b.style.display = 'none';
-            });
+            document.querySelectorAll('.enc-toggle-btn').forEach(b =>
+                b.classList.toggle('active', mode === 'matrice'));
+            const mib = document.getElementById('enc-matrix-info-box');
+            if (mib) mib.style.display = 'none';
             _drawEncChart();
         }
 
         function _drawEncChart() {
-            if (window._encGraphMode === 'radar') _drawEncRadar();
-            else _drawEncMatrix();
-            _drawEncPie();
+            const pieC = document.getElementById('enc-pie-canvas');
+            const radC = document.getElementById('enc-radar-canvas');
+            if (window._encGraphMode === 'matrice') {
+                if (pieC) pieC.style.display = 'none';
+                if (radC) radC.style.display = 'block';
+                _drawEncMatrix();
+            } else {
+                if (radC) radC.style.display = 'none';
+                if (pieC) pieC.style.display = 'block';
+                _drawEncPie();
+            }
         }
 
         function _drawEncPie() {
             const canvas = document.getElementById('enc-pie-canvas');
             if (!canvas) return;
+            // Auto-resize to container
+            const wrap = canvas.parentElement;
+            if (wrap && wrap.clientWidth > 0) {
+                const cw = Math.max(280, wrap.clientWidth - 28);
+                canvas.width = cw;
+                canvas.height = Math.min(Math.round(cw * 0.82), 340);
+            }
             const statsMatch = window._encCurrentStatsMatch;
             const totalPoss = window._encCurrentTotalPoss;
             if (!statsMatch || !totalPoss) return;
@@ -1573,8 +1585,9 @@
             const ctx = canvas.getContext('2d');
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
-            const pieR = Math.min(H / 2, W / 3) - 2;
-            const cx = pieR + 4, cy = H / 2;
+            // Pie occupies left 55% of canvas, legend right 45%
+            const pieR = Math.min(H / 2 - 8, W * 0.27);
+            const cx = W * 0.27 + 4, cy = H / 2;
             let angle = -Math.PI / 2;
             slices.forEach(slice => {
                 const frac = slice.poss / totalPoss;
@@ -1586,14 +1599,14 @@
                 ctx.fillStyle = slice.color;
                 ctx.fill();
                 ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 1.5;
+                ctx.lineWidth = 2;
                 ctx.stroke();
-                if (frac > 0.07) {
+                if (frac > 0.06) {
                     const mid = angle + sweep / 2;
                     const lx = cx + Math.cos(mid) * pieR * 0.65;
                     const ly = cy + Math.sin(mid) * pieR * 0.65;
                     ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 8px Inter,sans-serif';
+                    ctx.font = `bold ${Math.max(9, Math.round(pieR * 0.14))}px Inter,sans-serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(Math.round(frac * 100) + '%', lx, ly);
@@ -1601,20 +1614,20 @@
                 angle += sweep;
             });
             // Legend to the right
-            const legendX = cx + pieR + 10;
-            let legendY = 6;
-            const lh = 13;
+            const legendX = cx + pieR + 14;
+            const lh = Math.min(22, Math.floor((H - 8) / slices.length));
+            let legendY = Math.max(6, (H - slices.length * lh) / 2);
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             slices.forEach(slice => {
-                if (legendY + lh > H) return;
                 const frac = slice.poss / totalPoss;
+                const pct = Math.round(frac * 100);
                 ctx.fillStyle = slice.color;
-                ctx.fillRect(legendX, legendY + 1, 8, 8);
+                ctx.fillRect(legendX, legendY + 2, 10, 10);
                 ctx.fillStyle = '#374151';
-                ctx.font = '8px Inter,sans-serif';
-                const label = (slice.famille === 'Autre' ? 'Non classifié' : slice.famille) + ' ' + Math.round(frac * 100) + '%';
-                ctx.fillText(label, legendX + 11, legendY + 5);
+                ctx.font = `${Math.max(9, lh - 8)}px Inter,sans-serif`;
+                const name = slice.famille === 'Autre' ? 'Non classifié' : slice.famille;
+                ctx.fillText(`${name}  ${pct}%`, legendX + 14, legendY + 7);
                 legendY += lh;
             });
         }
@@ -1793,8 +1806,7 @@
         }
 
         function _toggleEncGraphInfo() {
-            if ((window._encGraphMode || 'matrice') === 'radar') _toggleEncRadarInfo();
-            else _toggleEncMatrixInfo();
+            _toggleEncMatrixInfo();
         }
 
         function _toggleEncRadarInfo() {
