@@ -1391,8 +1391,13 @@
                 let badgeHtml = '';
                 if (sd.matchCount >= 3 && s.possessions >= 5) {
                     const em = sd.effMoy, ec = s.eff;
-                    if (em > 0 && ec / em >= 1.5) badgeHtml = `<div class="enc-badge-mini faiblesse">⚡ FAIBLESSE ADV</div>`;
-                    else if (em > 0 && Math.abs(ec - em) / em <= 0.10 && sd.cv < 0.20) badgeHtml = `<div class="enc-badge-mini force">⭐ FORCE</div>`;
+                    if (isAdv) {
+                        if (em > 0 && ec / em >= 1.5) badgeHtml = `<div class="enc-badge-mini faiblesse">⚠ POINT FAIBLE</div>`;
+                        else if (em > 0 && Math.abs(ec - em) / em <= 0.10 && sd.cv < 0.20) badgeHtml = `<div class="enc-badge-mini force">⭐ FORCE DÉFENSE</div>`;
+                    } else {
+                        if (em > 0 && ec / em >= 1.5) badgeHtml = `<div class="enc-badge-mini faiblesse">⚡ FAIBLESSE ADV</div>`;
+                        else if (em > 0 && Math.abs(ec - em) / em <= 0.10 && sd.cv < 0.20) badgeHtml = `<div class="enc-badge-mini force">⭐ FORCE</div>`;
+                    }
                 }
                 const hasRef = sd.matchCount >= 3;
                 const fillClass = !hasRef ? 'noref' : (s.eff >= sd.effMoy ? 'above' : 'below');
@@ -1426,9 +1431,10 @@
                 <div class="enc-body">
                     <div class="enc-cards-grid">${cardsHtml}</div>
                     <div class="enc-right-panel" id="enc-right-panel">
-                        <div id="enc-graph-wrap">
-                            <div class="enc-graph-toggle">
+                        <div id="enc-graph-wrap" style="position:relative">
+                            <div class="enc-graph-toggle" style="align-items:center">
                                 <button class="enc-toggle-btn${mode==='matrice'?' active':''}" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
+                                <span class="enc-info-btn" onclick="_toggleEncMatrixInfo()" title="Comprendre la matrice">i</span>
                                 <button class="enc-toggle-btn${mode==='radar'?' active':''}" onclick="_setEncGraphMode('radar')">Radar</button>
                             </div>
                             <canvas id="enc-radar-canvas" width="340" height="290" style="display:block;margin:0 auto;max-width:100%"></canvas>
@@ -1492,12 +1498,8 @@
                 { x:PAD.left, y:my,         w:mx-PAD.left,        h:PAD.top+ph-my,        bg:'rgba(241,245,249,0.3)', label:'Abandonner',   ta:'left',  tx:PAD.left+4,      ty:PAD.top+ph-12 },
                 { x:mx,       y:my,         w:PAD.left+pw-mx,     h:PAD.top+ph-my,        bg:'rgba(254,243,199,0.55)', label:'Corriger ⚠',  ta:'right', tx:PAD.left+pw-4,   ty:PAD.top+ph-12 },
             ];
-            zones.forEach(z => {
-                ctx.fillStyle = z.bg; ctx.fillRect(z.x, z.y, z.w, z.h);
-                ctx.font = 'bold 8px system-ui'; ctx.fillStyle = 'rgba(100,116,139,0.8)';
-                ctx.textAlign = z.ta; ctx.textBaseline = 'top';
-                ctx.fillText(z.label, z.tx, z.ty);
-            });
+            // Quadrant backgrounds only (labels drawn after dots)
+            zones.forEach(z => { ctx.fillStyle = z.bg; ctx.fillRect(z.x, z.y, z.w, z.h); });
             // Quadrant dividers
             ctx.setLineDash([4,3]); ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(mx, PAD.top); ctx.lineTo(mx, PAD.top+ph); ctx.stroke();
@@ -1515,8 +1517,9 @@
             ctx.fillText('← Utilisation FENIX (possessions) →', PAD.left+pw/2, PAD.top+ph+5);
             ctx.save(); ctx.translate(9, PAD.top+ph/2); ctx.rotate(-Math.PI/2);
             ctx.textBaseline = 'top'; ctx.fillText('Efficacité (b+PO)/poss. →', 0, 0); ctx.restore();
-            // Dots — colored circles with number inside, NO text label (legend below)
+            // Dots — colored circles with number inside
             const DOT_R = 13;
+            window._encMatrixDots = [];
             used.forEach(f => {
                 const s = stats.get(f)||{possessions:0,eff:0};
                 const x = xS(s.possessions), y = yS(s.eff||0);
@@ -1524,11 +1527,21 @@
                 ctx.beginPath(); ctx.arc(x, y, DOT_R, 0, 2*Math.PI);
                 ctx.fillStyle = col; ctx.fill();
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-                // possessions count inside dot
                 ctx.font = `bold ${s.possessions >= 10 ? 9 : 10}px system-ui`;
                 ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText(s.possessions, x, y);
+                window._encMatrixDots.push({ x, y, famille: f, eff: s.eff||0, possessions: s.possessions });
             });
+            // Zone labels drawn LAST (on top of dots) with white bg for legibility
+            ctx.font = 'bold 8px system-ui';
+            zones.forEach(z => {
+                ctx.textAlign = z.ta; ctx.textBaseline = 'top';
+                const tw = ctx.measureText(z.label).width;
+                const bgX = z.ta === 'right' ? z.tx - tw - 2 : z.tx - 2;
+                ctx.fillStyle = 'rgba(255,255,255,0.82)'; ctx.fillRect(bgX, z.ty - 1, tw + 4, 10);
+                ctx.fillStyle = 'rgba(100,116,139,0.9)'; ctx.fillText(z.label, z.tx, z.ty);
+            });
+            _initEncMatrixHover();
             // Legend HTML (below canvas)
             const leg = document.getElementById('enc-matrix-legend');
             if (leg) {
@@ -1573,6 +1586,59 @@
             }
             document.getElementById('enc-graph-wrap').style.display = '';
             document.getElementById('enc-detail-wrap').style.display = 'none';
+        }
+
+        function _initEncMatrixHover() {
+            const canvas = document.getElementById('enc-radar-canvas');
+            if (!canvas || canvas._hoverInit) return;
+            canvas._hoverInit = true;
+            let tip = document.getElementById('enc-matrix-tooltip');
+            if (!tip) {
+                tip = document.createElement('div');
+                tip.id = 'enc-matrix-tooltip';
+                tip.style.cssText = 'position:fixed;background:rgba(15,23,42,0.92);color:#fff;border-radius:6px;padding:5px 10px;font-size:0.75rem;pointer-events:none;display:none;z-index:9999;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3)';
+                document.body.appendChild(tip);
+            }
+            canvas.addEventListener('mousemove', e => {
+                const rect = canvas.getBoundingClientRect();
+                const sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+                const cx = (e.clientX - rect.left) * sx, cy = (e.clientY - rect.top) * sy;
+                const dots = window._encMatrixDots || [];
+                const found = dots.find(d => Math.sqrt((cx-d.x)**2+(cy-d.y)**2) <= 15);
+                if (found) {
+                    tip.innerHTML = `<strong>${found.famille}</strong> — ${found.eff}% · ${found.possessions} poss.`;
+                    tip.style.display = 'block';
+                    tip.style.left = (e.clientX + 14) + 'px';
+                    tip.style.top = (e.clientY - 12) + 'px';
+                    canvas.style.cursor = 'pointer';
+                } else {
+                    tip.style.display = 'none';
+                    canvas.style.cursor = 'default';
+                }
+            });
+            canvas.addEventListener('mouseleave', () => { const t = document.getElementById('enc-matrix-tooltip'); if (t) t.style.display = 'none'; });
+        }
+
+        function _toggleEncMatrixInfo() {
+            let box = document.getElementById('enc-matrix-info-box');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'enc-matrix-info-box';
+                box.style.cssText = 'position:absolute;top:30px;left:0;right:0;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.75rem;line-height:1.6;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)';
+                box.innerHTML = `<strong style="font-size:0.8rem;color:#0A2463">Lire la matrice</strong><br>
+                    <b>Axe X</b> — Utilisation : nb de possessions avec cet enclenchement<br>
+                    <b>Axe Y</b> — Efficacité : (buts + PO) / possessions<br>
+                    <b>Ligne verticale</b> — moyenne des possessions entre familles<br>
+                    <b>Ligne 50%</b> — seuil d'efficacité<br><br>
+                    <span style="color:#059669;font-weight:600">⭐ Exploiter</span> — fort <em>et</em> efficace → continuer<br>
+                    <span style="color:#3B82F6;font-weight:600">🔵 Sous-utilisé</span> — efficace mais peu utilisé → faire plus<br>
+                    <span style="color:#F59E0B;font-weight:600">⚠ Corriger</span> — très utilisé mais inefficace → améliorer<br>
+                    <span style="color:#94A3B8;font-weight:600">🔘 Abandonner</span> — peu utilisé <em>et</em> inefficace → éviter`;
+                const wrap = document.getElementById('enc-graph-wrap');
+                if (wrap) wrap.appendChild(box);
+                return;
+            }
+            box.style.display = box.style.display === 'none' ? '' : 'none';
         }
 
         function _drawEncRadar() {
