@@ -1410,7 +1410,7 @@
             const cardsInfoHtml = `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;position:relative;margin-bottom:2px">
                 <span style="font-size:0.62rem;font-weight:700;color:#94A3B8;letter-spacing:0.07em;text-transform:uppercase">Familles</span>
                 <span class="enc-info-btn" onclick="_toggleEncCardsInfo()" title="Lire les cartes">i</span>
-                <div id="enc-cards-info-box" style="display:none;position:absolute;top:20px;right:0;width:100%;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.74rem;line-height:1.7;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+                <div id="enc-cards-info-box" style="display:none;position:absolute;top:0;left:calc(100% + 12px);width:300px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.74rem;line-height:1.7;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
                     <strong style="font-size:0.8rem;color:#0A2463">Lire les cartes</strong><br>
                     <b>Grand %</b> — Utilisation : part des possessions equipe jouees avec cette famille<br>
                     <b>Barre coloree</b> — verte si eff. encl. &ge; moy. saison, rouge si en-dessous, grise si pas assez de matchs<br>
