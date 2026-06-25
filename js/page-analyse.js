@@ -1602,9 +1602,10 @@
             const pieR = Math.min(W * 0.29, 340);
             const cx = W / 2, cy = pieR + 55;
 
+            const pieTotal = slices.reduce((sum, s) => sum + s.poss, 0);
             let angle = -Math.PI / 2;
             const computed = slices.map(slice => {
-                const frac = slice.poss / totalPoss;
+                const frac = slice.poss / pieTotal;
                 const sweep = frac * 2 * Math.PI;
                 const start = angle;
                 angle += sweep;
