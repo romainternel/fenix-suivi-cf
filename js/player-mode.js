@@ -271,12 +271,20 @@
 
             // ── Badge signature ──
             const sig = computePlayerSignature(nom, isGB);
-            const sigHTML = sig ? `
+            const sigHTML = sig && sig.label ? `
                 <div class="pmf-card pmf-signature">
                     <div style="font-size:1.5rem;flex-shrink:0">💥</div>
                     <div>
                         <div style="font-weight:700;color:#1E293B;font-size:0.92rem">${sig.label}</div>
                         <div style="font-size:0.78rem;color:#92400E;margin-top:2px">Tu domines l'équipe sur cette action cette saison</div>
+                    </div>
+                </div>`
+                : sig && sig.insufficient ? `
+                <div class="pmf-card" style="opacity:0.6">
+                    <div style="font-size:1.5rem;flex-shrink:0">💥</div>
+                    <div>
+                        <div style="font-weight:700;color:#64748B;font-size:0.92rem">Signature indisponible</div>
+                        <div style="font-size:0.78rem;color:#94A3B8;margin-top:2px">Pas assez de joueurs avec des données (${sig.count}/5 min.)</div>
                     </div>
                 </div>` : '';
 
@@ -484,7 +492,7 @@
                 });
             });
 
-            if (playersWithData.size < 5) return null;
+            if (playersWithData.size < 5) return { insufficient: true, count: playersWithData.size };
             let best = null, bestRatio = 0;
             allGroups.forEach(g => {
                 const count = playerCounts[g.label];
