@@ -93,6 +93,7 @@
         let _gardienSelected = null;
         let _lastBasculeResult = null;
         let _encStatsSaison = null;
+        let _encMatrixHoverController = null;
         let _ENC_FAMILLE_CUSTOM = {};
         try { _ENC_FAMILLE_CUSTOM = JSON.parse(localStorage.getItem('enc_famille_custom') || '{}'); } catch(e) {}
 
@@ -1884,8 +1885,10 @@
 
         function _initEncMatrixHover() {
             const canvas = document.getElementById('enc-radar-canvas');
-            if (!canvas || canvas._hoverInit) return;
-            canvas._hoverInit = true;
+            if (!canvas) return;
+            if (_encMatrixHoverController) _encMatrixHoverController.abort();
+            _encMatrixHoverController = new AbortController();
+            const signal = _encMatrixHoverController.signal;
             let tip = document.getElementById('enc-matrix-tooltip');
             if (!tip) {
                 tip = document.createElement('div');
@@ -1909,8 +1912,8 @@
                     tip.style.display = 'none';
                     canvas.style.cursor = 'default';
                 }
-            });
-            canvas.addEventListener('mouseleave', () => { const t = document.getElementById('enc-matrix-tooltip'); if (t) t.style.display = 'none'; });
+            }, { signal });
+            canvas.addEventListener('mouseleave', () => { const t = document.getElementById('enc-matrix-tooltip'); if (t) t.style.display = 'none'; }, { signal });
         }
 
         function _toggleEncGraphInfo() {
