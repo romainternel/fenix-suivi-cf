@@ -587,7 +587,7 @@
                     if (def) counts[def] = (counts[def]||0) + 1;
                 });
             });
-            const nbM = matchSet.size || 1;
+            const nbM = matchSet.size;
             const gc = g => g.main.reduce((s, a) => s + (counts[a] || 0), 0);
 
             const makeSection = (groups, headerColor, bgColor, title) => {
@@ -668,9 +668,9 @@
                     </div>
                 </div>
                 <div class="pmf-actions-totals">
-                    <div><div style="font-size:1.3rem;font-weight:800;color:${vColor(totalAtt)}">${sign(totalAtt)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL ATT</div><div style="font-size:0.7rem;color:#94A3B8">${(totalAtt/nbM).toFixed(1)}/match</div></div>
-                    <div><div style="font-size:1.3rem;font-weight:800;color:${vColor(totalDef)}">${sign(totalDef)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL DEF</div><div style="font-size:0.7rem;color:#94A3B8">${(totalDef/nbM).toFixed(1)}/match</div></div>
-                    <div><div style="font-size:1.5rem;font-weight:900;color:${vColor(totalJoueur)}">${sign(totalJoueur)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL JOUEUR</div><div style="font-size:0.7rem;color:#94A3B8">${(totalJoueur/nbM).toFixed(1)}/match</div></div>
+                    <div><div style="font-size:1.3rem;font-weight:800;color:${vColor(totalAtt)}">${sign(totalAtt)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL ATT</div><div style="font-size:0.7rem;color:#94A3B8">${nbM>0?(totalAtt/nbM).toFixed(1):'—'}/match</div></div>
+                    <div><div style="font-size:1.3rem;font-weight:800;color:${vColor(totalDef)}">${sign(totalDef)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL DEF</div><div style="font-size:0.7rem;color:#94A3B8">${nbM>0?(totalDef/nbM).toFixed(1):'—'}/match</div></div>
+                    <div><div style="font-size:1.5rem;font-weight:900;color:${vColor(totalJoueur)}">${sign(totalJoueur)}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">TOTAL JOUEUR</div><div style="font-size:0.7rem;color:#94A3B8">${nbM>0?(totalJoueur/nbM).toFixed(1):'—'}/match</div></div>
                     <div><div style="font-size:1.5rem;font-weight:900;color:#0A2463">${nbM}</div><div style="font-size:0.65rem;font-weight:700;color:#64748B;text-transform:uppercase">MATCHS JOUÉS</div></div>
                 </div>`;
         }
@@ -1705,6 +1705,8 @@
             if (fichePage) fichePage.style.display = 'none';
             const matchPage = document.getElementById('pm-match-page');
             if (matchPage) matchPage.style.display = 'none';
+            const zonesPage = document.getElementById('pm-zones-page');
+            if (zonesPage) zonesPage.style.display = 'none';
 
             // Remettre le bouton déconnexion d'origine
             const exitBtn = document.querySelector('#pm-bar button[onclick="exitPreviewMode()"]');

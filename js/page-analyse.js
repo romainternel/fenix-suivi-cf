@@ -173,11 +173,11 @@
             const fenixPB   = fenixData.filter(r => r[COLS.resultat] === 'PB').length;
             const advPB     = advData.filter(r => r[COLS.resultat] === 'PB').length;
 
-            const fenixTirsSubis = advData.filter(r => r[COLS.resultat] === 'But' || r[COLS.resultat] === 'Tir raté').length;
-            const fenixArrets    = advData.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const fenixTirsSubis = advData.filter(r => r[COLS.finalite] === 'But' || r[COLS.finalite] === 'Tir arrêté').length;
+            const fenixArrets    = advData.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
             const fenixGardEff   = fenixTirsSubis > 0 ? Math.round(fenixArrets / fenixTirsSubis * 100) : 0;
-            const advTirsSubis   = fenixData.filter(r => r[COLS.resultat] === 'But' || r[COLS.resultat] === 'Tir raté').length;
-            const advArrets      = fenixData.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const advTirsSubis   = fenixData.filter(r => r[COLS.finalite] === 'But' || r[COLS.finalite] === 'Tir arrêté').length;
+            const advArrets      = fenixData.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
             const advGardEff     = advTirsSubis > 0 ? Math.round(advArrets / advTirsSubis * 100) : 0;
 
             const getSup = (data, sign) => data.filter(r => (r[COLS.phase_att] || '').toString().includes(sign));
@@ -2000,11 +2000,10 @@
             const famOpts = ENC_FAMILLES_ORDRE.map(f => `<option value="${f}">${f}</option>`).join('');
             const sorted = [...byEnc.entries()].sort((a, b) => b[1] - a[1]);
             const lignes = sorted.map(([enc, cnt]) => {
-                const encEsc = enc.replace(/'/g, "\\'");
                 return `<tr>
-                    <td>${enc}</td>
+                    <td>${_escapeHtml(enc)}</td>
                     <td style="text-align:center;font-weight:600">${cnt}</td>
-                    <td><select class="enc-assign-select" onchange="_assignEncFamille('${encEsc}', this.value)">
+                    <td><select class="enc-assign-select" data-enc="${_escapeHtml(enc)}" onchange="_assignEncFamille(this.dataset.enc, this.value)">
                         <option value="">— assigner —</option>${famOpts}
                     </select></td>
                 </tr>`;
@@ -2277,7 +2276,7 @@
                 if (!byGardien.has(gardien)) { const m = new Map(); FAMILLES.forEach(f => m.set(f, { arrets:0, tirs:0, pct:0 })); byGardien.set(gardien, m); }
                 const s = byGardien.get(gardien).get(getEncFamille(r[COLS.enclenchement]));
                 const estArret = r[COLS.finalite] === 'Tir arrêté';
-                const estBut = r[COLS.finalite] === 'But' || r[COLS.resultat] === 'But';
+                const estBut = r[COLS.finalite] === 'But';
                 if (estArret) { s.arrets++; s.tirs++; } else if (estBut) s.tirs++;
             });
             byGardien.forEach(famMap => famMap.forEach(s => { s.pct = s.tirs > 0 ? Math.round(s.arrets / s.tirs * 100) : 0; }));
@@ -2365,7 +2364,7 @@
         function _renderGardienHeatmap(matchData, familleFilter) {
             const hc = document.getElementById('enc-gardien-heatmap');
             if (!hc) return;
-            let advRows = matchData.filter(r => r[COLS.club] !== 'FENIX' && (r[COLS.finalite]==='But'||r[COLS.finalite]==='Tir arrêté') && r[COLS.gardien] === _gardienSelected);
+            let advRows = matchData.filter(r => r[COLS.club] !== 'FENIX' && (r[COLS.finalite]==='But'||r[COLS.finalite]==='Tir arrêté') && matchPlayerName(_gardienSelected||'', (r[COLS.gardien]||'').toString().trim()));
             if (familleFilter) advRows = advRows.filter(r => getEncFamille(r[COLS.enclenchement]) === familleFilter);
             const titre = familleFilter ? `${familleFilter} (${advRows.length} tirs)` : `Tous systèmes (${advRows.length} tirs)`;
             hc.innerHTML = `<div style="font-size:0.75rem;color:#64748B;margin-bottom:4px;">${titre}</div><canvas id="enc-gardien-canvas" width="160" height="180"></canvas>${familleFilter?`<button onclick="_onGardienFamilleClick(null)" class="enc-filter-reset">Tout afficher</button>`:''}`;
