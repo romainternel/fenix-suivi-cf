@@ -1927,7 +1927,7 @@
             if (!box) {
                 box = document.createElement('div');
                 box.id = 'enc-matrix-info-box';
-                box.style.cssText = 'position:absolute;top:30px;left:0;right:0;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.75rem;line-height:1.6;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)';
+                box.style.cssText = 'position:absolute;top:30px;left:0;width:fit-content;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.75rem;line-height:1.6;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1);white-space:nowrap';
                 box.innerHTML = `<strong style="font-size:0.8rem;color:#0A2463">Lire la matrice</strong><br>
                     <b>Axe X</b> — Utilisation : nb de possessions avec cet enclenchement<br>
                     <b>Axe Y</b> — Efficacité : (buts + PO) / possessions<br>
