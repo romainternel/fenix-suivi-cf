@@ -1410,14 +1410,36 @@
             const cardsInfoHtml = `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;position:relative;margin-bottom:2px">
                 <span style="font-size:0.62rem;font-weight:700;color:#94A3B8;letter-spacing:0.07em;text-transform:uppercase">Familles</span>
                 <span class="enc-info-btn" onclick="_toggleEncCardsInfo()" title="Lire les cartes">i</span>
-                <div id="enc-cards-info-box" style="display:none;position:absolute;top:0;left:calc(100% + 12px);width:300px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.74rem;line-height:1.7;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
-                    <strong style="font-size:0.8rem;color:#0A2463">Lire les cartes</strong><br>
-                    <b>Grand %</b> — Utilisation : part des possessions equipe jouees avec cette famille<br>
-                    <b>Barre coloree</b> — verte si eff. encl. &ge; moy. saison, rouge si en-dessous, grise si pas assez de matchs<br>
-                    <b>% encl. (gras)</b> — Efficacite enclenchement = (Buts + PO) / Possessions (le PO compte comme efficace)<br>
-                    <b>% tir (gris)</b> — Reussite au tir = Buts / (Buts + Rates + Arretes)<br>
-                    <b>Np</b> — Nombre de possessions jouees avec cette famille<br>
-                    <b>▲/▼ pts</b> — Ecart vs moy. saison (vert = au-dessus, rouge = en-dessous)
+                <div id="enc-cards-info-box" style="display:none;position:absolute;top:0;left:calc(100% + 12px);width:390px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.74rem;line-height:1.4;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+                    <strong style="font-size:0.8rem;color:#0A2463">Lire les cartes</strong>
+                    <div style="display:flex;gap:14px;align-items:flex-start;margin-top:8px">
+                        <div style="position:relative;flex:0 0 auto">
+                            <div class="enc-card-mini" style="border-top-color:#F59E0B;width:118px;pointer-events:none;cursor:default">
+                                <div class="enc-card-mini-header"><span class="enc-famille-dot" style="background:#F59E0B"></span><span class="enc-famille-name">Isoler</span></div>
+                                <div class="enc-famille-eff">29%</div>
+                                <div class="enc-famille-sublabel">UTILISATION</div>
+                                <div class="enc-progress-track"><div class="enc-progress-fill above" style="width:29%"></div></div>
+                                <div class="enc-stat-pair">
+                                    <div><div class="enc-stat-main-val">52%</div><div class="enc-stat-pair-label">encl.</div></div>
+                                    <div class="enc-stat-sep">·</div>
+                                    <div><div class="enc-stat-sec-val">71%</div><div class="enc-stat-pair-label">tir</div></div>
+                                </div>
+                                <div class="enc-footnote">349p · <span style="color:#10B981;font-weight:600">▲ +3pts</span></div>
+                            </div>
+                            <div style="position:absolute;top:2px;right:-9px;width:16px;height:16px;border-radius:50%;background:#0A2463;color:#fff;font-size:0.52rem;font-weight:700;display:flex;align-items:center;justify-content:center">1</div>
+                            <div style="position:absolute;top:35px;right:-9px;width:16px;height:16px;border-radius:50%;background:#0A2463;color:#fff;font-size:0.52rem;font-weight:700;display:flex;align-items:center;justify-content:center">2</div>
+                            <div style="position:absolute;top:66px;right:-9px;width:16px;height:16px;border-radius:50%;background:#0A2463;color:#fff;font-size:0.52rem;font-weight:700;display:flex;align-items:center;justify-content:center">3</div>
+                            <div style="position:absolute;top:84px;right:-9px;width:16px;height:16px;border-radius:50%;background:#0A2463;color:#fff;font-size:0.52rem;font-weight:700;display:flex;align-items:center;justify-content:center">4</div>
+                            <div style="position:absolute;bottom:4px;right:-9px;width:16px;height:16px;border-radius:50%;background:#0A2463;color:#fff;font-size:0.52rem;font-weight:700;display:flex;align-items:center;justify-content:center">5</div>
+                        </div>
+                        <div style="flex:1;font-size:0.67rem;color:#374151;display:flex;flex-direction:column">
+                            <div style="display:flex;align-items:center;gap:5px;margin-top:2px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">1</span><span>Famille + couleur identifiant</span></div>
+                            <div style="display:flex;align-items:center;gap:5px;margin-top:19px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">2</span><span>% d'utilisation dans le match</span></div>
+                            <div style="display:flex;align-items:center;gap:5px;margin-top:17px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">3</span><span>Barre : vert ≥ moy. saison / rouge &lt;</span></div>
+                            <div style="display:flex;align-items:center;gap:5px;margin-top:10px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">4</span><span>Efficacité enc. <span style="color:#94A3B8">·</span> Réussite tir</span></div>
+                            <div style="display:flex;align-items:center;gap:5px;margin-top:14px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">5</span><span>Nb possessions · Écart vs moy. saison</span></div>
+                        </div>
+                    </div>
                 </div>
             </div>`;
             let cardsHtml = cardsInfoHtml;
