@@ -99,9 +99,10 @@
 
         function checkPeriodeData(matchData) {
             const total = matchData.length;
-            if (total === 0) return { ok: false, withPeriode: 0, total: 0 };
+            if (total === 0) return { ok: false, partial: false, withPeriode: 0, total: 0 };
             const withPeriode = matchData.filter(row => /^[12]/.test((row[COLS.periode] || '').toString().trim())).length;
-            return { ok: withPeriode / total >= 0.7, withPeriode, total };
+            const pct = withPeriode / total;
+            return { ok: withPeriode > 0, partial: pct > 0 && pct < 0.7, withPeriode, total };
         }
 
         function updateAnalysePage() {
@@ -125,8 +126,11 @@
             const hasPeriode = periodeCheck.ok;
             const warningEl = document.getElementById('periode-warning');
             if (warningEl) {
-                if (!hasPeriode && matchData.length > 0) {
-                    warningEl.textContent = `⚠️ Données période incomplètes (${periodeCheck.withPeriode}/${periodeCheck.total} lignes reconnues) — colonnes MT1/MT2 masquées.`;
+                if (periodeCheck.partial) {
+                    warningEl.textContent = `⚠ Données période partielles (${periodeCheck.withPeriode}/${periodeCheck.total} lignes) — résultats MT1/MT2 approximatifs.`;
+                    warningEl.style.display = 'block';
+                } else if (!hasPeriode && matchData.length > 0) {
+                    warningEl.textContent = `⚠ Aucune donnée de période — colonnes MT1/MT2 masquées.`;
                     warningEl.style.display = 'block';
                 } else {
                     warningEl.style.display = 'none';
