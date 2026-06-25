@@ -1328,7 +1328,6 @@
             rows.forEach(r => {
                 if (!(r[COLS.possession] || '').toString().trim()) return; // sub-event (Jet franc, Pen post-PO…) — pas une possession
                 const encRaw = (r[COLS.enclenchement] || '').toString().trim();
-                if (!encRaw) return; // pas d'enc renseigné → ignoré (ni classifié, ni "Autre")
                 const famille = getEncFamille(encRaw);
                 const s = stats.get(famille);
                 const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');

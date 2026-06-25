@@ -319,7 +319,7 @@
         }
 
         // ── Badges joueur ────────────────────────────────────────────────────────
-        function _computeNoteScore(nom, posteCode) {
+        function _computeNoteScore(nom, posteCode, bilanMatchs) {
             if (posteCode === 'GB' && typeof calculateGardienNotes === 'function') {
                 const all = calculateGardienNotes('');
                 const e = Object.entries(all).find(([k]) => matchPlayerName(k, nom));
@@ -327,6 +327,7 @@
             }
             let ap = 0, am = 0, dp = 0, dm = 0;
             DATA.forEach(row => {
+                if (bilanMatchs && !bilanMatchs.includes(row[COLS.rencontre])) return;
                 const js = (row[COLS.action_joueur]||'').toString().split(';');
                 const as = (row[COLS.action_att]||'').toString().split(';');
                 const ds = (row[COLS.action_def]||'').toString().split(';');
@@ -340,12 +341,12 @@
             return { att: ap - am, def: dp - dm, total: (ap - am) + (dp - dm) };
         }
 
-        function computePlayerRank(nom, posteCode) {
+        function computePlayerRank(nom, posteCode, bilanMatchs) {
             if (!posteCode || !JOUEURS_TERRAIN) return null;
             const teammates = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
             const noteCache = new Map();
             const getNote = n => {
-                if (!noteCache.has(n)) noteCache.set(n, _computeNoteScore(n, posteCode).total);
+                if (!noteCache.has(n)) noteCache.set(n, _computeNoteScore(n, posteCode, bilanMatchs).total);
                 return noteCache.get(n);
             };
             const myNote = getNote(nom);
@@ -390,8 +391,9 @@
         function renderBadges(nom, posteCode) {
             const el = document.getElementById('pmf-badges');
             if (!el) return;
+            const bilanMatchs = _getPmBilanMatchs();
             const badges = [];
-            const rank = computePlayerRank(nom, posteCode);
+            const rank = computePlayerRank(nom, posteCode, bilanMatchs);
             if (rank && rank.total > 1) {
                 const medal = rank.rank === 1 ? '🥇' : rank.rank === 2 ? '🥈' : rank.rank === 3 ? '🥉' : null;
                 if (medal) badges.push(`<span class="pmf-badge pmf-badge-rank">${medal} #${rank.rank} au poste</span>`);
@@ -400,9 +402,9 @@
             if (posteCode && posteCode !== 'GB' && JOUEURS_TERRAIN) {
                 const teammates = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
                 if (teammates.length > 0) {
-                    const myNote = _computeNoteScore(nom, posteCode);
-                    const topAtt = myNote.att > 0 && teammates.every(p => _computeNoteScore(p.nom, posteCode).att <= myNote.att);
-                    const topDef = myNote.def > 0 && teammates.every(p => _computeNoteScore(p.nom, posteCode).def <= myNote.def);
+                    const myNote = _computeNoteScore(nom, posteCode, bilanMatchs);
+                    const topAtt = myNote.att > 0 && teammates.every(p => _computeNoteScore(p.nom, posteCode, bilanMatchs).att <= myNote.att);
+                    const topDef = myNote.def > 0 && teammates.every(p => _computeNoteScore(p.nom, posteCode, bilanMatchs).def <= myNote.def);
                     if (topAtt) badges.push(`<span class="pmf-badge pmf-badge-rank">⚡ Top ATT au poste</span>`);
                     if (topDef) badges.push(`<span class="pmf-badge pmf-badge-rank">🛡️ Top DEF au poste</span>`);
                 }
