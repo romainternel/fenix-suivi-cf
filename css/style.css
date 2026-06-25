@@ -2444,6 +2444,13 @@
         }
         .enc-toggle-btn.active { background: #0A2463; border-color: #0A2463; color: #fff; }
         .enc-toggle-btn:hover:not(.active) { background: #E2E8F0; }
+        .enc-pie-mode-btn {
+            padding: 3px 8px; border: 1px solid #CBD5E1;
+            background: #F8FAFC; border-radius: 5px; font-size: 0.65rem;
+            font-weight: 600; color: #64748B; cursor: pointer; transition: all 0.15s;
+        }
+        .enc-pie-mode-btn.active { background: #7C3AED; border-color: #7C3AED; color: #fff; }
+        .enc-pie-mode-btn:hover:not(.active) { background: #E2E8F0; }
         .enc-info-btn {
             display: inline-flex; align-items: center; justify-content: center;
             width: 20px; height: 20px; border-radius: 50%; background: #E2E8F0;

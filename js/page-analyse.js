@@ -1535,6 +1535,11 @@
                 <div class="enc-body">
                     <div class="enc-cards-grid">${cardsHtml}</div>
                     <div class="enc-right-panel" id="enc-right-panel">
+                        <div id="enc-pie-mode-bar" style="display:${mode!=='matrice'?'flex':'none'};gap:4px;margin-bottom:6px;justify-content:center;flex-wrap:wrap">
+                            <button class="enc-pie-mode-btn${!window._encPieMode||window._encPieMode==='utilisation'?' active':''}" data-mode="utilisation" onclick="_setEncPieMode('utilisation')">Utilisation</button>
+                            <button class="enc-pie-mode-btn${window._encPieMode==='production'?' active':''}" data-mode="production" onclick="_setEncPieMode('production')">Buts + PO</button>
+                            <button class="enc-pie-mode-btn${window._encPieMode==='tirs'?' active':''}" data-mode="tirs" onclick="_setEncPieMode('tirs')">Tirs</button>
+                        </div>
                         <div id="enc-graph-wrap" style="position:relative;display:flex;align-items:center;justify-content:center;width:100%">
                             <canvas id="enc-pie-canvas" width="340" height="280" style="display:block;max-width:100%"></canvas>
                             <canvas id="enc-radar-canvas" width="340" height="280" style="display:none;max-width:100%"></canvas>
@@ -1558,6 +1563,13 @@
             if (window._encCurrentMatchData) renderEncFamillesSection(window._encCurrentMatchData);
         }
 
+        function _setEncPieMode(mode) {
+            window._encPieMode = mode;
+            document.querySelectorAll('.enc-pie-mode-btn').forEach(b =>
+                b.classList.toggle('active', b.dataset.mode === mode));
+            requestAnimationFrame(() => _drawEncPie());
+        }
+
         function _setEncGraphMode(mode) {
             window._encGraphMode = mode;
             document.querySelectorAll('.enc-toggle-btn[data-mode]').forEach(b =>
@@ -1566,6 +1578,8 @@
             if (infoBtn) infoBtn.style.opacity = mode !== 'matrice' ? '0.3' : '1';
             const mib = document.getElementById('enc-matrix-info-box');
             if (mib) mib.style.display = 'none';
+            const modeBar = document.getElementById('enc-pie-mode-bar');
+            if (modeBar) modeBar.style.display = mode !== 'matrice' ? 'flex' : 'none';
             requestAnimationFrame(() => _drawEncChart());
         }
 
@@ -1605,11 +1619,16 @@
                 'Faire courir':'#EC4899','Spéciaux':'#64748B','6vs5':'#06B6D4',
                 'Rebond':'#84CC16','Autre':'#94A3B8'
             };
+            const pm = window._encPieMode || 'utilisation';
             const slices = [];
             [...ENC_FAMILLES_ORDRE, 'Autre'].forEach(famille => {
                 const s = statsMatch.get(famille);
-                if (s && s.possessions > 0)
-                    slices.push({ famille, poss: s.possessions, color: PIE_HEX[famille] || '#94A3B8' });
+                if (!s || s.possessions === 0) return;
+                const val = pm === 'production' ? (s.buts || 0) + (s.po || 0)
+                          : pm === 'tirs' ? (s.buts || 0) + (s.tirs || 0)
+                          : s.possessions;
+                if (val === 0) return;
+                slices.push({ famille, poss: s.possessions, val, color: PIE_HEX[famille] || '#94A3B8' });
             });
             if (!slices.length) return;
 
@@ -1621,10 +1640,12 @@
             const pieR = Math.min(W * 0.29, 340);
             const cx = W / 2, cy = pieR + 55;
 
-            const pieTotal = slices.reduce((sum, s) => sum + s.poss, 0);
+            const sliceTotal = slices.reduce((sum, s) => sum + s.val, 0);
+            const denom = pm === 'utilisation' ? (totalPoss || sliceTotal) : sliceTotal;
+            if (!denom) return;
             let angle = -Math.PI / 2;
             const computed = slices.map(slice => {
-                const frac = slice.poss / pieTotal;
+                const frac = slice.val / denom;
                 const sweep = frac * 2 * Math.PI;
                 const start = angle;
                 angle += sweep;
@@ -2251,6 +2272,8 @@
             matchData.filter(r => r[COLS.club] !== 'FENIX').forEach(r => {
                 const gardien = (r[COLS.gardien] || '').toString().trim();
                 if (!gardien) return;
+                if (typeof GARDIENS_FENIX !== 'undefined' && GARDIENS_FENIX.length > 0 &&
+                    !GARDIENS_FENIX.includes(gardien)) return;
                 if (!byGardien.has(gardien)) { const m = new Map(); FAMILLES.forEach(f => m.set(f, { arrets:0, tirs:0, pct:0 })); byGardien.set(gardien, m); }
                 const s = byGardien.get(gardien).get(getEncFamille(r[COLS.enclenchement]));
                 const estArret = r[COLS.finalite] === 'Tir arrêté';
@@ -2354,10 +2377,14 @@
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const ZONE_MAP = { 'HG':0,'HC':1,'HD':2,'MG':3,'MC':4,'MD':5,'BG':6,'BC':7,'BD':8 };
+            const ZONE_MAP = {
+                '9m Int G':0,'9m ext G':0,'But à but':1,'9m Int D':2,'9m ext D':2,
+                '6-9 ext G':3,'6-9 central G':3,'6-9 central D':5,'6-9 ext D':5,
+                '6m ail G':6,'6m ext G':6,'6m central G':7,'6m central D':7,'7m':7,'6m ail D':8,'6m ext D':8
+            };
             const counts = new Array(9).fill(0), buts = new Array(9).fill(0);
             rows.forEach(r => {
-                const zone = (r[COLS.field_position]||'').toString().trim().toUpperCase();
+                const zone = (r[COLS.field_position]||'').toString().trim();
                 const idx = ZONE_MAP[zone];
                 if (idx !== undefined) { counts[idx]++; if (r[COLS.finalite]==='But') buts[idx]++; }
             });
