@@ -2,14 +2,10 @@
         let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
         let chatHistory = [];
 
-        // ===== MODULE ANALYSE — ENC_FAMILLE_MAP validé coach 2026-06-23 (ref: feuille Enclenchements) =====
+        // ===== MODULE ANALYSE — ENC_FAMILLE_MAP validé coach 2026-06-25 (ref: feuille Enclenchements ESSAI IA STAT) =====
         const ENC_FAMILLE_MAP = {
-            // MOUVEMENT — jeux de mouvement numérotés + transitions
-            '1':'Mouvement','5':'Mouvement','8':'Mouvement','9':'Mouvement',
-            'Pingouin':'Mouvement','Bis':'Mouvement',
-            'Départ':'Mouvement','Depart':'Mouvement',
-            'Croisé DC-AR':'Mouvement','Croise DC-AR':'Mouvement',
             // ISOLER — finalités qui isolent un défenseur
+            '1':'Isoler','9':'Isoler',
             'DUEL':'Isoler','Markus':'Isoler',
             'Écartement':'Isoler','Ecartement':'Isoler',
             'Renverse':'Isoler','Aix':'Isoler',
@@ -18,13 +14,14 @@
             'PORTO':'Isoler','Gidsel':'Isoler','2 pvts':'Isoler','Szeged':'Isoler',
             'LIMOGES':'Isoler','ISO':'Isoler',
             "Départ d'ailier":'Isoler',"Depart ailier":'Isoler',
+            'Départ':'Isoler','Depart':'Isoler',
             '7':'Isoler',
             // RENTRÉE
             '3':'Rentrée','6':'Rentrée',
             'Ressort':'Rentrée',
-            '+':'Rentrée','110':'Rentrée',
+            '+':'Rentrée','90':'Rentrée','110':'Rentrée',
             '6 OPPOSÉ':'Rentrée','6 OPPOSE':'Rentrée',
-            '90':'Rentrée','3 OPPOSÉ':'Rentrée','3 OPPOSE':'Rentrée',
+            '3 OPPOSÉ':'Rentrée','3 OPPOSE':'Rentrée',
             'Flensburg':'Rentrée','POSTE':'Rentrée',
             'POSTE CROISÉ':'Rentrée','POSTE CROISE':'Rentrée','Maillot':'Rentrée',
             // JEU PVT
@@ -43,23 +40,24 @@
             '7vs6 Markus':'7vs6','6 Barthez':'7vs6',
             '7vs6 1-2/5-6':'7vs6','7vs6 2-3/4-5':'7vs6','7vs5':'7vs6','BARTHEZ':'7vs6',
             // FAIRE COURIR
-            '4':'Faire courir',
+            '4':'Faire courir','8':'Faire courir',
             'Bretzel':'Faire courir','Course-tir':'Faire courir','Course-Tir':'Faire courir',
             'FENIX':'Faire courir','Long':'Faire courir','DK':'Faire courir',
             'M':'Faire courir','DANI':'Faire courir',
+            'Croisé DC-AR':'Faire courir','Croise DC-AR':'Faire courir',
             // SPÉCIAUX
+            '5':'Spéciaux','Bis':'Spéciaux',
             'Fake':'Spéciaux','RAPIDO':'Spéciaux','IRUN':'Spéciaux',
             'Kung Fu':'Spéciaux','Kung fu':'Spéciaux',
             'Moustache':'Spéciaux','Spéciaux':'Spéciaux','Speciaux':'Spéciaux','Spécial':'Spéciaux','Kebab':'Spéciaux',
             // 6VS5
-            'K':'6vs5','Danois':'6vs5','1 rotation':'6vs5',
+            'K':'6vs5','Danois':'6vs5','1 rotation':'6vs5','Pingouin':'6vs5',
             // REBOND — récupération offensive après tir/rebond
             'Recup':'Rebond','RECUP':'Rebond','recup':'Rebond',
         };
 
-        const ENC_FAMILLES_ORDRE = ['Mouvement','Isoler','Rentrée','Jeu PVT','Bloc PVT','7vs6','Faire courir','Spéciaux','6vs5','Rebond'];
+        const ENC_FAMILLES_ORDRE = ['Isoler','Rentrée','Jeu PVT','Bloc PVT','7vs6','Faire courir','Spéciaux','6vs5','Rebond'];
         const ENC_FAMILLE_COLORS = {
-            'Mouvement':'var(--enc-mouvement)',
             'Isoler':'var(--enc-isoler)',
             'Rentrée':'var(--enc-rentree)','Jeu PVT':'var(--enc-jeu-pvt)',
             'Bloc PVT':'var(--enc-bloc-pvt)','7vs6':'var(--enc-7vs6)',
@@ -67,7 +65,6 @@
             '6vs5':'var(--enc-6vs5)','Rebond':'var(--enc-rebond)','Autre':'var(--enc-autre)',
         };
         const ENC_FAMILLE_IDS = {
-            'Mouvement':'mouvement',
             'Isoler':'isoler','Rentrée':'rentree',
             'Jeu PVT':'jeu-pvt','Bloc PVT':'bloc-pvt','7vs6':'7vs6',
             'Faire courir':'faire-courir','Spéciaux':'speciaux','6vs5':'6vs5','Rebond':'rebond','Autre':'autre',
@@ -1581,7 +1578,7 @@
             const totalPoss = window._encCurrentTotalPoss;
             if (!statsMatch || !totalPoss) return;
             const PIE_HEX = {
-                'Mouvement':'#0EA5E9','Isoler':'#F59E0B','Rentrée':'#F97316',
+                'Isoler':'#F59E0B','Rentrée':'#F97316',
                 'Jeu PVT':'#8B5CF6','Bloc PVT':'#7C3AED','7vs6':'#10B981',
                 'Faire courir':'#EC4899','Spéciaux':'#64748B','6vs5':'#06B6D4',
                 'Rebond':'#84CC16','Autre':'#94A3B8'
@@ -1791,7 +1788,7 @@
             // Legend HTML (below canvas)
             const leg = document.getElementById('enc-matrix-legend');
             if (leg) {
-                const abbr = {'Faire courir':'F.courir','Mouvement':'Mvt','Spéciaux':'Spéc.'};
+                const abbr = {'Faire courir':'F.courir','Spéciaux':'Spéc.'};
                 const items = used.map(f => {
                     const s = stats.get(f)||{eff:0};
                     const col = getHex(f);
@@ -2066,7 +2063,7 @@
             const fSub  = Math.max(8, fMain - 1);
             const fTiny = Math.max(7, fSub - 1);
             const lyOff = Math.round(fMain * 0.65);
-            const abbr = {'Faire courir':'F.courir','Mouvement':'Mvt','Spéciaux':'Spéc.','Bloc PVT':'Bloc PVT','Jeu PVT':'Jeu PVT'};
+            const abbr = {'Faire courir':'F.courir','Spéciaux':'Spéc.','Bloc PVT':'Bloc PVT','Jeu PVT':'Jeu PVT'};
             ctx.textBaseline = 'middle';
             angles.forEach((a,i) => {
                 const lx = cx + LABEL_R*Math.cos(a), ly = cy + LABEL_R*Math.sin(a);
