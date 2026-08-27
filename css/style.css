@@ -2501,6 +2501,8 @@
         .enc-detail-table td { padding: 3px 6px; text-align: center; border-bottom: 1px solid #F1F5F9; }
         .enc-detail-table td:first-child { text-align: left; }
         .enc-detail-total { font-weight: 700; background: #F8FAFC; }
+        .enc-detail-row-clickable { cursor: pointer; transition: background 120ms ease; }
+        .enc-detail-row-clickable:hover { background: #EFF6FF; }
 
         /* Section bascule (A-05) */
         .enc-bascule-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }

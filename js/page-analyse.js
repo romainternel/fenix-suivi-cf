@@ -1812,6 +1812,14 @@
             }
             window._encSelectedFamille = fid;
             document.getElementById(`enc-card-${fid}`)?.classList.add('selected');
+            _renderEncFamilleDetail(famille, fid);
+            gw.style.display = 'none';
+            dw.style.display = '';
+        }
+
+        // Niveau 1 du détail : liste des intentions attaque de la famille
+        function _renderEncFamilleDetail(famille, fid) {
+            window._encSelectedIntention = null;
             const couleur = ENC_FAMILLE_COLORS[famille];
             const s = window._encCurrentStatsMatch?.get(famille) || { eff:0, possessions:0 };
             const dh = document.getElementById('enc-detail-header');
@@ -1822,8 +1830,21 @@
                 <strong style="text-transform:uppercase;font-size:0.85rem">${famille}</strong>
                 <span style="color:#64748B;font-size:0.75rem;margin-left:8px">${s.eff}% · n=${s.possessions}</span>`;
             if (dc) dc.innerHTML = _buildEncDetailTable(window._encCurrentMatchData, famille, window._encTeamMode === 'adv');
-            gw.style.display = 'none';
-            dw.style.display = '';
+        }
+
+        // Niveau 2 du détail : enclenchements enregistrés sous une intention attaque précise
+        function _selectEncIntention(famille, intention) {
+            window._encSelectedIntention = intention;
+            const couleur = ENC_FAMILLE_COLORS[famille];
+            const fid = ENC_FAMILLE_IDS[famille];
+            const dh = document.getElementById('enc-detail-header');
+            const dc = document.getElementById('enc-detail-content');
+            if (dh) dh.innerHTML = `
+                <button class="enc-detail-back" title="Retour aux intentions" data-famille="${_escapeHtml(famille)}" data-fid="${_escapeHtml(fid)}" onclick="_renderEncFamilleDetail(this.dataset.famille, this.dataset.fid)">←</button>
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${couleur};vertical-align:middle;margin-right:6px"></span>
+                <strong style="font-size:0.85rem">${_escapeHtml(intention)}</strong>
+                <span style="color:#64748B;font-size:0.75rem;margin-left:8px">${famille}</span>`;
+            if (dc) dc.innerHTML = _buildEncIntentionDetailTable(window._encCurrentMatchData, intention, window._encTeamMode === 'adv');
         }
 
         function _closeEncDetail() {
@@ -1831,6 +1852,7 @@
                 document.getElementById(`enc-card-${window._encSelectedFamille}`)?.classList.remove('selected');
                 window._encSelectedFamille = null;
             }
+            window._encSelectedIntention = null;
             const gw = document.getElementById('enc-graph-wrap');
             const dw = document.getElementById('enc-detail-wrap');
             if (gw) gw.style.display = '';
@@ -2131,9 +2153,41 @@
             sorted.forEach(([, s]) => {
                 const eff = s.possessions > 0 ? Math.round((s.buts + s.po) / s.possessions * 100) : 0;
                 const c = eff >= 60 ? '#059669' : eff < 40 ? '#DC2626' : '#64748B';
-                lignes += `<tr><td>${s.label}</td><td>${s.buts}</td><td>${s.po}</td><td>${s.tirs}</td><td>${s.pb}</td><td>${s.possessions}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
+                lignes += `<tr class="enc-detail-row-clickable" data-famille="${_escapeHtml(famille)}" data-intention="${_escapeHtml(s.label)}" onclick="_selectEncIntention(this.dataset.famille, this.dataset.intention)" title="Voir les enclenchements utilisés pour cette intention"><td>${_escapeHtml(s.label)}</td><td>${s.buts}</td><td>${s.po}</td><td>${s.tirs}</td><td>${s.pb}</td><td>${s.possessions}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
             });
             return `<table class="enc-detail-table"><thead><tr><th>Intention attaque</th><th>Buts</th><th>PO</th><th>Ratés</th><th>PB</th><th>Poss.</th><th>Eff. <span title="(Buts + PO) / Possessions - le PO compte comme efficace" style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:#94A3B8;color:#fff;font-size:9px;font-weight:700;cursor:help;vertical-align:middle;line-height:1">i</span></th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tpo}</td><td>${tt}</td><td>${tp}</td><td>${tposs}</td><td>${te}%</td></tr></tfoot></table>`;
+        }
+
+        // Niveau 2 — enclenchements bruts enregistrés pour une intention attaque précise
+        function _buildEncIntentionDetailTable(matchData, intention, isAdv) {
+            const rows = matchData.filter(r =>
+                (isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX') &&
+                (r[COLS.possession] || '').toString().trim() &&
+                (r[COLS.intention_attaque] || '').toString().trim() === intention);
+            const byEnc = new Map();
+            rows.forEach(r => {
+                const cle = (r[COLS.enclenchement] || '').toString().trim() || '(vide)';
+                if (!byEnc.has(cle)) byEnc.set(cle, { label: cle, tirs:0, buts:0, pb:0, po:0, possessions:0 });
+                const s = byEnc.get(cle);
+                const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');
+                s.possessions++;
+                if (res === 'But') s.buts++;
+                else if (res === 'Tir raté' || res === 'Tir arrêté') s.tirs++; // tirs = ratés seulement
+                else if (res === 'PB') s.pb++;
+                else if (res === 'PO') s.po++;
+            });
+            if (!byEnc.size) return '<p style="color:#94A3B8;font-size:0.82rem;padding:8px 0">Aucune donnée.</p>';
+            const sorted = [...byEnc.entries()].sort((a, b) => b[1].possessions - a[1].possessions);
+            let tt = 0, tb = 0, tp = 0, tpo = 0, tposs = 0;
+            sorted.forEach(([, s]) => { tt += s.tirs; tb += s.buts; tp += s.pb; tpo += s.po; tposs += s.possessions; });
+            const te = tposs > 0 ? Math.round((tb + tpo) / tposs * 100) : 0;
+            let lignes = '';
+            sorted.forEach(([, s]) => {
+                const eff = s.possessions > 0 ? Math.round((s.buts + s.po) / s.possessions * 100) : 0;
+                const c = eff >= 60 ? '#059669' : eff < 40 ? '#DC2626' : '#64748B';
+                lignes += `<tr><td>${_escapeHtml(s.label)}</td><td>${s.buts}</td><td>${s.po}</td><td>${s.tirs}</td><td>${s.pb}</td><td>${s.possessions}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
+            });
+            return `<table class="enc-detail-table"><thead><tr><th>Enclenchement</th><th>Buts</th><th>PO</th><th>Ratés</th><th>PB</th><th>Poss.</th><th>Eff. <span title="(Buts + PO) / Possessions - le PO compte comme efficace" style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:#94A3B8;color:#fff;font-size:9px;font-weight:700;cursor:help;vertical-align:middle;line-height:1">i</span></th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tpo}</td><td>${tt}</td><td>${tp}</td><td>${tposs}</td><td>${te}%</td></tr></tfoot></table>`;
         }
 
         // A-04 — Overlay momentum + détection bascule
