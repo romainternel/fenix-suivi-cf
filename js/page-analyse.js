@@ -1842,7 +1842,7 @@
             if (dh) dh.innerHTML = `
                 <button class="enc-detail-back" title="Retour aux intentions" data-famille="${_escapeHtml(famille)}" data-fid="${_escapeHtml(fid)}" onclick="_renderEncFamilleDetail(this.dataset.famille, this.dataset.fid)">←</button>
                 <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${couleur};vertical-align:middle;margin-right:6px"></span>
-                <strong style="font-size:0.85rem">${_escapeHtml(intention)}</strong>
+                <strong style="font-size:0.85rem">${_escapeHtml(intention || 'Non défini')}</strong>
                 <span style="color:#64748B;font-size:0.75rem;margin-left:8px">${famille}</span>`;
             if (dc) dc.innerHTML = _buildEncIntentionDetailTable(window._encCurrentMatchData, intention, window._encTeamMode === 'adv');
         }
@@ -1977,7 +1977,7 @@
             );
             const byEnc = new Map();
             rows.forEach(r => {
-                const enc = (r[COLS.intention_attaque] || '').toString().trim() || '(vide)';
+                const enc = (r[COLS.intention_attaque] || '').toString().trim() || 'Non défini';
                 byEnc.set(enc, (byEnc.get(enc) || 0) + 1);
             });
             if (!byEnc.size) {
@@ -2134,16 +2134,16 @@
         }
 
         function _buildEncDetailTable(matchData, famille, isAdv) {
+            // Intention vide → classée dans "Autre" (jeu libre non cadré, pas une erreur) : on la garde, pas de filtre sur intention non-vide.
             const rows = matchData.filter(r =>
                 (isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX') &&
                 (r[COLS.possession] || '').toString().trim() &&
-                (r[COLS.intention_attaque] || '').toString().trim() && // intention vide → ignorée
                 getEncFamille(r[COLS.intention_attaque]) === famille);
             const byEnc = new Map();
             rows.forEach(r => {
-                const cle = (r[COLS.intention_attaque] || '').toString().trim() || 'Inconnu';
-                const label = cle;
-                if (!byEnc.has(cle)) byEnc.set(cle, { label, tirs:0, buts:0, pb:0, po:0, possessions:0 });
+                const cle = (r[COLS.intention_attaque] || '').toString().trim();
+                const label = cle || 'Non défini';
+                if (!byEnc.has(cle)) byEnc.set(cle, { cle, label, tirs:0, buts:0, pb:0, po:0, possessions:0 });
                 const s = byEnc.get(cle);
                 const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');
                 s.possessions++;
@@ -2161,7 +2161,7 @@
             sorted.forEach(([, s]) => {
                 const eff = s.possessions > 0 ? Math.round((s.buts + s.po) / s.possessions * 100) : 0;
                 const c = eff >= 60 ? '#059669' : eff < 40 ? '#DC2626' : '#64748B';
-                lignes += `<tr class="enc-detail-row-clickable" data-famille="${_escapeHtml(famille)}" data-intention="${_escapeHtml(s.label)}" onclick="_selectEncIntention(this.dataset.famille, this.dataset.intention)" title="Voir les enclenchements utilisés pour cette intention"><td>${_escapeHtml(s.label)}</td><td>${s.buts}</td><td>${s.po}</td><td>${s.tirs}</td><td>${s.pb}</td><td>${s.possessions}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
+                lignes += `<tr class="enc-detail-row-clickable" data-famille="${_escapeHtml(famille)}" data-intention="${_escapeHtml(s.cle)}" onclick="_selectEncIntention(this.dataset.famille, this.dataset.intention)" title="Voir les enclenchements utilisés pour cette intention"><td>${_escapeHtml(s.label)}</td><td>${s.buts}</td><td>${s.po}</td><td>${s.tirs}</td><td>${s.pb}</td><td>${s.possessions}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
             });
             return `<table class="enc-detail-table"><thead><tr><th>Intention attaque</th><th>Buts</th><th>PO</th><th>Ratés</th><th>PB</th><th>Poss.</th><th>Eff. <span title="(Buts + PO) / Possessions - le PO compte comme efficace" style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:#94A3B8;color:#fff;font-size:9px;font-weight:700;cursor:help;vertical-align:middle;line-height:1">i</span></th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tpo}</td><td>${tt}</td><td>${tp}</td><td>${tposs}</td><td>${te}%</td></tr></tfoot></table>`;
         }
