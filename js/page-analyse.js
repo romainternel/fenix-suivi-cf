@@ -1891,6 +1891,14 @@
                 }
             }, { signal });
             canvas.addEventListener('mouseleave', () => { const t = document.getElementById('enc-matrix-tooltip'); if (t) t.style.display = 'none'; }, { signal });
+            canvas.addEventListener('click', e => {
+                const rect = canvas.getBoundingClientRect();
+                const sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+                const cx = (e.clientX - rect.left) * sx, cy = (e.clientY - rect.top) * sy;
+                const dots = window._encMatrixDots || [];
+                const found = dots.find(d => Math.sqrt((cx-d.x)**2+(cy-d.y)**2) <= 15);
+                if (found) _selectEncFamille(found.famille, ENC_FAMILLE_IDS[found.famille]);
+            }, { signal });
         }
 
         function _toggleEncGraphInfo() {
