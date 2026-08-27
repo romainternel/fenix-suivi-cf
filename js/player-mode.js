@@ -80,7 +80,10 @@
             if (bar) {
                 bar.style.display = 'flex';
                 const nameEl = document.getElementById('pm-player-name');
-                if (nameEl) nameEl.textContent = PLAYER_SESSION.nom;
+                if (nameEl) {
+                    const tp = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, PLAYER_SESSION.nom)) : null;
+                    nameEl.textContent = (tp && tp.nomComplet) || PLAYER_SESSION.nom;
+                }
             }
 
             const backBtn = document.getElementById('pm-back-btn');
@@ -173,7 +176,8 @@
             const isGB      = (typeof detectIsGB === 'function') ? detectIsGB(nom) : (posteCode === 'GB');
             const posteName = { GB:'Gardien de But', AG:'Ailier Gauche', AD:'Ailier Droit', ARG:'Arrière Gauche', ARD:'Arrière Droit', DC:'Demi-Centre', PIV:'Pivot' };
             const color     = (typeof POSTE_COLORS !== 'undefined' && POSTE_COLORS[posteCode]) ? POSTE_COLORS[posteCode] : '#0A2463';
-            const initials  = nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+            const displayNom = tp ? (tp.nomComplet || tp.nom) : nom;
+            const initials  = displayNom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
 
             const tjNom  = (typeof getTJData === 'function') ? getTJData(nom, MATCHS) : { matchs: 0, total: 0 };
             const tjStr  = tjNom.matchs ? `<span class="pmf-meta-item">⏱ ${tjNom.matchs} match${tjNom.matchs > 1 ? 's' : ''}</span><span class="pmf-meta-item">⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>` : '';
@@ -295,7 +299,7 @@
                 <div class="pmf-header" style="background:linear-gradient(135deg,${color} 0%,${color}cc 100%)">
                     <div class="pmf-avatar">${initials}</div>
                     <div>
-                        <div class="pmf-player-name">${nom}</div>
+                        <div class="pmf-player-name">${displayNom}</div>
                         <div class="pmf-player-poste">${posteCode} — ${posteName[posteCode]||posteCode}</div>
                         <div class="pmf-meta">${tjStr}</div>
                     </div>
@@ -729,10 +733,8 @@
                     return tot > 0 ? Math.round(gbMd[m].arrets / tot * 100) : 0;
                 });
                 const tjArr = played.map(m => {
-                    const jnum = (m.match(/^(J\d+)/i)||[])[1];
-                    if (!jnum) return null;
-                    const entry = TEMPS_JEU[nom.toLowerCase()];
-                    return (entry && entry[jnum] !== undefined) ? entry[jnum] : null;
+                    const entry = findTJEntry(nom);
+                    return (entry && entry[m] !== undefined) ? entry[m] : null;
                 });
 
                 const yMin = Math.min(0, ...scrArr);
@@ -1220,6 +1222,9 @@
             const wrap = document.getElementById('pm-match-player-table');
             if (!wrap) return;
 
+            const _tp = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) : null;
+            const displayNom = (_tp && _tp.nomComplet) || nom;
+
             const bilanMatchs = _getPmBilanMatchs();
             const matchesToShow = matchFilter
                 ? (DATA.some(r=>r[COLS.rencontre]===matchFilter) ? [matchFilter] : [])
@@ -1270,15 +1275,14 @@
                     const s=gbSbm[m]; if(!s) return;
                     const tC=s.ac+s.bc,tP=s.ap+s.bp,tT=tC+tP,aT=s.ac+s.ap;
                     Object.keys(gt).forEach(k=>gt[k]+=s[k]);
-                    const jnum=(m.match(/^(J\d+)/i)||[])[1];
-                    const tjE=TEMPS_JEU[nom.toLowerCase()];
-                    const tjMin=tjE&&jnum&&tjE[jnum]!==undefined?` <span style="color:#94A3B8;font-size:0.8em">(${tjE[jnum]} min)</span>`:'';
+                    const tjE=findTJEntry(nom);
+                    const tjMin=tjE&&tjE[m]!==undefined?` <span style="color:#94A3B8;font-size:0.8em">(${tjE[m]} min)</span>`:'';
                     rows+=`<tr><td style="color:${matchResultColor(m)}">${m}${tjMin}</td><td>${aT}/${tT}</td><td>${tT>0?Math.round(aT/tT*100)+'%':'-'}</td><td>${s.ac}/${tC}</td><td>${tC>0?Math.round(s.ac/tC*100)+'%':'-'}</td><td>${s.ap}/${tP}</td><td>${tP>0?Math.round(s.ap/tP*100)+'%':'-'}</td><td>${s.but}</td><td>${s.pd}</td><td>${s.pb}</td></tr>`;
                 });
                 const gtC=gt.ac+gt.bc,gtP=gt.ap+gt.bp,gtT=gtC+gtP,gaT=gt.ac+gt.ap;
                 rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${gaT}/${gtT}</td><td>${gtT>0?Math.round(gaT/gtT*100)+'%':'-'}</td><td>${gt.ac}/${gtC}</td><td>${gtC>0?Math.round(gt.ac/gtC*100)+'%':'-'}</td><td>${gt.ap}/${gtP}</td><td>${gtP>0?Math.round(gt.ap/gtP*100)+'%':'-'}</td><td>${gt.but}</td><td>${gt.pd}</td><td>${gt.pb}</td></tr>`;
 
-                wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>Total</th><th>%</th><th>Champ</th><th>%</th><th>Pen</th><th>%</th><th>But</th><th>PD</th><th>PB</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+                wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${displayNom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>Total</th><th>%</th><th>Champ</th><th>%</th><th>Pen</th><th>%</th><th>But</th><th>PD</th><th>PB</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 
             } else {
                 const _iF = () => ({bc:0,tc:0,bp:0,tp:0,pb:0,po:0,pd:0,ap:0,am:0,dp:0,dm:0});
@@ -1322,16 +1326,15 @@
                     const tC=s.bc+s.tc,tP=s.bp+s.tp,tT=tC+tP,tB=s.bc+s.bp;
                     const nA=s.ap-s.am,nD=s.dp-s.dm,nT=nA+nD;
                     Object.keys(tot).forEach(k=>tot[k]+=s[k]);
-                    const jnum=(m.match(/^(J\d+)/i)||[])[1];
-                    const tjE=TEMPS_JEU[nom.toLowerCase()];
-                    const tjMin=tjE&&jnum&&tjE[jnum]!==undefined?` <span style="color:#94A3B8;font-size:0.8em">(${tjE[jnum]} min)</span>`:'';
+                    const tjE=findTJEntry(nom);
+                    const tjMin=tjE&&tjE[m]!==undefined?` <span style="color:#94A3B8;font-size:0.8em">(${tjE[m]} min)</span>`:'';
                     rows+=`<tr><td style="color:${matchResultColor(m)}">${m}${tjMin}</td><td>${s.bc}/${tC}</td><td>${tC>0?Math.round(s.bc/tC*100)+'%':'-'}</td><td>${tP>0?s.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(s.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${s.pb}</td><td>${s.po}</td><td>${s.pd}</td><td>${nc(nA)}</td><td>${nc(nD)}</td><td>${nc(nT)}</td></tr>`;
                 });
                 const tC=tot.bc+tot.tc,tP=tot.bp+tot.tp,tT=tC+tP,tB=tot.bc+tot.bp;
                 const tNA=tot.ap-tot.am,tND=tot.dp-tot.dm,tNT=tNA+tND;
                 rows+=`<tr class="jm-total-row"><td>TOTAL</td><td>${tot.bc}/${tC}</td><td>${tC>0?Math.round(tot.bc/tC*100)+'%':'-'}</td><td>${tP>0?tot.bp+'/'+tP:'-'}</td><td>${tP>0?Math.round(tot.bp/tP*100)+'%':'-'}</td><td>${tT>0?Math.round(tB/tT*100)+'%':'-'}</td><td>${tot.pb}</td><td>${tot.po}</td><td>${tot.pd}</td><td>${nc(tNA)}</td><td>${nc(tND)}</td><td>${nc(tNT)}</td></tr>`;
 
-                wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${nom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>B/T</th><th>%Ch</th><th>Pen</th><th>%Pen</th><th>%Tot</th><th>PB</th><th>PO</th><th>PD</th><th class="jm-note-col">⭐⭐ATT</th><th class="jm-note-col">⭐DEF</th><th class="jm-note-col">★Tot</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+                wrap.innerHTML=`<div class="pmf-card"><div class="pmf-card-title">MES STATS — ${displayNom}</div><div style="overflow-x:auto"><table class="jm-table"><thead><tr><th>Match</th><th>B/T</th><th>%Ch</th><th>Pen</th><th>%Pen</th><th>%Tot</th><th>PB</th><th>PO</th><th>PD</th><th class="jm-note-col">⭐⭐ATT</th><th class="jm-note-col">⭐DEF</th><th class="jm-note-col">★Tot</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
             }
         }
 
@@ -1613,13 +1616,17 @@
             if (nomSel && typeof JOUEURS_TERRAIN !== 'undefined') {
                 const existing = Object.keys(accounts);
                 nomSel.innerHTML = '<option value="">-- Choisir un joueur --</option>'
-                    + JOUEURS_TERRAIN.filter(p=>!existing.includes(p.nom)).map(p=>`<option value="${p.nom}">${p.nom} (${p.poste})</option>`).join('');
+                    + JOUEURS_TERRAIN.filter(p=>!existing.includes(p.nom)).map(p=>`<option value="${p.nom}">${p.nomComplet || p.nom} (${p.poste})</option>`).join('');
             }
             const tbody = document.getElementById('pa-accounts-list');
             if (tbody) {
                 tbody.innerHTML = Object.entries(accounts).length === 0
                     ? '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:12px">Aucun compte joueur</td></tr>'
-                    : Object.entries(accounts).map(([nom,pwd])=>`<tr><td style="padding:6px 10px">${nom}</td><td style="padding:6px 10px">${'•'.repeat(Math.min(pwd.length,8))}</td><td style="padding:6px 10px;text-align:right"><button onclick="deletePlayerAccount('${nom}')" style="color:#EF4444;background:none;border:none;cursor:pointer;font-size:1rem" title="Supprimer">🗑</button></td></tr>`).join('');
+                    : Object.entries(accounts).map(([nom,pwd])=>{
+                        const tp = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => p.nom === nom) : null;
+                        const nomAff = (tp && tp.nomComplet) || nom;
+                        return `<tr><td style="padding:6px 10px">${nomAff}</td><td style="padding:6px 10px">${'•'.repeat(Math.min(pwd.length,8))}</td><td style="padding:6px 10px;text-align:right"><button onclick="deletePlayerAccount('${nom}')" style="color:#EF4444;background:none;border:none;cursor:pointer;font-size:1rem" title="Supprimer">🗑</button></td></tr>`;
+                    }).join('');
             }
             const modal = document.getElementById('pa-modal');
             if (modal) modal.style.display = 'flex';
@@ -1659,7 +1666,7 @@
             const sel = document.getElementById('preview-player-sel');
             if (sel && typeof JOUEURS_TERRAIN !== 'undefined' && JOUEURS_TERRAIN.length) {
                 sel.innerHTML = '<option value="">— Sélectionner un joueur —</option>'
-                    + JOUEURS_TERRAIN.map(p => `<option value="${p.nom}">${p.nom} (${p.poste})</option>`).join('');
+                    + JOUEURS_TERRAIN.map(p => `<option value="${p.nom}">${p.nomComplet || p.nom} (${p.poste})</option>`).join('');
             }
             const modal = document.getElementById('preview-modal');
             if (modal) modal.style.display = 'flex';

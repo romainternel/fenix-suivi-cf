@@ -54,7 +54,7 @@
                 const tjAvg      = tjData.matchs > 0 ? tjData.total / tjData.matchs : 0;
                 const qualified  = tjData.matchs >= 6 && tjAvg >= 20;
                 const ringClr    = qualified && eff !== null ? getEffColor(eff, p.poste) : '#e2e8f0';
-                const initials   = p.nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+                const initials   = (p.nomComplet || p.nom).split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
                 const safeName   = p.nom.replace(/'/g, "\\'");
 
                 const elem = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -103,7 +103,8 @@
             };
             const posteCode  = terrainPlayer ? terrainPlayer.poste : '';
             const posteLabel = posteName[posteCode] || posteCode;
-            const initials   = nom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+            const displayNom = terrainPlayer ? (terrainPlayer.nomComplet || terrainPlayer.nom) : nom;
+            const initials   = displayNom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
 
             // Stats globales filtrées par le filtre match actif + bilan
             const matchFilter = document.getElementById('filter-joueur-match').value;
@@ -168,7 +169,7 @@
                 <div class="jp-header" style="background:linear-gradient(135deg,${color} 0%,${color}cc 100%);">
                     <div class="jp-avatar">${initials}</div>
                     <div style="flex:1">
-                        <div class="jp-name">${nom}</div>
+                        <div class="jp-name">${displayNom}</div>
                         <div class="jp-poste-label">${posteCode} — ${posteLabel}</div>
                         ${tjHeaderStr}
                         <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
@@ -343,9 +344,8 @@
                 Object.entries(gbSbm).forEach(([m, s]) => {
                     const tC=s.ac+s.bc, tP=s.ap+s.bp, tT=tC+tP, aT=s.ac+s.ap;
                     Object.keys(gtot).forEach(k => gtot[k] += s[k]);
-                    const jnumG = (m.match(/^(J\d+)/i)||[])[1];
-                    const tjEntryG = TEMPS_JEU[nom.toLowerCase()];
-                    const tjMinG = tjEntryG && jnumG && tjEntryG[jnumG] !== undefined ? ` <span style="color:#94A3B8;font-size:0.8em">(${tjEntryG[jnumG]} min)</span>` : '';
+                    const tjEntryG = findTJEntry(nom);
+                    const tjMinG = tjEntryG && tjEntryG[m] !== undefined ? ` <span style="color:#94A3B8;font-size:0.8em">(${tjEntryG[m]} min)</span>` : '';
                     gbHTML += `<tr>
                         <td style="color:${matchResultColor(m)}">${m}${tjMinG}</td>
                         <td>${aT}/${tT}</td><td>${tT>0?Math.round(aT/tT*100)+'%':'-'}</td>
@@ -364,7 +364,7 @@
                 </tr>`;
 
                 matchesDiv.innerHTML = `
-                    <div class="jm-header">📊 DÉTAIL PAR MATCH — ${nom}</div>
+                    <div class="jm-header">📊 DÉTAIL PAR MATCH — ${displayNom}</div>
                     <div style="overflow-x:auto">
                     <table class="jm-table">
                         <thead><tr>
@@ -421,9 +421,8 @@
                     const tC=s.bc+s.tc, tP=s.bp+s.tp, tT=tC+tP, tB=s.bc+s.bp;
                     const nA=s.ap-s.am, nD=s.dp-s.dm, nT=nA+nD;
                     Object.keys(tot).forEach(k => tot[k] += s[k]);
-                    const jnum = (m.match(/^(J\d+)/i)||[])[1];
-                    const tjEntry = TEMPS_JEU[nom.toLowerCase()];
-                    const tjMin = tjEntry && jnum && tjEntry[jnum] !== undefined ? ` <span style="color:#94A3B8;font-size:0.8em">(${tjEntry[jnum]} min)</span>` : '';
+                    const tjEntry = findTJEntry(nom);
+                    const tjMin = tjEntry && tjEntry[m] !== undefined ? ` <span style="color:#94A3B8;font-size:0.8em">(${tjEntry[m]} min)</span>` : '';
                     tbodyHTML += `<tr>
                         <td style="color:${matchResultColor(m)}">${m}${tjMin}</td>
                         <td>${s.bc}/${tC}</td>
@@ -449,7 +448,7 @@
                 </tr>`;
 
                 matchesDiv.innerHTML = `
-                    <div class="jm-header">📊 DÉTAIL PAR MATCH — ${nom}</div>
+                    <div class="jm-header">📊 DÉTAIL PAR MATCH — ${displayNom}</div>
                     <div style="overflow-x:auto"><table class="jm-table">
                         <thead><tr>
                             <th>Match</th>
@@ -819,9 +818,8 @@
                         return t > 0 ? Math.round(gbMd[m].arrets/t*100) : 0;
                     });
                     const tjArr = gbPlayed.map(m => {
-                        const jnum = (m.match(/^(J\d+)/i)||[])[1];
-                        const entry = TEMPS_JEU[nom.toLowerCase()];
-                        return (entry && jnum && entry[jnum]!==undefined) ? entry[jnum] : null;
+                        const entry = findTJEntry(nom);
+                        return (entry && entry[m]!==undefined) ? entry[m] : null;
                     });
                     const W=800, H=290;
                     const pl={t:40,r:55,b:58,l:46};
@@ -1108,13 +1106,14 @@
             // Cover slide data
             const _jpInfo = (typeof JOUEURS_TERRAIN !== 'undefined') ? (JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) || {}) : {};
             const _posteCode = _jpInfo.poste || '';
+            const _displayNom = _jpInfo.nomComplet || nom;
             const _posteLblMap = { GB:'Gardien de But', AG:'Ailier Gauche', AD:'Ailier Droit', ARG:'Arrière Gauche', ARD:'Arrière Droit', DC:'Demi-Centre', PIV:'Pivot' };
             const _posteLabel = _posteLblMap[_posteCode] || _posteCode;
             const _filterBilanEl = document.getElementById('filter-joueur-bilan');
             const _periodLabel = matchFilter ? ('Match : ' + matchFilter) : (_filterBilanEl?.value || 'Saison complète');
             const _tjD = (typeof getTJData === 'function') ? getTJData(nom, effectiveMatchs) : { matchs: 0, total: 0 };
             const _tjStr = (_tjD.matchs > 0) ? `${_tjD.matchs} match${_tjD.matchs > 1 ? 's' : ''}  ·  ⌀ ${Math.round(_tjD.total / _tjD.matchs)} min/match` : '';
-            const _subHdr = nom + (_periodLabel !== 'Saison complète' ? '  ·  ' + _periodLabel : '');
+            const _subHdr = _displayNom + (_periodLabel !== 'Saison complète' ? '  ·  ' + _periodLabel : '');
 
             // Logo FENIX en data URL (fiable pour html2canvas + impression)
             const _logoUrl = await new Promise(res => {
@@ -1133,7 +1132,7 @@
                     <div style="font-family:Arial,sans-serif;font-size:10pt;color:white;letter-spacing:4px;margin-bottom:10px;text-align:center">FENIX HANDBALL</div>
                     <div style="width:50%;border-top:1px solid rgba(191,219,254,0.5);margin:0 auto 10px"></div>
                     <div style="font-family:Arial,sans-serif;font-size:17pt;color:white;letter-spacing:2px;margin-bottom:8px;text-align:center">SUIVI HANDBALL</div>
-                    <div style="font-family:Arial,sans-serif;font-size:36pt;font-weight:700;color:white;text-align:center">${nom}</div>
+                    <div style="font-family:Arial,sans-serif;font-size:36pt;font-weight:700;color:white;text-align:center">${_displayNom}</div>
                     <div style="font-family:Arial,sans-serif;font-size:11pt;color:#BFDBFE;letter-spacing:2px;margin-top:8px;text-align:center">${_posteLabel.toUpperCase()}</div>
                     <div style="width:50%;border-top:1px solid rgba(191,219,254,0.5);margin:10px auto 8px"></div>
                     <div style="font-family:Arial,sans-serif;font-size:9pt;color:#7EA0C4;text-align:center">${_periodLabel}</div>

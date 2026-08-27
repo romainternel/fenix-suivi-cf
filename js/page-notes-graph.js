@@ -635,10 +635,8 @@
                 return t > 0 ? Math.round(matchData[m].arrets / t * 100) : 0;
             });
             const tempsJeu = played.map(m => {
-                const jnum = (m.match(/^(J\d+)/i) || [])[1];
-                if (!jnum) return null;
-                const entry = TEMPS_JEU[gardien.toLowerCase()];
-                return (entry && entry[jnum] !== undefined) ? entry[jnum] : null;
+                const entry = findTJEntry(gardien);
+                return (entry && entry[m] !== undefined) ? entry[m] : null;
             });
 
             // Limites axe gauche (scores peuvent être négatifs)

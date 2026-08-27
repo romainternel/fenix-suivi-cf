@@ -17,14 +17,23 @@
             return getSelectedMatches();
         }
 
+        // TEMPS_JEU est keyé sur le nom de la feuille "Tableau_MATCH" (format "Prénom.Initiale").
+        // Certains appelants (dashboard, sélecteur gardien graphique) ne connaissent que le prénom DATA
+        // (ex: "Lucas") : on retombe sur matchPlayerName si la clé exacte n'existe pas.
+        function findTJEntry(nom) {
+            if (!nom) return null;
+            const direct = TEMPS_JEU[nom.toLowerCase()];
+            if (direct) return direct;
+            const key = Object.keys(TEMPS_JEU).find(k => matchPlayerName(nom, k));
+            return key ? TEMPS_JEU[key] : null;
+        }
+
         function getTJData(joueur, selectedMatches) {
-            const entry = TEMPS_JEU[joueur.toLowerCase()];
+            const entry = findTJEntry(joueur);
             if (!entry) return { total: null, matchs: null };
             let total = 0, matchs = 0;
             selectedMatches.forEach(m => {
-                const jnum = (m.match(/^(J\d+)/i) || [])[1];
-                if (!jnum) return;
-                const v = entry[jnum];
+                const v = entry[m];
                 if (v !== undefined) { total += v; matchs++; }
             });
             return { total, matchs };
@@ -69,6 +78,12 @@
             // Excel longer than terrain : "Jules Fernandez" matches terrain "Jules F"
             // Direction inverse (terrain plus long qu'Excel) supprimée : trop ambiguë avec homonymes
             if (en.startsWith(tn + ' ')) return true;
+            // Format "Prénom.Initiale" (saison 2026-2027, ex: "Lucas.G") : comparer sur le prénom (avant le point),
+            // avec tolérance de préfixe pour les surnoms saisis différemment entre feuilles (ex: "Zach" / "Zacharie")
+            const enPrenom = en.split('.')[0];
+            const tnPrenom = tn.split('.')[0];
+            if (enPrenom.length >= 3 && tnPrenom.length >= 3 &&
+                (enPrenom === tnPrenom || enPrenom.startsWith(tnPrenom) || tnPrenom.startsWith(enPrenom))) return true;
             return false;
         }
         // Cache : same (excelName, terrainName) pairs called thousands of times per player selection
