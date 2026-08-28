@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=237">
-    <script src="js/utils.js?v=237"></script>
-    <script src="js/impact-images.js?v=237"></script>
-    <script src="js/player-mode.js?v=237"></script>
-    <script src="js/page-joueurs.js?v=237"></script>
-    <script src="js/page-notes-graph.js?v=237"></script>
-    <script src="js/page-analyse.js?v=237"></script>
+    <link rel="stylesheet" href="css/style.css?v=238">
+    <script src="js/utils.js?v=238"></script>
+    <script src="js/impact-images.js?v=238"></script>
+    <script src="js/player-mode.js?v=238"></script>
+    <script src="js/page-joueurs.js?v=238"></script>
+    <script src="js/page-notes-graph.js?v=238"></script>
+    <script src="js/page-analyse.js?v=238"></script>
 </head>
 <body>
 
@@ -3410,31 +3410,28 @@ let _effInfoPoste = null;
     <div id="pm-fiche-page" style="display:none"></div>
 
     <!-- ── MODAL PREVIEW MODE JOUEUR ────────────────────────────────────────── -->
-    <div id="preview-modal" style="display:none;position:fixed;inset:0;z-index:2000;
-         background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:380px;width:90%;
-                    box-shadow:0 20px 60px rgba(0,0,0,.25);">
-            <h3 style="margin:0 0 6px;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;
-                       letter-spacing:1px;color:#0A2463">👤 Vue joueur</h3>
-            <p style="margin:0 0 18px;font-size:0.83rem;color:#64748B">
-                Choisir un joueur pour prévisualiser ce qu'il voit avec son compte.
-            </p>
-            <select id="preview-player-sel" style="width:100%;padding:9px 12px;border:1.5px solid #E2E8F0;
-                    border-radius:8px;font-size:0.9rem;margin-bottom:16px;background:#F8FAFC;">
-                <option value="">— Sélectionner un joueur —</option>
-            </select>
-            <div style="display:flex;gap:10px;justify-content:flex-end;">
-                <button onclick="closePreviewModal()"
-                        style="padding:8px 20px;border:1.5px solid #E2E8F0;background:#fff;border-radius:8px;
-                               cursor:pointer;font-size:0.85rem;color:#64748B;font-weight:600">
-                    Annuler
-                </button>
-                <button onclick="startPreviewMode()"
-                        style="padding:8px 20px;background:#0A2463;color:#fff;border:none;border-radius:8px;
-                               cursor:pointer;font-size:0.85rem;font-weight:700">
-                    Voir sa vue →
-                </button>
-            </div>
+    <div id="preview-overlay" class="slide-panel-overlay" onclick="closePreviewModal()"></div>
+    <div id="preview-modal" class="slide-panel" role="dialog" aria-modal="true" aria-labelledby="preview-modal-title">
+        <h3 id="preview-modal-title" style="margin:0 0 6px;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;
+                   letter-spacing:1px;color:#0A2463">👤 Vue joueur</h3>
+        <p style="margin:0 0 18px;font-size:0.83rem;color:#64748B">
+            Choisir un joueur pour prévisualiser ce qu'il voit avec son compte.
+        </p>
+        <select id="preview-player-sel" style="width:100%;padding:9px 12px;border:1.5px solid #E2E8F0;
+                border-radius:8px;font-size:0.9rem;margin-bottom:16px;background:#F8FAFC;">
+            <option value="">— Sélectionner un joueur —</option>
+        </select>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button onclick="closePreviewModal()"
+                    style="padding:8px 20px;border:1.5px solid #E2E8F0;background:#fff;border-radius:8px;
+                           cursor:pointer;font-size:0.85rem;color:#64748B;font-weight:600">
+                Annuler
+            </button>
+            <button onclick="startPreviewMode()"
+                    style="padding:8px 20px;background:#0A2463;color:#fff;border:none;border-radius:8px;
+                           cursor:pointer;font-size:0.85rem;font-weight:700">
+                Voir sa vue →
+            </button>
         </div>
     </div>
 
@@ -3482,49 +3479,46 @@ let _effInfoPoste = null;
     </div>
 
     <!-- ── STAFF ── modal gestion comptes joueurs ──────────────────────────── -->
-    <div id="pa-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
-         z-index:2000;align-items:center;justify-content:center">
-        <div style="background:white;border-radius:16px;padding:28px;width:480px;max-width:95vw;
-                    max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-                <h2 style="margin:0;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;
-                           color:#0A2463;letter-spacing:1.5px">🔑 COMPTES JOUEURS</h2>
-                <button onclick="closePlayerAccountsModal()"
-                        style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#64748B">✕</button>
-            </div>
-            <!-- Formulaire ajout -->
-            <div style="background:#F8FAFC;border-radius:10px;padding:16px;margin-bottom:20px">
-                <div style="font-weight:700;font-size:0.8rem;color:#64748B;margin-bottom:10px;letter-spacing:1px">
-                    AJOUTER UN COMPTE
-                </div>
-                <select id="pa-nom-sel" style="width:100%;border:1px solid #E2E8F0;border-radius:8px;
-                               padding:8px 12px;margin-bottom:10px;font-size:0.9rem">
-                    <option value="">-- Choisir un joueur --</option>
-                </select>
-                <input id="pa-pwd" type="text" placeholder="Mot de passe du joueur"
-                       style="width:100%;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;
-                              font-size:0.9rem;box-sizing:border-box;margin-bottom:10px">
-                <button onclick="savePlayerAccount()"
-                        style="width:100%;background:#0A2463;color:white;border:none;border-radius:8px;
-                               padding:10px;font-weight:700;cursor:pointer;font-size:0.9rem">
-                    ✅ CRÉER LE COMPTE
-                </button>
-            </div>
-            <!-- Liste comptes -->
-            <div style="font-weight:700;font-size:0.8rem;color:#64748B;margin-bottom:10px;letter-spacing:1px">
-                COMPTES EXISTANTS
-            </div>
-            <table style="width:100%;border-collapse:collapse;font-size:0.88rem">
-                <thead>
-                    <tr style="background:#F1F5F9">
-                        <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">JOUEUR</th>
-                        <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">MOT DE PASSE</th>
-                        <th style="padding:8px 10px"></th>
-                    </tr>
-                </thead>
-                <tbody id="pa-accounts-list"></tbody>
-            </table>
+    <div id="pa-overlay" class="slide-panel-overlay" onclick="closePlayerAccountsModal()"></div>
+    <div id="pa-modal" class="slide-panel" role="dialog" aria-modal="true" aria-labelledby="pa-modal-title">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <h2 id="pa-modal-title" style="margin:0;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;
+                       color:#0A2463;letter-spacing:1.5px">🔑 COMPTES JOUEURS</h2>
+            <button onclick="closePlayerAccountsModal()"
+                    style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#64748B">✕</button>
         </div>
+        <!-- Formulaire ajout -->
+        <div style="background:#F8FAFC;border-radius:10px;padding:16px;margin-bottom:20px">
+            <div style="font-weight:700;font-size:0.8rem;color:#64748B;margin-bottom:10px;letter-spacing:1px">
+                AJOUTER UN COMPTE
+            </div>
+            <select id="pa-nom-sel" style="width:100%;border:1px solid #E2E8F0;border-radius:8px;
+                           padding:8px 12px;margin-bottom:10px;font-size:0.9rem">
+                <option value="">-- Choisir un joueur --</option>
+            </select>
+            <input id="pa-pwd" type="text" placeholder="Mot de passe du joueur"
+                   style="width:100%;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;
+                          font-size:0.9rem;box-sizing:border-box;margin-bottom:10px">
+            <button onclick="savePlayerAccount()"
+                    style="width:100%;background:#0A2463;color:white;border:none;border-radius:8px;
+                           padding:10px;font-weight:700;cursor:pointer;font-size:0.9rem">
+                ✅ CRÉER LE COMPTE
+            </button>
+        </div>
+        <!-- Liste comptes -->
+        <div style="font-weight:700;font-size:0.8rem;color:#64748B;margin-bottom:10px;letter-spacing:1px">
+            COMPTES EXISTANTS
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:0.88rem">
+            <thead>
+                <tr style="background:#F1F5F9">
+                    <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">JOUEUR</th>
+                    <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">MOT DE PASSE</th>
+                    <th style="padding:8px 10px"></th>
+                </tr>
+            </thead>
+            <tbody id="pa-accounts-list"></tbody>
+        </table>
     </div>
 <div id="timeline-tooltip" style="
     position: fixed;

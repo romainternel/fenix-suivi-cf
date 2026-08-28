@@ -1620,6 +1620,41 @@
             ctx.fillStyle = '#333'; ctx.fillText('Adversaire', pad.left + 98, canvas.height - 6);
         }
 
+        // ── Panneau latéral partagé (STORY-19) — Comptes joueurs / Vue joueur ────
+        function _openSlidePanel(panelId, overlayId) {
+            const panel = document.getElementById(panelId);
+            const wasOpen = panel?.classList.contains('open');
+            document.getElementById(overlayId)?.classList.add('open');
+            if (panel) {
+                panel.classList.add('open');
+                if (!wasOpen) panel.querySelector('input, select, button, textarea')?.focus();
+            }
+        }
+
+        function _closeSlidePanel(panelId, overlayId, returnFocus) {
+            document.getElementById(overlayId)?.classList.remove('open');
+            document.getElementById(panelId)?.classList.remove('open');
+            if (returnFocus) document.getElementById('nav-tools-btn')?.focus();
+        }
+
+        document.addEventListener('keydown', function(e) {
+            const openPanel = document.querySelector('.slide-panel.open');
+            if (!openPanel) return;
+            if (e.key === 'Escape') {
+                if (openPanel.id === 'pa-modal') closePlayerAccountsModal(true);
+                else if (openPanel.id === 'preview-modal') closePreviewModal(true);
+                return;
+            }
+            if (e.key === 'Tab') {
+                const focusables = Array.from(openPanel.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+                    .filter(el => !el.disabled && el.offsetParent !== null);
+                if (!focusables.length) return;
+                const first = focusables[0], last = focusables[focusables.length - 1];
+                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+            }
+        });
+
         // ── Gestion comptes joueurs (staff only) ─────────────────────────────────
         function openPlayerAccountsModal() {
             const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts')||'{}');
@@ -1639,13 +1674,11 @@
                         return `<tr><td style="padding:6px 10px">${nomAff}</td><td style="padding:6px 10px">${'•'.repeat(Math.min(pwd.length,8))}</td><td style="padding:6px 10px;text-align:right"><button onclick="deletePlayerAccount('${nom}')" style="color:#EF4444;background:none;border:none;cursor:pointer;font-size:1rem" title="Supprimer">🗑</button></td></tr>`;
                     }).join('');
             }
-            const modal = document.getElementById('pa-modal');
-            if (modal) modal.style.display = 'flex';
+            _openSlidePanel('pa-modal', 'pa-overlay');
         }
 
-        function closePlayerAccountsModal() {
-            const modal = document.getElementById('pa-modal');
-            if (modal) modal.style.display = 'none';
+        function closePlayerAccountsModal(returnFocus) {
+            _closeSlidePanel('pa-modal', 'pa-overlay', returnFocus);
         }
 
         function savePlayerAccount() {
@@ -1679,13 +1712,11 @@
                 sel.innerHTML = '<option value="">— Sélectionner un joueur —</option>'
                     + JOUEURS_TERRAIN.map(p => `<option value="${p.nom}">${p.nomComplet || p.nom} (${p.poste})</option>`).join('');
             }
-            const modal = document.getElementById('preview-modal');
-            if (modal) modal.style.display = 'flex';
+            _openSlidePanel('preview-modal', 'preview-overlay');
         }
 
-        function closePreviewModal() {
-            const modal = document.getElementById('preview-modal');
-            if (modal) modal.style.display = 'none';
+        function closePreviewModal(returnFocus) {
+            _closeSlidePanel('preview-modal', 'preview-overlay', returnFocus);
         }
 
         function startPreviewMode() {

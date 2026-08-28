@@ -1539,6 +1539,41 @@
             background: rgba(255,255,255,0.3);
         }
 
+        /* ── Panneau latéral (STORY-19) — Comptes joueurs / Vue joueur uniquement.
+           Recensement des fenêtres modales du fichier (R7) : #gb-zone-modal, #notes-detail-modal,
+           #player-modal (.modal-overlay/.modal-content ci-dessus), #graph-modal et #eff-info-modal
+           restent des fenêtres centrées classiques — ce sont des popups de consultation de données
+           (détail joueur/note/graphique), pas des panneaux de navigation/réglages, et migrer leur
+           pattern visuel n'était pas demandé par la story. Seuls #pa-modal et #preview-modal migrent
+           vers .slide-panel car ce sont les deux seuls déclenchés depuis le menu "⚙ Outils" (STORY-12). */
+        .slide-panel-overlay {
+            position: fixed; inset: 0; z-index: 2000;
+            background: rgba(0,0,0,0.55);
+            opacity: 0; pointer-events: none;
+            transition: opacity 200ms ease-out;
+        }
+        .slide-panel-overlay.open { opacity: 1; pointer-events: auto; }
+
+        .slide-panel {
+            position: fixed; top: 0; right: 0; bottom: 0; z-index: 2001;
+            width: min(480px, 92vw);
+            background: var(--fenix-white);
+            box-shadow: -8px 0 30px rgba(0,0,0,0.2);
+            padding: 28px 32px;
+            overflow-y: auto;
+            transform: translateX(100%);
+            visibility: hidden;
+            transition: transform 200ms ease-out, visibility 0s linear 200ms;
+        }
+        .slide-panel.open {
+            transform: translateX(0);
+            visibility: visible;
+            transition: transform 200ms ease-out, visibility 0s linear 0s;
+        }
+        @media (max-width: 480px) {
+            .slide-panel { width: 100%; padding: 20px; }
+        }
+
         .modal-body {
             padding: 1.5rem;
             max-height: 60vh;
@@ -1928,19 +1963,6 @@
         }
         .nav-tools-item:hover, .nav-tools-item:focus-visible { background: var(--fenix-gray); }
         .nav-tools-item-accent:hover, .nav-tools-item-accent:focus-visible { background: rgba(16,185,129,0.12); color: #059669; }
-
-        /* Player accounts modal */
-        #pa-modal {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.55); z-index: 999;
-            align-items: center; justify-content: center;
-        }
-
-        .pa-modal-box {
-            background: #fff; border-radius: 14px;
-            padding: 1.6rem; width: 480px; max-width: 95vw;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-        }
 
         .pa-modal-title {
             font-family: 'Bebas Neue', sans-serif;
