@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=230">
-    <script src="js/utils.js?v=230"></script>
-    <script src="js/impact-images.js?v=230"></script>
-    <script src="js/player-mode.js?v=230"></script>
-    <script src="js/page-joueurs.js?v=230"></script>
-    <script src="js/page-notes-graph.js?v=230"></script>
-    <script src="js/page-analyse.js?v=230"></script>
+    <link rel="stylesheet" href="css/style.css?v=231">
+    <script src="js/utils.js?v=231"></script>
+    <script src="js/impact-images.js?v=231"></script>
+    <script src="js/player-mode.js?v=231"></script>
+    <script src="js/page-joueurs.js?v=231"></script>
+    <script src="js/page-notes-graph.js?v=231"></script>
+    <script src="js/page-analyse.js?v=231"></script>
 </head>
 <body>
 
@@ -86,8 +86,13 @@
             <button class="nav-btn" data-page="analyse">🔍 Analyse</button>
             <button class="nav-btn" data-page="joueurs">👥 Joueurs</button>
             <span class="nav-separator"></span>
-            <button id="btn-player-accounts" onclick="openPlayerAccountsModal()">🔑 Comptes</button>
-            <button id="btn-preview-mode" onclick="openPreviewModal()">👤 Vue joueur</button>
+            <div class="nav-tools-container">
+                <button id="nav-tools-btn" class="nav-tools-btn" onclick="toggleToolsMenu()" aria-haspopup="true" aria-expanded="false">⚙ Outils <span class="dropdown-arrow">▾</span></button>
+                <div id="nav-tools-menu" class="nav-tools-menu" style="display:none" role="menu">
+                    <button id="btn-player-accounts" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); openPlayerAccountsModal();">🔑 Comptes joueurs</button>
+                    <button id="btn-preview-mode" class="nav-tools-item nav-tools-item-accent" role="menuitem" onclick="closeToolsMenu(); openPreviewModal();">👤 Vue joueur</button>
+                </div>
+            </div>
         </nav>
     </header>
 
@@ -1390,6 +1395,35 @@ let _effInfoPoste = null;
                 });
             });
         }
+
+        function toggleToolsMenu() {
+            const btn = document.getElementById('nav-tools-btn');
+            const menu = document.getElementById('nav-tools-menu');
+            const open = menu.style.display !== 'none';
+            if (open) closeToolsMenu();
+            else {
+                menu.style.display = 'block';
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        function closeToolsMenu(returnFocus) {
+            const btn = document.getElementById('nav-tools-btn');
+            const menu = document.getElementById('nav-tools-menu');
+            if (menu.style.display === 'none') return;
+            menu.style.display = 'none';
+            btn.setAttribute('aria-expanded', 'false');
+            if (returnFocus) btn.focus();
+        }
+
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('nav-tools-btn')?.closest('.nav-tools-container');
+            if (container && !container.contains(e.target)) closeToolsMenu();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeToolsMenu(true);
+        });
 
         function setupFileInput() {
             const fileInput = document.getElementById('file-input');
