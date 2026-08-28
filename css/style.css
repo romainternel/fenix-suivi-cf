@@ -1,3 +1,14 @@
+        /* ── Échelle typographique (docs/visual/navigation-refonte.md §2) ──
+           Référence pour les stories suivantes — pas de classe générique imposée,
+           chaque écran applique la bonne taille au moment de sa propre passe visuelle.
+           Niveau      | Usage                          | Font        | Taille        | Weight  | Letter-spacing
+           Display     | Titre de page                  | Bebas Neue  | 1.4rem        | 400     | 1.5px
+           Section     | Titre de bloc/carte             | Bebas Neue  | 1.05rem       | 400     | 1px
+           Onglet      | Libellé d'onglet actif/inactif  | Inter       | 0.85rem       | 700     | 0.3px
+           Corps       | Texte courant, labels tableau   | Inter       | 0.82rem       | 400-600 | normal
+           Valeur clé  | Chiffre mis en avant (KPI/stat) | Inter       | 1.3rem-1.8rem | 800     | -0.5px
+           Micro       | Sous-labels, footnotes          | Inter       | 0.68-0.72rem  | 600-700 | 0.4px, UPPERCASE
+           Règle : jamais plus de 3 niveaux typographiques simultanés dans une même carte. */
         :root {
             --fenix-blue: #0A2463;
             --fenix-blue-light: #1E3A8A;
@@ -25,6 +36,37 @@
             --enc-jeu-rapide:   #4F46E5;
             --enc-autre:        #94A3B8;
             --bascule-line:     #F59E0B;
+            /* Échelle de gris (docs/visual/navigation-refonte.md §1.2) — formalise en tokens
+               les valeurs déjà utilisées ponctuellement en inline (#94A3B8/#64748B/#CBD5E1) */
+            --gray-50:  #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-400: #94A3B8;
+            --gray-600: #64748B;
+            --gray-900: #0F172A;
+            /* Surface élevée (§1.3) */
+            --surface-raised: #FFFFFF;
+            --surface-raised-border: 1px solid var(--gray-200);
+        }
+
+        /* ── Échelle d'élévation (docs/visual/navigation-refonte.md §3) ──
+           Niveau 0 : carte standard (contenu de liste, ligne de tableau) — pas d'ombre.
+           Niveau 1 : carte de contenu (bloc Analyse, fiche joueur) — ombre légère, s'accentue au survol.
+           Niveau 2 : carte proéminente (résumé match, bloc terrain, signature joueur) — ombre marquée. */
+        .surface-flat { border: 1px solid var(--gray-200); box-shadow: none; }
+
+        .surface-card {
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+            border-radius: 12px;
+            transition: box-shadow 150ms ease, transform 150ms ease;
+        }
+        .surface-card:hover { box-shadow: var(--shadow-md); }
+
+        .surface-hero {
+            border: none;
+            box-shadow: var(--shadow-lg);
+            border-radius: 14px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
