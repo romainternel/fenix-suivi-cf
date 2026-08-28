@@ -508,7 +508,10 @@
                 const ratio = count / avg;
                 if (ratio >= 1.5 && ratio > bestRatio) { bestRatio = ratio; best = g.label; }
             });
-            return best ? { label: best } : null;
+            // Le badge n'affiche aucun chiffre (contrairement au tableau détaillé) : le suffixe
+            // "(But DG)" y ferait croire à une domination sur le détail précis plutôt que sur la
+            // catégorie globale ("But" = But + But DG) qui a réellement été comparée à l'équipe.
+            return best ? { label: best.replace(/\s*\([^)]*\)\s*$/, '') } : null;
         }
 
         // ── Tableau zones de tir GB (remplace ACTIONS pour les gardiens) ────────
