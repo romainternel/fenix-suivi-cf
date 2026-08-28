@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=232">
-    <script src="js/utils.js?v=232"></script>
-    <script src="js/impact-images.js?v=232"></script>
-    <script src="js/player-mode.js?v=232"></script>
-    <script src="js/page-joueurs.js?v=232"></script>
-    <script src="js/page-notes-graph.js?v=232"></script>
-    <script src="js/page-analyse.js?v=232"></script>
+    <link rel="stylesheet" href="css/style.css?v=233">
+    <script src="js/utils.js?v=233"></script>
+    <script src="js/impact-images.js?v=233"></script>
+    <script src="js/player-mode.js?v=233"></script>
+    <script src="js/page-joueurs.js?v=233"></script>
+    <script src="js/page-notes-graph.js?v=233"></script>
+    <script src="js/page-analyse.js?v=233"></script>
 </head>
 <body>
 
@@ -395,99 +395,119 @@
 
                 <div id="analyse-content" style="display: none;">
                     <div id="periode-warning"></div>
-                    <!-- Timeline du score -->
-                    <div class="analyse-section">
-                        <h3 class="analyse-section-title">📈 ÉVOLUTION DU SCORE</h3>
-                        <div id="timeline-scores" class="timeline-scores"></div>
-                        <div class="timeline-container">
-                            <canvas id="timeline-canvas"></canvas>
-                        </div>
-                        <div id="mc-sequences-panel" style="display:none; margin-top:16px; border-radius:10px; overflow:hidden; border:1px solid #e2e8f0;">
-                            <div id="mc-sequences-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
-                                <div style="display:flex;align-items:center;gap:12px;">
-                                    <button onclick="closeMCPanel()" style="display:flex;align-items:center;gap:5px;font-size:0.75rem;padding:4px 10px;border:1px solid #cbd5e1;border-radius:6px;background:white;cursor:pointer;color:#475569;font-weight:600;">&#8592; Retour</button>
-                                    <span id="mc-sequences-title" style="font-weight:700;font-size:0.88rem;color:#0A2463;"></span>
+
+                    <!-- Onglets Analyse (STORY-14) -->
+                    <div class="an-tabs" role="tablist">
+                        <button class="an-tab-btn active" data-tab="resume" role="tab" aria-selected="true" onclick="_analyseTab('resume')">Résumé</button>
+                        <button class="an-tab-btn" data-tab="timeline" role="tab" aria-selected="false" onclick="_analyseTab('timeline')">Timeline</button>
+                        <button class="an-tab-btn" data-tab="enclenchements" role="tab" aria-selected="false" onclick="_analyseTab('enclenchements')">Enclenchements</button>
+                        <button class="an-tab-btn" data-tab="gardien" role="tab" aria-selected="false" onclick="_analyseTab('gardien')">Gardien</button>
+                        <button class="an-tab-btn" data-tab="chat" role="tab" aria-selected="false" onclick="_analyseTab('chat')">Chat IA</button>
+                    </div>
+
+                    <div id="an-tab-resume" class="an-tab-panel">
+                        <!-- Analyse comparative -->
+                        <div class="analyse-grid">
+                            <!-- Résumé automatique du match -->
+                            <div class="analyse-card ia-card">
+                                <div class="analyse-card-header">
+                                    <span>📊</span>
+                                    <h3>Résumé du match</h3>
                                 </div>
-                                <div style="display:flex;gap:8px;align-items:center;">
-                                    <button id="mc-sequences-toggle" onclick="toggleMCAdvancedCols()" style="font-size:0.72rem;padding:3px 10px;border:1px solid #cbd5e1;border-radius:6px;background:white;cursor:pointer;color:#475569;">Colonnes avancées</button>
+                                <div class="analyse-card-body" id="ia-analyse">
+                                    <!-- Généré automatiquement -->
                                 </div>
                             </div>
-                            <div style="overflow-x:auto;">
-                                <table id="mc-sequences-table" style="width:100%;border-collapse:collapse;font-size:0.78rem;"></table>
+
+                            <!-- Avis Coach -->
+                            <div class="analyse-card coach-card">
+                                <div class="analyse-card-header">
+                                    <span>👨‍🏫</span>
+                                    <h3>Ton Analyse (Coach)</h3>
+                                </div>
+                                <div class="analyse-card-body">
+                                    <textarea id="coach-analyse" placeholder="Écris ici ton analyse personnelle du match...&#10;&#10;Ex: 'On a perdu le match à cause de la gestion des temps faibles. Les 5 dernières minutes de MT1 ont été catastrophiques...'"></textarea>
+                                    <button class="save-coach-btn" onclick="saveCoachAnalyse()">💾 Sauvegarder mon analyse</button>
+                                    <div id="coach-saved-msg" class="saved-msg" style="display: none;">✓ Analyse sauvegardée</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Moments clés -->
-                    <div class="analyse-section">
-                        <h3 class="analyse-section-title">🔵 MOMENTS CLÉS</h3>
-                        <div id="moments-cles" class="moments-cles"></div>
-                    </div>
-
-                    <!-- Bascules du match -->
-                    <div class="analyse-section">
-                        <h3 class="analyse-section-title">⚡ BASCULES DU MATCH</h3>
-                        <div id="enc-bascule-section"></div>
-                    </div>
-
-                    <!-- Analyse comparative -->
-                    <div class="analyse-grid">
-                        <!-- Résumé automatique du match -->
-                        <div class="analyse-card ia-card">
-                            <div class="analyse-card-header">
-                                <span>📊</span>
-                                <h3>Résumé du match</h3>
-                            </div>
-                            <div class="analyse-card-body" id="ia-analyse">
+                        <!-- Indicateurs clés -->
+                        <div class="analyse-section">
+                            <h3 class="analyse-section-title">📊 Indicateurs Clés</h3>
+                            <div class="indicateurs-grid" id="indicateurs-grid">
                                 <!-- Généré automatiquement -->
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Avis Coach -->
-                        <div class="analyse-card coach-card">
-                            <div class="analyse-card-header">
-                                <span>👨‍🏫</span>
-                                <h3>Ton Analyse (Coach)</h3>
+                    <div id="an-tab-timeline" class="an-tab-panel" style="display:none">
+                        <!-- Timeline du score -->
+                        <div class="analyse-section">
+                            <h3 class="analyse-section-title">📈 ÉVOLUTION DU SCORE</h3>
+                            <div id="timeline-scores" class="timeline-scores"></div>
+                            <div class="timeline-container">
+                                <canvas id="timeline-canvas"></canvas>
                             </div>
-                            <div class="analyse-card-body">
-                                <textarea id="coach-analyse" placeholder="Écris ici ton analyse personnelle du match...&#10;&#10;Ex: 'On a perdu le match à cause de la gestion des temps faibles. Les 5 dernières minutes de MT1 ont été catastrophiques...'"></textarea>
-                                <button class="save-coach-btn" onclick="saveCoachAnalyse()">💾 Sauvegarder mon analyse</button>
-                                <div id="coach-saved-msg" class="saved-msg" style="display: none;">✓ Analyse sauvegardée</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Indicateurs clés -->
-                    <div class="analyse-section">
-                        <h3 class="analyse-section-title">📊 Indicateurs Clés</h3>
-                        <div class="indicateurs-grid" id="indicateurs-grid">
-                            <!-- Généré automatiquement -->
-                        </div>
-                    </div>
-
-                    <!-- Enclenchements offensifs (A-01/02/03) -->
-                    <div class="analyse-section">
-                        <div id="enc-familles-section"></div>
-                    </div>
-
-                    <!-- Gardien × systèmes adverses (A-06/07) -->
-                    <div class="analyse-section">
-                        <div id="enc-gardien-section"></div>
-                    </div>
-
-                    <!-- Chat IA -->
-                    <div class="analyse-section">
-                        <h3 class="analyse-section-title">💬 Chat IA - Pose tes questions</h3>
-                        <div class="chat-container">
-                            <div class="chat-messages" id="chat-messages">
-                                <div class="chat-message ia">
-                                    <div class="chat-avatar">🤖</div>
-                                    <div class="chat-content">Salut Coach ! Je suis prêt à analyser ce match avec toi. Pose-moi tes questions sur les stats, les joueurs, les moments clés...</div>
+                            <div id="mc-sequences-panel" style="display:none; margin-top:16px; border-radius:10px; overflow:hidden; border:1px solid #e2e8f0;">
+                                <div id="mc-sequences-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <button onclick="closeMCPanel()" style="display:flex;align-items:center;gap:5px;font-size:0.75rem;padding:4px 10px;border:1px solid #cbd5e1;border-radius:6px;background:white;cursor:pointer;color:#475569;font-weight:600;">&#8592; Retour</button>
+                                        <span id="mc-sequences-title" style="font-weight:700;font-size:0.88rem;color:#0A2463;"></span>
+                                    </div>
+                                    <div style="display:flex;gap:8px;align-items:center;">
+                                        <button id="mc-sequences-toggle" onclick="toggleMCAdvancedCols()" style="font-size:0.72rem;padding:3px 10px;border:1px solid #cbd5e1;border-radius:6px;background:white;cursor:pointer;color:#475569;">Colonnes avancées</button>
+                                    </div>
+                                </div>
+                                <div style="overflow-x:auto;">
+                                    <table id="mc-sequences-table" style="width:100%;border-collapse:collapse;font-size:0.78rem;"></table>
                                 </div>
                             </div>
-                            <div class="chat-input-container">
-                                <input type="text" id="chat-input" placeholder="Ex: Pourquoi on a perdu ? Qui a été le plus efficace ?" onkeypress="if(event.key==='Enter')sendChatMessage()">
-                                <button class="chat-send-btn" onclick="sendChatMessage()">Envoyer</button>
+                        </div>
+
+                        <!-- Moments clés -->
+                        <div class="analyse-section">
+                            <h3 class="analyse-section-title">🔵 MOMENTS CLÉS</h3>
+                            <div id="moments-cles" class="moments-cles"></div>
+                        </div>
+
+                        <!-- Bascules du match -->
+                        <div class="analyse-section">
+                            <h3 class="analyse-section-title">⚡ BASCULES DU MATCH</h3>
+                            <div id="enc-bascule-section"></div>
+                        </div>
+                    </div>
+
+                    <div id="an-tab-enclenchements" class="an-tab-panel" style="display:none">
+                        <!-- Enclenchements offensifs (A-01/02/03) -->
+                        <div class="analyse-section">
+                            <div id="enc-familles-section"></div>
+                        </div>
+                    </div>
+
+                    <div id="an-tab-gardien" class="an-tab-panel" style="display:none">
+                        <!-- Gardien × systèmes adverses (A-06/07) -->
+                        <div class="analyse-section">
+                            <div id="enc-gardien-section"></div>
+                        </div>
+                    </div>
+
+                    <div id="an-tab-chat" class="an-tab-panel" style="display:none">
+                        <!-- Chat IA -->
+                        <div class="analyse-section">
+                            <h3 class="analyse-section-title">💬 Chat IA - Pose tes questions</h3>
+                            <div class="chat-container">
+                                <div class="chat-messages" id="chat-messages">
+                                    <div class="chat-message ia">
+                                        <div class="chat-avatar">🤖</div>
+                                        <div class="chat-content">Salut Coach ! Je suis prêt à analyser ce match avec toi. Pose-moi tes questions sur les stats, les joueurs, les moments clés...</div>
+                                    </div>
+                                </div>
+                                <div class="chat-input-container">
+                                    <input type="text" id="chat-input" placeholder="Ex: Pourquoi on a perdu ? Qui a été le plus efficace ?" onkeypress="if(event.key==='Enter')sendChatMessage()">
+                                    <button class="chat-send-btn" onclick="sendChatMessage()">Envoyer</button>
+                                </div>
                             </div>
                         </div>
                     </div>

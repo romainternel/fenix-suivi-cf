@@ -2500,6 +2500,18 @@
         .enc-team-btn.active { background: #0A2463; border-color: #0A2463; color: #fff; }
         .enc-team-btn:hover:not(.active) { background: #E2E8F0; }
 
+        /* Onglets page Analyse (STORY-14) — structure/taille de .pm-tab-btn (mode joueur),
+           couleurs de .enc-team-btn : .pm-tab-btn est prévu pour un fond sombre (.pm-bar),
+           illisible sur le fond blanc de la page Analyse. Habillage définitif en STORY-16. */
+        .an-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0; }
+        .an-tab-btn {
+            padding: 0.35rem 0.9rem; border: 1px solid #CBD5E1; background: #F8FAFC;
+            border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+            font-family: 'Inter', sans-serif; color: #64748B; cursor: pointer; transition: all 0.2s;
+        }
+        .an-tab-btn.active { background: #0A2463; border-color: #0A2463; color: #fff; }
+        .an-tab-btn:hover:not(.active) { background: #E2E8F0; }
+
         /* Boutons toggle radar */
         .enc-graph-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
         .enc-graph-toggle--header { margin-bottom: 0; align-items: center; }

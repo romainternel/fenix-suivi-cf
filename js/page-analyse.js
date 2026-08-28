@@ -115,6 +115,7 @@
             _bascules = [];
             findMomentsCles(matchFilter, matchData);
             _bascules = detectAllBascules(getSortedGoals(matchData), matchData);
+            window._currentMatchName = matchFilter;
             window._currentMatchData = matchData;
             drawTimeline(matchFilter, matchData);
             const _tlCanvas = document.getElementById('timeline-canvas');
@@ -122,6 +123,32 @@
             renderBasculContext(matchData, _bascules);
             renderEncFamillesSection(matchData);
             renderGardienEncSection(matchData);
+            _analyseTab(sessionStorage.getItem('an_active_tab') || 'resume');
+        }
+
+        // STORY-14 — Onglets page Analyse (structure calquée sur pmTab(), js/player-mode.js).
+        // Toujours appelée quand #analyse-content est affiché (un match est sélectionné) :
+        // les 5 onglets ont donc toujours un contenu valide, pas de cas "onglet vide" à gérer ici.
+        const AN_TABS = ['resume', 'timeline', 'enclenchements', 'gardien', 'chat'];
+        function _analyseTab(tab) {
+            if (!AN_TABS.includes(tab)) tab = 'resume';
+            sessionStorage.setItem('an_active_tab', tab);
+            document.querySelectorAll('.an-tab-btn').forEach(b => {
+                const active = b.dataset.tab === tab;
+                b.classList.toggle('active', active);
+                b.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+            AN_TABS.forEach(t => {
+                const el = document.getElementById('an-tab-' + t);
+                if (el) el.style.display = (t === tab) ? 'block' : 'none';
+            });
+            // Canvas dimensionnés via clientWidth du conteneur : redessiner à l'ouverture de
+            // l'onglet évite un canvas figé sur la taille du dernier onglet actif au moment du rendu.
+            if (tab === 'timeline' && window._currentMatchName && window._currentMatchData) {
+                drawTimeline(window._currentMatchName, window._currentMatchData);
+            } else if (tab === 'enclenchements') {
+                requestAnimationFrame(() => _drawEncChart());
+            }
         }
 
         function generateResume3Points(matchName, matchData, hasPeriode) {
