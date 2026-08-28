@@ -1534,6 +1534,7 @@ let _effInfoPoste = null;
                         localStorage.setItem('fenix_data_filename', file.name);
                         localStorage.setItem('fenix_temps_jeu', JSON.stringify(TEMPS_JEU));
                         localStorage.setItem('fenix_bilan_rows', JSON.stringify(_rawBilanRows));
+                        localStorage.setItem('fenix_joueurs_terrain', JSON.stringify(JOUEURS_TERRAIN));
                     } catch(e) {}
                     updateImportUI(file.name, dateStr);
                 } catch (error) {
@@ -1574,6 +1575,11 @@ let _effInfoPoste = null;
                 if (savedTJ) TEMPS_JEU = JSON.parse(savedTJ);
                 const savedBilan = localStorage.getItem('fenix_bilan_rows');
                 if (savedBilan) _rawBilanRows = JSON.parse(savedBilan);
+                const savedJT = localStorage.getItem('fenix_joueurs_terrain');
+                if (savedJT) {
+                    JOUEURS_TERRAIN = JSON.parse(savedJT);
+                    if (typeof clearMatchPlayerNameCache === 'function') clearMatchPlayerNameCache();
+                }
                 if (!DATA || DATA.length === 0) return;
                 extractUniqueValues();
                 processBilans();
