@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=221">
-    <script src="js/utils.js?v=221"></script>
-    <script src="js/impact-images.js?v=221"></script>
-    <script src="js/player-mode.js?v=221"></script>
-    <script src="js/page-joueurs.js?v=221"></script>
-    <script src="js/page-notes-graph.js?v=221"></script>
-    <script src="js/page-analyse.js?v=221"></script>
+    <link rel="stylesheet" href="css/style.css?v=230">
+    <script src="js/utils.js?v=230"></script>
+    <script src="js/impact-images.js?v=230"></script>
+    <script src="js/player-mode.js?v=230"></script>
+    <script src="js/page-joueurs.js?v=230"></script>
+    <script src="js/page-notes-graph.js?v=230"></script>
+    <script src="js/page-analyse.js?v=230"></script>
 </head>
 <body>
 
@@ -281,12 +281,16 @@
                 </div>
             </div>
             <!-- Bloc Match : terrain + stats équipes -->
-            <div class="section">
-                <div class="match-card-bar">
+            <div class="section" id="match-block-section">
+                <div class="no-data" id="match-block-empty" style="display:none">
+                    <div class="no-data-icon">📁</div>
+                    <p>Importe un fichier Excel pour voir les données du match</p>
+                </div>
+                <div class="match-card-bar" id="match-card-bar">
                     <button class="btn-match-avg" id="btn-match-avg" onclick="toggleMatchCardAvg()">TOTAUX</button>
                 </div>
 
-                <div class="match-layout">
+                <div class="match-layout" id="match-layout">
                     <!-- Terrain -->
                     <div>
                         <div class="terrain-wrapper-small" id="terrain-wrapper">
@@ -1382,6 +1386,7 @@ let _effInfoPoste = null;
                         subnav.style.display = 'none';
                     }
                     if (DATA.length > 0) refreshPage(this.dataset.page);
+                    else if (this.dataset.page === 'analyse') updateMatchPage();
                 });
             });
         }
@@ -2198,6 +2203,19 @@ let _effInfoPoste = null;
         }
 
         function updateMatchPage() {
+            const emptyEl = document.getElementById('match-block-empty');
+            const barEl = document.getElementById('match-card-bar');
+            const layoutEl = document.getElementById('match-layout');
+            if (DATA.length === 0) {
+                if (emptyEl) emptyEl.style.display = 'block';
+                if (barEl) barEl.style.display = 'none';
+                if (layoutEl) layoutEl.style.display = 'none';
+                return;
+            }
+            if (emptyEl) emptyEl.style.display = 'none';
+            if (barEl) barEl.style.display = '';
+            if (layoutEl) layoutEl.style.display = '';
+
             const selectedMatchs = getMatchPageSelected();
 
             // Cards use only match filter

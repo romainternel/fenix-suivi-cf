@@ -88,7 +88,7 @@
 
             const backBtn = document.getElementById('pm-back-btn');
             if (backBtn) backBtn.style.display = (PLAYER_SESSION && PLAYER_SESSION.isPreview) ? 'inline-flex' : 'none';
-            if (typeof DATA !== 'undefined' && DATA.length > 0) pmTab(sessionStorage.getItem('pm_active_tab') || 'fiche');
+            pmTab(sessionStorage.getItem('pm_active_tab') || 'fiche');
 
             window.addEventListener('orientationchange', () => {
                 setTimeout(() => { if (_pmfChart) _pmfChart.resize(); }, 150);
@@ -134,7 +134,7 @@
                 if (matchEl) matchEl.style.display = 'none';
                 if (zonesEl) zonesEl.style.display = 'none';
                 if (ficheEl) ficheEl.style.display = 'block';
-                if (typeof DATA !== 'undefined' && DATA.length > 0) renderPlayerFiche();
+                renderPlayerFiche();
             } else if (tab === 'zones') {
                 if (_pmfChart) { _pmfChart.destroy(); _pmfChart = null; }
                 if (ficheEl) ficheEl.style.display = 'none';
