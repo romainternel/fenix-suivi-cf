@@ -179,6 +179,12 @@
             ],
         };
 
+        // Libellé de famille sans le détail entre parenthèses (ex: "But (But DG)" → "But") —
+        // utilisé partout où le total affiché est celui de la famille combinée, pas du détail seul.
+        function noteGroupBaseLabel(label) {
+            return label.replace(/\s*\([^)]*\)\s*$/, '');
+        }
+
         // Dérivés automatiquement — ne jamais modifier directement
         var ACTIONS_ATT_PLUS  = NOTE_GROUPS.attPlus.flatMap(g => g.main);
         var ACTIONS_ATT_MOINS = NOTE_GROUPS.attMoins.flatMap(g => g.main);

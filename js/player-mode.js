@@ -509,7 +509,7 @@
             allGroups.forEach(g => {
                 // Candidat 1 : la famille complète (ex: But + But DG combinés) → libellé de base "But"
                 const ratioGroup = ratioFor(playerCounts[g.label], teamTotals[g.label]);
-                if (ratioGroup >= 1.5 && ratioGroup > bestRatio) { bestRatio = ratioGroup; best = g.label.replace(/\s*\([^)]*\)\s*$/, ''); }
+                if (ratioGroup >= 1.5 && ratioGroup > bestRatio) { bestRatio = ratioGroup; best = noteGroupBaseLabel(g.label); }
                 // Candidat 2 : le sous-détail seul (ex: But DG) → n'est retenu QUE si lui-même est
                 // le signal distinctif, avec son propre libellé exact (pas "But", pas "But (But DG)")
                 if (g.sub) {
@@ -654,11 +654,11 @@
             const vColor = v => v > 0 ? '#059669' : v < 0 ? '#DC2626' : '#64748B';
 
             const allPlusGroups  = [...NOTE_GROUPS.attPlus, ...NOTE_GROUPS.defPlus]
-                .map(g => ({ label: g.label, total: gc(g) }))
+                .map(g => ({ label: noteGroupBaseLabel(g.label), total: gc(g) }))
                 .filter(g => g.total > 0)
                 .sort((a, b) => b.total - a.total);
             const allMoinsGroups = [...NOTE_GROUPS.attMoins, ...NOTE_GROUPS.defMoins]
-                .map(g => ({ label: g.label, total: gc(g) }))
+                .map(g => ({ label: noteGroupBaseLabel(g.label), total: gc(g) }))
                 .filter(g => g.total > 0)
                 .sort((a, b) => b.total - a.total);
             const top3Plus  = allPlusGroups.slice(0, 3);

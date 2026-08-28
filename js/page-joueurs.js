@@ -1546,7 +1546,7 @@
                 const mkLbl = txt => ({ text:txt, options:{ ...colF, align:'left', color:'1E293B', fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
                 const mkVal = (n, col) => ({ text:n.toString(), options:{ ...colF, bold:true, align:'center', color:col, fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
                 const mkSub = txt => ({ text:txt, options:{ ...colF, align:'center', color:DGRAY, fill:{ color:LGRAY }, border:{ pt:0.3, color:'E2E8F0' } } });
-                const buildR = (detail, col) => Object.entries(detail).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([lbl,cnt]) => [mkLbl(lbl), mkVal(cnt, col), mkSub(fmtR(cnt))]);
+                const buildR = (detail, col) => Object.entries(detail).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([lbl,cnt]) => [mkLbl(noteGroupBaseLabel(lbl)), mkVal(cnt, col), mkSub(fmtR(cnt))]);
 
                 const cols4 = [
                     { title:'ATT +', count:attPlus,  detail:attPlusDetail,  color:GREEN, x:0.15 },
