@@ -271,6 +271,9 @@
             margin-bottom: 1.5rem;
         }
 
+        /* Bloc terrain+cartes (Analyse) : niveau 2 "hero", bloc le plus important de l'écran (STORY-16) */
+        #match-block-section { border-radius: 14px; box-shadow: var(--shadow-lg); }
+
         .section-header {
             display: flex;
             align-items: center;
@@ -1038,12 +1041,14 @@
         .no-data-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }
 
         /* Page Analyse styles */
+        /* Cartes des onglets Analyse : même recette que .surface-card (STORY-16) */
         .analyse-section {
             background: var(--fenix-white);
-            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-sm);
         }
 
         .analyse-section-title {
@@ -1134,9 +1139,10 @@
 
         .analyse-card {
             background: var(--fenix-white);
-            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-sm);
         }
 
         .analyse-card-header {
@@ -2430,7 +2436,7 @@
             color: var(--fenix-dark); line-height: 1;
         }
         .enc-famille-sublabel {
-            font-size: 0.58rem; color: #94A3B8; text-transform: uppercase;
+            font-size: 0.7rem; color: #94A3B8; text-transform: uppercase;
             letter-spacing: 0.05em; margin-bottom: 4px;
         }
         .enc-famille-meta { font-size: 0.72rem; color: #64748B; margin-bottom: 8px; }
@@ -2445,12 +2451,16 @@
         .enc-progress-fill.below { background: var(--fenix-danger); }
         .enc-progress-fill.noref { background: #94A3B8; }
         .enc-progress-ref { font-size: 0.62rem; color: #94A3B8; margin-bottom: 8px; }
+        /* Niveaux typographiques de la card (STORY-16, règle "max 3 niveaux simultanés") :
+           Valeur clé = .enc-famille-eff · Corps = .enc-stat-main-val/.enc-stat-sec-val (même taille,
+           hiérarchie par poids/couleur) · Micro = .enc-famille-name/.enc-famille-sublabel/
+           .enc-stat-pair-label/.enc-footnote/.enc-badge-mini (même taille 0.7rem) */
         .enc-stat-pair { display: flex; align-items: flex-start; gap: 6px; margin: 5px 0 2px; }
-        .enc-stat-main-val { font-size: 1.05rem; font-weight: 700; color: #1E293B; line-height: 1; }
+        .enc-stat-main-val { font-size: 0.82rem; font-weight: 700; color: #1E293B; line-height: 1; }
         .enc-stat-sec-val { font-size: 0.82rem; font-weight: 600; color: #94A3B8; line-height: 1; }
-        .enc-stat-pair-label { font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94A3B8; margin-top: 2px; }
+        .enc-stat-pair-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94A3B8; margin-top: 2px; }
         .enc-stat-sep { color: #CBD5E1; padding-top: 1px; font-size: 0.9rem; line-height: 1.2; }
-        .enc-footnote { font-size: 0.57rem; color: #94A3B8; margin-top: 1px; margin-bottom: 3px; line-height: 1.4; }
+        .enc-footnote { font-size: 0.7rem; font-weight: 600; color: #94A3B8; margin-top: 1px; margin-bottom: 3px; line-height: 1.4; }
 
         /* Badges */
         .enc-badge-faiblesse {
@@ -2521,6 +2531,7 @@
         }
         .an-tab-btn.active { background: #0A2463; border-color: #0A2463; color: #fff; }
         .an-tab-btn:hover:not(.active) { background: #E2E8F0; }
+        .an-tab-btn:focus-visible { outline: 2px solid var(--fenix-accent); outline-offset: 2px; }
 
         /* Boutons toggle radar */
         .enc-graph-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
@@ -2563,7 +2574,7 @@
         /* Mini badges dans cards */
         .enc-badge-mini {
             display: inline-block; padding: 2px 5px; border-radius: 3px;
-            font-size: 0.6rem; font-weight: 700; margin-top: 4px;
+            font-size: 0.7rem; font-weight: 700; margin-top: 4px;
         }
         .enc-badge-mini.faiblesse { background: #FEF3C7; color: #92400E; }
         .enc-badge-mini.force { background: #D1FAE5; color: #065F46; }
