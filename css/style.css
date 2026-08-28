@@ -1709,8 +1709,9 @@
             padding: 0.35rem 0.9rem;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 0.82rem;
-            font-weight: 600;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
             font-family: 'Inter', sans-serif;
             transition: all 0.2s;
         }
@@ -2022,12 +2023,14 @@
             font-size: 0.75rem; opacity: 0.8;
         }
 
+        /* Mêmes tokens d'élévation que le reste de l'appli (--gray-200/--shadow-sm), pas de palette parallèle */
         .pmf-card {
             background: #fff;
+            border: 1px solid var(--gray-200);
             border-radius: 12px;
             padding: 1.2rem;
             margin-bottom: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            box-shadow: var(--shadow-sm);
             position: relative;
         }
         .pmf-card-title {
@@ -2074,7 +2077,7 @@
         }
 
         .pmf-kpi-box {
-            background: #F8FAFC; border-radius: 10px;
+            background: var(--gray-50); border-radius: 10px;
             padding: 0.75rem 0.4rem; text-align: center;
         }
 

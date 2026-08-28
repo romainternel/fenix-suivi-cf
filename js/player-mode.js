@@ -614,6 +614,8 @@
             const gc = g => g.main.reduce((s, a) => s + (counts[a] || 0), 0);
 
             const makeSection = (groups, headerColor, bgColor, title) => {
+                const headerBg   = headerColor === '#059669' ? '#D1FAE5' : '#FEE2E2';
+                const headerText = headerColor === '#059669' ? '#065F46' : '#991B1B';
                 const rows = groups.map(g => {
                     const total = gc(g);
                     const sub   = g.sub !== null ? (counts[g.sub] || 0) : null;
@@ -629,7 +631,7 @@
                     </tr>`;
                 }).join('');
                 return `<div style="flex:1;min-width:0">
-                    <div style="background:${headerColor};color:#fff;padding:5px 8px;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:1px;border-radius:6px 6px 0 0">${title}</div>
+                    <div style="background:${headerBg};color:${headerText};padding:5px 8px;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:1px;border-radius:6px 6px 0 0">${title}</div>
                     <div style="background:${bgColor};border-radius:0 0 6px 6px;overflow-x:auto">
                         <table style="width:100%;border-collapse:collapse">
                             <thead><tr style="background:rgba(0,0,0,0.06)">
