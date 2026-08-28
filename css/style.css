@@ -1009,7 +1009,8 @@
         /* Colonne droite : carte + tableau empilés */
         .joueur-right-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.75rem; }
         /* Carte joueur */
-        .joueur-panel { background: var(--fenix-white); border-radius: 16px; box-shadow: var(--shadow-md); overflow: hidden; }
+        /* Fiche principale = bloc le plus important de la page : élévation "hero" (§ élévation ci-dessus) */
+        .joueur-panel { background: var(--fenix-white); border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden; }
         .jp-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2.5rem 2rem; color: #94A3B8; text-align: center; }
         .jp-header { padding: 1.25rem 1.5rem; color: white; display: flex; align-items: center; gap: 1rem; }
         .jp-avatar { width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; }
@@ -1021,7 +1022,8 @@
         .jp-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--fenix-blue); line-height: 1; }
         .jp-lbl { font-size: 0.65rem; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.5px; margin-top: 0.15rem; }
         /* Tableau matchs — sous la carte, même largeur colonne droite */
-        #joueur-matches { background: var(--fenix-white); border-radius: 16px; box-shadow: var(--shadow-md); padding: 1.1rem 1.25rem; display: none; }
+        /* Détail par match = carte standard, moins proéminente que la fiche principale */
+        #joueur-matches { background: var(--fenix-white); border: 1px solid var(--gray-200); border-radius: 12px; box-shadow: var(--shadow-sm); padding: 1.1rem 1.25rem; display: none; }
         .jm-header { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--fenix-blue); letter-spacing: 1px; margin-bottom: 0.75rem; padding-bottom: 0.6rem; border-bottom: 2px solid #E8EFF5; }
         .jm-table { width: 100%; border-collapse: collapse; font-size: 0.73rem; }
         .jm-table th { padding: 0.35rem 0.35rem; text-align: center; background: #F8FAFC; border-bottom: 2px solid #E8EFF5; color: #64748B; font-weight: 700; font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.2px; white-space: nowrap; }
@@ -2266,8 +2268,10 @@
             border: 1px solid #E2E8F0;
             border-radius: 20px;
             padding: 5px 14px;
-            font-size: 0.78rem;
-            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
             color: #475569;
             cursor: pointer;
             transition: all 0.15s;
@@ -2509,7 +2513,7 @@
         .an-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0; }
         .an-tab-btn {
             padding: 0.35rem 0.9rem; border: 1px solid #CBD5E1; background: #F8FAFC;
-            border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+            border-radius: 20px; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px;
             font-family: 'Inter', sans-serif; color: #64748B; cursor: pointer; transition: all 0.2s;
         }
         .an-tab-btn.active { background: #0A2463; border-color: #0A2463; color: #fff; }

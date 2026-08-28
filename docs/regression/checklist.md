@@ -18,7 +18,7 @@ Environnement de référence : https://romainternel.github.io/fenix-suivi-cf/FEN
 | C2 | Authentification Joueur | v1 (comptes v?) | Mot de passe = compte créé dans `fenix_player_accounts` → bascule automatique en Mode Lecture Joueur avec le bon nom | 2026-08-26 |
 | C3 | Import fichier Excel (.xlsm/.xlsx) | v1 | Sélection du fichier → `DATA`/`MATCHS`/`SAISONS`/`JOUEURS_TERRAIN` peuplés → dashboard affiche des stats non nulles | 2026-08-26 |
 | C4 | Dashboard staff | v1 | Filtre match/saison appliqué → encarts FENIX/Adversaire (possessions, buts, %, PB, Pen, Neutralisé) cohérents et non figés | 2026-08-26 |
-| C5 | Page Joueurs — terrain + fiche | v1 | Clic sur un joueur du terrain SVG → panneau stats détaillées s'affiche avec les bonnes stats | 2026-08-26 |
+| C5 | Page Joueurs — terrain + fiche | v1, passe visuelle en v235 (STORY-17) | Clic sur un joueur du terrain SVG → panneau stats détaillées s'affiche avec les bonnes stats. Fiche principale en élévation "hero" (`#joueur-panel`), détail par match en "card" (`#joueur-matches`), sous-onglets Fiche/Notes/Graphique/Impact sur l'échelle typographique "Onglet" — aucune régression de données ni de lisibilité (terrain SVG inchangé, badges déjà conformes) | 2026-08-28 (QA-07/E2E-06) |
 | C6 | Mode Lecture Joueur (mobile) — Ma Fiche | v96+ (refonte sprint S-01→S-11, jusqu'à v221) | Connexion joueur → onglet "Ma Fiche" affiche KPIs + graphique progression sans erreur | 2026-08-26 |
 | C7 | Persistance des filtres bilan/saison/match entre pages | historique — source de bugs récurrente (AUDIT-NUIT bug #5, BUG-22 v220) | Changer de page ne doit ni planter ni afficher des données d'un autre bilan sans avertissement | 2026-08-26 |
 
