@@ -189,6 +189,8 @@
 
         #file-input { display: none; }
 
+        /* STORY-15 : scopé par ID (pas .section, partagée avec d'autres pages hors scope) */
+        #players-section { border: 1px solid var(--gray-200); border-radius: 12px; box-shadow: var(--shadow-sm); }
         #players-section th { cursor: pointer; user-select: none; white-space: nowrap; }
         #players-section th:hover { background: #EFF6FF; }
         #players-section th.sort-active { color: var(--fenix-blue); }
@@ -306,9 +308,10 @@
 
         .team-card {
             background: var(--fenix-white);
-            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
             padding: 1.5rem;
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-sm);
         }
 
         .team-card.fenix { border-left: 4px solid var(--fenix-blue); }
