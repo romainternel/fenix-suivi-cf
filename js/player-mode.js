@@ -473,6 +473,9 @@
             allGroups.forEach(g => g.main.forEach(a => { actionToLabel[a] = g.label; }));
             const playerCounts = {}, teamTotals = {};
             allGroups.forEach(g => { playerCounts[g.label] = 0; teamTotals[g.label] = { total: 0, players: new Set() }; });
+            // Comptage séparé par action brute (ex: "But DG" isolé de "But") pour détecter le cas
+            // où le joueur se distingue spécifiquement sur le sous-détail, pas juste sur la famille.
+            const playerRaw = {}, teamRaw = {};
 
             const playersWithData = new Set();
             DATA.forEach(row => {
@@ -491,6 +494,10 @@
                         teamTotals[label].total++;
                         teamTotals[label].players.add(pNom);
                         if (matchPlayerName(pNom, nom)) playerCounts[label]++;
+                        if (!teamRaw[action]) teamRaw[action] = { total: 0, players: new Set() };
+                        teamRaw[action].total++;
+                        teamRaw[action].players.add(pNom);
+                        if (matchPlayerName(pNom, nom)) playerRaw[action] = (playerRaw[action]||0) + 1;
                     });
                     if (att || def) playersWithData.add(pNom);
                 });
@@ -498,20 +505,19 @@
 
             if (playersWithData.size < 5) return { insufficient: true, count: playersWithData.size };
             let best = null, bestRatio = 0;
+            const ratioFor = (count, td) => (count >= 3 && td && td.players.size) ? count / (td.total / td.players.size) : 0;
             allGroups.forEach(g => {
-                const count = playerCounts[g.label];
-                if (count < 3) return;
-                const td = teamTotals[g.label];
-                if (!td.players.size) return;
-                const avg = td.total / td.players.size;
-                if (!avg) return;
-                const ratio = count / avg;
-                if (ratio >= 1.5 && ratio > bestRatio) { bestRatio = ratio; best = g.label; }
+                // Candidat 1 : la famille complète (ex: But + But DG combinés) → libellé de base "But"
+                const ratioGroup = ratioFor(playerCounts[g.label], teamTotals[g.label]);
+                if (ratioGroup >= 1.5 && ratioGroup > bestRatio) { bestRatio = ratioGroup; best = g.label.replace(/\s*\([^)]*\)\s*$/, ''); }
+                // Candidat 2 : le sous-détail seul (ex: But DG) → n'est retenu QUE si lui-même est
+                // le signal distinctif, avec son propre libellé exact (pas "But", pas "But (But DG)")
+                if (g.sub) {
+                    const ratioSub = ratioFor(playerRaw[g.sub], teamRaw[g.sub]);
+                    if (ratioSub >= 1.5 && ratioSub > bestRatio) { bestRatio = ratioSub; best = g.sub; }
+                }
             });
-            // Le badge n'affiche aucun chiffre (contrairement au tableau détaillé) : le suffixe
-            // "(But DG)" y ferait croire à une domination sur le détail précis plutôt que sur la
-            // catégorie globale ("But" = But + But DG) qui a réellement été comparée à l'équipe.
-            return best ? { label: best.replace(/\s*\([^)]*\)\s*$/, '') } : null;
+            return best ? { label: best } : null;
         }
 
         // ── Tableau zones de tir GB (remplace ACTIONS pour les gardiens) ────────
