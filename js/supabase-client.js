@@ -168,6 +168,48 @@ async function callCreatePlayerAccount(nom, motDePasse) {
     return body;
 }
 
+// STORY-24 : suppression d'un compte joueur (auth.users + player_profiles) — nécessite les droits
+// admin (service_role), donc une Edge Function dédiée, même contrainte que la création.
+async function callDeletePlayerAccount(nom) {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/delete-player-account`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ nom }),
+    });
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok || body.error) throw new Error(body.error || `Erreur HTTP ${resp.status}`);
+    return body;
+}
+
+// Miroir exact de toInternalEmail() côté Edge Function (supabase/functions/create-player-account/
+// index.ts) — doit rester strictement identique, sinon l'email généré ici ne correspond plus à
+// celui utilisé pour créer le compte et la connexion échoue systématiquement.
+function toInternalEmailClient(nom) {
+    const normalise = (nom || '').toString()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9.]/g, '');
+    return `${normalise}@fenix.local`;
+}
+
+function populateLoginPlayerDropdown() {
+    const sel = document.getElementById('login-nom-sel');
+    if (!sel || typeof PLAYER_PROFILES === 'undefined') return;
+    const opts = PLAYER_PROFILES
+        .slice()
+        .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''))
+        .map(p => {
+            const tp = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(j => j.nom === p.nom) : null;
+            const label = (tp && tp.nomComplet) || p.nom;
+            return `<option value="${p.nom}">${label}</option>`;
+        }).join('');
+    sel.innerHTML = '<option value="">-- Choisis ton nom (joueur) --</option>' + opts;
+}
+
 async function runLocalMigration() {
     const d = _f5CountLocalData();
     const goBtn = document.getElementById('f5-migration-btn-go');

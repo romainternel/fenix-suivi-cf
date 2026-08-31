@@ -11,14 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=242">
-    <script src="js/supabase-client.js?v=242"></script>
-    <script src="js/utils.js?v=242"></script>
-    <script src="js/impact-images.js?v=242"></script>
-    <script src="js/player-mode.js?v=242"></script>
-    <script src="js/page-joueurs.js?v=242"></script>
-    <script src="js/page-notes-graph.js?v=242"></script>
-    <script src="js/page-analyse.js?v=242"></script>
+    <link rel="stylesheet" href="css/style.css?v=243">
+    <script src="js/supabase-client.js?v=243"></script>
+    <script src="js/utils.js?v=243"></script>
+    <script src="js/impact-images.js?v=243"></script>
+    <script src="js/player-mode.js?v=243"></script>
+    <script src="js/page-joueurs.js?v=243"></script>
+    <script src="js/page-notes-graph.js?v=243"></script>
+    <script src="js/page-analyse.js?v=243"></script>
 </head>
 <body>
 
@@ -61,6 +61,9 @@
             <div class="login-logo"><img src="favicon.png" style="width:100%;height:100%;object-fit:cover;"></div>
             <div class="login-title">FENIX Stats</div>
             <div class="login-subtitle">Centre de Formation · Accès Staff</div>
+            <select id="login-nom-sel" class="login-input" style="margin-bottom:0.75rem;letter-spacing:normal;text-align:left">
+                <option value="">-- Choisis ton nom (joueur) --</option>
+            </select>
             <input type="password" id="login-input" class="login-input"
                 placeholder="Mot de passe" onkeydown="if(event.key==='Enter') checkLogin()">
             <button class="login-btn" onclick="checkLogin()">ACCÉDER</button>
@@ -84,27 +87,45 @@
                 if (typeof checkAndOfferLocalMigration === 'function') checkAndOfferLocalMigration();
             }
         })();
-        function checkLogin() {
+        // Connexion joueur via Supabase Auth depuis STORY-24 (email interne généré à partir du nom
+        // choisi dans le menu déroulant — un mot de passe seul ne suffit plus à identifier qui se
+        // connecte, cf. docs/stories/STORY-24, décision Romain 2026-08-31 : menu "Choisis ton nom").
+        async function checkLogin() {
             const input = document.getElementById('login-input');
             const pwd   = input.value;
             if (pwd === 'Partage') {
                 sessionStorage.setItem('fenix_session', JSON.stringify({ role: 'staff', nom: null }));
                 document.getElementById('login-screen').classList.add('hidden');
                 checkAndOfferLocalMigration();
-            } else {
-                const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts') || '{}');
-                const playerNom = Object.keys(accounts).find(n => accounts[n] === pwd);
-                if (playerNom) {
-                    PLAYER_SESSION = { role: 'joueur', nom: playerNom };
-                    sessionStorage.setItem('fenix_session', JSON.stringify(PLAYER_SESSION));
-                    document.getElementById('login-screen').classList.add('hidden');
-                    setupPlayerUI();
-                } else {
-                    input.classList.add('error');
-                    document.getElementById('login-error').textContent = 'Mot de passe incorrect';
-                    setTimeout(() => input.classList.remove('error'), 400);
-                    input.value = '';
-                }
+                return;
+            }
+            const nomSel = document.getElementById('login-nom-sel');
+            const nom = nomSel ? nomSel.value : '';
+            if (!nom) {
+                input.classList.add('error');
+                document.getElementById('login-error').textContent = 'Choisis ton nom dans la liste';
+                setTimeout(() => input.classList.remove('error'), 400);
+                return;
+            }
+            const btn = document.querySelector('.login-btn');
+            if (btn) { btn.disabled = true; btn.textContent = '…'; }
+            try {
+                const { error } = await supabaseClient.auth.signInWithPassword({
+                    email: toInternalEmailClient(nom),
+                    password: pwd,
+                });
+                if (error) throw error;
+                PLAYER_SESSION = { role: 'joueur', nom };
+                sessionStorage.setItem('fenix_session', JSON.stringify(PLAYER_SESSION));
+                document.getElementById('login-screen').classList.add('hidden');
+                setupPlayerUI();
+            } catch (e) {
+                input.classList.add('error');
+                document.getElementById('login-error').textContent = 'Mot de passe incorrect';
+                setTimeout(() => input.classList.remove('error'), 400);
+                input.value = '';
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'ACCÉDER'; }
             }
         }
     </script>
@@ -1044,6 +1065,8 @@
         let TEMPS_JEU = {}; // { nomLower: { nomDuMatchExact: minutes, ... } }
         let BILANS = [];    // [{ nom, saison, journeeFin, matchs[], label }]
         let _rawBilanRows = [];
+        let PLAYER_PROFILES = []; // [{ nom, poste }] — comptes joueurs Supabase Auth (STORY-24)
+        let FAMILLE_MAPPING = {}; // { intentionAttaque: famille } — chargé depuis Supabase (STORY-24)
         let _ngBilanMatches = null; // filtre bilan passé au notegraph depuis la page Joueurs
         let GARDIENS_FENIX = []; // Dérivé de JOUEURS_TERRAIN (poste GB) au chargement des données
         let FIELD_POSITIONS = [];
@@ -1697,14 +1720,26 @@ let _effInfoPoste = null;
         async function loadFromSupabase() {
             showSupabaseBootLoading();
             try {
-                const [matchDataRows, joueursRows, tableauMatchRows, bilanRows] = await Promise.all([
+                const [matchDataRows, joueursRows, tableauMatchRows, bilanRows, playerProfileRows, familleRows, coachAnalyseRows] = await Promise.all([
                     fetchAll('match_data'),
                     fetchAll('joueurs'),
                     fetchAll('tableau_match'),
                     fetchAll('bilan'),
+                    fetchAll('player_profiles'),
+                    fetchAll('famille_mapping'),
+                    fetchAll('coach_analyses'),
                 ]);
 
                 DATA = matchDataRows.map(rowToPositionalArray);
+
+                // STORY-24 : comptes joueurs (nom/poste, jamais de mot de passe), familles tactiques
+                // et notes de coach désormais chargées depuis Supabase au boot, à la place des sources
+                // locales/hardcodées (localStorage fenix_player_accounts, ENC_FAMILLE_MAP, fenix_coach_analyses).
+                PLAYER_PROFILES = playerProfileRows.map(p => ({ nom: p.nom, poste: p.poste }));
+                FAMILLE_MAPPING = {};
+                familleRows.forEach(r => { FAMILLE_MAPPING[r.intention_attaque] = r.famille; });
+                coachAnalyses = {};
+                coachAnalyseRows.forEach(r => { coachAnalyses[r.match_key] = r.contenu; });
 
                 // JOUEURS_TERRAIN : même principe de placement sur le terrain que processFile()
                 // (un pool de positions par poste, assigné dans l'ordre de lecture) — tri par nom
@@ -1732,6 +1767,7 @@ let _effInfoPoste = null;
 
                 _rawBilanRows = bilanRows.map(r => ({ nom: r.nom, saison: r.saison || '', journeeFin: r.journee_fin }));
 
+                populateLoginPlayerDropdown();
                 hideSupabaseBootOverlay();
 
                 if (!DATA || DATA.length === 0) return; // rien encore importé nulle part -> écran d'import normal
@@ -3613,7 +3649,7 @@ let _effInfoPoste = null;
             <input id="pa-pwd" type="text" placeholder="Mot de passe du joueur"
                    style="width:100%;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;
                           font-size:0.9rem;box-sizing:border-box;margin-bottom:10px">
-            <button onclick="savePlayerAccount()"
+            <button id="pa-create-btn" onclick="savePlayerAccount()"
                     style="width:100%;background:#0A2463;color:white;border:none;border-radius:8px;
                            padding:10px;font-weight:700;cursor:pointer;font-size:0.9rem">
                 ✅ CRÉER LE COMPTE
@@ -3627,7 +3663,7 @@ let _effInfoPoste = null;
             <thead>
                 <tr style="background:#F1F5F9">
                     <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">JOUEUR</th>
-                    <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">MOT DE PASSE</th>
+                    <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">POSTE</th>
                     <th style="padding:8px 10px"></th>
                 </tr>
             </thead>

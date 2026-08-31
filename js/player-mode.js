@@ -1655,51 +1655,70 @@
             }
         });
 
-        // ── Gestion comptes joueurs (staff only) ─────────────────────────────────
-        function openPlayerAccountsModal() {
-            const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts')||'{}');
+        // ── Gestion comptes joueurs (staff only) — Supabase Auth depuis STORY-24 ──────
+        // Plus de mot de passe stocké ni affiché nulle part côté client : player_profiles
+        // ne contient que nom/poste, les mots de passe vivent uniquement dans auth.users.
+        async function openPlayerAccountsModal() {
+            const tbody = document.getElementById('pa-accounts-list');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:12px">Chargement…</td></tr>';
+            _openSlidePanel('pa-modal', 'pa-overlay');
+
+            let profiles;
+            try {
+                profiles = await fetchAll('player_profiles');
+            } catch (e) {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#EF4444;padding:12px">Erreur de chargement — réessaie</td></tr>';
+                return;
+            }
+
             const nomSel = document.getElementById('pa-nom-sel');
             if (nomSel && typeof JOUEURS_TERRAIN !== 'undefined') {
-                const existing = Object.keys(accounts);
+                const existing = profiles.map(p => p.nom);
                 nomSel.innerHTML = '<option value="">-- Choisir un joueur --</option>'
                     + JOUEURS_TERRAIN.filter(p=>!existing.includes(p.nom)).map(p=>`<option value="${p.nom}">${p.nomComplet || p.nom} (${p.poste})</option>`).join('');
             }
-            const tbody = document.getElementById('pa-accounts-list');
             if (tbody) {
-                tbody.innerHTML = Object.entries(accounts).length === 0
+                tbody.innerHTML = profiles.length === 0
                     ? '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:12px">Aucun compte joueur</td></tr>'
-                    : Object.entries(accounts).map(([nom,pwd])=>{
-                        const tp = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => p.nom === nom) : null;
-                        const nomAff = (tp && tp.nomComplet) || nom;
-                        return `<tr><td style="padding:6px 10px">${nomAff}</td><td style="padding:6px 10px">${'•'.repeat(Math.min(pwd.length,8))}</td><td style="padding:6px 10px;text-align:right"><button onclick="deletePlayerAccount('${nom}')" style="color:#EF4444;background:none;border:none;cursor:pointer;font-size:1rem" title="Supprimer">🗑</button></td></tr>`;
+                    : profiles.map(p => {
+                        const tp = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(j => j.nom === p.nom) : null;
+                        const nomAff = (tp && tp.nomComplet) || p.nom;
+                        return `<tr><td style="padding:6px 10px">${nomAff}</td><td style="padding:6px 10px;color:#64748B">${p.poste || '—'}</td><td style="padding:6px 10px;text-align:right"><button onclick="deletePlayerAccount('${p.nom}')" style="color:#EF4444;background:none;border:none;cursor:pointer;font-size:1rem" title="Supprimer">🗑</button></td></tr>`;
                     }).join('');
             }
-            _openSlidePanel('pa-modal', 'pa-overlay');
         }
 
         function closePlayerAccountsModal(returnFocus) {
             _closeSlidePanel('pa-modal', 'pa-overlay', returnFocus);
         }
 
-        function savePlayerAccount() {
+        async function savePlayerAccount() {
             const selEl = document.getElementById('pa-nom-sel');
             const pwdEl = document.getElementById('pa-pwd');
             const nom = selEl ? selEl.value.trim() : '';
             const pwd = pwdEl ? pwdEl.value.trim() : '';
             if (!nom || !pwd) { alert('Sélectionne un joueur et saisis un mot de passe'); return; }
-            const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts')||'{}');
-            accounts[nom] = pwd;
-            localStorage.setItem('fenix_player_accounts', JSON.stringify(accounts));
-            if (pwdEl) pwdEl.value = '';
-            openPlayerAccountsModal();
+            const btn = document.getElementById('pa-create-btn');
+            if (btn) { btn.disabled = true; btn.textContent = '…'; }
+            try {
+                await callCreatePlayerAccount(nom, pwd);
+                if (pwdEl) pwdEl.value = '';
+                await openPlayerAccountsModal();
+            } catch (e) {
+                alert('Erreur lors de la création du compte : ' + (e.message || 'échec réseau'));
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '✅ CRÉER LE COMPTE'; }
+            }
         }
 
-        function deletePlayerAccount(nom) {
+        async function deletePlayerAccount(nom) {
             if (!confirm(`Supprimer le compte de ${nom} ?`)) return;
-            const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts')||'{}');
-            delete accounts[nom];
-            localStorage.setItem('fenix_player_accounts', JSON.stringify(accounts));
-            openPlayerAccountsModal();
+            try {
+                await callDeletePlayerAccount(nom);
+                await openPlayerAccountsModal();
+            } catch (e) {
+                alert('Erreur lors de la suppression du compte : ' + (e.message || 'échec réseau'));
+            }
         }
 
         // ── Preview mode (staff → simule vue joueur) ─────────────────────────────

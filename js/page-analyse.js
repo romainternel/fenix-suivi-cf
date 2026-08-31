@@ -1,20 +1,11 @@
         // ===== PAGE ANALYSE — v163 =====
-        let coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}');
+        // Chargé depuis Supabase au boot (loadFromSupabase(), STORY-24) — plus de source localStorage.
+        let coachAnalyses = {};
         let chatHistory = [];
 
-        // ===== MODULE ANALYSE — ENC_FAMILLE_MAP validé coach 2026-08-27 (ref: feuille Famille ESSAI IA STAT, colonne Intention attaque) =====
-        const ENC_FAMILLE_MAP = {
-            'ISO 2':'Isoler','ISO 3':'Isoler','ISO 4':'Isoler','ISO 5':'Isoler',
-            '7vs6':'7vs6',
-            '1&2':'Jeu Pivot','2&3':'Jeu Pivot','3&4':'Jeu Pivot','4&5':'Jeu Pivot','5&6':'Jeu Pivot',
-            'GLISSE':'Jeu Pivot','BLOC':'Jeu Pivot',
-            'FAIRE COURIR':'Faire courir',
-            'RENTREE':'Rentrée',
-            'SPECIAUX':'Spéciaux',
-            '6vs5':'6vs5',
-            'JEU RAPIDE':'Jeu Rapide',
-        };
-
+        // ===== MODULE ANALYSE — familles tactiques (8 familles, validées coach 2026-08-27) =====
+        // La correspondance Intention attaque → Famille vit désormais dans Supabase (FAMILLE_MAPPING,
+        // chargée au boot, STORY-24) — l'ancien littéral ENC_FAMILLE_MAP a été retiré.
         const ENC_FAMILLES_ORDRE = ['Isoler','Rentrée','Jeu Pivot','7vs6','Faire courir','Spéciaux','6vs5','Jeu Rapide'];
         const ENC_FAMILLE_COLORS = {
             'Isoler':'var(--enc-isoler)',
@@ -971,17 +962,24 @@
             document.getElementById('moments-cles').innerHTML = html;
         }
 
-        function saveCoachAnalyse() {
+        async function saveCoachAnalyse() {
             const matchFilter = document.getElementById('filter-match-global').value;
             if (!matchFilter) return;
-            
+
+            const btn = document.querySelector('.save-coach-btn');
             const analyse = document.getElementById('coach-analyse').value;
-            coachAnalyses[matchFilter] = analyse;
-            localStorage.setItem('fenix_coach_analyses', JSON.stringify(coachAnalyses));
-            
-            const msg = document.getElementById('coach-saved-msg');
-            msg.style.display = 'block';
-            setTimeout(() => msg.style.display = 'none', 2000);
+            if (btn) btn.disabled = true;
+            try {
+                await upsertRows('coach_analyses', [{ match_key: matchFilter, contenu: analyse }]);
+                coachAnalyses[matchFilter] = analyse;
+                const msg = document.getElementById('coach-saved-msg');
+                msg.style.display = 'block';
+                setTimeout(() => msg.style.display = 'none', 2000);
+            } catch (e) {
+                alert('Erreur lors de l\'enregistrement de la note — réessaie (' + (e.message || 'échec réseau') + ')');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         }
 
         function _escapeHtml(str) {
@@ -1290,8 +1288,12 @@
             if (intentionStr === null || intentionStr === undefined) return 'Autre';
             const str = intentionStr.toString().trim();
             if (!str) return 'Autre';
+            // _ENC_FAMILLE_CUSTOM (localStorage) reste vérifié en premier : c'est le filet de sécurité
+            // pour classifier manuellement une intention non reconnue (panneau "non classifié"), dont
+            // l'écriture n'est rebranchée sur Supabase qu'en STORY-25 (éditeur de familles). Le retirer
+            // maintenant désactiverait cette classification manuelle sans remplacement fonctionnel.
             if (_ENC_FAMILLE_CUSTOM[str]) return _ENC_FAMILLE_CUSTOM[str];
-            return ENC_FAMILLE_MAP[str] || 'Autre';
+            return FAMILLE_MAPPING[str] || 'Autre';
         }
 
         function computeEncCoverage(rows) {
