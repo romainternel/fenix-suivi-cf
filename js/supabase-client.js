@@ -87,6 +87,24 @@ const DATA_HEADER_TO_COLUMN = {
     intentionattaque: 'intention_attaque',
 };
 
+// STORY-22, mitigation risque P0 R1 — reconstruit le tableau positionnel DATA depuis les lignes
+// nommées reçues de Supabase, dans l'ordre EXACT attendu par COLS (FENIX-HANDBALL-CF-SUIVI.html).
+// Ne JAMAIS dériver cet ordre depuis les clés d'un objet JS (Object.values(DATA_HEADER_TO_COLUMN)
+// par ex.) — l'ordre d'un objet littéral est trop fragile pour le point le plus critique de toute
+// la migration (une réorganisation du fichier casserait cet ordre sans aucune erreur visible).
+// Toujours une liste explicite, à faire correspondre manuellement à COLS si celui-ci change un jour.
+const MATCH_DATA_COLUMN_ORDER = [
+    'position', 'rencontre', 'club', 'phase_att', 'ge', 'defense_attaquee',
+    'resultat', 'joueur', 'finalite', 'enclenchement', 'gardien',
+    'position_tir', 'field_position', 'periode', 'possession',
+    'position_terrain', 'action_joueur', 'action_att', 'action_def', 'impact',
+    'saison', 'intention_attaque',
+];
+
+function rowToPositionalArray(row) {
+    return MATCH_DATA_COLUMN_ORDER.map(col => row[col]);
+}
+
 function buildMatchDataRows(jsonData) {
     const headerRow = jsonData[0] || [];
     const idxToColumn = headerRow.map(h => DATA_HEADER_TO_COLUMN[_normaliseHeader(h)] || null);

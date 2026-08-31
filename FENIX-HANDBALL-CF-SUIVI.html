@@ -11,16 +11,30 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=240">
-    <script src="js/supabase-client.js?v=240"></script>
-    <script src="js/utils.js?v=240"></script>
-    <script src="js/impact-images.js?v=240"></script>
-    <script src="js/player-mode.js?v=240"></script>
-    <script src="js/page-joueurs.js?v=240"></script>
-    <script src="js/page-notes-graph.js?v=240"></script>
-    <script src="js/page-analyse.js?v=240"></script>
+    <link rel="stylesheet" href="css/style.css?v=241">
+    <script src="js/supabase-client.js?v=241"></script>
+    <script src="js/utils.js?v=241"></script>
+    <script src="js/impact-images.js?v=241"></script>
+    <script src="js/player-mode.js?v=241"></script>
+    <script src="js/page-joueurs.js?v=241"></script>
+    <script src="js/page-notes-graph.js?v=241"></script>
+    <script src="js/page-analyse.js?v=241"></script>
 </head>
 <body>
+
+    <!-- Chargement/erreur Supabase au démarrage (STORY-22) — z-index sous le login (9999), au-dessus du reste -->
+    <div id="supabase-boot-overlay" style="display:none">
+        <div class="surface-card" id="supabase-boot-loading">
+            <div class="supabase-spinner"></div>
+            <div class="supabase-boot-text">Chargement des données…</div>
+        </div>
+        <div class="surface-card" id="supabase-boot-error" style="display:none">
+            <div class="supabase-boot-error-icon">📡 ⚠️</div>
+            <div class="supabase-boot-error-title">Impossible de contacter le serveur</div>
+            <div class="supabase-boot-text">Vérifie ta connexion et réessaie</div>
+            <button class="supabase-boot-retry-btn" onclick="loadFromSupabase()">🔄 Réessayer</button>
+        </div>
+    </div>
 
     <!-- Écran de connexion -->
     <div id="login-screen">
@@ -1085,7 +1099,7 @@ let _effInfoPoste = null;
             setupNavigation();
             setupFileInput();
             setupFilters();
-            loadFromLocalStorage();
+            loadFromSupabase();
             // Ajuster le top de la barre sticky selon la hauteur réelle de la header
             const hdr = document.querySelector('.header');
             const stickyBar = document.getElementById('analyse-sticky-bar');
@@ -1649,35 +1663,83 @@ let _effInfoPoste = null;
             badge.style.display = 'inline-flex';
         }
 
-        function loadFromLocalStorage() {
-            const saved = localStorage.getItem('fenix_data');
-            const date = localStorage.getItem('fenix_data_date') || '';
-            const filename = localStorage.getItem('fenix_data_filename') || 'fichier inconnu';
-            if (!saved) return;
+        // STORY-22 : lecture depuis Supabase au démarrage, remplace l'ancienne loadFromLocalStorage().
+        // Point le plus sensible du cycle (mitigation R1) : DATA doit être reconstruit en tableau
+        // positionnel dans l'ordre EXACT attendu par COLS, sinon tout le rendu de l'app affiche
+        // silencieusement les mauvaises colonnes. rowToPositionalArray() (js/supabase-client.js)
+        // est l'unique endroit qui fait cette conversion — ne jamais la dupliquer ailleurs.
+        async function loadFromSupabase() {
+            showSupabaseBootLoading();
             try {
-                DATA = JSON.parse(saved);
-                const savedTJ = localStorage.getItem('fenix_temps_jeu');
-                if (savedTJ) TEMPS_JEU = JSON.parse(savedTJ);
-                const savedBilan = localStorage.getItem('fenix_bilan_rows');
-                if (savedBilan) _rawBilanRows = JSON.parse(savedBilan);
-                const savedJT = localStorage.getItem('fenix_joueurs_terrain');
-                if (savedJT) {
-                    JOUEURS_TERRAIN = JSON.parse(savedJT);
-                    if (typeof clearMatchPlayerNameCache === 'function') clearMatchPlayerNameCache();
-                }
-                if (!DATA || DATA.length === 0) return;
+                const [matchDataRows, joueursRows, tableauMatchRows, bilanRows] = await Promise.all([
+                    fetchAll('match_data'),
+                    fetchAll('joueurs'),
+                    fetchAll('tableau_match'),
+                    fetchAll('bilan'),
+                ]);
+
+                DATA = matchDataRows.map(rowToPositionalArray);
+
+                // JOUEURS_TERRAIN : même principe de placement sur le terrain que processFile()
+                // (un pool de positions par poste, assigné dans l'ordre de lecture) — tri par nom
+                // pour un résultat déterministe d'un chargement à l'autre.
+                const posteCounts = {};
+                JOUEURS_TERRAIN = joueursRows
+                    .slice()
+                    .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''))
+                    .map(p => {
+                        posteCounts[p.poste] = posteCounts[p.poste] || 0;
+                        const pool = POSTE_POSITIONS[p.poste] || [{x:50,y:50}];
+                        const pos = pool[posteCounts[p.poste] % pool.length];
+                        posteCounts[p.poste]++;
+                        return { nom: p.nom, poste: p.poste, x: pos.x, y: pos.y, nomComplet: p.nom_complet || p.nom };
+                    });
+                if (typeof clearMatchPlayerNameCache === 'function') clearMatchPlayerNameCache();
+
+                TEMPS_JEU = {};
+                tableauMatchRows.forEach(r => {
+                    const key = (r.nom || '').toLowerCase();
+                    if (!key || !r.match) return;
+                    TEMPS_JEU[key] = TEMPS_JEU[key] || {};
+                    TEMPS_JEU[key][r.match] = r.min;
+                });
+
+                _rawBilanRows = bilanRows.map(r => ({ nom: r.nom, saison: r.saison || '', journeeFin: r.journee_fin }));
+
+                hideSupabaseBootOverlay();
+
+                if (!DATA || DATA.length === 0) return; // rien encore importé nulle part -> écran d'import normal
+
                 extractUniqueValues();
                 processBilans();
                 populateFilters();
                 updateDashboard();
                 showDataLoaded();
+                // Filename/date d'import réel non trackés côté Supabase — repli sur la dernière valeur
+                // locale connue de cet appareil, sinon un libellé générique.
+                const filename = localStorage.getItem('fenix_data_filename') || 'Supabase';
+                const date = localStorage.getItem('fenix_data_date') || '';
                 updateImportUI(filename, date);
-            } catch(e) {
-                localStorage.removeItem('fenix_data');
-                return;
+                if (typeof buildPmMatchNav === 'function') buildPmMatchNav();
+                if (typeof isPlayerMode === 'function' && isPlayerMode() && typeof pmTab === 'function') pmTab('fiche');
+            } catch (err) {
+                showSupabaseBootError();
             }
-            if (typeof buildPmMatchNav === 'function') buildPmMatchNav();
-            if (typeof isPlayerMode === 'function' && isPlayerMode() && typeof pmTab === 'function') pmTab('fiche');
+        }
+
+        function showSupabaseBootLoading() {
+            document.getElementById('supabase-boot-overlay').style.display = 'flex';
+            document.getElementById('supabase-boot-loading').style.display = 'block';
+            document.getElementById('supabase-boot-error').style.display = 'none';
+        }
+
+        function showSupabaseBootError() {
+            document.getElementById('supabase-boot-loading').style.display = 'none';
+            document.getElementById('supabase-boot-error').style.display = 'block';
+        }
+
+        function hideSupabaseBootOverlay() {
+            document.getElementById('supabase-boot-overlay').style.display = 'none';
         }
 
         function extractUniqueValues() {
