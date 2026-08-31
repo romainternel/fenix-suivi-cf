@@ -16,7 +16,8 @@
 
 ## Critères d'acceptation
 - [ ] Mécanisme A : au chargement, si `fenix_coach_analyses`/`fenix_player_accounts`/`enc_famille_custom` contiennent des données ET qu'aucun flag `fenix_supabase_migrated` n'est posé, un écran de migration s'affiche (Design F5) avec le décompte réel des éléments trouvés
-- [ ] Le bouton "Migrer maintenant" pousse chaque entrée vers `coach_analyses`/`player_accounts`/`famille_mapping` en `upsert` (pas `insert` simple), puis pose le flag `fenix_supabase_migrated`
+- [ ] Le bouton "Migrer maintenant" pousse chaque entrée de `coach_analyses`/`famille_mapping` en `upsert` (pas `insert` simple) ; **pour les comptes joueurs (`fenix_player_accounts`), appelle l'Edge Function `create-player-account` une fois par compte trouvé** (pas un `upsert` direct de table, cf. Architecture §1.2bis) — puis pose le flag `fenix_supabase_migrated`
+- [ ] **Mitigation R10** : le résultat de la migration des comptes joueurs est affiché **par compte** (réussi/échoué), pas un seul message global — si un appel à l'Edge Function échoue pour un joueur, Romain doit savoir lequel pour le recréer manuellement plutôt que de découvrir un compte manquant plus tard
 - [ ] Le bouton "Annuler" ferme sans migrer ; le prompt réapparaît au chargement suivant tant que la migration n'est pas faite
 - [ ] Une entrée "🔄 Migrer mes données locales" reste disponible en permanence dans le menu "⚙ Outils", pour rattraper une migration annulée ou refaite depuis un autre appareil
 - [ ] Mécanisme B : `famille_mapping` contient les 18 correspondances par défaut **et** les overrides connus de Romain (`_ENC_FAMILLE_CUSTOM`, si non vide au moment du déploiement) avec les overrides prioritaires sur les défauts — **mitigation R5** : vérifié ligne par ligne après amorçage, pas seulement supposé correct

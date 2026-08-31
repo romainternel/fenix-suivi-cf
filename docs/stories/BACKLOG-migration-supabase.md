@@ -20,7 +20,7 @@ STORY-22 (lecture ← Supabase au boot) ⚠️ story la plus sensible, mitigatio
 STORY-23 (migration locale + amorçage famille) ⚠️ clarifier R4 avec Romain avant de commencer
     │
     ▼
-STORY-24 (rebranchement comptes/notes/famille en lecture) ⚠️ trancher R2 avec Romain avant mise en prod
+STORY-24 (rebranchement comptes/notes/famille — comptes joueurs via Supabase Auth, R2 résolu le 2026-08-28)
     │
     ├──▶ STORY-25 (édition familles — Must Have)
     │
@@ -33,16 +33,17 @@ Aucune parallélisation possible avant STORY-24 : chaque story dépend structure
 
 1. **Avant tout** : URL + clé anonyme du projet Supabase (bloque STORY-20 et donc tout le reste)
 2. **Avant STORY-23** : sur combien d'appareils Romain a-t-il déjà des données locales (notes coach / comptes joueurs) différentes ? (risque R4)
-3. **Avant la mise en production de STORY-24** : confirmation explicite que l'exposition de `player_accounts` via la clé anonyme est un risque accepté (risque R2) — sinon, une story de mitigation supplémentaire est à écrire avant de livrer
+
+~~3. Avant STORY-24 : trancher R2~~ — **résolu le 2026-08-28** : Romain a demandé le passage à Supabase Auth (comptes joueurs), qui élimine le risque plutôt que de l'accepter. Voir `docs/arch/migration-supabase.md` §1.2bis. Nouveau point de vigilance introduit à sa place (R2bis, critère de STORY-20) : le secret `service_role` de l'Edge Function ne doit jamais fuiter — c'est un critère d'acceptation de STORY-20, pas un point à trancher avec Romain (décision déjà prise, juste à bien exécuter).
 
 ## Récapitulatif
 
 | Story | Titre | Taille | Priorité PRD |
 |---|---|---|---|
-| STORY-20 | Setup projet Supabase + schéma | S | Must Have (F1) |
+| STORY-20 | Setup projet Supabase + schéma + Edge Function comptes joueurs | M | Must Have (F1) |
 | STORY-21 | Import Excel → Supabase | M | Must Have (F1, F2) |
 | STORY-22 | Lecture Supabase au boot | L | Must Have (F3) |
 | STORY-23 | Migration locale + amorçage famille | M | Must Have (F4, F5) |
-| STORY-24 | Rebranchement comptes/notes/famille | M | Must Have (F4) |
+| STORY-24 | Rebranchement comptes (Supabase Auth)/notes/famille | M | Must Have (F4) |
 | STORY-25 | Éditeur de familles | M | Must Have (F6) |
 | STORY-26 | Éditeur de bilans | S | Should Have (F7) |
