@@ -51,3 +51,57 @@ async function upsertRows(table, rows) {
     const { error } = await supabaseClient.from(table).upsert(rows);
     if (error) throw error;
 }
+
+// Lecture de la feuille DATA par nom d'en-tête (STORY-21) — résilient à un réordonnancement
+// des colonnes dans l'Excel, contrairement à COLS (mapping positionnel utilisé par le reste
+// de l'app tant que STORY-22 n'est pas livrée). Réf. docs/arch/migration-supabase.md §1.3.
+function _normaliseHeader(h) {
+    return (h || '').toString()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '') // accents
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+}
+
+const DATA_HEADER_TO_COLUMN = {
+    position: 'position',
+    rencontre: 'rencontre',
+    club: 'club',
+    phaseatt: 'phase_att',
+    ge: 'ge',
+    defenseattaquee: 'defense_attaquee',
+    resultat: 'resultat',
+    joueurs: 'joueur', // en-tête Excel "Joueurs" (pluriel) -> colonne "joueur" (singulier)
+    finalite: 'finalite',
+    enclenchement: 'enclenchement',
+    gardien: 'gardien',
+    positiontir: 'position_tir',
+    fieldposition: 'field_position',
+    periode: 'periode',
+    possession: 'possession',
+    positionterrain: 'position_terrain',
+    actionjoueur: 'action_joueur',
+    actionatt: 'action_att',
+    actiondef: 'action_def',
+    impact: 'impact',
+    saison: 'saison',
+    intentionattaque: 'intention_attaque',
+};
+
+function buildMatchDataRows(jsonData) {
+    const headerRow = jsonData[0] || [];
+    const idxToColumn = headerRow.map(h => DATA_HEADER_TO_COLUMN[_normaliseHeader(h)] || null);
+    const rencontreIdx = idxToColumn.indexOf('rencontre');
+    if (rencontreIdx < 0) throw new Error('Colonne "Rencontre" introuvable dans la feuille DATA');
+
+    return jsonData.slice(1)
+        .filter(row => row.length > 0 && row[rencontreIdx])
+        .map(row => {
+            const obj = {};
+            idxToColumn.forEach((col, i) => {
+                if (!col) return;
+                const val = row[i];
+                obj[col] = (val === undefined || val === null || val === '') ? null : val.toString();
+            });
+            return obj;
+        });
+}

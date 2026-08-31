@@ -11,14 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=239">
-    <script src="js/supabase-client.js?v=239"></script>
-    <script src="js/utils.js?v=239"></script>
-    <script src="js/impact-images.js?v=239"></script>
-    <script src="js/player-mode.js?v=239"></script>
-    <script src="js/page-joueurs.js?v=239"></script>
-    <script src="js/page-notes-graph.js?v=239"></script>
-    <script src="js/page-analyse.js?v=239"></script>
+    <link rel="stylesheet" href="css/style.css?v=240">
+    <script src="js/supabase-client.js?v=240"></script>
+    <script src="js/utils.js?v=240"></script>
+    <script src="js/impact-images.js?v=240"></script>
+    <script src="js/player-mode.js?v=240"></script>
+    <script src="js/page-joueurs.js?v=240"></script>
+    <script src="js/page-notes-graph.js?v=240"></script>
+    <script src="js/page-analyse.js?v=240"></script>
 </head>
 <body>
 
@@ -1465,7 +1465,9 @@ let _effInfoPoste = null;
 
         function processFile(file) {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
+                let joueursRowsForSupabase = [];
+                let tableauMatchRowsForSupabase = [];
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
@@ -1479,9 +1481,10 @@ let _effInfoPoste = null;
                         const jSheet = workbook.Sheets[joueursSheetName];
                         const jData = XLSX.utils.sheet_to_json(jSheet, { header: 1 });
                         const headers = (jData[0] || []).map(h => h?.toString().toLowerCase());
-                        const iNom   = headers.findIndex(h => h?.includes('nom'));
-                        const iPoste = headers.findIndex(h => h?.includes('poste'));
-                        const iNomId = headers.findIndex(h => h?.includes('nom id'));
+                        const iNom    = headers.findIndex(h => h?.includes('nom'));
+                        const iPoste  = headers.findIndex(h => h?.includes('poste'));
+                        const iNomId  = headers.findIndex(h => h?.includes('nom id'));
+                        const iSaison = headers.findIndex(h => h?.includes('saison'));
                         if (iNom >= 0 && iPoste >= 0) {
                             const posteCounts = {};
                             const seen = {};
@@ -1491,7 +1494,8 @@ let _effInfoPoste = null;
                                 const poste = row[iPoste]?.toString().trim().toUpperCase();
                                 if (!nom || !poste) return;
                                 // "NOM ID" (nom complet, ex: "Lucas GINESTET") : présent depuis la saison 2026-2027, utilisé pour l'affichage — nom reste la clé de matching interne
-                                const nomId = iNomId >= 0 ? (row[iNomId]?.toString().trim() || '') : '';
+                                const nomId  = iNomId >= 0 ? (row[iNomId]?.toString().trim() || '') : '';
+                                const saison = iSaison >= 0 ? (row[iSaison]?.toString().trim() || '') : '';
                                 // Dernière occurrence d'un nom = saison la plus récente
                                 if (seen[nom] !== undefined) newTerrain.splice(seen[nom], 1, null);
                                 posteCounts[poste] = posteCounts[poste] || 0;
@@ -1499,9 +1503,12 @@ let _effInfoPoste = null;
                                 const pos  = pool[posteCounts[poste] % pool.length];
                                 posteCounts[poste]++;
                                 seen[nom] = newTerrain.length;
-                                newTerrain.push({ nom, poste, x: pos.x, y: pos.y, nomComplet: nomId || nom });
+                                newTerrain.push({ nom, poste, x: pos.x, y: pos.y, nomComplet: nomId || nom, saison });
                             });
                             JOUEURS_TERRAIN = newTerrain.filter(Boolean);
+                            joueursRowsForSupabase = JOUEURS_TERRAIN.map(p => ({
+                                nom: p.nom, poste: p.poste, saison: p.saison || null, nom_complet: p.nomComplet
+                            }));
                             if (typeof clearMatchPlayerNameCache === 'function') clearMatchPlayerNameCache();
                             currentSelectedJoueur = null;
                         }
@@ -1557,6 +1564,7 @@ let _effInfoPoste = null;
                                 const min = typeof row[iTmMin] === 'number' ? row[iTmMin] : parseInt(row[iTmMin]) || 0;
                                 TEMPS_JEU[key] = TEMPS_JEU[key] || {};
                                 TEMPS_JEU[key][matchName] = min;
+                                tableauMatchRowsForSupabase.push({ match: matchName, min, nom: nomJ });
                             });
                         }
                     }
@@ -1598,6 +1606,22 @@ let _effInfoPoste = null;
                         localStorage.setItem('fenix_joueurs_terrain', JSON.stringify(JOUEURS_TERRAIN));
                     } catch(e) {}
                     updateImportUI(file.name, dateStr);
+
+                    // STORY-21 : synchronisation Supabase — après le rendu local réussi, ne bloque pas
+                    // l'affichage si le réseau flanche. Remplacement complet de chaque table.
+                    try {
+                        const matchDataRows = buildMatchDataRows(jsonData);
+                        const bilanRowsForSupabase = _rawBilanRows.map(r => ({
+                            saison: r.saison || null, nom: r.nom, journee_fin: r.journeeFin
+                        }));
+                        await replaceTable('match_data', matchDataRows);
+                        await replaceTable('joueurs', joueursRowsForSupabase);
+                        await replaceTable('tableau_match', tableauMatchRowsForSupabase);
+                        await replaceTable('bilan', bilanRowsForSupabase);
+                    } catch (supabaseError) {
+                        alert('Import local réussi, mais la synchronisation avec Supabase a échoué : ' + supabaseError.message
+                            + '\n\nTes données restent visibles sur cet appareil. Réessaie l\'import pour resynchroniser.');
+                    }
                 } catch (error) {
                     alert('Erreur: ' + error.message);
                 }
