@@ -7,6 +7,9 @@
 ## Révisé le 2026-08-28 — comptes joueurs via Supabase Auth
 L'ancien risque R2 (mots de passe joueurs en clair exposés via la clé anonyme) est résolu par un changement d'architecture demandé par Romain : les comptes joueurs passent par Supabase Auth + l'Edge Function `create-player-account` (déployée en STORY-20), pas par une table en clair. Voir `docs/arch/migration-supabase.md` §1.2bis.
 
+## ⚠️ Point à trancher avec Romain avant de considérer cette story terminée (risque R11)
+`docs/security/migration-supabase-story-20.md` : l'Edge Function `create-player-account` n'a aucune vérification d'appelant — n'importe qui avec la clé publishable peut créer un compte joueur en contournant le mot de passe staff, avec un risque de squatting de compte (pas de fuite de données sensibles, impact borné). **Demander à Romain s'il veut une mitigation légère** (ex. vérification du mot de passe staff "Partage" côté Edge Function) **avant de livrer cette story**, ou s'il accepte le risque tel quel pour ce cycle.
+
 ## Contexte technique
 - Zone concernée : `openPlayerAccountsModal()`/`savePlayerAccount()`/`deletePlayerAccount()` (`js/player-mode.js`), `checkLogin()` côté joueur, `saveCoachAnalyse()`/`coachAnalyses` (`js/page-analyse.js`), `getEncFamille()` (`js/page-analyse.js`)
 - Spec exacte : `docs/arch/migration-supabase.md` §1.2bis, §1.6, §4

@@ -8,9 +8,9 @@
 ## 1. Décision technique
 
 ### 1.1 Intégration du client Supabase
-Aucun build, aucun bundler dans ce projet (fichier HTML unique + fichiers `js/*.js` chargés en `<script>` classiques) — on ne change pas ça. Le client `@supabase/supabase-js` v2 s'ajoute en CDN, exactement comme `XLSX` et `Chart.js` le sont déjà aujourd'hui :
+Aucun build, aucun bundler dans ce projet (fichier HTML unique + fichiers `js/*.js` chargés en `<script>` classiques) — on ne change pas ça. Le client `@supabase/supabase-js` v2 s'ajoute en CDN, exactement comme `XLSX` et `Chart.js` le sont déjà aujourd'hui — **version épinglée exacte**, cohérent avec la convention déjà en place pour les autres CDN de ce projet (pas de `@2` flottant) :
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
 ```
 Nouveau fichier `js/supabase-client.js` (chargé après ce script, avant les autres `js/*.js` qui en dépendent) : initialise `const supabase = window.supabase.createClient(URL, ANON_KEY)` et expose un petit nombre de fonctions utilitaires (`fetchAll()`, `replaceTable(nom, lignes)`, `upsertRows(table, lignes)`) — pas de couche d'abstraction générique, juste ce dont ce projet a besoin.
 
@@ -113,7 +113,7 @@ CREATE TABLE famille_mapping (
 -- Les 2 autres données déjà générées dans l'app
 CREATE TABLE coach_analyses (
   match_key TEXT PRIMARY KEY,
-  analyse   TEXT NOT NULL,
+  contenu   TEXT NOT NULL,  -- "analyse"/"analyze" est un mot réservé PostgreSQL, colonne renommée (découvert lors de STORY-20)
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
