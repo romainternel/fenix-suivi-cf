@@ -104,6 +104,49 @@
         .supabase-boot-retry-btn:hover { background: var(--fenix-blue-light); }
         .supabase-boot-retry-btn:focus-visible { outline: 2px solid var(--fenix-accent); outline-offset: 2px; }
 
+        /* Migration des données locales existantes (STORY-23, docs/visual/migration-supabase.md §3) */
+        #f5-migration-overlay {
+            position: fixed; inset: 0; z-index: 8500;
+            background: rgba(0,0,0,0.55);
+            display: none; align-items: center; justify-content: center;
+            padding: 1rem;
+        }
+        #f5-migration-card { max-width: 420px; width: 100%; padding: 1.75rem; background: var(--fenix-white); }
+        .f5-migration-title-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.9rem; }
+        .f5-migration-icon { font-size: 1.4rem; }
+        .f5-migration-title {
+            font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 1.5px; color: var(--fenix-blue);
+        }
+        .f5-migration-intro { font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--gray-600); margin-bottom: 0.9rem; }
+        .f5-migration-list { list-style: none; margin-bottom: 0.9rem; }
+        .f5-migration-list li { font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--fenix-dark); padding: 0.2rem 0; }
+        .f5-migration-check { color: var(--fenix-success); font-weight: 700; margin-right: 0.4rem; }
+        .f5-migration-progress { margin-top: 0.9rem; font-family: 'Inter', sans-serif; font-size: 0.82rem; }
+        .f5-migration-progress-item { padding: 0.15rem 0; color: var(--gray-600); }
+        .f5-migration-progress-item.ok { color: var(--fenix-success); }
+        .f5-migration-progress-item.fail { color: #DC2626; }
+        .f5-migration-done-banner {
+            background: #D1FAE5; color: #065F46; border-radius: 8px; padding: 0.6rem 0.9rem;
+            font-family: 'Inter', sans-serif; font-size: 0.85rem; margin-top: 0.9rem;
+        }
+        .f5-migration-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.1rem; }
+        .f5-migration-btn-secondary {
+            border: 1.5px solid var(--gray-200); background: white; color: var(--gray-600);
+            padding: 0.5rem 1.1rem; border-radius: 8px;
+            font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+        }
+        .f5-migration-btn-secondary:hover { background: var(--gray-50); }
+        .f5-migration-btn-primary {
+            background: var(--fenix-blue); color: #fff; border: none;
+            padding: 0.5rem 1.25rem; border-radius: 8px;
+            font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+        }
+        .f5-migration-btn-primary:hover { background: var(--fenix-blue-light); }
+        .f5-migration-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .f5-migration-btn-secondary:focus-visible, .f5-migration-btn-primary:focus-visible {
+            outline: 2px solid var(--fenix-accent); outline-offset: 2px;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {

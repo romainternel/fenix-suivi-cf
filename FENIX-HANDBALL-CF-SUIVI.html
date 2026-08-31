@@ -11,14 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=241">
-    <script src="js/supabase-client.js?v=241"></script>
-    <script src="js/utils.js?v=241"></script>
-    <script src="js/impact-images.js?v=241"></script>
-    <script src="js/player-mode.js?v=241"></script>
-    <script src="js/page-joueurs.js?v=241"></script>
-    <script src="js/page-notes-graph.js?v=241"></script>
-    <script src="js/page-analyse.js?v=241"></script>
+    <link rel="stylesheet" href="css/style.css?v=242">
+    <script src="js/supabase-client.js?v=242"></script>
+    <script src="js/utils.js?v=242"></script>
+    <script src="js/impact-images.js?v=242"></script>
+    <script src="js/player-mode.js?v=242"></script>
+    <script src="js/page-joueurs.js?v=242"></script>
+    <script src="js/page-notes-graph.js?v=242"></script>
+    <script src="js/page-analyse.js?v=242"></script>
 </head>
 <body>
 
@@ -33,6 +33,25 @@
             <div class="supabase-boot-error-title">Impossible de contacter le serveur</div>
             <div class="supabase-boot-text">Vérifie ta connexion et réessaie</div>
             <button class="supabase-boot-retry-btn" onclick="loadFromSupabase()">🔄 Réessayer</button>
+        </div>
+    </div>
+
+    <!-- Migration unique des données locales existantes vers Supabase (STORY-23) -->
+    <div id="f5-migration-overlay">
+        <div class="surface-hero" id="f5-migration-card" role="dialog" aria-modal="true" aria-labelledby="f5-migration-title">
+            <div class="f5-migration-title-row">
+                <span class="f5-migration-icon">🔄</span>
+                <span class="f5-migration-title" id="f5-migration-title">MIGRATION VERS SUPABASE</span>
+            </div>
+            <div class="f5-migration-intro">Des données existent sur cet appareil et pas encore sur le serveur partagé :</div>
+            <ul class="f5-migration-list" id="f5-migration-list"></ul>
+            <div class="f5-migration-intro">Elles vont être copiées vers Supabase. Rien n'est supprimé de cet appareil.</div>
+            <div id="f5-migration-progress" class="f5-migration-progress" style="display:none"></div>
+            <div id="f5-migration-done" class="f5-migration-done-banner" style="display:none">✅ Migration terminée</div>
+            <div class="f5-migration-actions" id="f5-migration-actions">
+                <button class="f5-migration-btn-secondary" id="f5-migration-btn-cancel" onclick="closeF5MigrationPrompt()">Annuler</button>
+                <button class="f5-migration-btn-primary" id="f5-migration-btn-go" onclick="runLocalMigration()">Migrer maintenant</button>
+            </div>
         </div>
     </div>
 
@@ -53,11 +72,16 @@
         (function() {
             const stored = sessionStorage.getItem('fenix_session');
             if (stored) {
-                try { if (['staff','joueur'].includes(JSON.parse(stored).role))
-                    document.getElementById('login-screen').classList.add('hidden');
+                try {
+                    const session = JSON.parse(stored);
+                    if (['staff','joueur'].includes(session.role)) {
+                        document.getElementById('login-screen').classList.add('hidden');
+                        if (session.role === 'staff' && typeof checkAndOfferLocalMigration === 'function') checkAndOfferLocalMigration();
+                    }
                 } catch(e) {}
             } else if (sessionStorage.getItem('fenix_auth') === '1') {
                 document.getElementById('login-screen').classList.add('hidden');
+                if (typeof checkAndOfferLocalMigration === 'function') checkAndOfferLocalMigration();
             }
         })();
         function checkLogin() {
@@ -66,6 +90,7 @@
             if (pwd === 'Partage') {
                 sessionStorage.setItem('fenix_session', JSON.stringify({ role: 'staff', nom: null }));
                 document.getElementById('login-screen').classList.add('hidden');
+                checkAndOfferLocalMigration();
             } else {
                 const accounts = JSON.parse(localStorage.getItem('fenix_player_accounts') || '{}');
                 const playerNom = Object.keys(accounts).find(n => accounts[n] === pwd);
@@ -107,6 +132,7 @@
                 <div id="nav-tools-menu" class="nav-tools-menu" style="display:none" role="menu">
                     <button id="btn-player-accounts" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); openPlayerAccountsModal();">🔑 Comptes joueurs</button>
                     <button id="btn-preview-mode" class="nav-tools-item nav-tools-item-accent" role="menuitem" onclick="closeToolsMenu(); openPreviewModal();">👤 Vue joueur</button>
+                    <button id="btn-migrate-local" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); checkAndOfferLocalMigration(true);">🔄 Migrer mes données locales</button>
                 </div>
             </div>
         </nav>

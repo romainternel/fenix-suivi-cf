@@ -105,6 +105,124 @@ function rowToPositionalArray(row) {
     return MATCH_DATA_COLUMN_ORDER.map(col => row[col]);
 }
 
+// ── STORY-23 : migration unique des données locales existantes vers Supabase ──
+// Mécanisme A (docs/arch/migration-supabase.md §2) — distinct de l'amorçage initial de
+// famille_mapping (mécanisme B, fait une seule fois en SQL par le Developer, pas ici).
+// Ne concerne que le staff : appelée uniquement depuis checkLogin() (staff) et la restauration
+// de session staff, jamais pour une session joueur (ces données ne le regardent pas).
+
+function _f5CountLocalData() {
+    let coachAnalyses = {}, playerAccounts = {}, famCustom = {};
+    try { coachAnalyses = JSON.parse(localStorage.getItem('fenix_coach_analyses') || '{}'); } catch(e) {}
+    try { playerAccounts = JSON.parse(localStorage.getItem('fenix_player_accounts') || '{}'); } catch(e) {}
+    try { famCustom = JSON.parse(localStorage.getItem('enc_famille_custom') || '{}'); } catch(e) {}
+    return {
+        notes: Object.keys(coachAnalyses).length,
+        comptes: Object.keys(playerAccounts).length,
+        familles: Object.keys(famCustom).length,
+        coachAnalyses, playerAccounts, famCustom,
+    };
+}
+
+function checkAndOfferLocalMigration(force) {
+    const alreadyMigrated = localStorage.getItem('fenix_supabase_migrated') === '1';
+    const d = _f5CountLocalData();
+    const total = d.notes + d.comptes + d.familles;
+    if (!force && (alreadyMigrated || total === 0)) return;
+
+    const items = [];
+    if (d.notes > 0) items.push(`<li><span class="f5-migration-check">✓</span>${d.notes} note${d.notes > 1 ? 's' : ''} de coach</li>`);
+    if (d.comptes > 0) items.push(`<li><span class="f5-migration-check">✓</span>${d.comptes} compte${d.comptes > 1 ? 's' : ''} joueur${d.comptes > 1 ? 's' : ''}</li>`);
+    if (d.familles > 0) items.push(`<li><span class="f5-migration-check">✓</span>${d.familles} assignation${d.familles > 1 ? 's' : ''} de famille manuelle${d.familles > 1 ? 's' : ''}</li>`);
+    document.getElementById('f5-migration-list').innerHTML = items.join('')
+        || '<li style="color:var(--gray-600)">Aucune donnée locale à migrer sur cet appareil.</li>';
+
+    document.getElementById('f5-migration-progress').style.display = 'none';
+    document.getElementById('f5-migration-progress').innerHTML = '';
+    document.getElementById('f5-migration-done').style.display = 'none';
+    document.getElementById('f5-migration-actions').style.display = 'flex';
+    document.getElementById('f5-migration-btn-cancel').textContent = total > 0 ? 'Annuler' : 'Fermer';
+    const goBtn = document.getElementById('f5-migration-btn-go');
+    goBtn.disabled = false;
+    goBtn.style.display = total > 0 ? 'inline-block' : 'none';
+
+    document.getElementById('f5-migration-overlay').style.display = 'flex';
+}
+
+function closeF5MigrationPrompt() {
+    document.getElementById('f5-migration-overlay').style.display = 'none';
+}
+
+async function callCreatePlayerAccount(nom, motDePasse) {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/create-player-account`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ nom, motDePasse }),
+    });
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok || body.error) throw new Error(body.error || `Erreur HTTP ${resp.status}`);
+    return body;
+}
+
+async function runLocalMigration() {
+    const d = _f5CountLocalData();
+    const goBtn = document.getElementById('f5-migration-btn-go');
+    const progressEl = document.getElementById('f5-migration-progress');
+    goBtn.disabled = true;
+    progressEl.style.display = 'block';
+    progressEl.innerHTML = '';
+
+    function logLine(label, ok, detail) {
+        const div = document.createElement('div');
+        div.className = 'f5-migration-progress-item ' + (ok ? 'ok' : 'fail');
+        div.textContent = (ok ? '✓ ' : '✗ ') + label + (detail ? ' — ' + detail : '');
+        progressEl.appendChild(div);
+    }
+
+    if (d.notes > 0) {
+        try {
+            const rows = Object.entries(d.coachAnalyses).map(([match_key, contenu]) => ({ match_key, contenu }));
+            await upsertRows('coach_analyses', rows);
+            logLine(`${d.notes} note(s) de coach`, true);
+        } catch (e) {
+            logLine('Notes de coach', false, 'échec, réessaie via "⚙ Outils"');
+        }
+    }
+
+    if (d.familles > 0) {
+        try {
+            const rows = Object.entries(d.famCustom).map(([intention_attaque, famille]) => ({ intention_attaque, famille }));
+            await upsertRows('famille_mapping', rows);
+            logLine(`${d.familles} assignation(s) de famille`, true);
+        } catch (e) {
+            logLine('Assignations de famille', false, 'échec, réessaie via "⚙ Outils"');
+        }
+    }
+
+    // Comptes joueurs : un appel Edge Function par compte trouvé (pas un upsert direct de table,
+    // cf. Architecture §1.2bis) — statut affiché par compte (mitigation R10), pas un message global,
+    // pour que Romain sache lequel recréer manuellement si l'un d'eux échoue.
+    if (d.comptes > 0) {
+        for (const [nom, motDePasse] of Object.entries(d.playerAccounts)) {
+            try {
+                await callCreatePlayerAccount(nom, motDePasse);
+                logLine(`Compte ${nom}`, true);
+            } catch (e) {
+                logLine(`Compte ${nom}`, false, e.message || 'échec');
+            }
+        }
+    }
+
+    localStorage.setItem('fenix_supabase_migrated', '1');
+    document.getElementById('f5-migration-actions').style.display = 'none';
+    document.getElementById('f5-migration-done').style.display = 'block';
+    setTimeout(closeF5MigrationPrompt, 2500);
+}
+
 function buildMatchDataRows(jsonData) {
     const headerRow = jsonData[0] || [];
     const idxToColumn = headerRow.map(h => DATA_HEADER_TO_COLUMN[_normaliseHeader(h)] || null);
