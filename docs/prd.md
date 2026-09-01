@@ -1,4 +1,4 @@
-# PRD — Page Impact pour un gardien
+# PRD — Photos joueurs (portrait + corps entier)
 
 **Agent :** Product Manager
 **Date :** 2026-09-01
@@ -7,54 +7,60 @@
 
 ## 1. Objectif
 
-Faire fonctionner la page Impact pour un gardien en réutilisant l'écran moderne déjà utilisé pour les joueurs de champ (`page-impact`), au lieu de la page orpheline cassée (`page-gardiens`) — et afficher le nom du joueur consulté sur cet écran, pour tout le monde.
+Remplacer l'identification textuelle (initiales) des joueurs par de vraies photos là où c'est pertinent, sans jamais dégrader l'expérience pour un joueur sans photo disponible.
 
 ## 2. Features
 
-### F1 — Impact d'un gardien sur `page-impact` (Must Have)
-`openImpactForSelected()` route désormais un gardien vers `page-impact` (comme un joueur de champ), plus jamais vers `page-gardiens`. `updateImpactPage()` (et ses fonctions associées `updateZoneEfficacite()`, le calcul des stats générales, le dessin des 3 canvas) détecte le cas gardien et bascule sa source de données : club adverse (`row[COLS.club] !== 'FENIX'`), `finalite` ('Tir arrêté'/'But' encaissé) au lieu de `resultat`, comparaison sur `row[COLS.gardien]` via `matchPlayerName()` au lieu de `row[COLS.joueur]`.
+### F1 — Portrait sur l'avatar fiche joueur (staff + mobile joueur)
+`.jp-avatar` (page Joueurs, `js/page-joueurs.js`) et `.pmf-avatar` (mode joueur, `js/player-mode.js`) affichent la photo portrait du joueur sélectionné si elle existe, sinon les initiales actuelles (comportement inchangé).
 
-### F2 — Nom du joueur/gardien affiché sur la page Impact (Must Have)
-Un intitulé visible (ex. sous le titre "🎯 Impact au Shoot") affiche le nom complet du joueur actuellement sélectionné ("Tous les joueurs" si aucun filtre) — pour un joueur de champ comme pour un gardien.
+### F2 — Photo corps entier dans l'export PDF/PPT
+La page de couverture de l'export (`pdf-slide-cover`, dans `printFicheJoueur()`) intègre la photo corps entier du joueur quand elle est disponible. Sans photo : la couverture reste strictement identique à aujourd'hui (logo + nom).
 
-### F3 — Vérification et alignement du Mode Lecture Joueur mobile (Must Have)
-Un gardien connecté lui-même doit pouvoir consulter sa propre page Impact sans le même bug. Vérification explicite du code déjà en place (`js/player-mode.js`), correction si un écart est trouvé.
-
-### F4 — Décommissionnement de `page-gardiens` (Should Have)
-Une fois F1 livrée et vérifiée, `page-gardiens`/`updateGardiensPage()`/`drawGardienCanvas()` n'ont plus aucun appelant utile — à retirer pour ne pas laisser une deuxième implémentation morte et non maintenue derrière. Conditionné à la confirmation par l'Architect qu'aucune autre référence n'existe (déjà vérifié par grep exhaustif au moment du Brief, à re-confirmer avant suppression).
-
-### F5 — Grille "Efficacité par zone" pour un gardien (Nice to Have)
-La page Impact actuelle affiche une grille de zones colorées par seuil d'efficacité pour un joueur de champ (`getPlayerPoste()`, `ZONE_SEUILS`), absente pour un gardien. Étendre cette grille au cas gardien (avec ou sans seuils colorés — à trancher par le Designer) apporterait de la cohérence, mais n'est pas nécessaire pour que le bug soit résolu : les 3 vues terrain (zones d'arrêt/encaissement) suffisent déjà à répondre au besoin initial de Romain.
+### F3 — Bascule terrain ↔ photo corps entier
+Sur la page Joueurs, un clic sur l'avatar du joueur sélectionné (portrait ou initiales) remplace le terrain SVG (`court-container`) par la photo corps entier de ce joueur. Un second clic (ou un bouton retour) rebascule sur le terrain. Si le joueur sélectionné n'a pas de photo corps entier, le clic n'a pas d'effet visible (le terrain reste affiché) — pas d'état "cassé" ou d'espace vide.
 
 ## 3. Priorités
 
-| # | Feature | Priorité |
+| Feature | Priorité | Justification |
 |---|---|---|
-| F1 | Impact gardien sur page-impact | Must Have |
-| F2 | Nom du joueur affiché | Must Have |
-| F3 | Vérification mode joueur mobile | Must Have |
-| F4 | Décommissionnement page-gardiens | Should Have |
-| F5 | Grille efficacité par zone (gardien) | Nice to Have |
+| F1 — Portrait avatar | **Must Have** | Le changement le plus visible, le plus fréquemment vu (à chaque sélection de joueur), bénéfice immédiat |
+| F2 — Photo export PDF/PPT | **Should Have** | Valeur réelle (documents partagés à l'extérieur) mais consulté moins souvent que F1 |
+| F3 — Bascule terrain/photo | **Nice to Have** | Idée de Romain, séduisante visuellement, mais n'apporte pas d'info nouvelle (pur plaisir visuel) — peut attendre si l'Architecture ou les Risques la complexifient plus que prévu |
 
 ## 4. Critères d'acceptation
 
-- Sélectionner un gardien (Gabin.S, Noah.O ou Enzo.D) puis "🎯 Impact" → stats non nulles cohérentes avec sa fiche (ex. Enzo Ditta : 15/40 arrêts/tirs, 38%), 3 vues terrain peuplées de points verts (arrêt)/croix rouges (but encaissé).
-- Un joueur de champ sélectionné → comportement strictement inchangé (non-régression explicite, comparaison avant/après).
-- Le nom du joueur consulté est visible à l'écran, pour les deux cas.
-- Le mode joueur mobile testé explicitement pour un gardien connecté lui-même (pas supposé fonctionner).
-- Si F4 livrée : recherche exhaustive (`grep`) confirmant qu'aucun code ne référence plus `page-gardiens`/`updateGardiensPage` avant suppression.
+**F1**
+- [ ] Joueur avec photo portrait disponible → avatar affiche la photo (fiche staff ET mode joueur mobile)
+- [ ] Joueur sans photo → avatar affiche les initiales, identique à l'existant (aucune régression)
+- [ ] Fichier photo manquant/cassé → repli automatique sur initiales, aucune icône "image cassée" visible, aucune erreur console bloquante
+
+**F2**
+- [ ] Joueur avec photo corps entier → visible sur la page de couverture de l'export PDF et PPT
+- [ ] Joueur sans photo → couverture identique à l'actuelle
+- [ ] Le texte existant (nom, poste, période) reste lisible, pas de chevauchement avec la photo
+
+**F3**
+- [ ] Clic sur l'avatar (joueur avec photo corps entier) → le terrain est remplacé par la photo
+- [ ] Un contrôle visible permet de revenir au terrain
+- [ ] Changer de joueur sélectionné pendant que la photo est affichée → comportement cohérent (retour auto au terrain, ou mise à jour de la photo — à trancher en Design)
+- [ ] Joueur sans photo corps entier → le clic sur l'avatar ne fait rien de cassé
 
 ## 5. Hors scope
 
-- Les 4 autres fonctionnalités déjà corrigées le jour même (onglet Gardien de l'Analyse, table GB, graphique de progression, et leur cause commune) — non concernées par ce cycle.
-- Refonte visuelle de la page Impact au-delà de l'ajout du nom du joueur et, si F5 retenue, de la grille de zones.
-- Export PDF/PPT — déjà fonctionnel pour un gardien, non touché.
+- Upload de photo via l'interface (fichiers ajoutés par Romain directement, hors app).
+- Édition/recadrage d'image dans l'app.
+- Photos des joueurs adverses.
+- Généralisation du portrait à d'autres pages non listées ici (Dashboard, tableau Notes, etc.) — pourra faire l'objet d'un cycle futur si F1 est validé à l'usage.
 
 ## 6. Dépendances
 
-- Aucune dépendance externe. Le fix des 3 régressions du matin (v246) est déjà en production — cette story s'appuie sur le même pattern (`matchPlayerName()`) mais sur un chemin de code différent.
+- F1 et F2 dépendent tous deux de la même décision d'Architecture : où sont stockées les photos et comment le code les résout pour un nom de joueur donné (fonction de résolution commune, réutilisée par F1/F2/F3).
+- F3 dépend de F1 (réutilise le même avatar comme déclencheur).
+- Aucune dépendance sur le travail Supabase déjà en place (migration terminée, STORY-20→29) — cette feature est indépendante des tables `match_data`/`joueurs`/etc., sauf si l'Architecture choisit Supabase Storage comme solution de stockage.
 
-## 7. Risques
+## 7. Risques (aperçu — détaillés par le Risk Analyst)
 
-- **F4 (suppression de page-gardiens)** : si un lien externe, un favori navigateur, ou une intégration future pointait vers cette page par son ID, la suppression casserait ce chemin. Impact jugé très faible (aucune navigation ne l'expose, confirmé par recherche exhaustive), mais l'Architect doit trancher formellement si le risque est acceptable ou s'il vaut mieux la laisser en l'état (morte mais présente) pour ce cycle.
-- **F1** : réutiliser `updateImpactPage()` pour 2 cas (joueur/gardien) avec des colonnes sources différentes augmente légèrement sa complexité — à surveiller pour ne pas la rendre illisible (l'Architect doit statuer sur la structure du code, ex. sous-fonctions séparées vs. branches conditionnelles).
+- Couverture partielle des photos au lancement (la majorité des joueurs n'en auront pas encore) → le fallback doit être irréprochable, sinon la feature donne une impression de bug plutôt que de progressive rollout.
+- Mapping nom → fichier photo : mêmes pièges de format de nom ("Prénom" vs "Prénom.Initiale") déjà rencontrés plusieurs fois cette saison sur ce projet — à sécuriser via `matchPlayerName()` comme partout ailleurs.
+- Poids des fichiers photo (images haute résolution façon les 2 exemples fournis, plusieurs Mo chacune) → impact sur le temps de chargement de l'app si non maîtrisé.

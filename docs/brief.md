@@ -1,4 +1,4 @@
-# Brief — Page Impact pour un gardien
+# Brief — Photos joueurs (portrait + corps entier)
 
 **Agent :** Analyst
 **Date :** 2026-09-01
@@ -7,54 +7,43 @@
 
 ## 1. Contexte
 
-Le jour même, un audit complet a détecté et corrigé 3 régressions liées aux gardiens (onglet Gardien de la page Analyse, table GB de la page Notes, graphique de progression) — toutes causées par une comparaison stricte entre le format "prénom seul" de la colonne Excel `Gardien` et le format court "Prénom.Initiale" utilisé ailleurs dans l'app. En vérifiant l'app après ce correctif, Romain a trouvé un 4e symptôme, sur la page Joueurs → onglet "🎯 Impact" : pour un gardien sélectionné, toutes les stats affichent 0 et les 3 zones de terrain restent vides, alors que la fiche du même gardien (onglet "Fiche") fonctionne très bien.
+L'appli affiche aujourd'hui chaque joueur uniquement via ses initiales dans un avatar rond texte (`.jp-avatar` sur la page Joueurs, `.pmf-avatar` en mode joueur mobile — vérifié dans le code, aucune photo nulle part). Romain a désormais des photos individuelles de plusieurs joueurs, dans deux formats : un **portrait** (tête, fond transparent) et un **corps entier** (joueur en pied, en maillot Fenix Toulouse complet, fond transparent, format vertical). Il veut les exploiter dans l'appli plutôt que de les laisser inutilisées.
 
-## 2. Investigation technique (avant tout cadrage produit)
+## 2. Problème
 
-Contrairement aux 3 régressions du matin, celle-ci n'est **pas** qu'un problème de format de nom — c'est un problème de routage et de logique métier plus profond :
+L'appli est aujourd'hui 100% textuelle pour l'identification visuelle d'un joueur — un avatar avec 2 lettres. C'est fonctionnel mais impersonnel : sur la fiche joueur, dans les exports PDF/PPT (destinés à être montrés aux joueurs, aux parents, ou en réunion staff), et dans l'esprit général "outil de suivi pro" que Romain construit depuis plusieurs mois (charte visuelle Fenix, dégradés bleu club, Bebas Neue), l'absence de vraie photo est le dernier point qui fait "tableur amélioré" plutôt que "outil de club".
 
-- Le bouton "🎯 Impact" (`openImpactForSelected()`) route **différemment** selon que le joueur sélectionné est un gardien ou non :
-  - Joueur de champ → page `page-impact` (`updateImpactPage()`), la page moderne, maintenue.
-  - Gardien → page `page-gardiens` (`updateGardiensPage()`), une **ancienne page orpheline** — la checklist de régression la décrivait déjà comme "non reliée à la navigation, aucun bouton ne l'appelle", ce qui est faux dans ce cas précis : elle est bien atteinte, mais uniquement via ce chemin gardien, jamais visitée/testée depuis.
-- `updateGardiensPage()` a le même bug de comparaison stricte que les 3 déjà corrigés ce matin (`row[COLS.gardien] !== gardienFilter`) — un fix ponctuel la remettrait en état.
-- **Mais** `updateGardiensPage()` a aussi des lacunes structurelles par rapport à la vraie page Impact : pas de grille "Efficacité par zone", pas de mode comparaison, pas de filtre bilan/résultat, esthétique non alignée avec le reste de l'app (page jamais mise à jour depuis les passes visuelles STORY-13→19).
-- La page moderne `updateImpactPage()`, elle, **ne gère pas du tout le cas gardien** — aucune branche conditionnelle, elle filtre systématiquement sur `row[COLS.club] === 'FENIX'` et `row[COLS.joueur]`, deux critères qui ne correspondent jamais à un gardien.
-- Un troisième endroit du code, `printFicheJoueur()` (export PDF/PPT, `js/page-joueurs.js`), gère **déjà correctement** le cas gardien pour ses propres besoins (zones de tir dans le PDF) : filtre sur `finalite`/`gardien` avec `matchPlayerName()`, jamais sur `joueur`. C'est la meilleure référence disponible dans le code pour la bonne logique.
+## 3. Utilisateurs
 
-## 3. Problème
+- **Romain (staff/coach)** — usage desktop principalement, consulte la fiche joueur en préparation de match ou d'entretien, exporte en PDF/PPT pour partager en réunion ou avec un joueur/parent.
+- **Joueurs (mode lecture mobile)** — consultent leur propre fiche sur téléphone ; verraient leur propre avatar photo.
+- Contrainte réaliste : toutes les photos ne sont pas encore disponibles pour tous les joueurs (déploiement progressif à mesure que Romain les récupère) — l'app doit rester cohérente avec un mélange joueurs-avec-photo / joueurs-sans-photo.
 
-Un gardien ne peut aujourd'hui pas consulter ses zones d'arrêt/d'encaissement depuis l'écran qu'il utiliserait naturellement (le même bouton "Impact" que ses coéquipiers) — soit parce que l'écran affiche des zéros partout (bug de nom), soit parce qu'il atterrit sur une page visuellement datée et fonctionnellement en retard par rapport au reste de l'app. Sur ~21 joueurs de l'effectif, 3 sont des gardiens : ce n'est pas un cas marginal.
+## 4. Vision
 
-## 4. Utilisateurs
+Chaque joueur avec une photo disponible est identifiable visuellement partout où son nom apparaît en position "carte d'identité" (fiche, export, connexion) — sans jamais casser l'affichage pour un joueur qui n'a pas encore de photo.
 
-- **Romain (staff)**, sur ordinateur, en préparation de séance ou d'analyse post-match — consulte l'Impact d'un gardien au même titre que celui d'un joueur de champ, dans le même flux de navigation.
-- **Un gardien connecté lui-même** (Mode Lecture Joueur, mobile), onglet "Impact" — à vérifier si le même bug/la même divergence existe côté mobile (le code de `player-mode.js` examiné ce matin utilisait déjà `matchPlayerName()` correctement pour cette page, donc probablement déjà fonctionnel côté mobile — à confirmer par l'Architect, pas supposé).
+## 5. Scope
 
-## 5. Vision
+**Dans le scope :**
+1. Portrait joueur en remplacement de l'avatar initiales sur la fiche joueur (`page-joueurs`) et en mode lecture joueur mobile (`player-mode`), avec repli propre sur les initiales si pas de photo.
+2. Photo corps entier intégrée à l'export PDF/PPT du joueur (`printFicheJoueur()` / `exportJoueurPPT()`) — emplacement à définir par le Designer, la page de couverture existante (`pdf-slide-cover`, actuellement juste logo + nom) étant le candidat naturel.
+3. Nouvelle interaction sur la page Joueurs : un clic sur l'avatar (portrait ou initiales) du joueur sélectionné bascule la colonne terrain (`court-container`) vers l'affichage de sa photo corps entier, avec un moyen évident de revenir au terrain.
 
-Un gardien sélectionné dans la page Joueurs affiche ses zones d'arrêt/d'encaissement sur le **même écran Impact**, avec le **même niveau de finition** (filtres, efficacité par zone, mode comparaison) qu'un joueur de champ — plus de page séparée à part, plus de logique dupliquée à maintenir en double. Le nom du joueur/gardien consulté est visible à l'écran.
+**Hors scope (explicitement) :**
+- Upload de photo depuis l'interface (Romain ajoute les fichiers lui-même, comme il le fait déjà pour le fichier Excel).
+- Recadrage/édition d'image dans l'app.
+- Photos pour les entités "Adversaire" (uniquement les joueurs Fenix).
 
-## 6. Scope
+## 6. Critères de succès
 
-**Dans le scope** :
-- Faire fonctionner l'onglet Impact pour un gardien, avec la bonne source de données (finalité + gardien + impact, pas joueur), en s'appuyant sur `page-impact`/`updateImpactPage()` plutôt qu'en rafistolant `page-gardiens`.
-- Afficher le nom du joueur/gardien actuellement sélectionné sur la page Impact (actuellement absent pour tout le monde, pas seulement les gardiens).
-- Décommissionner proprement `page-gardiens` si elle devient inutilisée (sous réserve de validation Architect — voir Risques).
-- Vérifier et, si besoin, aligner le Mode Lecture Joueur mobile (le gardien consultant sa propre page Impact).
+- Un joueur avec photo affiche sa vraie photo à la place des initiales, sur desktop staff ET mobile joueur, sans erreur console si le fichier est absent.
+- Un joueur sans photo continue d'afficher les initiales exactement comme aujourd'hui — aucune régression visuelle.
+- L'export PDF/PPT intègre la photo corps entier sans casser la mise en page existante (ni pour un joueur avec photo, ni pour un joueur sans photo).
+- Le clic sur l'avatar bascule visuellement le terrain vers la photo corps entier et permet un retour simple.
 
-**Hors scope** :
-- Toute autre page/fonctionnalité liée aux gardiens (déjà corrigées ce matin : onglet Gardien de l'Analyse, table GB, graphique de progression).
-- Refonte visuelle plus large de la page Impact au-delà de ce qui est nécessaire pour unifier le cas gardien.
-- Export PDF/PPT (`printFicheJoueur()`) — déjà fonctionnel pour les gardiens, non concerné.
+## 7. Questions en suspens
 
-## 7. Critères de succès
-
-- Sélectionner un gardien puis cliquer "Impact" affiche ses vraies stats (tirs subis, arrêts, %, buts encaissés) et ses zones d'arrêt/encaissement sur les 3 vues terrain, cohérentes avec sa fiche.
-- Le nom du joueur consulté est visible sur la page Impact, pour un gardien comme pour un joueur de champ.
-- Aucune régression sur l'Impact d'un joueur de champ (comportement actuel déjà correct, à préserver à l'identique).
-- Le mode joueur mobile (un gardien consultant sa propre page Impact) fonctionne, vérifié explicitement — pas supposé fonctionner parce que le code semblait déjà correct.
-
-## 8. Questions en suspens (pour l'Architect)
-
-- `page-gardiens` peut-elle être décommissionnée entièrement, ou est-ce que quelque chose d'autre y pointe encore (à vérifier par une recherche exhaustive avant de la supprimer) ?
-- La grille "Efficacité par zone" de la page Impact repose sur des seuils par poste (`getPlayerPoste()`, `ZONE_SEUILS`) pensés pour des joueurs de champ — faut-il des seuils spécifiques pour un gardien, ou peut-on simplement afficher la grille sans seuils de couleur pour ce cas (à trancher, PM/Designer) ?
+- **Où stocker les fichiers photo** (Supabase Storage vs fichiers statiques bundlés dans le repo) → tranché en Architecture (voir `docs/arch/photos-joueurs.md`), car ça détermine largement l'implémentation.
+- **Convention de nommage** des fichiers pour le mapping nom → photo → tranchée en Architecture.
+- Romain fournira les fichiers progressivement : pas de liste figée du nombre de joueurs concernés au lancement de la feature.
