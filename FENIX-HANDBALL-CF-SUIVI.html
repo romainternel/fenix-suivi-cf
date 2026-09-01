@@ -11,14 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=247">
-    <script src="js/supabase-client.js?v=247"></script>
-    <script src="js/utils.js?v=247"></script>
-    <script src="js/impact-images.js?v=247"></script>
-    <script src="js/player-mode.js?v=247"></script>
-    <script src="js/page-joueurs.js?v=247"></script>
-    <script src="js/page-notes-graph.js?v=247"></script>
-    <script src="js/page-analyse.js?v=247"></script>
+    <link rel="stylesheet" href="css/style.css?v=248">
+    <script src="js/supabase-client.js?v=248"></script>
+    <script src="js/utils.js?v=248"></script>
+    <script src="js/impact-images.js?v=248"></script>
+    <script src="js/player-mode.js?v=248"></script>
+    <script src="js/page-joueurs.js?v=248"></script>
+    <script src="js/page-notes-graph.js?v=248"></script>
+    <script src="js/page-analyse.js?v=248"></script>
 </head>
 <body>
 
@@ -868,93 +868,6 @@
             </div>
         </div>
 
-        <!-- Gardiens Page -->
-        <div class="page" id="page-gardiens">
-            <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">🥅 Statistiques Gardiens</h2>
-                    <button class="btn-comparer btn-comparer-dark" onclick="toggleCompare('gardien-filters', this)">🔀 Comparer</button>
-                </div>
-
-                <div id="gardien-filters" class="filters compare-filters" style="display:none;">
-                    <div class="filter-group">
-                        <label>Gardien</label>
-                        <select id="filter-gardien" onchange="updateGardiensPage()">
-                            <option value="">Tous les gardiens</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Match</label>
-                        <select id="filter-gardien-match" onchange="updateGardiensPage()">
-                            <option value="">Tous les matchs</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="stats-grid" id="gardien-stats">
-                    <div class="stat-card blue">
-                        <div class="label">Tirs subis</div>
-                        <div class="value" id="gb-tirs">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">Arrêts</div>
-                        <div class="value" id="gb-arrets">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">% Arrêts</div>
-                        <div class="value" id="gb-pct">0%</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">Buts encaissés</div>
-                        <div class="value" id="gb-buts">0</div>
-                    </div>
-                </div>
-
-                <div class="goal-container" style="margin-top: 2rem;">
-                    <div class="goal-wrapper"><canvas id="goal-canvas-alg"></canvas><div class="label">Externe Gauche</div></div>
-                    <div class="goal-wrapper"><canvas id="goal-canvas-face"></canvas><div class="label">Central</div></div>
-                    <div class="goal-wrapper"><canvas id="goal-canvas-ald"></canvas><div class="label">Externe Droit</div></div>
-                </div>
-
-                <!-- Sélecteur de zone gardien -->
-                <div style="margin-top:1rem;">
-                    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">
-                        <span style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;">Zone</span>
-                        <span id="zone-filter-active-gardien" style="font-size:0.78rem;color:#2563eb;font-weight:700;"></span>
-                        <button id="zone-reset-btn-gardien" onclick="toggleGardienZone(null)" style="display:none;font-size:0.72rem;color:#2563eb;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;">✕ Tout voir</button>
-                    </div>
-                    <div id="zone-rect-selector-gardien" style="display:flex;flex-direction:column;gap:4px;">
-                        <div class="zr-row">
-                            <div class="zr-cell" data-zone="6m ail G">6m ail G</div>
-                            <div class="zr-cell" data-zone="6m ext G">6m ext G</div>
-                            <div class="zr-cell" data-zone="6m central G">6m central G</div>
-                            <div class="zr-cell" data-zone="6m central D">6m central D</div>
-                            <div class="zr-cell" data-zone="6m ext D">6m ext D</div>
-                            <div class="zr-cell" data-zone="6m ail D">6m ail D</div>
-                        </div>
-                        <div class="zr-row">
-                            <div class="zr-cell" data-zone="6-9 ext G">6-9 ext G</div>
-                            <div class="zr-cell" data-zone="6-9 central G">6-9 central G</div>
-                            <div class="zr-cell zr-7m" data-zone="7m">7m</div>
-                            <div class="zr-cell" data-zone="6-9 central D">6-9 central D</div>
-                            <div class="zr-cell" data-zone="6-9 ext D">6-9 ext D</div>
-                        </div>
-                        <div class="zr-row">
-                            <div class="zr-cell" data-zone="9m ext G">9m ext G</div>
-                            <div class="zr-cell" data-zone="9m Int G">9m Int G</div>
-                            <div class="zr-cell" data-zone="9m Int D">9m Int D</div>
-                            <div class="zr-cell" data-zone="9m ext D">9m ext D</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="legend" style="margin-top:0.75rem;">
-                    <div class="legend-item"><div class="legend-dot tir-rate"></div><span>But encaissé</span></div>
-                    <div class="legend-item"><div class="legend-dot but"></div><span>Tir arrêté</span></div>
-                </div>
-            </div>
-        </div>
-
         <!-- Impact Page -->
         <div class="page" id="page-impact">
             <div class="section">
@@ -1077,10 +990,9 @@
         let FIELD_POSITIONS = [];
         let impactZoneFilter = '';
         let impactBilanFilter = '';
+        let _impactIsGB = false; // reflète isGB de la dernière updateImpactPage() — utilisé par le tooltip canvas
         let impactEfficaciteMode = false;
-        let gardienZoneFilter = '';
         const IMPACT_DOTS  = { alg: [], face: [], ald: [] };
-        const GARDIEN_DOTS = { alg: [], face: [], ald: [] };
 
         // Seuils d'efficacité par poste — standards D1 Starligue 2024-25 (hors penalty)
         // Violet ≥ hi% = Solide, Vert ≥ mid% = Projetable, Rouge < mid% = Non projetable
@@ -1178,11 +1090,7 @@ let _effInfoPoste = null;
                 const cell = e.target.closest('.zr-cell');
                 if (cell) toggleImpactZone(cell.dataset.zone);
             });
-            document.getElementById('zone-rect-selector-gardien')?.addEventListener('click', e => {
-                const cell = e.target.closest('.zr-cell');
-                if (cell) toggleGardienZone(cell.dataset.zone);
-            });
-            // Tooltip survol canvases Gardien
+            // Tooltip survol canvas Impact (joueur de champ ou gardien, cf. _impactIsGB)
             let _ttHideTimer = null;
             function _showCanvasTooltip(canvas, dots, cx, cy, isGardien) {
                 const rect = canvas.getBoundingClientRect();
@@ -1221,33 +1129,15 @@ let _effInfoPoste = null;
                     return false;
                 }
             }
-            ['alg', 'face', 'ald'].forEach(view => {
-                const canvas = document.getElementById(`goal-canvas-${view}`);
-                if (!canvas) return;
-                canvas.addEventListener('mousemove', e => {
-                    _showCanvasTooltip(canvas, GARDIEN_DOTS[view], e.clientX, e.clientY, true);
-                    canvas.style.cursor = 'crosshair';
-                });
-                canvas.addEventListener('mouseleave', () => {
-                    document.getElementById('impact-tooltip').style.display = 'none';
-                    canvas.style.cursor = 'default';
-                });
-                canvas.addEventListener('touchstart', e => {
-                    e.preventDefault();
-                    const t = e.touches[0];
-                    const found = _showCanvasTooltip(canvas, GARDIEN_DOTS[view], t.clientX, t.clientY, true);
-                    if (found) {
-                        clearTimeout(_ttHideTimer);
-                        _ttHideTimer = setTimeout(() => document.getElementById('impact-tooltip').style.display = 'none', 3000);
-                    }
-                }, { passive: false });
-            });
-            // Tooltip survol des points Impact
+            // Tooltip survol des points Impact — STORY-29 : isGardien lu dynamiquement depuis
+            // _impactIsGB (mis à jour par updateImpactPage()) au lieu d'un `false` en dur, sinon le
+            // marqueur ●/✕ du tooltip serait inversé pour un gardien depuis STORY-27 (bug découvert
+            // en nettoyant l'ancien bloc goal-canvas-*, jamais testé au survol lors de STORY-27).
             ['alg', 'face', 'ald'].forEach(view => {
                 const canvas = document.getElementById(`impact-canvas-${view}`);
                 if (!canvas) return;
                 canvas.addEventListener('mousemove', e => {
-                    _showCanvasTooltip(canvas, IMPACT_DOTS[view], e.clientX, e.clientY, false);
+                    _showCanvasTooltip(canvas, IMPACT_DOTS[view], e.clientX, e.clientY, _impactIsGB);
                     canvas.style.cursor = 'crosshair';
                 });
                 canvas.addEventListener('mouseleave', () => {
@@ -1257,7 +1147,7 @@ let _effInfoPoste = null;
                 canvas.addEventListener('touchstart', e => {
                     e.preventDefault();
                     const t = e.touches[0];
-                    const found = _showCanvasTooltip(canvas, IMPACT_DOTS[view], t.clientX, t.clientY, false);
+                    const found = _showCanvasTooltip(canvas, IMPACT_DOTS[view], t.clientX, t.clientY, _impactIsGB);
                     if (found) {
                         clearTimeout(_ttHideTimer);
                         _ttHideTimer = setTimeout(() => document.getElementById('impact-tooltip').style.display = 'none', 3000);
@@ -1976,7 +1866,7 @@ let _effInfoPoste = null;
             // Autres filtres (select classiques)
             populateMatchPageCheckboxes(MATCHS);
 
-            const matchFilters = ['filter-joueur-match', 'filter-gardien-match', 'filter-note-match'];
+            const matchFilters = ['filter-joueur-match', 'filter-note-match'];
             matchFilters.forEach(id => {
                 const sel = document.getElementById(id);
                 if (sel) {
@@ -2018,12 +1908,6 @@ let _effInfoPoste = null;
                 });
             }
             
-            const gardienFilter = document.getElementById('filter-gardien');
-            if (gardienFilter) {
-                gardienFilter.innerHTML = '<option value="">Tous les gardiens</option>';
-                GARDIENS_FENIX.forEach(g => gardienFilter.innerHTML += `<option value="${g}">${g}</option>`);
-            }
-
             // Graph GB : gardiens détectés dans les tirs adverses, filtrés par GARDIENS_FENIX si disponible
             // gbg-gardien / gbg-gardien-2
             {
@@ -2165,7 +2049,7 @@ let _effInfoPoste = null;
             // Mettre à jour les selects de match des autres pages
             populateMatchPageCheckboxes(matchesToShow);
 
-            const matchSelects = ['filter-joueur-match', 'filter-gardien-match', 'filter-note-match'];
+            const matchSelects = ['filter-joueur-match', 'filter-note-match'];
             matchSelects.forEach(id => {
                 const sel = document.getElementById(id);
                 if (sel) {
@@ -2202,7 +2086,6 @@ let _effInfoPoste = null;
                 case 'joueurs': updateJoueursPage(); break;
                 case 'notes': updateNotesPage(); break;
                 case 'notegraph': _ngFromDetail = null; updateNoteGraph(); updateGbGraph(); break;
-                case 'gardiens': updateGardiensPage(); break;
                 case 'impact': updateImpactPage(); break;
             }
         }
@@ -2744,99 +2627,6 @@ let _effInfoPoste = null;
             if (e.target === this) closePlayerModal();
         });
 
-        function toggleGardienZone(zoneId) {
-            gardienZoneFilter = (gardienZoneFilter === zoneId || !zoneId) ? '' : zoneId;
-            updateGardienZoneUI();
-            updateGardiensPage();
-        }
-
-        function updateGardienZoneUI() {
-            document.querySelectorAll('#zone-rect-selector-gardien .zr-cell').forEach(c => {
-                c.classList.toggle('zr-selected', c.dataset.zone === gardienZoneFilter);
-            });
-            const label = document.getElementById('zone-filter-active-gardien');
-            const btn   = document.getElementById('zone-reset-btn-gardien');
-            if (label) label.textContent = gardienZoneFilter || '';
-            if (btn)   btn.style.display = gardienZoneFilter ? 'inline' : 'none';
-        }
-
-        function drawGardienCanvas(canvasId, img, data) {
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-            const container = canvas.parentElement;
-            canvas.width  = container.clientWidth  || 400;
-            canvas.height = container.clientHeight || 300;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            let drawX = 0, drawY = 0, drawW = canvas.width, drawH = canvas.height;
-            if (img && img.complete && img.naturalWidth > 0) {
-                const imgAr = img.naturalWidth / img.naturalHeight;
-                const cvsAr = canvas.width / canvas.height;
-                if (imgAr > cvsAr) { drawH = canvas.width / imgAr; drawY = (canvas.height - drawH) / 2; }
-                else               { drawW = canvas.height * imgAr; drawX = (canvas.width - drawW) / 2; }
-                ctx.drawImage(img, drawX, drawY, drawW, drawH);
-            } else {
-                ctx.fillStyle = '#e2e8f0'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#94a3b8'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText('Image non disponible', canvas.width / 2, canvas.height / 2);
-            }
-
-            const viewKey = canvasId.replace('goal-canvas-', '');
-            GARDIEN_DOTS[viewKey] = [];
-            data.forEach(row => {
-                const parts = String(row[COLS.impact] || '').split(';');
-                const x = parseFloat(parts[0]), y = parseFloat(parts[1]);
-                if (isNaN(x) || isNaN(y)) return;
-                const dotX = drawX + (x / 100) * drawW;
-                const dotY = drawY + (y / 100) * drawH;
-                GARDIEN_DOTS[viewKey].push({ x: dotX, y: dotY, row });
-                const isArret = row[COLS.finalite] === 'Tir arrêté';
-                const s = 6;
-                ctx.save(); ctx.lineCap = 'round';
-                if (isArret) {
-                    ctx.beginPath(); ctx.arc(dotX, dotY, s, 0, Math.PI * 2);
-                    ctx.fillStyle = '#10B981'; ctx.fill();
-                    ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
-                } else {
-                    const sc = s / Math.SQRT2;
-                    ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 2.5;
-                    ctx.beginPath();
-                    ctx.moveTo(dotX - sc, dotY - sc); ctx.lineTo(dotX + sc, dotY + sc);
-                    ctx.moveTo(dotX + sc, dotY - sc); ctx.lineTo(dotX - sc, dotY + sc);
-                    ctx.stroke();
-                }
-                ctx.restore();
-            });
-        }
-
-        function updateGardiensPage() {
-            const gardienFilter = document.getElementById('filter-gardien').value;
-            const matchFilter   = document.getElementById('filter-gardien-match').value;
-
-            const filtered = DATA.filter(row => {
-                if (row[COLS.club] === 'FENIX') return false;
-                if (matchFilter && row[COLS.rencontre] !== matchFilter) return false;
-                if (gardienFilter && row[COLS.gardien] !== gardienFilter) return false;
-                if (gardienZoneFilter && row[COLS.field_position] !== gardienZoneFilter) return false;
-                const finalite = row[COLS.finalite] || '';
-                const resultat = row[COLS.resultat] || '';
-                return resultat === 'But' || finalite === 'Tir arrêté';
-            });
-
-            const arrets = filtered.filter(row => row[COLS.finalite] === 'Tir arrêté').length;
-            const buts   = filtered.filter(row => row[COLS.resultat] === 'But').length;
-            const tirsCadres = arrets + buts;
-
-            document.getElementById('gb-tirs').textContent  = tirsCadres;
-            document.getElementById('gb-arrets').textContent = arrets;
-            document.getElementById('gb-pct').textContent   = tirsCadres > 0 ? Math.round(arrets / tirsCadres * 100) + '%' : '0%';
-            document.getElementById('gb-buts').textContent  = buts;
-
-            drawGardienCanvas('goal-canvas-alg',  IMPACT_IMAGES.alg,  filtered.filter(r => getImpactView(r) === 'alg'));
-            drawGardienCanvas('goal-canvas-face', IMPACT_IMAGES.face, filtered.filter(r => getImpactView(r) === 'face'));
-            drawGardienCanvas('goal-canvas-ald',  IMPACT_IMAGES.ald,  filtered.filter(r => getImpactView(r) === 'ald'));
-        }
 
 
         function drawGoalImpacts(canvasId, data) {
@@ -3065,6 +2855,7 @@ let _effInfoPoste = null;
             const isGB = joueurFilter && typeof GARDIENS_FENIX !== 'undefined'
                 ? GARDIENS_FENIX.some(g => matchPlayerName(g, joueurFilter))
                 : false;
+            _impactIsGB = isGB; // lu par le tooltip canvas (mousemove/touchstart, hors de cette fonction)
 
             // Libellés adaptatifs (Design F1/F2, docs/design/impact-gardien.md)
             document.getElementById('impact-lbl-buts').textContent = isGB ? 'Arrêts' : 'Buts';
