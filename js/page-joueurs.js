@@ -123,8 +123,8 @@
                 }
 
                 if (photoUrl) {
-                    // Photo clippée légèrement en retrait du rayon pour garder l'anneau couleur (ringClr) visible en bordure
-                    const photoR  = r - 1;
+                    // Photo clippée au même rayon que le rond : remplit tout le cercle, seul le trait de contour (ringClr) dépasse
+                    const photoR  = r;
                     const clipId  = `court-clip-${idx}`;
                     const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
                     clip.setAttribute('id', clipId);
