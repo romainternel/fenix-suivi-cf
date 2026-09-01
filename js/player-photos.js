@@ -31,3 +31,14 @@
             if (!key) return null;
             return PLAYER_PHOTOS[key][type] || null;
         }
+
+        // Préchargement en tâche de fond dès le chargement du script (avant même la connexion) :
+        // sans ça, le premier clic sur une photo terrain déclenche un vrai fetch réseau et l'image
+        // met un instant à apparaître (photo corps entier ~150-200 Ko), perceptible comme un flash/retard.
+        (function _preloadPlayerPhotos() {
+            _playerPhotoKeys.forEach(key => {
+                const { portrait, corps } = PLAYER_PHOTOS[key];
+                if (portrait) { const i = new Image(); i.src = portrait; }
+                if (corps)    { const i = new Image(); i.src = corps; }
+            });
+        })();
