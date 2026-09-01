@@ -92,3 +92,9 @@ Remplacer les 3 comparaisons strictes par `matchPlayerName()`, à l'identique du
 **RÉGRESSION DÉTECTÉE** — 3 features (I1 onglet Gardien, I2 table GB, I3 graphique gardien) silencieusement cassées pour tout gardien, même cause racine, préexistante à ce cycle. Aucune régression Critique. Le reste de l'application (19/22 features testées, dont les 7 Critiques) est conforme.
 
 **Recommandation** : correctif ciblé (3 lignes, pattern déjà éprouvé) avant la prochaine session de suivi de match impliquant l'analyse d'un gardien.
+
+---
+
+## 5. Suivi — corrigé le jour même (v246)
+
+Romain a validé la correction le jour même. Le correctif s'est révélé légèrement plus profond que prévu pour I2 (`calculateGardienNotes()` créait deux entrées séparées par gardien selon le format de nom, pas seulement un filtre à assouplir) — détail complet et vérification dans `docs/regression/v246.md`. Les 3 features sont désormais ✅ dans la checklist.

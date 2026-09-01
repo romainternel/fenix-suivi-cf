@@ -2420,8 +2420,11 @@
             matchData.filter(r => r[COLS.club] !== 'FENIX').forEach(r => {
                 const gardien = (r[COLS.gardien] || '').toString().trim();
                 if (!gardien) return;
+                // matchPlayerName() plutôt qu'une égalité stricte : la colonne "Gardien" de la feuille
+                // DATA contient le prénom seul ("Gabin"), pas le format court "Prénom.Initiale" utilisé
+                // par GARDIENS_FENIX ("Gabin.S") — une comparaison directe ne correspond jamais.
                 if (typeof GARDIENS_FENIX !== 'undefined' && GARDIENS_FENIX.length > 0 &&
-                    !GARDIENS_FENIX.includes(gardien)) return;
+                    !GARDIENS_FENIX.some(g => matchPlayerName(gardien, g))) return;
                 if (!byGardien.has(gardien)) { const m = new Map(); FAMILLES.forEach(f => m.set(f, { arrets:0, tirs:0, pct:0 })); byGardien.set(gardien, m); }
                 const s = byGardien.get(gardien).get(getEncFamille(r[COLS.intention_attaque]));
                 const estArret = r[COLS.finalite] === 'Tir arrêté';

@@ -217,10 +217,19 @@
                 if (row[COLS.club] === 'FENIX') return;
                 if (selectedMatchesList.length > 0 && !selectedMatchesList.includes(row[COLS.rencontre])) return;
 
-                const gardien = (row[COLS.gardien] || '').toString().trim();
-                if (!gardien) return;
-                // Si la feuille Joueurs est chargée, ne garder que les vrais GB
-                if (GARDIENS_FENIX.length > 0 && !GARDIENS_FENIX.includes(gardien)) return;
+                const gardienRaw = (row[COLS.gardien] || '').toString().trim();
+                if (!gardienRaw) return;
+                // La colonne "Gardien" de la feuille DATA contient le prénom seul ("Gabin"), pas le
+                // format court "Prénom.Initiale" ("Gabin.S") utilisé par GARDIENS_FENIX et par
+                // action_joueur (Passe 2 ci-dessous) — toujours résoudre vers cette forme canonique
+                // avant d'agréger, sinon les deux passes créent deux clés distinctes pour le même
+                // gardien ("Gabin" côté tirs adverses, "Gabin.S" côté bonus actions) au lieu de fusionner.
+                let gardien = gardienRaw;
+                if (GARDIENS_FENIX.length > 0) {
+                    const canonical = GARDIENS_FENIX.find(g => matchPlayerName(gardienRaw, g));
+                    if (!canonical) return;
+                    gardien = canonical;
+                }
 
                 const finalite = (row[COLS.finalite] || '').toString();
                 const resultat  = (row[COLS.resultat]  || '').toString();
@@ -608,7 +617,10 @@
 
             DATA.forEach(row => {
                 if (row[COLS.club] === 'FENIX') return;
-                if ((row[COLS.gardien] || '').toString().trim() !== gardien) return;
+                // matchPlayerName() plutôt qu'une égalité stricte : row[COLS.gardien] contient le
+                // prénom seul ("Gabin"), gardien (sélection du menu) le format court "Prénom.Initiale"
+                // ("Gabin.S") — une comparaison directe ne correspond jamais.
+                if (!matchPlayerName((row[COLS.gardien] || '').toString().trim(), gardien)) return;
                 const m = row[COLS.rencontre];
                 if (!matchData[m]) return;
 
