@@ -1,3 +1,47 @@
+        let _courtPhotoMode = false;
+
+        function toggleCourtPhoto() {
+            if (!currentSelectedJoueur) return;
+            const corpsUrl = (typeof getPlayerPhoto === 'function') ? getPlayerPhoto(currentSelectedJoueur, 'corps') : null;
+            if (!corpsUrl) return;
+            _courtPhotoMode = !_courtPhotoMode;
+            _renderCourtPhotoState(corpsUrl);
+        }
+
+        function _renderCourtPhotoState(corpsUrl) {
+            const svg = document.getElementById('hb-court-svg');
+            const container = document.querySelector('.court-container');
+            if (!svg || !container) return;
+            let photoView = document.getElementById('court-photo-view');
+            let backBtn = document.getElementById('court-back-btn');
+
+            if (_courtPhotoMode) {
+                svg.style.display = 'none';
+                if (!photoView) {
+                    photoView = document.createElement('div');
+                    photoView.id = 'court-photo-view';
+                    photoView.className = 'court-photo-view';
+                    container.appendChild(photoView);
+                }
+                const nom = currentSelectedJoueur || '';
+                photoView.innerHTML = `<img src="${corpsUrl}" alt="${nom}">`;
+                photoView.style.display = 'flex';
+                if (!backBtn) {
+                    backBtn = document.createElement('button');
+                    backBtn.id = 'court-back-btn';
+                    backBtn.className = 'court-back-btn';
+                    backBtn.innerHTML = '↩ Terrain';
+                    backBtn.onclick = toggleCourtPhoto;
+                    container.appendChild(backBtn);
+                }
+                backBtn.style.display = 'flex';
+            } else {
+                svg.style.display = 'block';
+                if (photoView) photoView.style.display = 'none';
+                if (backBtn) backBtn.style.display = 'none';
+            }
+        }
+
         function _getJoueurBilanMatchs() {
             const val = document.getElementById('filter-joueur-bilan')?.value || '';
             if (!val || typeof BILANS === 'undefined') return null;
@@ -105,6 +149,13 @@
             const posteLabel = posteName[posteCode] || posteCode;
             const displayNom = terrainPlayer ? (terrainPlayer.nomComplet || terrainPlayer.nom) : nom;
             const initials   = displayNom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+            const photoUrl   = (typeof getPlayerPhoto === 'function') ? getPlayerPhoto(nom, 'portrait') : null;
+            const corpsUrl   = (typeof getPlayerPhoto === 'function') ? getPlayerPhoto(nom, 'corps') : null;
+            _courtPhotoMode = false;
+            if (typeof _renderCourtPhotoState === 'function') _renderCourtPhotoState();
+            const avatarInner = photoUrl
+                ? `<img src="${photoUrl}" alt="${displayNom}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${initials}'}))">`
+                : initials;
 
             // Stats globales filtrées par le filtre match actif + bilan
             const matchFilter = document.getElementById('filter-joueur-match').value;
@@ -167,7 +218,7 @@
                 : '';
             const jpHeader = `
                 <div class="jp-header" style="background:linear-gradient(135deg,${color} 0%,${color}cc 100%);">
-                    <div class="jp-avatar">${initials}</div>
+                    <div class="jp-avatar${corpsUrl ? ' jp-avatar-clickable' : ''}"${corpsUrl ? ` onclick="toggleCourtPhoto()"` : ''}>${avatarInner}${corpsUrl ? '<span class="jp-avatar-badge">👤</span>' : ''}</div>
                     <div style="flex:1">
                         <div class="jp-name">${displayNom}</div>
                         <div class="jp-poste-label">${posteCode} — ${posteLabel}</div>
@@ -1114,6 +1165,7 @@
             const _tjD = (typeof getTJData === 'function') ? getTJData(nom, effectiveMatchs) : { matchs: 0, total: 0 };
             const _tjStr = (_tjD.matchs > 0) ? `${_tjD.matchs} match${_tjD.matchs > 1 ? 's' : ''}  ·  ⌀ ${Math.round(_tjD.total / _tjD.matchs)} min/match` : '';
             const _subHdr = _displayNom + (_periodLabel !== 'Saison complète' ? '  ·  ' + _periodLabel : '');
+            const _corpsUrl = (typeof getPlayerPhoto === 'function') ? getPlayerPhoto(nom, 'corps') : null;
 
             // Logo FENIX en data URL (fiable pour html2canvas + impression)
             const _logoUrl = await new Promise(res => {
@@ -1128,6 +1180,7 @@
             const printZone = document.getElementById('joueur-print-zone');
             printZone.innerHTML = `
                 <div class="pdf-page pdf-slide-cover">
+                    ${_corpsUrl ? `<img class="pdf-cover-photo" src="${_corpsUrl}" alt="${_displayNom}">` : ''}
                     ${_logoUrl ? `<img src="${_logoUrl}" style="width:160px;height:160px;border-radius:50%;object-fit:cover;margin-bottom:20px">` : ''}
                     <div style="font-family:Arial,sans-serif;font-size:10pt;color:white;letter-spacing:4px;margin-bottom:10px;text-align:center">FENIX HANDBALL</div>
                     <div style="width:50%;border-top:1px solid rgba(191,219,254,0.5);margin:0 auto 10px"></div>

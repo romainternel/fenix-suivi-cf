@@ -178,6 +178,10 @@
             const color     = (typeof POSTE_COLORS !== 'undefined' && POSTE_COLORS[posteCode]) ? POSTE_COLORS[posteCode] : '#0A2463';
             const displayNom = tp ? (tp.nomComplet || tp.nom) : nom;
             const initials  = displayNom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+            const photoUrl  = (typeof getPlayerPhoto === 'function') ? getPlayerPhoto(nom, 'portrait') : null;
+            const avatarInner = photoUrl
+                ? `<img src="${photoUrl}" alt="${displayNom}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${initials}'}))">`
+                : initials;
 
             const tjNom  = (typeof getTJData === 'function') ? getTJData(nom, MATCHS) : { matchs: 0, total: 0 };
             const tjStr  = tjNom.matchs ? `<span class="pmf-meta-item">⏱ ${tjNom.matchs} match${tjNom.matchs > 1 ? 's' : ''}</span><span class="pmf-meta-item">⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>` : '';
@@ -297,7 +301,7 @@
 
             page.innerHTML = `
                 <div class="pmf-header" style="background:linear-gradient(135deg,${color} 0%,${color}cc 100%)">
-                    <div class="pmf-avatar">${initials}</div>
+                    <div class="pmf-avatar">${avatarInner}</div>
                     <div>
                         <div class="pmf-player-name">${displayNom}</div>
                         <div class="pmf-player-poste">${posteCode} — ${posteName[posteCode]||posteCode}</div>

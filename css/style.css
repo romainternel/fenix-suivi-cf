@@ -1083,10 +1083,25 @@
         .btn-comparer-dark.btn-comparer-active { background: var(--fenix-blue) !important; color: #fff; border-color: var(--fenix-blue); }
         .compare-filters { animation: fadeIn 0.15s ease; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
         .joueurs-layout { display: flex; gap: 0.5rem; align-items: flex-start; }
-        .court-container { flex-shrink: 0; display: flex; flex-direction: column; margin-left: -0.5rem; }
+        .court-container { flex-shrink: 0; display: flex; flex-direction: column; margin-left: -0.5rem; position: relative; }
         #hb-court-svg { height: 70vh; width: auto; max-width: 100%; display: block; border-radius: 12px; box-shadow: var(--shadow-lg); cursor: default; }
         .court-player { cursor: pointer; }
         .court-player:hover { filter: brightness(1.25) drop-shadow(0 0 2px rgba(255,255,255,0.7)); }
+        .court-photo-view {
+            width: 100%; height: 70vh; display: none; align-items: flex-end; justify-content: center;
+            border-radius: 12px; box-shadow: var(--shadow-lg); overflow: hidden; position: relative;
+            background: linear-gradient(180deg, #E8F1FB 0%, #F8FAFC 100%);
+            opacity: 0; animation: courtPhotoIn 0.2s ease-out forwards;
+        }
+        @keyframes courtPhotoIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .court-photo-view img { max-height: 100%; max-width: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 8px 12px rgba(15,23,42,0.18)); }
+        .court-back-btn {
+            position: absolute; top: 10px; left: 10px; z-index: 5; display: none;
+            background: rgba(10,36,99,0.85); color: #fff; border: none; border-radius: 20px;
+            padding: 6px 14px; font-size: 0.78rem; font-weight: 600; align-items: center; gap: 5px;
+            box-shadow: var(--shadow-md); cursor: pointer; transition: background 0.15s ease;
+        }
+        .court-back-btn:hover { background: var(--fenix-blue-light); }
         /* Colonne droite : carte + tableau empilés */
         .joueur-right-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.75rem; }
         /* Carte joueur */
@@ -1094,7 +1109,16 @@
         .joueur-panel { background: var(--fenix-white); border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden; }
         .jp-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2.5rem 2rem; color: #94A3B8; text-align: center; }
         .jp-header { padding: 1.25rem 1.5rem; color: white; display: flex; align-items: center; gap: 1rem; }
-        .jp-avatar { width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; }
+        .jp-avatar { width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; position: relative; overflow: hidden; }
+        .jp-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: center top; }
+        .jp-avatar-clickable { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .jp-avatar-clickable:hover { transform: scale(1.06); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .jp-avatar-clickable:active { transform: scale(0.97); }
+        .jp-avatar-badge {
+            position: absolute; bottom: -1px; right: -1px; width: 16px; height: 16px; border-radius: 50%;
+            background: var(--fenix-accent); border: 1.5px solid #fff; font-size: 0.55rem;
+            display: flex; align-items: center; justify-content: center; line-height: 1;
+        }
         .jp-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 1px; line-height: 1.1; }
         .jp-poste-label { font-size: 0.8rem; opacity: 0.85; margin-top: 0.2rem; }
         .jp-stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); border-top: 1px solid #E8EFF5; }
@@ -1765,6 +1789,12 @@
             min-height: 175mm;
             position: relative;
         }
+        .pdf-cover-photo {
+            position: absolute; bottom: 0; right: 24px;
+            height: 55%; max-width: 42%;
+            object-fit: contain; object-position: bottom;
+            filter: drop-shadow(-6px 0 14px rgba(0,0,0,0.35));
+        }
 
         @media print {
             .pdf-merged-cols .jp-stats-grid { grid-template-columns: repeat(3, 1fr) !important; }
@@ -2109,8 +2139,9 @@
             background: rgba(255,255,255,0.2);
             display: flex; align-items: center; justify-content: center;
             font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem;
-            color: #fff; flex-shrink: 0;
+            color: #fff; flex-shrink: 0; overflow: hidden;
         }
+        .pmf-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: center top; }
 
         .pmf-player-name {
             font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem;
