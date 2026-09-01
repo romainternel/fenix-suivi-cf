@@ -1107,8 +1107,8 @@
             const _jpInfo = (typeof JOUEURS_TERRAIN !== 'undefined') ? (JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom)) || {}) : {};
             const _posteCode = _jpInfo.poste || '';
             const _displayNom = _jpInfo.nomComplet || nom;
-            const _posteLblMap = { GB:'Gardien de But', AG:'Ailier Gauche', AD:'Ailier Droit', ARG:'Arrière Gauche', ARD:'Arrière Droit', DC:'Demi-Centre', PIV:'Pivot' };
-            const _posteLabel = _posteLblMap[_posteCode] || _posteCode;
+            // POSTE_LABELS : constante partagée (FENIX-HANDBALL-CF-SUIVI.html, STORY-27) — plus de copie locale.
+            const _posteLabel = POSTE_LABELS[_posteCode] || _posteCode;
             const _filterBilanEl = document.getElementById('filter-joueur-bilan');
             const _periodLabel = matchFilter ? ('Match : ' + matchFilter) : (_filterBilanEl?.value || 'Saison complète');
             const _tjD = (typeof getTJData === 'function') ? getTJData(nom, effectiveMatchs) : { matchs: 0, total: 0 };

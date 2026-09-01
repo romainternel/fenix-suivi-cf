@@ -11,14 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=246">
-    <script src="js/supabase-client.js?v=246"></script>
-    <script src="js/utils.js?v=246"></script>
-    <script src="js/impact-images.js?v=246"></script>
-    <script src="js/player-mode.js?v=246"></script>
-    <script src="js/page-joueurs.js?v=246"></script>
-    <script src="js/page-notes-graph.js?v=246"></script>
-    <script src="js/page-analyse.js?v=246"></script>
+    <link rel="stylesheet" href="css/style.css?v=247">
+    <script src="js/supabase-client.js?v=247"></script>
+    <script src="js/utils.js?v=247"></script>
+    <script src="js/impact-images.js?v=247"></script>
+    <script src="js/player-mode.js?v=247"></script>
+    <script src="js/page-joueurs.js?v=247"></script>
+    <script src="js/page-notes-graph.js?v=247"></script>
+    <script src="js/page-analyse.js?v=247"></script>
 </head>
 <body>
 
@@ -971,6 +971,9 @@
                     <button class="btn-comparer btn-comparer-dark" onclick="toggleCompare('impact-filters', this)">🔀 Comparer</button>
                 </div>
 
+                <!-- STORY-27 : nom + poste du joueur consulté, pour un joueur de champ comme pour un gardien -->
+                <div id="impact-joueur-nom" style="font-size:0.85rem;margin:2px 0 0.6rem;color:var(--gray-400,#94A3B8);font-weight:500">Tous les joueurs</div>
+
                 <!-- Filtres + Stats alignés sur la même ligne -->
                 <div style="display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem;">
                     <div id="impact-filters" class="filters compare-filters" style="flex:1;margin:0;display:none;">
@@ -992,12 +995,12 @@
                     <div style="display:flex;gap:0.5rem;align-items:center;flex-shrink:0;padding-bottom:0.1rem;">
                         <div style="text-align:center;">
                             <div style="font-size:1.5rem;font-weight:800;color:#1e293b;" id="impact-buts">0</div>
-                            <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.04em;">Buts</div>
+                            <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.04em;" id="impact-lbl-buts">Buts</div>
                         </div>
                         <div style="font-size:1.3rem;font-weight:300;color:#cbd5e1;line-height:1;">/</div>
                         <div style="text-align:center;">
                             <div style="font-size:1.5rem;font-weight:800;color:#1e293b;" id="impact-total">0</div>
-                            <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.04em;">Tirs</div>
+                            <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.04em;" id="impact-lbl-tirs">Tirs</div>
                         </div>
                         <div style="font-size:1.3rem;font-weight:300;color:#cbd5e1;line-height:1;margin-left:0.25rem;">|</div>
                         <div style="text-align:center;margin-left:0.25rem;">
@@ -1048,8 +1051,8 @@
 
                 <div class="legend" style="margin-top:0.75rem;display:flex;align-items:center;gap:2px;flex-wrap:wrap">
                     <span class="pmz-filter-item pmz-filter-active" id="impact-rf-tout"  onclick="onImpactResultFilter('')">Tout</span>
-                    <span class="pmz-filter-item" id="impact-rf-but"  onclick="onImpactResultFilter('But')"><span style="color:#10B981">●</span> But marqué</span>
-                    <span class="pmz-filter-item" id="impact-rf-rate" onclick="onImpactResultFilter('Tir raté')"><span style="color:#EF4444">✕</span> Tir arrêté/raté</span>
+                    <span class="pmz-filter-item" id="impact-rf-but"  onclick="onImpactResultFilter('But')"><span style="color:#10B981">●</span> <span id="impact-lbl-but-legend">But marqué</span></span>
+                    <span class="pmz-filter-item" id="impact-rf-rate" onclick="onImpactResultFilter('Tir raté')"><span style="color:#EF4444">✕</span> <span id="impact-lbl-rate-legend">Tir raté</span></span>
                 </div>
             </div>
         </div>
@@ -1413,44 +1416,29 @@ let _effInfoPoste = null;
             updateGbGraph();
         }
 
+        // STORY-27 : un gardien route désormais vers la même page-impact qu'un joueur de champ
+        // (au lieu de l'ancienne page-gardiens, orpheline et cassée — cf. docs/arch/impact-gardien.md).
         function openImpactForSelected() {
             if (!currentSelectedJoueur) return;
-            if (detectIsGB(currentSelectedJoueur)) {
-                const sel = document.getElementById('filter-gardien');
-                if (sel) {
-                    sel.value = '';
-                    for (let i = 0; i < sel.options.length; i++) {
-                        if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) {
-                            sel.value = sel.options[i].value;
-                            break;
-                        }
+            const sel = document.getElementById('filter-impact-joueur');
+            if (sel) {
+                sel.value = '';
+                for (let i = 0; i < sel.options.length; i++) {
+                    if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) {
+                        sel.value = sel.options[i].value;
+                        break;
                     }
                 }
-                hideCompareFilters();
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.getElementById('page-gardiens').classList.add('active');
-                updateGardiensPage();
-            } else {
-                const sel = document.getElementById('filter-impact-joueur');
-                if (sel) {
-                    sel.value = '';
-                    for (let i = 0; i < sel.options.length; i++) {
-                        if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) {
-                            sel.value = sel.options[i].value;
-                            break;
-                        }
-                    }
-                }
-                // Sync bilan depuis page Joueurs
-                const _joueurBilanVal = document.getElementById('filter-joueur-bilan')?.value || '';
-                impactBilanFilter = _joueurBilanVal;
-                const impactBilanSel = document.getElementById('filter-impact-bilan');
-                if (impactBilanSel) impactBilanSel.value = _joueurBilanVal;
-                hideCompareFilters();
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.getElementById('page-impact').classList.add('active');
-                updateImpactPage();
             }
+            // Sync bilan depuis page Joueurs
+            const _joueurBilanVal = document.getElementById('filter-joueur-bilan')?.value || '';
+            impactBilanFilter = _joueurBilanVal;
+            const impactBilanSel = document.getElementById('filter-impact-bilan');
+            if (impactBilanSel) impactBilanSel.value = _joueurBilanVal;
+            hideCompareFilters();
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-impact').classList.add('active');
+            updateImpactPage();
         }
 
         function goToAnalysePage() {
@@ -1998,11 +1986,18 @@ let _effInfoPoste = null;
             });
             
             const playerFilters = ['filter-impact-joueur', 'filter-note-joueur'];
+            // Un gardien n'apparaît dans JOUEURS_FENIX (dérivé de row[COLS.joueur]/action_joueur)
+            // que s'il a eu une action offensive au moins une fois — pas garanti pour tous les
+            // gardiens. Sans cette union avec GARDIENS_FENIX, un gardien resterait invisible dans
+            // ces deux filtres malgré des données d'impact réelles (colonne Gardien). Découvert en
+            // marge de STORY-27 (page Impact) ; corrige incidemment le même trou côté page Notes.
+            const _nonGbNames = JOUEURS_FENIX.filter(j => !GARDIENS_FENIX.some(g => matchPlayerName(j, g)));
+            const _allPlayerNames = [..._nonGbNames, ...GARDIENS_FENIX].sort();
             playerFilters.forEach(id => {
                 const sel = document.getElementById(id);
                 if (sel) {
                     sel.innerHTML = '<option value="">Tous les joueurs</option>';
-                    JOUEURS_FENIX.forEach(j => sel.innerHTML += `<option value="${j}">${j}</option>`);
+                    _allPlayerNames.forEach(j => sel.innerHTML += `<option value="${j}">${j}</option>`);
                 }
             });
 
@@ -2689,6 +2684,10 @@ let _effInfoPoste = null;
             PIV: '#F59E0B'
         };
 
+        // Libellé complet par code poste — source unique (STORY-27), remplace l'ancienne constante
+        // locale _posteLblMap dupliquée dans printFicheJoueur() (js/page-joueurs.js).
+        const POSTE_LABELS = { GB:'Gardien de But', AG:'Ailier Gauche', AD:'Ailier Droit', ARG:'Arrière Gauche', ARD:'Arrière Droit', DC:'Demi-Centre', PIV:'Pivot' };
+
         // Pool de positions par poste (assignées dans l'ordre d'apparition dans la feuille Joueurs)
         const POSTE_POSITIONS = {
             GB:  [ {x:50,y:5},  {x:44,y:3},  {x:56,y:3},  {x:44,y:8},  {x:56,y:8},  {x:50,y:11} ],
@@ -3037,7 +3036,14 @@ let _effInfoPoste = null;
                 }
                 if (rows.length === 0) { c.classList.add('zr-eff-grey'); return; }
                 const pct = Math.round(positifs / rows.length * 100);
-                const s   = ZONE_SEUILS[cat];
+                if (isGbSelected) {
+                    // Mitigation R1 (docs/risks/impact-gardien.md) : ZONE_SEUILS est calibré pour un
+                    // % de réussite au tir d'un joueur de champ, pas pour un % d'arrêt de gardien —
+                    // afficher le % sans coloration sémantique plutôt qu'un seuil trompeur.
+                    c.innerHTML = `<span>${c.dataset.label}</span><span class="zr-pct">${pct}%</span>`;
+                    return;
+                }
+                const s = ZONE_SEUILS[cat];
                 c.classList.add(pct >= s.vert ? 'zr-eff-vert' : pct >= s.orange ? 'zr-eff-orange' : 'zr-eff-rouge');
                 c.innerHTML = `<span>${c.dataset.label}</span><span class="zr-pct">${pct}%</span>`;
             });
@@ -3050,39 +3056,71 @@ let _effInfoPoste = null;
             return 'face';
         }
 
+        // STORY-27 : gère désormais aussi le cas gardien (isGB) — source de données club adverse +
+        // finalite/gardien au lieu de club FENIX + resultat/joueur. Pattern porté depuis
+        // renderPlayerZones() (js/player-mode.js), déjà correct pour le Mode Lecture Joueur mobile.
         function updateImpactPage() {
             const joueurFilter   = document.getElementById('filter-impact-joueur').value;
             const resultatFilter = document.getElementById('filter-impact-resultat').value;
+            const isGB = joueurFilter && typeof GARDIENS_FENIX !== 'undefined'
+                ? GARDIENS_FENIX.some(g => matchPlayerName(g, joueurFilter))
+                : false;
+
+            // Libellés adaptatifs (Design F1/F2, docs/design/impact-gardien.md)
+            document.getElementById('impact-lbl-buts').textContent = isGB ? 'Arrêts' : 'Buts';
+            document.getElementById('impact-lbl-tirs').textContent = isGB ? 'Tirs subis' : 'Tirs';
+            document.getElementById('impact-lbl-but-legend').textContent  = isGB ? 'Arrêt' : 'But marqué';
+            document.getElementById('impact-lbl-rate-legend').textContent = isGB ? 'But encaissé' : 'Tir raté';
+            const nomEl = document.getElementById('impact-joueur-nom');
+            if (!joueurFilter) {
+                nomEl.textContent = 'Tous les joueurs';
+                nomEl.style.cssText = 'font-size:0.85rem;margin:2px 0 0.6rem;color:var(--gray-400,#94A3B8);font-weight:500';
+            } else {
+                const tp = (typeof JOUEURS_TERRAIN !== 'undefined') ? JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, joueurFilter)) : null;
+                const displayNom = (tp && tp.nomComplet) || joueurFilter;
+                const posteLabel = tp ? (POSTE_LABELS[tp.poste] || tp.poste) : '';
+                nomEl.innerHTML = `<strong style="color:var(--gray-900,#0F172A);font-weight:700">${displayNom}</strong>` +
+                    (posteLabel ? ` <span style="color:var(--gray-600,#64748B);font-weight:400"> — ${posteLabel}</span>` : '');
+                nomEl.style.cssText = 'font-size:0.85rem;margin:2px 0 0.6rem';
+            }
+
             document.getElementById('impact-rf-tout')?.classList.toggle('pmz-filter-active', resultatFilter === '');
             document.getElementById('impact-rf-but')?.classList.toggle('pmz-filter-active', resultatFilter === 'But');
             document.getElementById('impact-rf-rate')?.classList.toggle('pmz-filter-active', resultatFilter === 'Tir raté');
             const bilanM = impactBilanFilter ? BILANS.find(b => b.nom === impactBilanFilter)?.matchs : null;
 
+            const clubOK = row => isGB ? row[COLS.club] !== 'FENIX' : row[COLS.club] === 'FENIX';
+            const isPositif = row => isGB ? row[COLS.finalite] === 'Tir arrêté' : row[COLS.resultat] === 'But';
+            const eligible  = row => isGB
+                ? (row[COLS.finalite] === 'Tir arrêté' || row[COLS.resultat] === 'But')
+                : ['But', 'Tir raté'].includes(row[COLS.resultat]);
+            const nameOK = row => !joueurFilter || matchPlayerName(
+                (isGB ? row[COLS.gardien] : row[COLS.joueur] || '').toString().trim(), joueurFilter);
+            const resultatOK = row => {
+                if (!resultatFilter) return true;
+                if (isGB) return resultatFilter === 'But' ? row[COLS.resultat] === 'But' : row[COLS.finalite] === 'Tir arrêté';
+                return row[COLS.resultat] === resultatFilter;
+            };
+
             // Stats générales : tous les tirs (avec ou sans coordonnées d'impact)
-            const filteredAll = DATA.filter(row => {
-                if (row[COLS.club] !== 'FENIX') return false;
-                if (!['But', 'Tir raté'].includes(row[COLS.resultat])) return false;
-                if (joueurFilter && !matchPlayerName((row[COLS.joueur]||'').toString().trim(), joueurFilter)) return false;
-                if (bilanM && !bilanM.includes(row[COLS.rencontre])) return false;
-                return true;
-            });
+            const filteredAll = DATA.filter(row =>
+                clubOK(row) && eligible(row) && nameOK(row) && (!bilanM || bilanM.includes(row[COLS.rencontre]))
+            );
             // Canvas / zones : uniquement les tirs avec coordonnées d'impact
-            const filtered = DATA.filter(row => {
-                if (row[COLS.club] !== 'FENIX') return false;
-                if (!['But', 'Tir raté'].includes(row[COLS.resultat])) return false;
-                if (!row[COLS.impact] || !String(row[COLS.impact]).includes(';')) return false;
-                if (joueurFilter && !matchPlayerName((row[COLS.joueur]||'').toString().trim(), joueurFilter)) return false;
-                if (impactZoneFilter && row[COLS.field_position] !== impactZoneFilter) return false;
-                if (resultatFilter && row[COLS.resultat] !== resultatFilter) return false;
-                if (bilanM && !bilanM.includes(row[COLS.rencontre])) return false;
-                return true;
-            });
+            const filtered = DATA.filter(row =>
+                clubOK(row) && eligible(row) &&
+                row[COLS.impact] && String(row[COLS.impact]).includes(';') &&
+                nameOK(row) &&
+                (!impactZoneFilter || row[COLS.field_position] === impactZoneFilter) &&
+                resultatOK(row) &&
+                (!bilanM || bilanM.includes(row[COLS.rencontre]))
+            );
 
             const total = filteredAll.length;
-            const buts  = filteredAll.filter(row => row[COLS.resultat] === 'But').length;
-            const pct   = total > 0 ? Math.round(buts / total * 100) : null;
+            const positifs = filteredAll.filter(isPositif).length;
+            const pct   = total > 0 ? Math.round(positifs / total * 100) : null;
             document.getElementById('impact-total').textContent = total;
-            document.getElementById('impact-buts').textContent  = buts;
+            document.getElementById('impact-buts').textContent  = positifs;
             const effEl = document.getElementById('impact-eff');
             const poste = !impactZoneFilter ? getPlayerPoste(joueurFilter) : null;
             _effInfoPoste = poste;
@@ -3093,18 +3131,14 @@ let _effInfoPoste = null;
                 effEl.style.color = impactZoneFilter ? '#0f172a' : getEffColor(pct, poste);
             }
 
-            drawImpactCanvas('impact-canvas-alg',  IMPACT_IMAGES.alg,  filtered.filter(r => getImpactView(r) === 'alg'));
-            drawImpactCanvas('impact-canvas-face', IMPACT_IMAGES.face, filtered.filter(r => getImpactView(r) === 'face'));
-            drawImpactCanvas('impact-canvas-ald',  IMPACT_IMAGES.ald,  filtered.filter(r => getImpactView(r) === 'ald'));
+            drawImpactCanvas('impact-canvas-alg',  IMPACT_IMAGES.alg,  filtered.filter(r => getImpactView(r) === 'alg'),  isGB);
+            drawImpactCanvas('impact-canvas-face', IMPACT_IMAGES.face, filtered.filter(r => getImpactView(r) === 'face'), isGB);
+            drawImpactCanvas('impact-canvas-ald',  IMPACT_IMAGES.ald,  filtered.filter(r => getImpactView(r) === 'ald'),  isGB);
 
             // Sous-brillance des zones sans données pour le joueur sélectionné
             const zonesAvecDonnees = joueurFilter
-                ? new Set(DATA.filter(r =>
-                    r[COLS.club] === 'FENIX' &&
-                    ['But', 'Tir raté'].includes(r[COLS.resultat]) &&
-                    matchPlayerName((r[COLS.joueur]||'').toString().trim(), joueurFilter) &&
-                    r[COLS.field_position]
-                  ).map(r => r[COLS.field_position]))
+                ? new Set(DATA.filter(r => clubOK(r) && eligible(r) && nameOK(r) && r[COLS.field_position])
+                    .map(r => r[COLS.field_position]))
                 : null;
             document.querySelectorAll('#zone-rect-selector .zr-cell').forEach(c => {
                 c.classList.toggle('zr-empty', !!zonesAvecDonnees && !zonesAvecDonnees.has(c.dataset.zone));
@@ -3120,7 +3154,7 @@ let _effInfoPoste = null;
             updateImpactPage();
         }
 
-        function drawImpactCanvas(canvasId, img, data) {
+        function drawImpactCanvas(canvasId, img, data, isGB) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
             const container = canvas.parentElement;
@@ -3164,7 +3198,8 @@ let _effInfoPoste = null;
                 const s = 6;
                 ctx.save();
                 ctx.lineCap = 'round';
-                if (row[COLS.resultat] === 'But') {
+                const isPositifDot = isGB ? row[COLS.finalite] === 'Tir arrêté' : row[COLS.resultat] === 'But';
+                if (isPositifDot) {
                     ctx.beginPath();
                     ctx.arc(dotX, dotY, s, 0, Math.PI * 2);
                     ctx.fillStyle = '#10B981';

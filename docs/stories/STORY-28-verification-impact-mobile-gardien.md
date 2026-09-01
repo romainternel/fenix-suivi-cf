@@ -9,10 +9,10 @@
 - Cette story est une vérification, pas un développement — mais reste une story à part entière : "je ne fais pas confiance au code, je vérifie en conditions réelles" (principe déjà appliqué systématiquement sur ce projet)
 
 ## Critères d'acceptation
-- [ ] Connexion réelle avec le compte d'un des 3 gardiens (Gabin.S, Noah.O ou Enzo.D), onglet "Zones" du Mode Lecture Joueur (375px, mobile)
-- [ ] Stats et zones d'arrêt/encaissement affichées correctement, cohérentes avec la fiche du même gardien côté staff
-- [ ] Libellés adaptatifs déjà en place ("ARRÊTS ET BUTS CONCÉDÉS", "Arrêté"/"Encaissé") confirmés visuellement, pas juste lus dans le code
-- [ ] Si un écart réel est trouvé (contrairement à l'attendu de l'Architecture) : le documenter et le corriger dans cette story, ne pas le reporter silencieusement
+- [x] Connexion réelle avec le compte d'un gardien (Gabin.S, compte de test créé puis supprimé), onglet "Zones" du Mode Lecture Joueur (375px, mobile)
+- [x] Stats et zones d'arrêt/encaissement affichées correctement : "6 arrêts / 16 tirs, 38%" — identique à la vue staff (STORY-27) et à la table GB (STORY-26/v246)
+- [x] Libellés adaptatifs confirmés visuellement : "ARRÊTS ET BUTS CONCÉDÉS", légende "Arrêté"/"Encaissé" — `docs/e2e/screenshots/story-28-mobile-gardien-zones.png`
+- [x] Aucun écart trouvé — le code (`renderPlayerZones()`) était déjà correct comme anticipé par l'Architecture, confirmé en conditions réelles plutôt que simplement supposé
 
 ## Hors scope
 - Toute modification de la vue staff/desktop — STORY-27

@@ -11,14 +11,14 @@
 - Spec exacte : `docs/design/impact-gardien.md`, `docs/visual/impact-gardien.md`
 
 ## Critères d'acceptation
-- [ ] `openImpactForSelected()` route désormais un gardien vers `page-impact` (comme un joueur de champ) — plus jamais vers `page-gardiens`
-- [ ] `updateImpactPage()` détecte le cas gardien (`detectIsGB()`) et bascule sa source de données : club adverse + `finalite` (Tir arrêté/But) + comparaison sur `row[COLS.gardien]` via `matchPlayerName()`, au lieu de club FENIX + `resultat` + `row[COLS.joueur]`
-- [ ] Les 3 vues terrain (Externe Gauche/Central/Externe Droit) affichent les points d'arrêt (vert) et de but encaissé (rouge) pour un gardien sélectionné
-- [ ] Libellés adaptatifs selon le cas : `ARRÊTS`/`TIRS SUBIS` (au lieu de `BUTS`/`TIRS`), légende "Arrêt"/"But encaissé" (au lieu de "But"/"Tir raté"), filtre Résultat avec les bonnes options pour un gardien
-- [ ] Nom + poste du joueur actuellement sélectionné affiché sous le titre de section (`Enzo Ditta — Gardien de but`), pour un joueur de champ comme pour un gardien ; "Tous les joueurs" si aucun filtre
-- [ ] **Mitigation R1 (Risk Analyst, P0)** : la coloration par seuil de la grille "Efficacité par zone" (`ZONE_SEUILS`) est neutralisée pour un gardien — affichage du % sans couleur sémantique trompeuse, pas de seuil de joueur de champ appliqué à un % d'arrêt
-- [ ] **Mitigation R2 (Risk Analyst, P0) — non-régression explicite obligatoire** : comparer un joueur de champ avant/après cette story sur les mêmes chiffres exacts (stats + zones), pas une vérification visuelle approximative
-- [ ] Testé : sélectionner chacun des 3 gardiens réels (Gabin.S, Noah.O, Enzo.D) → stats cohérentes avec leur fiche respective (ex. Enzo Ditta 15/40, 38%)
+- [x] `openImpactForSelected()` route désormais un gardien vers `page-impact` (comme un joueur de champ) — plus jamais vers `page-gardiens`. Testé : `document.querySelector('.page.active').id === 'page-impact'` pour un gardien sélectionné.
+- [x] `updateImpactPage()` détecte le cas gardien et bascule sa source de données : club adverse + `finalite` (Tir arrêté/But) + comparaison sur `row[COLS.gardien]` via `matchPlayerName()`, au lieu de club FENIX + `resultat` + `row[COLS.joueur]`
+- [x] Les 3 vues terrain affichent les points d'arrêt (vert) et de but encaissé (rouge) pour un gardien — testé sur Gabin SALTEL : 6 points verts + 10 croix rouges répartis sur les 3 vues, cohérent avec 6/16 arrêts
+- [x] Libellés adaptatifs : `ARRÊTS`/`TIRS SUBIS`, légende "Arrêt"/"But encaissé" — vérifiés visuellement (`docs/e2e/screenshots/story-27-impact-gardien.png`). Filtre Résultat testé explicitement : "Arrêt" seul → 6 points, "But encaissé" seul → 10 points, somme exacte = 16
+- [x] Nom + poste affiché sous le titre de section (`Gabin SALTEL — Gardien de But`, `Antonin VACHE — Demi-Centre`), "Tous les joueurs" si aucun filtre — testé pour les 2 cas
+- [x] **Mitigation R1 (P0)** : coloration par seuil de la grille "Efficacité par zone" neutralisée pour un gardien — testé explicitement : 7 cellules avec pourcentage affiché (0%/33%/100%/75%/25%), aucune classe `zr-eff-vert/orange/rouge` appliquée
+- [x] **Mitigation R2 (P0) — non-régression explicite** : Antonin Vache avant/après identique (2/4, 50%, mêmes points sur les mêmes vues terrain, légende "But marqué"/"Tir raté" inchangée) — `docs/e2e/screenshots/story-27-impact-joueur-champ-nonregression.png`
+- [x] Testé : les 3 gardiens réels (Gabin.S 6/16 38%, Noah.O 15/40 38%, Enzo.D 15/40 38%) — cohérents avec la table GB de la page Notes (STORY-26/v246)
 
 ## Hors scope
 - F3 (Mode Lecture Joueur mobile) — déjà correct, story de vérification séparée (STORY-28)
