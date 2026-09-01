@@ -1228,26 +1228,49 @@
 
             if (colHeaders.length < 2) { container.innerHTML = ''; return; }
 
+            const fmtVal = (val, unit) => val !== null
+                ? (Number.isInteger(Math.round(val * 10) / 10) ? val.toFixed(0) : val.toFixed(1)) + unit
+                : null;
+
             let rows = '';
             statsDef.forEach(stat => {
                 const avgs = {};
                 colHeaders.forEach(col => { avgs[col.key] = avg(groups[col.key], stat.key); });
 
-                let sigV = '', sigD = '';
+                let sigV = '', sigD = '', sigLevel = null, relDiff = null, vBetter = null;
                 if (avgs.V !== null && avgs.D !== null) {
-                    const base    = (avgs.V + avgs.D) / 2;
-                    const relDiff = base > 0 ? Math.abs(avgs.V - avgs.D) / base : 0;
-                    const vBetter = stat.higherBetter ? avgs.V > avgs.D : avgs.V < avgs.D;
+                    const base = (avgs.V + avgs.D) / 2;
+                    relDiff = base > 0 ? Math.abs(avgs.V - avgs.D) / base : 0;
+                    vBetter = stat.higherBetter ? avgs.V > avgs.D : avgs.V < avgs.D;
                     if (relDiff >= 0.15) {
                         sigV = vBetter ? ' 🔑' : ' ⚠️';
                         sigD = vBetter ? ' ⚠️' : ' 🔑';
+                        sigLevel = 'fort';
                     } else if (relDiff >= 0.07) {
                         sigV = vBetter ? ' ↑' : ' ↓';
                         sigD = vBetter ? ' ↓' : ' ↑';
+                        sigLevel = 'modéré';
+                    } else {
+                        sigLevel = 'faible';
                     }
                 }
 
-                let cells = `<td class="corr-label">${stat.label}</td>`;
+                let tooltip;
+                if (avgs.V === null || avgs.D === null) {
+                    tooltip = `Comparaison victoires/défaites non disponible cette saison (pas encore assez de matchs des deux types).`;
+                } else {
+                    const better  = vBetter ? 'victoire' : 'défaite';
+                    const pct     = Math.round(relDiff * 100);
+                    const compare = `En moyenne ${fmtVal(avgs.V, stat.unit)} en victoire contre ${fmtVal(avgs.D, stat.unit)} en défaite (écart de ${pct}%).`;
+                    const meaning = sigLevel === 'fort'
+                        ? `🔑 Signal fort : cet écart est important, ce KPI est nettement associé au résultat (plus favorable en ${better}).`
+                        : sigLevel === 'modéré'
+                            ? `↑↓ Signal modéré : cet écart est notable mais moins déterminant (plus favorable en ${better}).`
+                            : `Écart trop faible pour être significatif.`;
+                    tooltip = `${compare} ${meaning}`;
+                }
+
+                let cells = `<td class="corr-label">${stat.label}<span class="enc-info-btn" style="margin-left:5px;width:16px;height:16px;font-size:0.6rem;vertical-align:middle" title="${tooltip.replace(/"/g, '&quot;')}">i</span></td>`;
                 colHeaders.forEach(col => {
                     const val = avgs[col.key];
                     const sig = col.key === 'V' ? sigV : (col.key === 'D' ? sigD : '');
