@@ -11,14 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=244">
-    <script src="js/supabase-client.js?v=244"></script>
-    <script src="js/utils.js?v=244"></script>
-    <script src="js/impact-images.js?v=244"></script>
-    <script src="js/player-mode.js?v=244"></script>
-    <script src="js/page-joueurs.js?v=244"></script>
-    <script src="js/page-notes-graph.js?v=244"></script>
-    <script src="js/page-analyse.js?v=244"></script>
+    <link rel="stylesheet" href="css/style.css?v=245">
+    <script src="js/supabase-client.js?v=245"></script>
+    <script src="js/utils.js?v=245"></script>
+    <script src="js/impact-images.js?v=245"></script>
+    <script src="js/player-mode.js?v=245"></script>
+    <script src="js/page-joueurs.js?v=245"></script>
+    <script src="js/page-notes-graph.js?v=245"></script>
+    <script src="js/page-analyse.js?v=245"></script>
 </head>
 <body>
 
@@ -154,6 +154,7 @@
                     <button id="btn-player-accounts" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); openPlayerAccountsModal();">🔑 Comptes joueurs</button>
                     <button id="btn-preview-mode" class="nav-tools-item nav-tools-item-accent" role="menuitem" onclick="closeToolsMenu(); openPreviewModal();">👤 Vue joueur</button>
                     <button id="btn-familles" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); openFamillesModal();">🏷️ Familles tactiques</button>
+                    <button id="btn-bilans" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); openBilansModal();">📅 Bilans</button>
                     <button id="btn-migrate-local" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); checkAndOfferLocalMigration(true);">🔄 Migrer mes données locales</button>
                 </div>
             </div>
@@ -1766,7 +1767,10 @@ let _effInfoPoste = null;
                     TEMPS_JEU[key][r.match] = r.min;
                 });
 
-                _rawBilanRows = bilanRows.map(r => ({ nom: r.nom, saison: r.saison || '', journeeFin: r.journee_fin }));
+                // Trié par journée de fin croissante (_sortRawBilanRows, définie plus bas) — processBilans()
+                // traite les bilans dans l'ordre reçu, pas par date ; nécessaire depuis que STORY-26
+                // permet d'ajouter un bilan hors ordre chronologique via l'éditeur.
+                _rawBilanRows = _sortRawBilanRows(bilanRows.map(r => ({ nom: r.nom, saison: r.saison || '', journeeFin: r.journee_fin })));
 
                 populateLoginPlayerDropdown();
                 hideSupabaseBootOverlay();
@@ -1868,6 +1872,102 @@ let _effInfoPoste = null;
                 if (sel)  sel.innerHTML = bilanOptions;
                 if (wrap) wrap.style.display = BILANS.length ? 'flex' : 'none';
             });
+        }
+
+        // ── STORY-26 : édition des bilans (Saison/Nom/Journée fin) — modèle direct STORY-25 ──
+        // processBilans() peuple déjà lui-même les dropdowns "Période" (ci-dessus) : le rappeler
+        // après un ajout/suppression suffit à répercuter le changement, pas besoin de populateFilters()
+        // (qui reconstruirait aussi les filtres match/joueur/saison sans rapport, et perdrait leur
+        // sélection en cours).
+        //
+        // processBilans() traite les bilans dans l'ordre où il les reçoit (pas par journée de fin) —
+        // un bilan dont la journée de fin est antérieure au dernier déjà traité est silencieusement
+        // ignoré (endIdx <= prevEndIdx). Sans danger tant que la source était l'Excel (lignes déjà
+        // dans l'ordre chronologique), mais un ajout via cet éditeur n'a plus cette garantie —
+        // toujours trier par journée de fin croissante avant de peupler _rawBilanRows.
+        function _sortRawBilanRows(rows) {
+            const num = r => parseInt(((r.journeeFin || '').match(/(\d+)/) || [])[1] || '0');
+            return rows.slice().sort((a, b) => num(a) - num(b));
+        }
+
+        async function _refreshBilansData() {
+            const rows = await fetchAll('bilan');
+            _rawBilanRows = _sortRawBilanRows(rows.map(r => ({ nom: r.nom, saison: r.saison || '', journeeFin: r.journee_fin })));
+            processBilans();
+            return rows;
+        }
+
+        function _renderBilansList(rows) {
+            const countLabel = document.getElementById('bilan-count-label');
+            if (countLabel) countLabel.textContent = `BILANS EXISTANTS (${rows.length})`;
+            const tbody = document.getElementById('bilan-list');
+            if (!tbody) return;
+            const sorted = rows.slice().sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+            tbody.innerHTML = sorted.length === 0
+                ? '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:12px">Aucun bilan</td></tr>'
+                : sorted.map(r => `<tr>
+                    <td style="padding:6px 10px">${_escapeHtml(r.saison || '—')}</td>
+                    <td style="padding:6px 10px">${_escapeHtml(r.nom)}</td>
+                    <td style="padding:6px 10px">${_escapeHtml(r.journee_fin)}</td>
+                    <td style="padding:6px 10px;text-align:right">
+                        <button data-id="${r.id}" onclick="deleteBilan(this.dataset.id)"
+                                style="color:#EF4444;background:none;border:none;cursor:pointer;font-size:1rem" title="Supprimer">🗑</button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        async function openBilansModal() {
+            const tbody = document.getElementById('bilan-list');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:12px">Chargement…</td></tr>';
+            _openSlidePanel('bilan-modal', 'bilan-overlay');
+            let rows;
+            try {
+                rows = await fetchAll('bilan');
+            } catch (e) {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#EF4444;padding:12px">Erreur de chargement — réessaie</td></tr>';
+                return;
+            }
+            _renderBilansList(rows);
+        }
+
+        function closeBilansModal(returnFocus) {
+            _closeSlidePanel('bilan-modal', 'bilan-overlay', returnFocus);
+        }
+
+        async function addBilan() {
+            const saisonEl = document.getElementById('bilan-saison');
+            const nomEl = document.getElementById('bilan-nom');
+            const journeeEl = document.getElementById('bilan-journee');
+            const saison = saisonEl ? saisonEl.value.trim() : '';
+            const nom = nomEl ? nomEl.value.trim() : '';
+            const journeeFin = journeeEl ? journeeEl.value.trim() : '';
+            if (!nom || !journeeFin) { alert('Renseigne au moins un nom et une journée de fin'); return; }
+            const btn = document.getElementById('bilan-add-btn');
+            if (btn) { btn.disabled = true; btn.textContent = '…'; }
+            try {
+                await upsertRows('bilan', [{ saison: saison || null, nom, journee_fin: journeeFin }]);
+                const rows = await _refreshBilansData();
+                if (saisonEl) saisonEl.value = '';
+                if (nomEl) nomEl.value = '';
+                if (journeeEl) journeeEl.value = '';
+                _renderBilansList(rows);
+            } catch (e) {
+                alert('Erreur lors de l\'ajout : ' + (e.message || 'échec réseau'));
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '✅ AJOUTER'; }
+            }
+        }
+
+        async function deleteBilan(id) {
+            if (!confirm('Supprimer ce bilan ?')) return;
+            try {
+                const { error } = await supabaseClient.from('bilan').delete().eq('id', Number(id));
+                if (error) throw error;
+                const rows = await _refreshBilansData();
+                _renderBilansList(rows);
+            } catch (e) {
+                alert('Erreur lors de la suppression : ' + (e.message || 'échec réseau'));
+            }
         }
 
         function populateFilters() {
@@ -3715,6 +3815,52 @@ let _effInfoPoste = null;
                 </tr>
             </thead>
             <tbody id="fam-mapping-list"></tbody>
+        </table>
+    </div>
+
+    <!-- ── STAFF ── panneau édition des bilans (STORY-26) ─────────────────────── -->
+    <div id="bilan-overlay" class="slide-panel-overlay" onclick="closeBilansModal()"></div>
+    <div id="bilan-modal" class="slide-panel" role="dialog" aria-modal="true" aria-labelledby="bilan-modal-title">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <h2 id="bilan-modal-title" style="margin:0;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;
+                       color:#0A2463;letter-spacing:1.5px">📅 BILANS</h2>
+            <button onclick="closeBilansModal()"
+                    style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#64748B">✕</button>
+        </div>
+        <!-- Formulaire ajout -->
+        <div style="background:#F8FAFC;border-radius:10px;padding:16px;margin-bottom:20px">
+            <div style="font-weight:700;font-size:0.8rem;color:#64748B;margin-bottom:10px;letter-spacing:1px">
+                AJOUTER UN BILAN
+            </div>
+            <input id="bilan-saison" type="text" placeholder="Saison (ex: 2026-2027, facultatif)"
+                   style="width:100%;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;
+                          font-size:0.9rem;box-sizing:border-box;margin-bottom:10px">
+            <input id="bilan-nom" type="text" placeholder="Nom (ex: Bilan 1)"
+                   style="width:100%;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;
+                          font-size:0.9rem;box-sizing:border-box;margin-bottom:10px">
+            <input id="bilan-journee" type="text" placeholder="Journée fin (ex: J10)"
+                   style="width:100%;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;
+                          font-size:0.9rem;box-sizing:border-box;margin-bottom:10px">
+            <button id="bilan-add-btn" onclick="addBilan()"
+                    style="width:100%;background:#0A2463;color:white;border:none;border-radius:8px;
+                           padding:10px;font-weight:700;cursor:pointer;font-size:0.9rem">
+                ✅ AJOUTER
+            </button>
+        </div>
+        <!-- Liste bilans -->
+        <div id="bilan-count-label" style="font-weight:700;font-size:0.8rem;color:#64748B;margin-bottom:10px;letter-spacing:1px">
+            BILANS EXISTANTS
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:0.88rem">
+            <thead>
+                <tr style="background:#F1F5F9">
+                    <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">SAISON</th>
+                    <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">NOM</th>
+                    <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">JOURNÉE FIN</th>
+                    <th style="padding:8px 10px"></th>
+                </tr>
+            </thead>
+            <tbody id="bilan-list"></tbody>
         </table>
     </div>
 <div id="timeline-tooltip" style="
