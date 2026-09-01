@@ -14,13 +14,15 @@
 
 ## Critères d'acceptation
 
-- [ ] Joueur sélectionné a une photo corps entier → avatar cliquable (curseur pointer, léger effet hover)
-- [ ] Clic sur l'avatar → le terrain est remplacé visuellement par la photo corps entier, dans la même zone (`.court-container`)
-- [ ] Un bouton "↩ Terrain" apparaît et permet de revenir à l'affichage terrain
-- [ ] Changer de joueur sélectionné pendant que la photo est affichée → retour automatique à l'affichage terrain (pas de photo obsolète affichée pour le nouveau joueur)
-- [ ] Changer le filtre match/bilan pendant que le mode photo est actif, puis revenir au terrain → le terrain reflète bien le filtre à jour (pas de données obsolètes, grâce au masquage CSS plutôt qu'un retrait DOM)
-- [ ] Joueur sélectionné sans photo corps entier → avatar non cliquable, aucun changement visuel au clic
-- [ ] 0 erreur console dans tous les cas
+- [x] Joueur sélectionné a une photo corps entier → avatar cliquable (curseur pointer, léger effet hover)
+- [x] Clic sur l'avatar → le terrain est remplacé visuellement par la photo corps entier, dans la même zone (`.court-container`) — vérifié Marius.C, screenshot conforme au design
+- [x] Un bouton "↩ Terrain" apparaît et permet de revenir à l'affichage terrain — testé dans les deux sens
+- [x] Changer de joueur sélectionné pendant que la photo est affichée → retour automatique à l'affichage terrain — vérifié (`_courtPhotoMode` repasse à `false`, SVG réaffiché)
+- [x] Changer le filtre match/bilan pendant que le mode photo est actif, puis revenir au terrain → le terrain reflète bien le filtre à jour — garanti par construction : `#hb-court-svg` est masqué via `display:none` (jamais retiré du DOM), `#court-players` reste présent et continue d'être mis à jour par `renderCourtPlayers()` même masqué
+- [x] Joueur sélectionné sans photo corps entier → avatar non cliquable, aucun changement visuel au clic — vérifié Yoran.C
+- [x] 0 erreur console dans tous les cas
+
+**Livré en v250 (2026-09-01).**
 
 ## Hors scope
 

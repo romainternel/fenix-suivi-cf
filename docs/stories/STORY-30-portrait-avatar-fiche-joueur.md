@@ -15,14 +15,16 @@
 
 ## Critères d'acceptation
 
-- [ ] `getPlayerPhoto(nom, 'portrait')` retourne l'URL si le nom matche une clé de `PLAYER_PHOTOS` (via `matchPlayerName`, tolérant les formats "Prénom" / "Prénom.Initiale"), `null` sinon
-- [ ] Sur la page Joueurs, sélectionner un joueur avec photo → `.jp-avatar` affiche l'image (`object-fit:cover`, cercle), plus les initiales
-- [ ] Sélectionner un joueur sans photo → `.jp-avatar` affiche les initiales, strictement identique au comportement actuel (aucune régression visuelle)
-- [ ] Photo référencée mais fichier introuvable (404) → repli automatique sur les initiales via `onerror`, aucune icône "image cassée" visible
-- [ ] Même comportement vérifié en mode joueur mobile (`player-mode.js`, `.pmf-avatar`) pour le joueur connecté
-- [ ] `alt="{nom du joueur}"` présent sur chaque `<img>` de photo
-- [ ] Vérifié sur la prod déployée (GitHub Pages), pas seulement en local (risque de casse de fichier Windows→Linux, cf. R2)
-- [ ] 0 erreur console dans tous les cas (avec photo, sans photo, photo cassée)
+- [x] `getPlayerPhoto(nom, 'portrait')` retourne l'URL si le nom matche une clé de `PLAYER_PHOTOS` (via `matchPlayerName`, tolérant les formats "Prénom" / "Prénom.Initiale"), `null` sinon
+- [x] Sur la page Joueurs, sélectionner un joueur avec photo → `.jp-avatar` affiche l'image (`object-fit:cover`, cercle), plus les initiales — vérifié Marius.C
+- [x] Sélectionner un joueur sans photo → `.jp-avatar` affiche les initiales, strictement identique au comportement actuel (aucune régression visuelle) — vérifié Yoran.C (pas encore de photo)
+- [x] Photo référencée mais fichier introuvable (404) → repli automatique sur les initiales via `onerror`, aucune icône "image cassée" visible
+- [x] Même comportement vérifié en mode joueur mobile (`player-mode.js`, `.pmf-avatar`) pour le joueur connecté — vérifié via `openPreviewModal()`/`startPreviewMode()`
+- [x] `alt="{nom du joueur}"` présent sur chaque `<img>` de photo
+- [x] Vérifié sur la prod déployée (GitHub Pages), pas seulement en local — les 36 fichiers `assets/photos/*.webp` répondent 200 en prod (v250), avatar photo confirmé visuellement sur la prod réelle
+- [x] 0 erreur console dans tous les cas (avec photo, sans photo, photo cassée) — seule erreur observée en prod est le refresh-token Supabase déjà documenté (`audit-complet-2026-09-01-soir.md` §4), sans lien avec cette feature
+
+**Livré en v250 (2026-09-01), 18/21 joueurs actuels ont une photo.**
 
 ## Hors scope
 

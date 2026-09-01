@@ -13,11 +13,13 @@
 
 ## Critères d'acceptation
 
-- [ ] Joueur avec photo corps entier disponible → visible sur la page de couverture, export **PDF** (impression navigateur)
-- [ ] Même joueur → visible sur la page de couverture, export **PowerPoint** (`exportJoueurPPT()`)
-- [ ] Joueur sans photo corps entier → page de couverture strictement identique à l'actuelle (logo + nom + poste + période), aucun espace vide résiduel
-- [ ] Le texte existant (nom, poste, période, logo) reste entièrement lisible, aucun chevauchement avec la photo pour un nom de longueur normale
-- [ ] 0 erreur console pendant l'export, dans les deux cas (avec/sans photo)
+- [x] Joueur avec photo corps entier disponible → visible sur la page de couverture, export **PDF** (impression navigateur) — vérifié Marius.C, effet "carte joueur" bas-droite avec drop-shadow
+- [x] Même joueur → visible sur la page de couverture, export **PowerPoint** (`exportJoueurPPT()`) — export réel déclenché et téléchargé (`Marius.C_suivi_CF.pptx`) sans erreur
+- [x] Joueur sans photo corps entier → page de couverture strictement identique à l'actuelle (logo + nom + poste + période), aucun espace vide résiduel — vérifié Yoran.C
+- [x] Le texte existant (nom, poste, période, logo) reste entièrement lisible, aucun chevauchement avec la photo pour un nom de longueur normale
+- [x] 0 erreur console pendant l'export, dans les deux cas (avec/sans photo)
+
+**Livré en v250 (2026-09-01).**
 
 ## Hors scope
 
