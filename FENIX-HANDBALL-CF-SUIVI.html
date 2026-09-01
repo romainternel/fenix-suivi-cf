@@ -11,14 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=243">
-    <script src="js/supabase-client.js?v=243"></script>
-    <script src="js/utils.js?v=243"></script>
-    <script src="js/impact-images.js?v=243"></script>
-    <script src="js/player-mode.js?v=243"></script>
-    <script src="js/page-joueurs.js?v=243"></script>
-    <script src="js/page-notes-graph.js?v=243"></script>
-    <script src="js/page-analyse.js?v=243"></script>
+    <link rel="stylesheet" href="css/style.css?v=244">
+    <script src="js/supabase-client.js?v=244"></script>
+    <script src="js/utils.js?v=244"></script>
+    <script src="js/impact-images.js?v=244"></script>
+    <script src="js/player-mode.js?v=244"></script>
+    <script src="js/page-joueurs.js?v=244"></script>
+    <script src="js/page-notes-graph.js?v=244"></script>
+    <script src="js/page-analyse.js?v=244"></script>
 </head>
 <body>
 
@@ -153,6 +153,7 @@
                 <div id="nav-tools-menu" class="nav-tools-menu" style="display:none" role="menu">
                     <button id="btn-player-accounts" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); openPlayerAccountsModal();">🔑 Comptes joueurs</button>
                     <button id="btn-preview-mode" class="nav-tools-item nav-tools-item-accent" role="menuitem" onclick="closeToolsMenu(); openPreviewModal();">👤 Vue joueur</button>
+                    <button id="btn-familles" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); openFamillesModal();">🏷️ Familles tactiques</button>
                     <button id="btn-migrate-local" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); checkAndOfferLocalMigration(true);">🔄 Migrer mes données locales</button>
                 </div>
             </div>
@@ -3668,6 +3669,52 @@ let _effInfoPoste = null;
                 </tr>
             </thead>
             <tbody id="pa-accounts-list"></tbody>
+        </table>
+    </div>
+
+    <!-- ── STAFF ── panneau édition familles tactiques (STORY-25) ────────────── -->
+    <div id="fam-overlay" class="slide-panel-overlay" onclick="closeFamillesModal()"></div>
+    <div id="fam-modal" class="slide-panel" role="dialog" aria-modal="true" aria-labelledby="fam-modal-title">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <h2 id="fam-modal-title" style="margin:0;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;
+                       color:#0A2463;letter-spacing:1.5px">🏷️ FAMILLES TACTIQUES</h2>
+            <button onclick="closeFamillesModal()"
+                    style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#64748B">✕</button>
+        </div>
+        <div id="fam-default-banner" style="display:none;background:#EFF6FF;color:#1E40AF;border-radius:8px;
+                   padding:8px 12px;font-size:0.78rem;margin-bottom:16px">
+            Ces correspondances viennent de la configuration initiale — modifie-les librement.
+        </div>
+        <!-- Formulaire ajout -->
+        <div style="background:#F8FAFC;border-radius:10px;padding:16px;margin-bottom:20px">
+            <div style="font-weight:700;font-size:0.8rem;color:#64748B;margin-bottom:10px;letter-spacing:1px">
+                AJOUTER UNE CORRESPONDANCE
+            </div>
+            <input id="fam-intention" type="text" placeholder="Intention attaque (ex: ISO 4)"
+                   style="width:100%;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;
+                          font-size:0.9rem;box-sizing:border-box;margin-bottom:10px">
+            <select id="fam-famille-sel" style="width:100%;border:1px solid #E2E8F0;border-radius:8px;
+                           padding:8px 12px;margin-bottom:10px;font-size:0.9rem">
+            </select>
+            <button id="fam-add-btn" onclick="addFamilleMapping()"
+                    style="width:100%;background:#0A2463;color:white;border:none;border-radius:8px;
+                           padding:10px;font-weight:700;cursor:pointer;font-size:0.9rem">
+                ✅ AJOUTER
+            </button>
+        </div>
+        <!-- Liste correspondances -->
+        <div id="fam-count-label" style="font-weight:700;font-size:0.8rem;color:#64748B;margin-bottom:10px;letter-spacing:1px">
+            CORRESPONDANCES EXISTANTES
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:0.88rem">
+            <thead>
+                <tr style="background:#F1F5F9">
+                    <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">INTENTION ATTAQUE</th>
+                    <th style="padding:8px 10px;text-align:left;color:#64748B;font-weight:600">FAMILLE</th>
+                    <th style="padding:8px 10px"></th>
+                </tr>
+            </thead>
+            <tbody id="fam-mapping-list"></tbody>
         </table>
     </div>
 <div id="timeline-tooltip" style="

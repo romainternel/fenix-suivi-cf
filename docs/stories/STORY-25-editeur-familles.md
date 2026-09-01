@@ -10,14 +10,14 @@
 - Modèle direct à suivre : `openPlayerAccountsModal()`/`savePlayerAccount()`/`deletePlayerAccount()` (`js/player-mode.js`) — même structure, même pattern `.slide-panel`, adapté à `famille_mapping`
 
 ## Critères d'acceptation
-- [ ] Nouvelle entrée "🏷️ Familles tactiques" dans le menu "⚙ Outils", à la suite de "Comptes joueurs"/"Vue joueur"
-- [ ] Panneau `.slide-panel` (glisse depuis la droite, overlay, Échap, focus trap — identique à STORY-19) listant les correspondances existantes, triées alphabétiquement par "Intention attaque"
-- [ ] Formulaire d'ajout : champ texte "Intention attaque" + liste déroulante fermée sur les 8 familles connues (`ENC_FAMILLES_ORDRE`) — pas de champ texte libre pour la famille, pour éviter une 9e famille fantôme non gérée par le reste de l'app (couleurs, camemberts)
-- [ ] Bouton supprimer (`🗑`) par ligne avec confirmation native (`confirm()`, cohérent avec `deletePlayerAccount()`)
-- [ ] Toute modification (ajout/suppression) écrit immédiatement dans `famille_mapping` (Supabase) et met à jour `FAMILLE_MAPPING` en mémoire — effet visible immédiatement sur les cards d'enclenchement de la page Analyse sans rechargement de page
-- [ ] État vide / premier lancement : si `famille_mapping` ne contient que les valeurs par défaut (pas encore éditées), un bandeau discret l'indique ("Ces correspondances viennent de la configuration initiale — modifie-les librement")
-- [ ] **Mitigation R6** : retour d'erreur visible en cas d'échec réseau lors d'un ajout/suppression
-- [ ] Testé : modifier une famille, vérifier que la page Analyse (camembert/matrice Enclenchements) reflète le changement sans avoir à réimporter l'Excel
+- [x] Nouvelle entrée "🏷️ Familles tactiques" dans le menu "⚙ Outils", à la suite de "Comptes joueurs"/"Vue joueur"
+- [x] Panneau `.slide-panel` (glisse depuis la droite, overlay, Échap, focus trap — identique à STORY-19) listant les correspondances existantes, triées alphabétiquement par "Intention attaque". Testé : Échap ferme le panneau et rend le focus à "⚙ Outils".
+- [x] Formulaire d'ajout : champ texte "Intention attaque" + liste déroulante fermée sur les 8 familles connues (`ENC_FAMILLES_ORDRE`)
+- [x] Bouton supprimer (`🗑`) par ligne avec confirmation native (`confirm()`), testé via le bouton réel du DOM
+- [x] Toute modification (ajout/suppression) écrit immédiatement dans `famille_mapping` (Supabase) et met à jour `FAMILLE_MAPPING` en mémoire — effet visible immédiatement sur les cards d'enclenchement de la page Analyse sans rechargement de page. **Testé numériquement, pas juste visuellement** : réassignation de "BLOC" (Jeu Pivot → Isoler) → possessions Jeu Pivot 9→7, Isoler 26→28 sur le match affiché, sans navigation ; réassignation inverse → valeurs exactement restaurées.
+- [x] État vide / premier lancement : si `famille_mapping` ne contient que les valeurs par défaut (pas encore éditées), un bandeau discret l'indique. Testé dans les deux sens : bandeau visible sur les 17 valeurs par défaut inchangées, disparaît après une modification, réapparaît après restauration exacte de l'état par défaut.
+- [x] **Mitigation R6** : retour d'erreur visible en cas d'échec réseau lors d'un ajout/suppression — testé explicitement (échec simulé), message d'erreur affiché.
+- [x] Testé : modifier une famille, vérifier que la page Analyse (camembert/matrice Enclenchements) reflète le changement sans avoir à réimporter l'Excel — confirmé (cf. ci-dessus). Aucune donnée réelle laissée altérée : la correspondance BLOC/Jeu Pivot a été restaurée à l'identique et vérifiée via l'API REST après le test.
 
 ## Hors scope
 - Édition de la feuille `Bilan` (STORY-26)

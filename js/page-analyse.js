@@ -2044,6 +2044,109 @@
             }
         }
 
+        // ── STORY-25 : édition des correspondances Intention attaque → Famille (famille_mapping) ──
+        // Modèle direct : openPlayerAccountsModal()/savePlayerAccount()/deletePlayerAccount() (js/player-mode.js).
+        // Reprend les 17 correspondances actuellement amorcées en base (supabase/seed-famille-mapping.sql)
+        // pour détecter si famille_mapping est encore la configuration initiale, jamais éditée par Romain.
+        const _FAMILLE_DEFAULTS = {
+            'ISO 2':'Isoler','ISO 3':'Isoler','ISO 4':'Isoler','ISO 5':'Isoler',
+            '7vs6':'7vs6',
+            '1&2':'Jeu Pivot','2&3':'Jeu Pivot','3&4':'Jeu Pivot','4&5':'Jeu Pivot','5&6':'Jeu Pivot',
+            'GLISSE':'Jeu Pivot','BLOC':'Jeu Pivot',
+            'FAIRE COURIR':'Faire courir',
+            'RENTREE':'Rentrée',
+            'SPECIAUX':'Spéciaux',
+            '6vs5':'6vs5',
+            'JEU RAPIDE':'Jeu Rapide',
+        };
+        function _isFamilleMappingUnedited(map) {
+            const keys = Object.keys(map);
+            const defKeys = Object.keys(_FAMILLE_DEFAULTS);
+            if (keys.length !== defKeys.length) return false;
+            return defKeys.every(k => map[k] === _FAMILLE_DEFAULTS[k]);
+        }
+
+        function _renderFamillesList(rows) {
+            const countLabel = document.getElementById('fam-count-label');
+            if (countLabel) countLabel.textContent = `CORRESPONDANCES EXISTANTES (${rows.length})`;
+            const tbody = document.getElementById('fam-mapping-list');
+            if (!tbody) return;
+            const sorted = rows.slice().sort((a, b) => (a.intention_attaque || '').localeCompare(b.intention_attaque || ''));
+            tbody.innerHTML = sorted.length === 0
+                ? '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:12px">Aucune correspondance</td></tr>'
+                : sorted.map(r => `<tr>
+                    <td style="padding:6px 10px">${_escapeHtml(r.intention_attaque)}</td>
+                    <td style="padding:6px 10px">${_escapeHtml(r.famille)}</td>
+                    <td style="padding:6px 10px;text-align:right">
+                        <button data-intention="${_escapeHtml(r.intention_attaque)}" onclick="deleteFamilleMapping(this.dataset.intention)"
+                                style="color:#EF4444;background:none;border:none;cursor:pointer;font-size:1rem" title="Supprimer">🗑</button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        async function openFamillesModal() {
+            const selFam = document.getElementById('fam-famille-sel');
+            if (selFam) selFam.innerHTML = ENC_FAMILLES_ORDRE.map(f => `<option value="${f}">${f}</option>`).join('');
+            const tbody = document.getElementById('fam-mapping-list');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:12px">Chargement…</td></tr>';
+            _openSlidePanel('fam-modal', 'fam-overlay');
+
+            let rows;
+            try {
+                rows = await fetchAll('famille_mapping');
+            } catch (e) {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#EF4444;padding:12px">Erreur de chargement — réessaie</td></tr>';
+                return;
+            }
+
+            const map = {};
+            rows.forEach(r => { map[r.intention_attaque] = r.famille; });
+            const banner = document.getElementById('fam-default-banner');
+            if (banner) banner.style.display = _isFamilleMappingUnedited(map) ? 'block' : 'none';
+
+            _renderFamillesList(rows);
+        }
+
+        function closeFamillesModal(returnFocus) {
+            _closeSlidePanel('fam-modal', 'fam-overlay', returnFocus);
+        }
+
+        async function addFamilleMapping() {
+            const intentionEl = document.getElementById('fam-intention');
+            const famEl = document.getElementById('fam-famille-sel');
+            const intention = intentionEl ? intentionEl.value.trim() : '';
+            const famille = famEl ? famEl.value : '';
+            if (!intention || !famille) { alert('Renseigne une intention attaque et choisis une famille'); return; }
+            const btn = document.getElementById('fam-add-btn');
+            if (btn) { btn.disabled = true; btn.textContent = '…'; }
+            try {
+                await upsertRows('famille_mapping', [{ intention_attaque: intention, famille }]);
+                FAMILLE_MAPPING[intention] = famille;
+                _encStatsSaison = null; // invalider cache saison
+                if (intentionEl) intentionEl.value = '';
+                await openFamillesModal();
+                if (window._encCurrentMatchData) renderEncFamillesSection(window._encCurrentMatchData);
+            } catch (e) {
+                alert('Erreur lors de l\'ajout : ' + (e.message || 'échec réseau'));
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '✅ AJOUTER'; }
+            }
+        }
+
+        async function deleteFamilleMapping(intention) {
+            if (!confirm(`Supprimer la correspondance "${intention}" ?`)) return;
+            try {
+                const { error } = await supabaseClient.from('famille_mapping').delete().eq('intention_attaque', intention);
+                if (error) throw error;
+                delete FAMILLE_MAPPING[intention];
+                _encStatsSaison = null; // invalider cache saison
+                await openFamillesModal();
+                if (window._encCurrentMatchData) renderEncFamillesSection(window._encCurrentMatchData);
+            } catch (e) {
+                alert('Erreur lors de la suppression : ' + (e.message || 'échec réseau'));
+            }
+        }
+
         function _drawEncRadar() {
             const canvas = document.getElementById('enc-radar-canvas');
             if (!canvas) return;

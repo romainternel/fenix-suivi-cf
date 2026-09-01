@@ -1643,6 +1643,7 @@
             if (e.key === 'Escape') {
                 if (openPanel.id === 'pa-modal') closePlayerAccountsModal(true);
                 else if (openPanel.id === 'preview-modal') closePreviewModal(true);
+                else if (openPanel.id === 'fam-modal') closeFamillesModal(true);
                 return;
             }
             if (e.key === 'Tab') {
