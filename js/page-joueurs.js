@@ -87,11 +87,11 @@
 
             // ── Construction dans un fragment off-DOM ──
             const frag = document.createDocumentFragment();
-            JOUEURS_TERRAIN.forEach(p => {
+            JOUEURS_TERRAIN.forEach((p, idx) => {
                 const isActive   = activeNames.size === 0 || [...activeNames].some(n => matchPlayerName(n, p.nom));
                 const isSelected = p.nom === currentSelectedJoueur;
                 const opacity    = isActive ? 1 : 0.28;
-                const r          = isSelected ? 4.5 : 3.5;
+                const r          = isSelected ? 5.3 : 4.3;
 
                 const eff        = playerEff[p.nom];
                 const tjData     = getTJData(p.nom, effectiveMatchList);
@@ -100,6 +100,7 @@
                 const ringClr    = qualified && eff !== null ? getEffColor(eff, p.poste) : '#e2e8f0';
                 const initials   = (p.nomComplet || p.nom).split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
                 const safeName   = p.nom.replace(/'/g, "\\'");
+                const photoUrl   = (typeof getPlayerPhoto === 'function') ? getPlayerPhoto(p.nom, 'portrait') : null;
 
                 const elem = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 elem.setAttribute('class', 'court-player');
@@ -121,13 +122,33 @@
                     elem.appendChild(ring);
                 }
 
-                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', p.x); text.setAttribute('y', p.y + 0.3);
-                text.setAttribute('text-anchor', 'middle'); text.setAttribute('dominant-baseline', 'middle');
-                text.setAttribute('font-family', 'Inter,sans-serif'); text.setAttribute('font-size', '2.0');
-                text.setAttribute('font-weight', '700'); text.setAttribute('fill', '#0f172a');
-                text.textContent = initials;
-                elem.appendChild(text);
+                if (photoUrl) {
+                    // Photo clippée légèrement en retrait du rayon pour garder l'anneau couleur (ringClr) visible en bordure
+                    const photoR  = r - 1;
+                    const clipId  = `court-clip-${idx}`;
+                    const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+                    clip.setAttribute('id', clipId);
+                    const clipCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    clipCircle.setAttribute('cx', p.x); clipCircle.setAttribute('cy', p.y); clipCircle.setAttribute('r', photoR);
+                    clip.appendChild(clipCircle);
+                    elem.appendChild(clip);
+
+                    const img = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                    img.setAttribute('href', photoUrl);
+                    img.setAttribute('x', p.x - photoR); img.setAttribute('y', p.y - photoR);
+                    img.setAttribute('width', photoR * 2); img.setAttribute('height', photoR * 2);
+                    img.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+                    img.setAttribute('clip-path', `url(#${clipId})`);
+                    elem.appendChild(img);
+                } else {
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', p.x); text.setAttribute('y', p.y + 0.3);
+                    text.setAttribute('text-anchor', 'middle'); text.setAttribute('dominant-baseline', 'middle');
+                    text.setAttribute('font-family', 'Inter,sans-serif'); text.setAttribute('font-size', '2.0');
+                    text.setAttribute('font-weight', '700'); text.setAttribute('fill', '#0f172a');
+                    text.textContent = initials;
+                    elem.appendChild(text);
+                }
 
                 frag.appendChild(elem);
             });
@@ -138,6 +159,7 @@
         }
 
         function selectJoueur(nom) {
+            const isNewSelection = nom !== currentSelectedJoueur;
             currentSelectedJoueur = nom;
             const terrainPlayer = JOUEURS_TERRAIN.find(p => matchPlayerName(p.nom, nom));
             const color = terrainPlayer ? POSTE_COLORS[terrainPlayer.poste] : '#0A2463';
@@ -151,8 +173,12 @@
             const initials   = displayNom.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
             const photoUrl   = (typeof getPlayerPhoto === 'function') ? getPlayerPhoto(nom, 'portrait') : null;
             const corpsUrl   = (typeof getPlayerPhoto === 'function') ? getPlayerPhoto(nom, 'corps') : null;
-            _courtPhotoMode = false;
-            if (typeof _renderCourtPhotoState === 'function') _renderCourtPhotoState();
+            // Sélection d'UN NOUVEAU joueur = intention de le voir : bascule direct en grand format s'il a
+            // une photo corps entier (pas de clic supplémentaire sur l'avatar). Un simple rafraîchissement
+            // du joueur déjà sélectionné (changement de filtre, retour sur la page) ne touche pas au mode
+            // en cours — sinon un "↩ Terrain" manuel serait annulé par le prochain changement de filtre.
+            if (isNewSelection) _courtPhotoMode = !!corpsUrl;
+            if (typeof _renderCourtPhotoState === 'function') _renderCourtPhotoState(corpsUrl);
             const avatarInner = photoUrl
                 ? `<img src="${photoUrl}" alt="${displayNom}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${initials}'}))">`
                 : initials;
