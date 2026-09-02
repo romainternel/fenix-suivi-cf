@@ -48,7 +48,7 @@ assets/photos/                 Photos joueurs (WebP, portrait + corps entier), a
                                 — voir §5 pour le mapping. Fichiers sources bruts (haute résolution,
                                 dossier "PHOTO JOUEURS/" côté Romain) volontairement hors repo (.gitignore)
 
-ALD.png, ALG.png, TERRAIN HANDBALL.png, TERRAIN HB TIR.png
+ALD.png, ALG.png, TERRAIN HB TIR.png
                                 Images terrain/zones utilisées par les canvas Impact
 
 supabase/
