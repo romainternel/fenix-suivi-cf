@@ -1412,7 +1412,7 @@
             window._encSelectedFamille = null;
             const sublabelCard = isAdv ? 'RÉUSSITE ADV.' : 'RÉUSSITE POSS.';
             const warningHtml = coverage.pct < 80 && coverage.total > 0
-                ? `<div class="enc-coverage-warning enc-coverage-clickable" onclick="_toggleUnclassifiedPanel()">⚠ ${100 - coverage.pct}% des enclenchements non classifiés — <u>cliquer pour voir le détail</u></div>
+                ? `<div class="enc-coverage-warning enc-coverage-clickable" onclick="_toggleUnclassifiedPanel()">⚠ ${100 - coverage.pct}% des intentions attaque non classifiées — <u>cliquer pour voir le détail</u></div>
                    <div id="enc-unclassified-panel" style="display:none;margin-bottom:10px"></div>` : '';
             const cardsInfoHtml = `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;position:relative;margin-bottom:2px">
                 <span style="font-size:0.62rem;font-weight:700;color:#94A3B8;letter-spacing:0.07em;text-transform:uppercase">Familles</span>
@@ -1427,7 +1427,7 @@
                                 <div class="enc-famille-sublabel">UTILISATION</div>
                                 <div class="enc-progress-track"><div class="enc-progress-fill above" style="width:29%"></div></div>
                                 <div class="enc-stat-pair">
-                                    <div><div class="enc-stat-main-val">52%</div><div class="enc-stat-pair-label">encl.</div></div>
+                                    <div><div class="enc-stat-main-val">52%</div><div class="enc-stat-pair-label">int.</div></div>
                                     <div class="enc-stat-sep">·</div>
                                     <div><div class="enc-stat-sec-val">71%</div><div class="enc-stat-pair-label">tir</div></div>
                                 </div>
@@ -1443,7 +1443,7 @@
                             <div style="display:flex;align-items:center;gap:5px;margin-top:2px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">1</span><span>Famille + couleur identifiant</span></div>
                             <div style="display:flex;align-items:center;gap:5px;margin-top:19px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">2</span><span>% d'utilisation dans le match</span></div>
                             <div style="display:flex;align-items:center;gap:5px;margin-top:17px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">3</span><span>Barre : vert ≥ moy. saison / rouge &lt;</span></div>
-                            <div style="display:flex;align-items:center;gap:5px;margin-top:10px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">4</span><span>Efficacité enc. <span style="color:#94A3B8">·</span> Réussite tir</span></div>
+                            <div style="display:flex;align-items:center;gap:5px;margin-top:10px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">4</span><span>Efficacité int. <span style="color:#94A3B8">·</span> Réussite tir</span></div>
                             <div style="display:flex;align-items:center;gap:5px;margin-top:14px"><span style="background:#0A2463;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.48rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px">5</span><span>Nb possessions · Écart vs moy. saison</span></div>
                         </div>
                     </div>
@@ -1490,7 +1490,7 @@
                     <div class="enc-famille-sublabel">UTILISATION</div>
                     <div class="enc-progress-track"><div class="enc-progress-fill ${fillClass}" style="width:${utilisPct}%"></div></div>
                     <div class="enc-stat-pair">
-                        <div><div class="enc-stat-main-val">${s.eff}%</div><div class="enc-stat-pair-label">encl.</div></div>
+                        <div><div class="enc-stat-main-val">${s.eff}%</div><div class="enc-stat-pair-label">int.</div></div>
                         <div class="enc-stat-sep">·</div>
                         <div><div class="enc-stat-sec-val">${tirEff}%</div><div class="enc-stat-pair-label">tir</div></div>
                     </div>
@@ -1513,7 +1513,7 @@
                     <div class="enc-famille-sublabel">UTILISATION</div>
                     <div class="enc-progress-track"><div class="enc-progress-fill noref" style="width:${utilisAutrePct}%"></div></div>
                     <div class="enc-stat-pair">
-                        <div><div class="enc-stat-main-val">${enclEffAutre}%</div><div class="enc-stat-pair-label">encl.</div></div>
+                        <div><div class="enc-stat-main-val">${enclEffAutre}%</div><div class="enc-stat-pair-label">int.</div></div>
                         <div class="enc-stat-sep">·</div>
                         <div><div class="enc-stat-sec-val">${tirEffAutre}%</div><div class="enc-stat-pair-label">tir</div></div>
                     </div>
@@ -1522,7 +1522,7 @@
             }
             const mode = window._encGraphMode;
             const titleIcon = isAdv ? '🛡' : '⚡';
-            const titleLabel = isAdv ? 'DÉFENSE FENIX — enclenchements adversaires' : 'ENCLENCHEMENTS OFFENSIFS FENIX';
+            const titleLabel = isAdv ? 'DÉFENSE FENIX — intentions attaque adverses' : 'INTENTIONS ATTAQUE FENIX';
             container.innerHTML = `
                 <div class="enc-section-header">
                     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -1989,7 +1989,7 @@
                 box.id = 'enc-matrix-info-box';
                 box.style.cssText = 'position:absolute;top:30px;right:0;width:fit-content;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.75rem;line-height:1.6;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1);white-space:nowrap';
                 box.innerHTML = `<strong style="font-size:0.8rem;color:#0A2463">Lire la matrice</strong><br>
-                    <b>Axe X</b> — Utilisation : nb de possessions avec cet enclenchement<br>
+                    <b>Axe X</b> — Utilisation : nb de possessions avec cette intention attaque<br>
                     <b>Axe Y</b> — Efficacité : (buts + PO) / possessions<br>
                     <b>Ligne verticale</b> — moyenne des possessions entre familles<br>
                     <b>Ligne 50%</b> — seuil d'efficacité<br><br>
