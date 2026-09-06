@@ -2689,6 +2689,57 @@
         }
         .enc-info-btn:hover { background: #CBD5E1; }
 
+        /* Mode Articulation défensive (STORY-34) — demi-terrain, postes P1-P6 */
+        .enc-pie-mode-btn.artic-disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+        .artic-empty { color: #94A3B8; font-size: 0.85rem; text-align: center; padding: 24px 0; }
+        .artic-dispositif-toggle { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
+        .artic-court {
+            width: 100%; max-width: 520px; margin: 0 auto;
+            aspect-ratio: 1 / 0.62;
+            background: linear-gradient(180deg, #6BAED9 0%, #4A8EC8 100%);
+            border-radius: 12px; box-shadow: var(--shadow-lg);
+            position: relative; overflow: hidden;
+        }
+        .artic-goal {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 30%; height: 14%;
+            background-image: repeating-linear-gradient(45deg, #CC2222 0 6px, #f0f0f0 6px 12px);
+            border: 2px solid #fff; border-top: none; border-radius: 0 0 4px 4px;
+        }
+        .artic-poste {
+            position: absolute; width: 56px; height: 56px; border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff; border: 3px solid var(--fenix-blue);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px;
+            box-shadow: var(--shadow-md);
+            cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .artic-poste:hover { transform: translate(-50%, -50%) scale(1.08); box-shadow: var(--shadow-lg); }
+        .artic-poste.selected { border-color: #FCD34D; box-shadow: 0 0 0 3px rgba(252,211,77,0.4); }
+        .artic-poste-label { font-size: 0.55rem; color: #94A3B8; letter-spacing: 1px; }
+        .artic-poste-joueur { font-size: 0.62rem; color: var(--fenix-dark); font-weight: 700; line-height: 1.05; text-align: center; }
+        .artic-poste-eff { font-size: 0.9rem; font-weight: 700; line-height: 1.1; }
+        /* Métrique = efficacité ADVERSE (pas FENIX) : vert = adversaire inefficace ici = bonne défense.
+           Seuils repris de EFF_SEUILS par défaut ({hi:55, mid:38}) pour rester cohérent avec le reste
+           de l'app, appliqués en sens inverse (fort = bas, faible = haut). */
+        .artic-poste-eff.fort   { color: #10B981; }
+        .artic-poste-eff.moyen  { color: #F59E0B; }
+        .artic-poste-eff.faible { color: #EF4444; }
+        .artic-poste-eff.noref  { color: #94A3B8; font-size: 0.7rem; }
+        .artic-poste-badge {
+            position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%;
+            background: var(--fenix-accent); color: #fff; font-size: 0.55rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff;
+        }
+        .artic-detail-panel {
+            margin-top: 14px; padding: 10px 14px; background: #F8FAFC;
+            border: 1px solid #E2E8F0; border-radius: 10px; font-size: 0.8rem;
+        }
+        .artic-detail-title { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: #0A2463; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .artic-detail-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #E8EFF5; }
+        .artic-detail-row:last-child { border-bottom: none; }
+
         /* Panel détail (droite) */
         .enc-detail-header-bar {
             display: flex; align-items: center; gap: 6px;

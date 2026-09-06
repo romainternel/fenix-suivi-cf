@@ -1533,24 +1533,26 @@
                         </div>
                     </div>
                     <div class="enc-graph-toggle enc-graph-toggle--header">
-                        <button class="enc-toggle-btn${mode!=='matrice'?' active':''}" data-mode="pie" onclick="_setEncGraphMode('pie')">Vue générale</button>
+                        <button class="enc-toggle-btn${mode!=='matrice'&&mode!=='articulation'?' active':''}" data-mode="pie" onclick="_setEncGraphMode('pie')">Vue générale</button>
                         <button class="enc-toggle-btn${mode==='matrice'?' active':''}" data-mode="matrice" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
                         <span class="enc-info-btn" id="enc-graph-info-btn" onclick="if(window._encGraphMode==='matrice')_toggleEncGraphInfo()" title="Comprendre la matrice" style="opacity:${mode!=='matrice'?'0.3':'1'}">i</span>
+                        <button class="enc-pie-mode-btn${mode==='articulation'?' active':''}${!isAdv?' artic-disabled':''}" onclick="_setEncGraphMode('articulation')" title="${isAdv?'':'Disponible uniquement en mode Défense'}">🎯 Articulation</button>
                     </div>
                 </div>
                 ${warningHtml}
                 <div class="enc-body">
                     <div class="enc-cards-grid">${cardsHtml}</div>
                     <div class="enc-right-panel" id="enc-right-panel">
-                        <div id="enc-pie-mode-bar" style="display:${mode!=='matrice'?'flex':'none'};gap:4px;margin-bottom:6px;justify-content:center;flex-wrap:wrap">
+                        <div id="enc-pie-mode-bar" style="display:${mode!=='matrice'&&mode!=='articulation'?'flex':'none'};gap:4px;margin-bottom:6px;justify-content:center;flex-wrap:wrap">
                             <button class="enc-pie-mode-btn${!window._encPieMode||window._encPieMode==='utilisation'?' active':''}" data-mode="utilisation" onclick="_setEncPieMode('utilisation')">Utilisation</button>
                             <button class="enc-pie-mode-btn${window._encPieMode==='production'?' active':''}" data-mode="production" onclick="_setEncPieMode('production')">Buts + PO</button>
                             <button class="enc-pie-mode-btn${window._encPieMode==='tirs'?' active':''}" data-mode="tirs" onclick="_setEncPieMode('tirs')">Tirs</button>
                         </div>
-                        <div id="enc-graph-wrap" style="position:relative;display:flex;align-items:center;justify-content:center;width:100%">
+                        <div id="enc-graph-wrap" style="position:relative;display:${mode==='articulation'?'none':'flex'};align-items:center;justify-content:center;width:100%">
                             <canvas id="enc-pie-canvas" width="340" height="280" style="display:block;max-width:100%"></canvas>
                             <canvas id="enc-radar-canvas" width="340" height="280" style="display:none;max-width:100%"></canvas>
                         </div>
+                        <div id="enc-articulation-wrap" style="display:${mode==='articulation'?'block':'none'};width:100%"></div>
                         <div id="enc-detail-wrap" style="display:none">
                             <div class="enc-detail-header-bar" id="enc-detail-header"></div>
                             <div id="enc-detail-content"></div>
@@ -1567,6 +1569,8 @@
         function _setEncTeamMode(mode) {
             window._encTeamMode = mode;
             window._encSelectedFamille = null;
+            // L'articulation défensive n'existe pas côté attaque FENIX — retombe sur la vue générale
+            if (mode === 'fenix' && window._encGraphMode === 'articulation') window._encGraphMode = 'pie';
             if (window._encCurrentMatchData) renderEncFamillesSection(window._encCurrentMatchData);
         }
 
@@ -1581,13 +1585,23 @@
             window._encGraphMode = mode;
             document.querySelectorAll('.enc-toggle-btn[data-mode]').forEach(b =>
                 b.classList.toggle('active', b.dataset.mode === mode));
+            document.querySelectorAll('.enc-graph-toggle--header .enc-pie-mode-btn').forEach(b => b.classList.toggle('active', mode === 'articulation'));
             const infoBtn = document.getElementById('enc-graph-info-btn');
             if (infoBtn) infoBtn.style.opacity = mode !== 'matrice' ? '0.3' : '1';
             const mib = document.getElementById('enc-matrix-info-box');
             if (mib) mib.style.display = 'none';
             const modeBar = document.getElementById('enc-pie-mode-bar');
-            if (modeBar) modeBar.style.display = mode !== 'matrice' ? 'flex' : 'none';
-            requestAnimationFrame(() => _drawEncChart());
+            if (modeBar) modeBar.style.display = (mode !== 'matrice' && mode !== 'articulation') ? 'flex' : 'none';
+            const graphWrap = document.getElementById('enc-graph-wrap');
+            const articWrap = document.getElementById('enc-articulation-wrap');
+            if (graphWrap) graphWrap.style.display = mode === 'articulation' ? 'none' : 'flex';
+            if (articWrap) articWrap.style.display = mode === 'articulation' ? 'block' : 'none';
+            if (mode === 'articulation') {
+                window._articSelectedPoste = null;
+                if (articWrap && window._encCurrentMatchData) _drawArticulationCourt(articWrap, window._encCurrentMatchData);
+            } else {
+                requestAnimationFrame(() => _drawEncChart());
+            }
         }
 
         function _drawEncChart() {
@@ -2434,6 +2448,139 @@
             });
             html += '</div>';
             container.innerHTML = html;
+        }
+
+        // A-05bis — Articulation défensive (STORY-34) : efficacité adverse par poste défensif occupé
+        const ARTIC_POSTES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
+
+        function _resolveArticJoueur(nomRaw) {
+            const raw = (nomRaw || '').toString().trim();
+            if (!raw) return null;
+            if (typeof JOUEURS_TERRAIN === 'undefined' || !JOUEURS_TERRAIN.length) return raw;
+            const found = JOUEURS_TERRAIN.find(p => matchPlayerName(raw, p.nom));
+            return found ? found.nom : raw;
+        }
+
+        // Regroupe par dispositif (0-6 / 1-5) puis par poste puis par joueur — une ligne comptée par
+        // séquence adverse (filtre possession, cf. computeEncStats), le tag articulation étant répété
+        // sur toutes les lignes d'une même séquence (confirmé par Romain).
+        function computeArticulationStats(matchData) {
+            const postes = { '0-6': new Map(), '1-5': new Map() };
+            const totals = { '0-6': 0, '1-5': 0 };
+            matchData.filter(r => r[COLS.club] !== 'FENIX').forEach(r => {
+                if (!(r[COLS.possession] || '').toString().trim()) return;
+                const articRaw = (r[COLS.articulation_def] || '').toString().trim();
+                if (!articRaw) return;
+                const dispositif = articRaw.replace(/^ARTICULATION DEF\s*/i, '').trim();
+                if (dispositif !== '0-6' && dispositif !== '1-5') return;
+                const res = (r[COLS.finalite] || '').toString().trim();
+                const isBut = res === 'But';
+                const isPO = res === 'PO';
+                totals[dispositif]++;
+                const posteMap = postes[dispositif];
+                ARTIC_POSTES.forEach(pKey => {
+                    const joueur = _resolveArticJoueur(r[COLS[pKey]]);
+                    if (!joueur) return;
+                    if (!posteMap.has(pKey)) posteMap.set(pKey, new Map());
+                    const joueurMap = posteMap.get(pKey);
+                    if (!joueurMap.has(joueur)) joueurMap.set(joueur, { buts: 0, po: 0, possessions: 0, eff: 0 });
+                    const s = joueurMap.get(joueur);
+                    s.possessions++;
+                    if (isBut) s.buts++;
+                    else if (isPO) s.po++;
+                });
+            });
+            ['0-6', '1-5'].forEach(disp => {
+                postes[disp].forEach(joueurMap => joueurMap.forEach(s => {
+                    s.eff = s.possessions > 0 ? Math.round((s.buts + s.po) / s.possessions * 100) : 0;
+                }));
+            });
+            return { postes, totals };
+        }
+
+        function _articEffClass(eff, possessions) {
+            if (possessions < 5) return 'noref';
+            if (eff < 38) return 'fort';
+            if (eff <= 55) return 'moyen';
+            return 'faible';
+        }
+
+        // Layouts des 6 postes (% dans .artic-court) — 0-6 : ligne alignée à 6m.
+        // 1-5 : P1/P2/P5/P6 restent à 6m, P3 recule en couverture, P4 sort en avancé (cf. Design §1).
+        const ARTIC_LAYOUTS = {
+            '0-6': { p1: [8, 48], p2: [25.6, 48], p3: [43.2, 48], p4: [56.8, 48], p5: [74.4, 48], p6: [92, 48] },
+            '1-5': { p1: [8, 48], p2: [26, 48], p3: [50, 66], p4: [50, 86], p5: [74, 48], p6: [92, 48] },
+        };
+
+        function _drawArticulationCourt(container, matchData) {
+            const stats = computeArticulationStats(matchData);
+            const available = ['0-6', '1-5'].filter(d => stats.totals[d] > 0);
+            if (!available.length) {
+                container.innerHTML = `<p class="artic-empty">Pas encore de données d'articulation défensive sur cette période.</p>`;
+                return;
+            }
+            if (!window._articDispositif || !available.includes(window._articDispositif)) {
+                window._articDispositif = available.slice().sort((a, b) => stats.totals[b] - stats.totals[a])[0];
+            }
+            const dispositif = window._articDispositif;
+            const layout = ARTIC_LAYOUTS[dispositif];
+            const posteMap = stats.postes[dispositif];
+
+            const togglesHtml = available.length > 1 ? `
+                <div class="artic-dispositif-toggle">
+                    ${available.map(d => `<button class="enc-pie-mode-btn${d === dispositif ? ' active' : ''}" onclick="_setArticDispositif('${d}')">${d} (${stats.totals[d]} séq.)</button>`).join('')}
+                </div>` : '';
+
+            let postesHtml = '';
+            ARTIC_POSTES.forEach(pKey => {
+                const [x, y] = layout[pKey];
+                const joueurMap = posteMap.get(pKey);
+                if (!joueurMap || !joueurMap.size) {
+                    postesHtml += `<div class="artic-poste" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucune donnée">
+                        <div class="artic-poste-label">${pKey.toUpperCase()}</div><div class="artic-poste-joueur">—</div></div>`;
+                    return;
+                }
+                const entries = [...joueurMap.entries()].sort((a, b) => b[1].possessions - a[1].possessions);
+                const [topJoueur, topStats] = entries[0];
+                const effClass = _articEffClass(topStats.eff, topStats.possessions);
+                const effLabel = topStats.possessions < 5 ? `${topStats.eff}% (n<3)` : `${topStats.eff}%`;
+                const badge = entries.length > 1 ? `<div class="artic-poste-badge">+${entries.length - 1}</div>` : '';
+                postesHtml += `<div class="artic-poste${window._articSelectedPoste === pKey ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
+                    ${badge}
+                    <div class="artic-poste-label">${pKey.toUpperCase()}</div>
+                    <div class="artic-poste-joueur">${_escapeHtml(topJoueur)}</div>
+                    <div class="artic-poste-eff ${effClass}">${effLabel}</div>
+                </div>`;
+            });
+
+            let detailHtml = '';
+            if (window._articSelectedPoste && posteMap.get(window._articSelectedPoste)) {
+                const pKey = window._articSelectedPoste;
+                const entries = [...posteMap.get(pKey).entries()].sort((a, b) => b[1].possessions - a[1].possessions);
+                detailHtml = `<div class="artic-detail-panel">
+                    <div class="artic-detail-title">${pKey.toUpperCase()} — détail par joueur</div>
+                    ${entries.map(([joueur, s]) => `<div class="artic-detail-row"><span>${_escapeHtml(joueur)}</span><span>${s.possessions} séq. · ${s.possessions < 5 ? `${s.eff}% (n<3)` : `${s.eff}% eff. adverse`}</span></div>`).join('')}
+                </div>`;
+            }
+
+            container.innerHTML = `
+                ${togglesHtml}
+                <div class="artic-court">
+                    <div class="artic-goal"></div>
+                    ${postesHtml}
+                </div>
+                ${detailHtml}`;
+        }
+
+        function _setArticDispositif(dispositif) {
+            window._articDispositif = dispositif;
+            window._articSelectedPoste = null;
+            if (window._encCurrentMatchData) _drawArticulationCourt(document.getElementById('enc-articulation-wrap'), window._encCurrentMatchData);
+        }
+
+        function _selectArticPoste(pKey) {
+            window._articSelectedPoste = window._articSelectedPoste === pKey ? null : pKey;
+            if (window._encCurrentMatchData) _drawArticulationCourt(document.getElementById('enc-articulation-wrap'), window._encCurrentMatchData);
         }
 
         // A-06/07 — Gardien × famille
