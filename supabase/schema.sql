@@ -27,7 +27,14 @@ create table match_data (
   action_def         text,
   impact             text,
   saison             text,
-  intention_attaque  text
+  intention_attaque  text,
+  articulation_def   text,
+  p1                 text,
+  p2                 text,
+  p3                 text,
+  p4                 text,
+  p5                 text,
+  p6                 text
 );
 
 create table joueurs (

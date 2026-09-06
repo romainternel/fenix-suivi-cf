@@ -85,6 +85,8 @@ const DATA_HEADER_TO_COLUMN = {
     impact: 'impact',
     saison: 'saison',
     intentionattaque: 'intention_attaque',
+    articulationdef: 'articulation_def',
+    p1: 'p1', p2: 'p2', p3: 'p3', p4: 'p4', p5: 'p5', p6: 'p6',
 };
 
 // STORY-22, mitigation risque P0 R1 — reconstruit le tableau positionnel DATA depuis les lignes
@@ -99,6 +101,7 @@ const MATCH_DATA_COLUMN_ORDER = [
     'position_tir', 'field_position', 'periode', 'possession',
     'position_terrain', 'action_joueur', 'action_att', 'action_def', 'impact',
     'saison', 'intention_attaque',
+    'articulation_def', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6',
 ];
 
 function rowToPositionalArray(row) {
