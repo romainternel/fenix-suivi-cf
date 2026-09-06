@@ -1,72 +1,72 @@
-# PRD — Articulation défensive (efficacité par poste occupé)
+# PRD — Refonte lisibilité du mode Articulation
 
 **Agent :** Product Manager
-**Date :** 2026-09-02
+**Date :** 2026-09-06
 
 ---
 
 ## 1. Objectif
 
-Permettre à Romain d'analyser l'efficacité défensive de FENIX en fonction du dispositif (0-6 / 1-5) et des joueurs occupant chaque poste défensif (P1-P6), avec une mise en avant automatique des meilleures combinaisons de charnière centrale.
+Réorganiser la présentation du mode Articulation (terrain, contrôles, indicateurs) sans toucher au calcul des données, pour que Romain identifie en un coup d'œil qui occupe chaque poste, quel réglage est actif, et retrouve un placement des postes fidèle à la vraie ligne des 6m.
 
 ## 2. Features
 
-### F1 — Import des colonnes Excel vers Supabase
-Les 7 nouvelles colonnes (`ARTICULATION DEF`, `P1`...`P6`) sont importées comme les autres colonnes `DATA` : ajoutées à `COLS`, au mapping nom-d'en-tête → colonne Supabase, et à la table `match_data` (7 colonnes texte nullable, migration SQL à appliquer une fois par Romain).
+### F1 — Ronds-poste allégés (nom seul)
+Les 6 ronds sur le terrain n'affichent plus que le nom du joueur (plus de pourcentage empilé dans le cercle). Un signal visuel minimal d'efficacité peut subsister (ex. couleur de bordure) si le Designer le juge nécessaire pour ne pas perdre l'information en un coup d'œil — mais le chiffre lui-même migre ailleurs (détail au clic, cartes Bloc).
 
-### F2 — Mode "Articulation" dans la section Intention attaque (Défense)
-Un 3e mode d'affichage à côté de "Vue générale" / "Matrice 2×2", visible uniquement en mode Défense (`isAdv === true` — l'articulation n'a de sens que côté défensif). Affiche un demi-terrain handball avec les 6 postes positionnés selon le dispositif dominant de la période affichée (0-6 ou 1-5 — bascule si les deux coexistent, cf. Design). Chaque poste affiche le(s) joueur(s) l'ayant occupé et l'efficacité adverse (buts/tirs) associée.
+### F2 — Postes sur la courbe réelle du 6m (dispositif 0-6)
+Les 6 postes du dispositif 0-6, actuellement alignés à `y` constant dans `ARTIC_LAYOUTS['0-6']`, sont repositionnés pour suivre le tracé de l'arc 6m dessiné par `_articCourtSvg()` (`M 12.5,10 A 37.5,30 0 0,0 87.5,10`) : le `y` de chaque poste se calcule à partir de son `x` selon l'équation de cette ellipse, pas une valeur fixe.
 
-### F3 — Filtre par poste / joueur
-Cliquer un poste (ou choisir un joueur dans un sélecteur) filtre le détail affiché à ce poste/joueur précis — cohérent avec le filtre match déjà actif sur la page (comportement identique à la sélection de famille existante).
+### F3 — Cohérence du dispositif 1-5
+Le dispositif 1-5 a déjà des postes à hauteurs variables (P3 en couverture, P4 avancé) mais pas nécessairement calés sur un tracé précis. Revalider ce placement à la lumière de la même logique que F2, sans nécessairement forcer un calcul d'arc strict si la disposition en losange actuelle reste plus lisible pour un 1-5 (dispositif où P3/P4 ne sont justement pas sur la ligne des autres).
 
-### F4 — Classement automatique des meilleures charnières centrales
-Calcule, pour chaque combinaison de joueurs observée aux postes 2 à 5, l'efficacité adverse associée, et met en avant les 2-3 meilleures (adversaire le moins efficace), avec un seuil minimum de séquences pour être éligible (évite un classement sur un échantillon non significatif).
+### F4 — Bandeau de contrôles réorganisé
+Les trois mécanismes de réglage (dispositif 0-6/1-5, mode Le+utilisé/Top Def, sélection manuelle par poste) sont regroupés dans une zone visuellement distincte du terrain, avec un état actif lisible sans ambiguïté pour chacun.
+
+### F5 — Nouvelle hiérarchie des indicateurs
+Redéfinir où vit chaque donnée déjà calculée aujourd'hui, en s'appuyant sur ce qui existe :
+- Efficacité individuelle par poste (`computeArticulationStats`) — reste consultable, mais plus dans le rond (cf. F1)
+- Efficacité globale adverse de référence (`stats.global`)
+- 3 cartes Bloc (`ARTIC_BLOCKS`/`_articBlockEff`)
+- Panneau de détail multi-joueurs au clic sur un poste
+- Sélecteur manuel de joueur par poste
+
+Le Designer propose une organisation spatiale unique pour ces 5 éléments plutôt qu'un empilement séquentiel comme aujourd'hui.
 
 ## 3. Priorités
 
-| Feature | Priorité | Justification |
+| # | Feature | Priorité |
 |---|---|---|
-| F1 — Import des colonnes | **Must Have** | Bloquant : sans les données en base, rien d'autre n'est possible |
-| F2 — Mode Articulation (visuel demi-terrain) | **Must Have** | Cœur de la demande explicite de Romain |
-| F3 — Filtre poste/joueur | **Must Have** | Sans filtre, le visuel n'est qu'une image statique — la valeur est dans l'exploration |
-| F4 — Classement automatique charnière centrale | **Should Have** | Valeur ajoutée réelle et explicitement demandée, mais peut suivre F1-F3 de quelques jours sans bloquer la livraison du reste |
+| F1 | Ronds-poste allégés (nom seul) | **Must Have** |
+| F2 | Postes sur la courbe réelle du 6m (dispositif 0-6) | **Must Have** |
+| F4 | Bandeau de contrôles réorganisé | **Must Have** |
+| F5 | Nouvelle hiérarchie des indicateurs | **Must Have** |
+| F3 | Cohérence du dispositif 1-5 | **Should Have** |
+| — | Signal visuel discret d'efficacité dans le rond (option de F1) | **Nice to Have** — à la discrétion du Designer |
 
 ## 4. Critères d'acceptation
 
-**F1**
-- [ ] Réimport d'un fichier Excel contenant les 7 nouvelles colonnes → les valeurs arrivent dans `match_data` (Supabase) sans erreur
-- [ ] Réimport d'un fichier Excel **sans** ces colonnes (ancien format) → import toujours fonctionnel, colonnes vides/null, aucune régression
-- [ ] Lignes non taguées (Articulation/P1-P6 vides) → traitées comme non-données, pas d'erreur d'affichage
-
-**F2**
-- [ ] En vue match (onglet où vit la section Intention attaque) ET en vue saison complète, le mode "Articulation" est accessible en Défense
-- [ ] Le mode "Articulation" n'apparaît pas (ou est désactivé) en mode Attaque — l'articulation défensive n'a pas de sens côté attaque FENIX
-- [ ] Demi-terrain affiché avec 6 postes positionnés correctement selon 0-6 ou 1-5
-- [ ] Chaque poste affiche le joueur l'ayant occupé le plus souvent sur la période, et l'efficacité adverse correspondante
-
-**F3**
-- [ ] Clic sur un poste → détail (joueur(s), nombre de séquences, efficacité adverse) mis à jour
-- [ ] Sélection d'un joueur spécifique → filtre cohérent avec le poste
-
-**F4**
-- [ ] Les 2-3 meilleures combinaisons P2-P5 sont affichées, classées par efficacité adverse croissante
-- [ ] Une combinaison avec un échantillon insuffisant (seuil à définir en Architecture) n'apparaît pas dans le classement, ou apparaît explicitement marquée comme non significative
+- Aucun pourcentage n'apparaît plus dans un rond-poste sur le terrain, pour aucun dispositif.
+- Sur le dispositif 0-6, le `y` de chaque poste dans `ARTIC_LAYOUTS` est dérivé de l'équation de l'arc 6m (même famille de calcul que le tracé SVG), vérifiable visuellement : les 6 ronds semblent "posés" sur la ligne, pas alignés au-dessus ou en dessous.
+- Les contrôles de dispositif, de mode, et la sélection manuelle sont visuellement séparés du terrain et de leurs résultats (postes, blocs), avec un affichage clair de l'option active pour chacun.
+- Chacune des 5 données listées en F5 a un emplacement défini et documenté dans la maquette du Designer — aucune n'est supprimée, seulement replacée.
+- Aucune régression sur les valeurs numériques affichées (mêmes calculs `computeArticulationStats`/`_articBlockEff`/`_articEffClass`).
+- Non-régression des fonctionnalités existantes : bascule dispositif, bascule Top Def/Le+utilisé, sélection manuelle avec ou sans donnée, désactivation du bouton Articulation en mode Attaque, fonctionnement identique en vue match et en vue saison.
 
 ## 5. Hors scope
 
-- Simulation "what-if" d'une ligne jamais jouée.
-- Articulation offensive (le concept n'existe que côté défense dans les données fournies).
-- Édition manuelle des postes dans l'app (les données viennent uniquement de l'import Excel, comme le reste de `match_data`).
+- Modification des calculs (`computeArticulationStats`, `_articBlockEff`, seuils `possessions>=5`, formule d'efficacité).
+- STORY-35 (classement automatique des charnières centrales P2-P5) — chantier séparé, non fusionné ici.
+- Ajout d'un nouveau filtre sur les données sous-jacentes (période, résultat, adversaire) — le retour de Romain porte sur la lisibilité des contrôles existants, pas sur l'ajout d'un filtre inédit, sauf clarification contraire en cours de conception.
+- Le composant terrain SVG lui-même (`_articCourtSvg()` : tracé du but, 6m, 9m) n'est pas redessiné — seul le placement des postes dessus change.
 
 ## 6. Dépendances
 
-- F2/F3/F4 dépendent entièrement de F1 (aucune donnée exploitable avant l'import).
-- Réutilise `renderEncFamillesSection()` et son système de mode (`window._encGraphMode`) déjà en place — pas de nouvelle page ni de nouvelle route.
-- Réutilise le pattern d'agrégation de `computeGbEncStats()` (regroupement + calcul d'efficacité par sous-catégorie) comme référence technique la plus proche.
+- `_articCourtSvg()` et son tracé d'arc (`js/page-analyse.js`) doivent rester la source de vérité géométrique pour F2/F3 — le calcul du nouveau `ARTIC_LAYOUTS` doit dériver de la même équation, pas d'une approximation indépendante, pour garantir que les postes restent visuellement sur la ligne si le tracé du terrain est un jour ajusté.
+- `JOUEURS_TERRAIN`, `matchPlayerName()`, `computeArticulationStats()`, `_articBlockEff()` : inchangés, réutilisés tels quels.
 
-## 7. Risques (aperçu — détaillés par le Risk Analyst)
+## 7. Risques
 
-- Migration Supabase : ajouter des colonnes à une table existante avec des données réelles en production — à faire proprement (ALTER TABLE additif, jamais destructif).
-- Couverture de données probablement faible au démarrage (Romain tague au fur et à mesure) — le classement F4 doit rester silencieux/prudent plutôt que trompeur sur un petit échantillon.
-- Ambiguïté sur l'emplacement UI (onglet séparé vs mode intégré) déjà réduite par la Designer (cf. Brief §7) mais à valider en revue.
+- **Lisibilité du 1-5** : si F3 impose un calcul d'arc strict au 1-5, le résultat pourrait moins bien représenter un vrai dispositif 1-5 (où P3/P4 sortent délibérément de la ligne) — le Designer doit trancher au cas par cas plutôt qu'appliquer F2 mécaniquement au 1-5.
+- **Perte d'info si le signal d'efficacité est totalement retiré du rond** : un utilisateur pressé pourrait devoir cliquer sur chaque poste pour savoir "qui est fort/faible" alors qu'aujourd'hui c'est visible d'un coup d'œil — à évaluer par le Designer via un signal minimal (couleur) plutôt qu'un retrait complet.
+- **Ambiguïté persistante sur "les filtres"** : si l'interprétation retenue dans le Brief (clarté du bandeau de contrôles) ne correspond pas à l'intention réelle de Romain, la maquette du Designer devra être validée avec lui avant développement — c'est un point de vérification explicite avant de lancer le Developer.
