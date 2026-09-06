@@ -2689,15 +2689,28 @@
         }
         .enc-info-btn:hover { background: #CBD5E1; }
 
-        /* Mode Articulation défensive (STORY-34) — demi-terrain, postes P1-P6 */
+        /* Mode Articulation défensive (STORY-34, refonte lisibilité STORY-36) — demi-terrain, postes P1-P6 */
         .enc-pie-mode-btn.artic-disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
         .artic-empty { color: #94A3B8; font-size: 0.85rem; text-align: center; padding: 24px 0; }
-        .artic-dispositif-toggle { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
-        .artic-global-eff { text-align: center; font-size: 0.8rem; color: #475569; margin-bottom: 10px; }
-        .artic-global-eff strong { color: #0A2463; font-size: 0.95rem; }
-        /* Lignes du terrain dessinées en SVG (_articCourtSvg, réutilise les défs #court-bg/#goal-net
-           du terrain #hb-court-svg de la page Joueurs, présent ailleurs dans le même document — les id
-           SVG se résolvent au niveau du document, pas seulement du <svg> englobant). */
+        /* Bandeau de contrôles : regroupe dispositif/mode/reset dans un conteneur visuellement séparé
+           du terrain et des indicateurs (STORY-36 — auparavant, ces toggles flottaient directement
+           au-dessus du terrain sans hiérarchie claire). */
+        .artic-control-bar {
+            background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;
+            padding: 10px 14px; margin-bottom: 14px; box-shadow: var(--shadow-sm);
+        }
+        .artic-control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+        .artic-control-row:last-of-type { margin-bottom: 0; }
+        .artic-control-label { font-size: 0.68rem; font-weight: 700; color: #64748B; letter-spacing: 0.5px; min-width: 80px; }
+        .artic-dispositif-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
+        .artic-manual-indicator {
+            font-size: 0.72rem; color: #64748B; margin-top: 6px; padding-top: 6px;
+            border-top: 1px dashed #CBD5E1; transition: opacity 0.15s ease;
+        }
+        .artic-manual-indicator a { color: var(--fenix-accent); font-weight: 600; text-decoration: none; }
+        .artic-manual-indicator a:hover { text-decoration: underline; }
+        /* Lignes du terrain dessinées en SVG (_articCourtSvg, défs locales dupliquées — cf. commentaire
+           dans _articCourtSvg()). */
         .artic-court {
             width: 100%; max-width: 520px; margin: 0 auto;
             aspect-ratio: 1 / 1;
@@ -2714,17 +2727,24 @@
             cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
         .artic-poste:hover { transform: translate(-50%, -50%) scale(1.08); box-shadow: var(--shadow-lg); }
-        .artic-poste.selected { border-color: #FCD34D; box-shadow: 0 0 0 3px rgba(252,211,77,0.4); }
+        /* Sélection en outline (pas box-shadow) pour coexister avec le liseré d'efficacité ci-dessous,
+           qui utilise déjà box-shadow — les deux doivent rester visibles simultanément (STORY-36). */
+        .artic-poste.selected { outline: 2px solid #FCD34D; outline-offset: 2px; }
         .artic-poste-label { font-size: 0.55rem; color: #94A3B8; letter-spacing: 1px; }
-        .artic-poste-joueur { font-size: 0.62rem; color: var(--fenix-dark); font-weight: 700; line-height: 1.05; text-align: center; }
-        .artic-poste-eff { font-size: 0.9rem; font-weight: 700; line-height: 1.1; }
-        /* Métrique = efficacité ADVERSE (pas FENIX) : vert = adversaire inefficace ici = bonne défense.
-           Seuils repris de EFF_SEUILS par défaut ({hi:55, mid:38}) pour rester cohérent avec le reste
-           de l'app, appliqués en sens inverse (fort = bas, faible = haut). */
-        .artic-poste-eff.fort   { color: #10B981; }
-        .artic-poste-eff.moyen  { color: #F59E0B; }
-        .artic-poste-eff.faible { color: #EF4444; }
-        .artic-poste-eff.noref  { color: #94A3B8; font-size: 0.7rem; }
+        .artic-poste-joueur { font-size: 0.72rem; color: var(--fenix-dark); font-weight: 700; line-height: 1.1; text-align: center; }
+        /* Nom seul dans le rond (STORY-36 — le % a migré vers le panneau de détail et les cartes
+           d'indicateurs) ; l'efficacité individuelle du poste reste lisible d'un coup d'œil via ce
+           liseré coloré. Métrique = efficacité ADVERSE (pas FENIX) : vert = adversaire inefficace ici
+           = bonne défense, seuils repris de _articEffClass (appliqués en sens inverse). */
+        .artic-poste.fort   { box-shadow: 0 0 0 3px #10B981; }
+        .artic-poste.moyen  { box-shadow: 0 0 0 3px #F59E0B; }
+        .artic-poste.faible { box-shadow: 0 0 0 3px #EF4444; }
+        .artic-poste.noref  { box-shadow: 0 0 0 3px #CBD5E1; }
+        .artic-poste-manual {
+            position: absolute; top: -6px; left: -6px; width: 16px; height: 16px; border-radius: 50%;
+            background: var(--fenix-accent); color: #fff; font-size: 0.6rem;
+            display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff;
+        }
         .artic-poste-badge {
             position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%;
             background: var(--fenix-accent); color: #fff; font-size: 0.55rem; font-weight: 700;
@@ -2734,7 +2754,9 @@
         .artic-block-card {
             flex: 1 1 150px; max-width: 200px; text-align: center;
             background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
+        .artic-block-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
         .artic-block-label { font-size: 0.68rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
         .artic-block-eff { font-size: 1.15rem; font-weight: 700; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
         .artic-block-eff.fort   { color: #10B981; }

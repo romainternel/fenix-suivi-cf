@@ -2514,12 +2514,37 @@
             return 'faible';
         }
 
+        // Paramètres de l'ellipse du tracé 6m dans _articCourtSvg() (arc "M 12.5,10 A 37.5,30 0 0,0
+        // 87.5,10") — seule source de vérité pour le placement des postes sur la ligne. Si le tracé
+        // SVG change un jour, ces 4 nombres doivent changer avec lui (STORY-36).
+        const ARTIC_6M_ARC = { cx: 50, cy: 10, rx: 37.5, ry: 30 };
+
+        function _articArcY(x, arc) {
+            const t = (x - arc.cx) / arc.rx;
+            return arc.cy + arc.ry * Math.sqrt(Math.max(0, 1 - t * t));
+        }
+
         // Layouts des 6 postes (mêmes unités que le viewBox du demi-terrain, 0-100 des deux côtés,
-        // cf. _articCourtSvg) — 0-6 : ligne alignée à 6m. 1-5 : P1/P2/P5/P6 restent à 6m, P3 recule
-        // en couverture, P4 sort en avancé (cf. Design §1).
+        // cf. _articCourtSvg). 0-6 : les 6 postes suivent la courbe réelle du 6m (STORY-36 — avant,
+        // alignés sur une ligne droite à y constant, ne correspondait pas au tracé). 1-5 : P1/P2/P5/P6
+        // suivent la même courbe, P3/P4 sortent délibérément de la ligne (définition du dispositif :
+        // P3 recule en couverture près du 9m, P4 avance au-delà, cf. Design §3) et gardent des
+        // coordonnées fixes.
         const ARTIC_LAYOUTS = {
-            '0-6': { p1: [8, 28], p2: [25.6, 28], p3: [43.2, 28], p4: [56.8, 28], p5: [74.4, 28], p6: [92, 28] },
-            '1-5': { p1: [8, 28], p2: [26, 28], p3: [50, 46], p4: [50, 66], p5: [74, 28], p6: [92, 28] },
+            '0-6': (() => {
+                const xs = { p1: 15, p2: 29, p3: 43, p4: 57, p5: 71, p6: 85 };
+                const out = {};
+                Object.keys(xs).forEach(k => { out[k] = [xs[k], _articArcY(xs[k], ARTIC_6M_ARC)]; });
+                return out;
+            })(),
+            '1-5': (() => {
+                const xs = { p1: 15, p2: 32, p5: 68, p6: 85 };
+                const out = {};
+                Object.keys(xs).forEach(k => { out[k] = [xs[k], _articArcY(xs[k], ARTIC_6M_ARC)]; });
+                out.p3 = [50, 46];
+                out.p4 = [50, 66];
+                return out;
+            })(),
         };
 
         // Terrain dessiné (zone 6m/9m, but) — mêmes proportions que le terrain interactif de la page
@@ -2622,18 +2647,23 @@
             const posteMap = stats.postes[dispositif];
             const g = stats.global[dispositif];
 
-            const togglesHtml = available.length > 1 ? `
-                <div class="artic-dispositif-toggle">
-                    ${available.map(d => `<button class="enc-pie-mode-btn${d === dispositif ? ' active' : ''}" onclick="_setArticDispositif('${d}')">${d} (${stats.totals[d]} séq.)</button>`).join('')}
-                </div>` : '';
-
-            const viewToggleHtml = `
-                <div class="artic-dispositif-toggle">
-                    <button class="enc-pie-mode-btn${window._articViewMode!=='topdef'?' active':''}" onclick="_setArticViewMode('frequent')">Le + utilisé</button>
-                    <button class="enc-pie-mode-btn${window._articViewMode==='topdef'?' active':''}" onclick="_setArticViewMode('topdef')">🏆 Top Def</button>
-                </div>`;
-
-            const globalHtml = `<div class="artic-global-eff">Efficacité attaque adverse (référence, ${dispositif}) : <strong>${g.eff}%</strong> · ${g.possessions} séq.</div>`;
+            const nManual = Object.keys(window._articManualPoste).length;
+            const controlBarHtml = `<div class="artic-control-bar">
+                ${available.length > 1 ? `<div class="artic-control-row">
+                    <span class="artic-control-label">DISPOSITIF</span>
+                    <div class="artic-dispositif-toggle">
+                        ${available.map(d => `<button class="enc-pie-mode-btn${d === dispositif ? ' active' : ''}" onclick="_setArticDispositif('${d}')">${d} (${stats.totals[d]} séq.)</button>`).join('')}
+                    </div>
+                </div>` : ''}
+                <div class="artic-control-row">
+                    <span class="artic-control-label">AFFICHAGE</span>
+                    <div class="artic-dispositif-toggle">
+                        <button class="enc-pie-mode-btn${window._articViewMode!=='topdef'?' active':''}" onclick="_setArticViewMode('frequent')">Le + utilisé</button>
+                        <button class="enc-pie-mode-btn${window._articViewMode==='topdef'?' active':''}" onclick="_setArticViewMode('topdef')">🏆 Top Def</button>
+                    </div>
+                </div>
+                ${nManual > 0 ? `<div class="artic-manual-indicator">⚙ ${nManual} poste${nManual > 1 ? 's' : ''} modifié${nManual > 1 ? 's' : ''} manuellement · <a href="#" onclick="_resetArticManual();return false;">Réinitialiser</a></div>` : ''}
+            </div>`;
 
             let postesHtml = '';
             const lineup = {};
@@ -2641,46 +2671,38 @@
                 const [x, y] = layout[pKey];
                 const joueurMap = posteMap.get(pKey);
                 const manuel = window._articManualPoste[pKey];
+                const manualMark = manuel ? `<div class="artic-poste-manual">✎</div>` : '';
                 if (manuel) {
                     lineup[pKey] = manuel;
                     const s = joueurMap ? joueurMap.get(manuel) : null;
-                    if (!s) {
-                        postesHtml += `<div class="artic-poste${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
-                            <div class="artic-poste-label">${pKey.toUpperCase()}</div>
-                            <div class="artic-poste-joueur">${_escapeHtml(manuel)}</div>
-                            <div class="artic-poste-eff noref">pas de donnée</div>
-                        </div>`;
-                        return;
-                    }
-                    const effClass = _articEffClass(s.eff, s.possessions);
-                    const effLabel = s.possessions < 5 ? `${s.eff}% (n<3)` : `${s.eff}%`;
-                    postesHtml += `<div class="artic-poste${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
+                    const effClass = s ? _articEffClass(s.eff, s.possessions) : 'noref';
+                    postesHtml += `<div class="artic-poste ${effClass}${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
+                        ${manualMark}
                         <div class="artic-poste-label">${pKey.toUpperCase()}</div>
                         <div class="artic-poste-joueur">${_escapeHtml(manuel)}</div>
-                        <div class="artic-poste-eff ${effClass}">${effLabel}</div>
                     </div>`;
                     return;
                 }
                 if (!joueurMap || !joueurMap.size) {
                     lineup[pKey] = null;
-                    postesHtml += `<div class="artic-poste" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucune donnée" onclick="_selectArticPoste('${pKey}')">
+                    postesHtml += `<div class="artic-poste noref" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucune donnée" onclick="_selectArticPoste('${pKey}')">
                         <div class="artic-poste-label">${pKey.toUpperCase()}</div><div class="artic-poste-joueur">—</div></div>`;
                     return;
                 }
                 const [topJoueur, topStats] = _articPrimaryEntry(pKey, joueurMap);
                 lineup[pKey] = topJoueur;
                 const effClass = _articEffClass(topStats.eff, topStats.possessions);
-                const effLabel = topStats.possessions < 5 ? `${topStats.eff}% (n<3)` : `${topStats.eff}%`;
                 const badge = joueurMap.size > 1 ? `<div class="artic-poste-badge">+${joueurMap.size - 1}</div>` : '';
-                postesHtml += `<div class="artic-poste${window._articSelectedPoste === pKey ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
+                postesHtml += `<div class="artic-poste ${effClass}${window._articSelectedPoste === pKey ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
                     ${badge}
                     <div class="artic-poste-label">${pKey.toUpperCase()}</div>
                     <div class="artic-poste-joueur">${_escapeHtml(topJoueur)}</div>
-                    <div class="artic-poste-eff ${effClass}">${effLabel}</div>
                 </div>`;
             });
 
+            const referenceCard = `<div class="artic-block-card"><div class="artic-block-label">Référence adverse</div><div class="artic-block-eff ${_articEffClass(g.eff, g.possessions)}">${g.possessions < 5 ? `${g.eff}% (n<3)` : `${g.eff}%`}</div><div class="artic-block-n">${g.possessions} séq.</div></div>`;
             const blocksHtml = `<div class="artic-blocks">
+                ${referenceCard}
                 ${ARTIC_BLOCKS.map(b => {
                     const stat = _articBlockEff(matchData, dispositif, lineup, b.postes);
                     if (stat.incomplete) return `<div class="artic-block-card"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff noref">composition incomplète</div></div>`;
@@ -2713,15 +2735,18 @@
             }
 
             container.innerHTML = `
-                ${togglesHtml}
-                ${viewToggleHtml}
-                ${globalHtml}
+                ${controlBarHtml}
                 <div class="artic-court">
                     ${_articCourtSvg()}
                     ${postesHtml}
                 </div>
                 ${blocksHtml}
                 ${detailHtml}`;
+        }
+
+        function _resetArticManual() {
+            window._articManualPoste = {};
+            _redrawArticCourt();
         }
 
         function _redrawArticCourt() {
