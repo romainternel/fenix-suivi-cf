@@ -2463,10 +2463,13 @@
 
         // Regroupe par dispositif (0-6 / 1-5) puis par poste puis par joueur — une ligne comptée par
         // séquence adverse (filtre possession, cf. computeEncStats), le tag articulation étant répété
-        // sur toutes les lignes d'une même séquence (confirmé par Romain).
+        // sur toutes les lignes d'une même séquence (confirmé par Romain). `global` = efficacité
+        // attaque adverse toutes séquences taguées confondues (référence de comparaison, comptée une
+        // seule fois par séquence — pas par poste, sinon une séquence serait comptée 6 fois).
         function computeArticulationStats(matchData) {
             const postes = { '0-6': new Map(), '1-5': new Map() };
             const totals = { '0-6': 0, '1-5': 0 };
+            const global = { '0-6': { buts: 0, po: 0, possessions: 0, eff: 0 }, '1-5': { buts: 0, po: 0, possessions: 0, eff: 0 } };
             matchData.filter(r => r[COLS.club] !== 'FENIX').forEach(r => {
                 if (!(r[COLS.possession] || '').toString().trim()) return;
                 const articRaw = (r[COLS.articulation_def] || '').toString().trim();
@@ -2477,6 +2480,10 @@
                 const isBut = res === 'But';
                 const isPO = res === 'PO';
                 totals[dispositif]++;
+                const g = global[dispositif];
+                g.possessions++;
+                if (isBut) g.buts++;
+                else if (isPO) g.po++;
                 const posteMap = postes[dispositif];
                 ARTIC_POSTES.forEach(pKey => {
                     const joueur = _resolveArticJoueur(r[COLS[pKey]]);
@@ -2494,8 +2501,10 @@
                 postes[disp].forEach(joueurMap => joueurMap.forEach(s => {
                     s.eff = s.possessions > 0 ? Math.round((s.buts + s.po) / s.possessions * 100) : 0;
                 }));
+                const g = global[disp];
+                g.eff = g.possessions > 0 ? Math.round((g.buts + g.po) / g.possessions * 100) : 0;
             });
-            return { postes, totals };
+            return { postes, totals, global };
         }
 
         function _articEffClass(eff, possessions) {
@@ -2505,12 +2514,65 @@
             return 'faible';
         }
 
-        // Layouts des 6 postes (% dans .artic-court) — 0-6 : ligne alignée à 6m.
-        // 1-5 : P1/P2/P5/P6 restent à 6m, P3 recule en couverture, P4 sort en avancé (cf. Design §1).
+        // Layouts des 6 postes (mêmes unités que le viewBox du demi-terrain, 0-100 des deux côtés,
+        // cf. _articCourtSvg) — 0-6 : ligne alignée à 6m. 1-5 : P1/P2/P5/P6 restent à 6m, P3 recule
+        // en couverture, P4 sort en avancé (cf. Design §1).
         const ARTIC_LAYOUTS = {
-            '0-6': { p1: [8, 48], p2: [25.6, 48], p3: [43.2, 48], p4: [56.8, 48], p5: [74.4, 48], p6: [92, 48] },
-            '1-5': { p1: [8, 48], p2: [26, 48], p3: [50, 66], p4: [50, 86], p5: [74, 48], p6: [92, 48] },
+            '0-6': { p1: [8, 28], p2: [25.6, 28], p3: [43.2, 28], p4: [56.8, 28], p5: [74.4, 28], p6: [92, 28] },
+            '1-5': { p1: [8, 28], p2: [26, 28], p3: [50, 46], p4: [50, 66], p5: [74, 28], p6: [92, 28] },
         };
+
+        // Terrain dessiné (zone 6m/9m, but) — mêmes proportions que le terrain interactif de la page
+        // Joueurs (#hb-court-svg), décalées de +10 pour repartir d'un viewBox 0-100 sans marge négative
+        // (simplifie le positionnement des postes, exprimés dans les mêmes unités 0-100). Défs dupliquées
+        // localement (pas de référence à #hb-court-svg) : ce terrain adverse est dessiné pendant que la
+        // page Joueurs est display:none, et un fill="url(#id)" ne résout pas vers un <defs> dont
+        // l'ancêtre est display:none — dépendre du DOM d'une autre page serait fragile.
+        function _articCourtSvg() {
+            return `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
+                <defs>
+                    <linearGradient id="artic-court-bg" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#6BAED9"/>
+                        <stop offset="100%" stop-color="#4A8EC8"/>
+                    </linearGradient>
+                    <pattern id="artic-goal-net" x="0" y="0" width="2.5" height="2" patternUnits="userSpaceOnUse">
+                        <rect width="1.25" height="1" fill="#CC2222"/>
+                        <rect x="1.25" width="1.25" height="1" fill="#f0f0f0"/>
+                        <rect y="1" width="1.25" height="1" fill="#f0f0f0"/>
+                        <rect x="1.25" y="1" width="1.25" height="1" fill="#CC2222"/>
+                    </pattern>
+                </defs>
+                <rect x="0" y="0" width="100" height="100" fill="url(#artic-court-bg)" rx="6"/>
+                <rect x="37" y="0" width="26" height="10" fill="url(#artic-goal-net)"/>
+                <rect x="37" y="0" width="26" height="10" fill="none" stroke="white" stroke-width="0.8"/>
+                <line x1="0" y1="10" x2="100" y2="10" stroke="white" stroke-width="0.6"/>
+                <line x1="0" y1="10" x2="0" y2="92" stroke="white" stroke-width="0.6"/>
+                <line x1="100" y1="10" x2="100" y2="92" stroke="white" stroke-width="0.6"/>
+                <path d="M 12.5,10 A 37.5,30 0 0,0 87.5,10" fill="rgba(255,255,255,0.07)" stroke="white" stroke-width="0.6"/>
+                <path d="M 0,25 A 52,44 0 0,0 100,25" fill="none" stroke="white" stroke-width="0.5" stroke-dasharray="2.2,1.6" opacity="0.8"/>
+                <line x1="48" y1="45" x2="52" y2="45" stroke="white" stroke-width="0.6" opacity="0.9"/>
+            </svg>`;
+        }
+
+        function _articJoueurStats(pKey, joueur, posteMap) {
+            const joueurMap = posteMap.get(pKey);
+            return (joueurMap && joueurMap.get(joueur)) || null;
+        }
+
+        // Choix du joueur "principal" affiché sur un poste : override manuel (Romain a choisi qui il
+        // veut voir) > mode Top Def (le plus efficace, au-dessus du seuil de significativité) > mode
+        // par défaut (le plus utilisé à ce poste sur la période).
+        function _articPrimaryEntry(pKey, joueurMap) {
+            const manuel = window._articManualPoste && window._articManualPoste[pKey];
+            if (manuel) return [manuel, _articJoueurStats(pKey, manuel, { get: () => joueurMap }) || joueurMap.get(manuel) || null];
+            const entries = [...joueurMap.entries()];
+            if (window._articViewMode === 'topdef') {
+                const fiables = entries.filter(([, s]) => s.possessions >= 5);
+                const pool = fiables.length ? fiables : entries;
+                return pool.slice().sort((a, b) => a[1].eff - b[1].eff)[0];
+            }
+            return entries.slice().sort((a, b) => b[1].possessions - a[1].possessions)[0];
+        }
 
         function _drawArticulationCourt(container, matchData) {
             const stats = computeArticulationStats(matchData);
@@ -2522,29 +2584,59 @@
             if (!window._articDispositif || !available.includes(window._articDispositif)) {
                 window._articDispositif = available.slice().sort((a, b) => stats.totals[b] - stats.totals[a])[0];
             }
+            if (!window._articViewMode) window._articViewMode = 'frequent';
+            if (!window._articManualPoste) window._articManualPoste = {};
             const dispositif = window._articDispositif;
             const layout = ARTIC_LAYOUTS[dispositif];
             const posteMap = stats.postes[dispositif];
+            const g = stats.global[dispositif];
 
             const togglesHtml = available.length > 1 ? `
                 <div class="artic-dispositif-toggle">
                     ${available.map(d => `<button class="enc-pie-mode-btn${d === dispositif ? ' active' : ''}" onclick="_setArticDispositif('${d}')">${d} (${stats.totals[d]} séq.)</button>`).join('')}
                 </div>` : '';
 
+            const viewToggleHtml = `
+                <div class="artic-dispositif-toggle">
+                    <button class="enc-pie-mode-btn${window._articViewMode!=='topdef'?' active':''}" onclick="_setArticViewMode('frequent')">Le + utilisé</button>
+                    <button class="enc-pie-mode-btn${window._articViewMode==='topdef'?' active':''}" onclick="_setArticViewMode('topdef')">🏆 Top Def</button>
+                </div>`;
+
+            const globalHtml = `<div class="artic-global-eff">Efficacité attaque adverse (référence, ${dispositif}) : <strong>${g.eff}%</strong> · ${g.possessions} séq.</div>`;
+
             let postesHtml = '';
             ARTIC_POSTES.forEach(pKey => {
                 const [x, y] = layout[pKey];
                 const joueurMap = posteMap.get(pKey);
+                const manuel = window._articManualPoste[pKey];
+                if (manuel) {
+                    const s = joueurMap ? joueurMap.get(manuel) : null;
+                    if (!s) {
+                        postesHtml += `<div class="artic-poste${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
+                            <div class="artic-poste-label">${pKey.toUpperCase()}</div>
+                            <div class="artic-poste-joueur">${_escapeHtml(manuel)}</div>
+                            <div class="artic-poste-eff noref">pas de donnée</div>
+                        </div>`;
+                        return;
+                    }
+                    const effClass = _articEffClass(s.eff, s.possessions);
+                    const effLabel = s.possessions < 5 ? `${s.eff}% (n<3)` : `${s.eff}%`;
+                    postesHtml += `<div class="artic-poste${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
+                        <div class="artic-poste-label">${pKey.toUpperCase()}</div>
+                        <div class="artic-poste-joueur">${_escapeHtml(manuel)}</div>
+                        <div class="artic-poste-eff ${effClass}">${effLabel}</div>
+                    </div>`;
+                    return;
+                }
                 if (!joueurMap || !joueurMap.size) {
-                    postesHtml += `<div class="artic-poste" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucune donnée">
+                    postesHtml += `<div class="artic-poste" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucune donnée" onclick="_selectArticPoste('${pKey}')">
                         <div class="artic-poste-label">${pKey.toUpperCase()}</div><div class="artic-poste-joueur">—</div></div>`;
                     return;
                 }
-                const entries = [...joueurMap.entries()].sort((a, b) => b[1].possessions - a[1].possessions);
-                const [topJoueur, topStats] = entries[0];
+                const [topJoueur, topStats] = _articPrimaryEntry(pKey, joueurMap);
                 const effClass = _articEffClass(topStats.eff, topStats.possessions);
                 const effLabel = topStats.possessions < 5 ? `${topStats.eff}% (n<3)` : `${topStats.eff}%`;
-                const badge = entries.length > 1 ? `<div class="artic-poste-badge">+${entries.length - 1}</div>` : '';
+                const badge = joueurMap.size > 1 ? `<div class="artic-poste-badge">+${joueurMap.size - 1}</div>` : '';
                 postesHtml += `<div class="artic-poste${window._articSelectedPoste === pKey ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
                     ${badge}
                     <div class="artic-poste-label">${pKey.toUpperCase()}</div>
@@ -2554,33 +2646,63 @@
             });
 
             let detailHtml = '';
-            if (window._articSelectedPoste && posteMap.get(window._articSelectedPoste)) {
+            if (window._articSelectedPoste) {
                 const pKey = window._articSelectedPoste;
-                const entries = [...posteMap.get(pKey).entries()].sort((a, b) => b[1].possessions - a[1].possessions);
+                const joueurMap = posteMap.get(pKey);
+                const entries = joueurMap ? [...joueurMap.entries()].sort((a, b) => b[1].possessions - a[1].possessions) : [];
+                const selectOptions = (typeof JOUEURS_TERRAIN !== 'undefined' ? JOUEURS_TERRAIN : [])
+                    .slice().sort((a, b) => (a.nomComplet || a.nom).localeCompare(b.nomComplet || b.nom))
+                    .map(p => `<option value="${_escapeHtml(p.nom)}"${window._articManualPoste[pKey] === p.nom ? ' selected' : ''}>${_escapeHtml(p.nomComplet || p.nom)}</option>`).join('');
                 detailHtml = `<div class="artic-detail-panel">
                     <div class="artic-detail-title">${pKey.toUpperCase()} — détail par joueur</div>
-                    ${entries.map(([joueur, s]) => `<div class="artic-detail-row"><span>${_escapeHtml(joueur)}</span><span>${s.possessions} séq. · ${s.possessions < 5 ? `${s.eff}% (n<3)` : `${s.eff}% eff. adverse`}</span></div>`).join('')}
+                    ${entries.length ? entries.map(([joueur, s]) => `<div class="artic-detail-row"><span>${_escapeHtml(joueur)}</span><span>${s.possessions} séq. · ${s.possessions < 5 ? `${s.eff}% (n<3)` : `${s.eff}% eff. adverse`}</span></div>`).join('') : '<div class="artic-detail-row"><span>Aucune donnée pour ce poste</span></div>'}
+                    <div class="artic-detail-select">
+                        <label>Voir un autre joueur à ce poste :</label>
+                        <select onchange="_setArticManualJoueur('${pKey}', this.value)">
+                            <option value="">— Auto (${window._articViewMode === 'topdef' ? 'top def' : 'le plus utilisé'}) —</option>
+                            ${selectOptions}
+                        </select>
+                    </div>
                 </div>`;
             }
 
             container.innerHTML = `
                 ${togglesHtml}
+                ${viewToggleHtml}
+                ${globalHtml}
                 <div class="artic-court">
-                    <div class="artic-goal"></div>
+                    ${_articCourtSvg()}
                     ${postesHtml}
                 </div>
                 ${detailHtml}`;
         }
 
+        function _redrawArticCourt() {
+            if (window._encCurrentMatchData) _drawArticulationCourt(document.getElementById('enc-articulation-wrap'), window._encCurrentMatchData);
+        }
+
         function _setArticDispositif(dispositif) {
             window._articDispositif = dispositif;
             window._articSelectedPoste = null;
-            if (window._encCurrentMatchData) _drawArticulationCourt(document.getElementById('enc-articulation-wrap'), window._encCurrentMatchData);
+            window._articManualPoste = {};
+            _redrawArticCourt();
+        }
+
+        function _setArticViewMode(mode) {
+            window._articViewMode = mode;
+            _redrawArticCourt();
+        }
+
+        function _setArticManualJoueur(pKey, joueurNom) {
+            if (!window._articManualPoste) window._articManualPoste = {};
+            if (joueurNom) window._articManualPoste[pKey] = joueurNom;
+            else delete window._articManualPoste[pKey];
+            _redrawArticCourt();
         }
 
         function _selectArticPoste(pKey) {
             window._articSelectedPoste = window._articSelectedPoste === pKey ? null : pKey;
-            if (window._encCurrentMatchData) _drawArticulationCourt(document.getElementById('enc-articulation-wrap'), window._encCurrentMatchData);
+            _redrawArticCourt();
         }
 
         // A-06/07 — Gardien × famille
