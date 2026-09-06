@@ -1,49 +1,59 @@
-# Brief — Photos joueurs (portrait + corps entier)
+# Brief — Articulation défensive (efficacité par poste occupé)
 
 **Agent :** Analyst
-**Date :** 2026-09-01
+**Date :** 2026-09-02
 
 ---
 
 ## 1. Contexte
 
-L'appli affiche aujourd'hui chaque joueur uniquement via ses initiales dans un avatar rond texte (`.jp-avatar` sur la page Joueurs, `.pmf-avatar` en mode joueur mobile — vérifié dans le code, aucune photo nulle part). Romain a désormais des photos individuelles de plusieurs joueurs, dans deux formats : un **portrait** (tête, fond transparent) et un **corps entier** (joueur en pied, en maillot Fenix Toulouse complet, fond transparent, format vertical). Il veut les exploiter dans l'appli plutôt que de les laisser inutilisées.
+Romain a ajouté 7 nouvelles colonnes à la feuille Excel `DATA` (positions 22 à 28, juste après `Intention attaque`) :
+
+| Colonne Excel | Rôle |
+|---|---|
+| `ARTICULATION DEF` | Système défensif FENIX pour la séquence : `ARTICULATION DEF 0-6` (défense alignée, 6 joueurs à 6m) ou `ARTICULATION DEF 1-5` (défense étagée, 5 joueurs à 6m + 1 avancé) |
+| `P1` à `P6` | Nom du joueur FENIX (format court `Prénom.Initiale`) occupant chacun des 6 postes défensifs pour cette séquence |
+
+**Sémantique des postes** (confirmée par Romain, dos au but, joueur qui défend) :
+- **0-6** : P1 = ailier gauche adverse, P2 = arrière gauche adverse, P3/P4 = milieu, jusqu'à P6 = côté droit — les 6 joueurs alignés à 6m.
+- **1-5** : même principe mais P4 est le joueur avancé (sorti sur un attaquant), P3 est celui resté en couverture derrière lui (la "zone").
+
+Ces colonnes ne sont pas renseignées sur toutes les lignes — uniquement sur les séquences d'attaque adverse que Romain a explicitement taguées (visible dans son fichier : lignes avec `Intention attaque` type "Faire courir"/"Rentrée" souvent taguées, d'autres non). C'est une donnée **défensive** : elle décrit comment FENIX défendait pendant une séquence d'attaque de l'adversaire — elle s'inscrit donc naturellement dans la section déjà existante "DÉFENSE FENIX — Intention attaque adverses" (page Analyse), pas dans le sens Attaque.
 
 ## 2. Problème
 
-L'appli est aujourd'hui 100% textuelle pour l'identification visuelle d'un joueur — un avatar avec 2 lettres. C'est fonctionnel mais impersonnel : sur la fiche joueur, dans les exports PDF/PPT (destinés à être montrés aux joueurs, aux parents, ou en réunion staff), et dans l'esprit général "outil de suivi pro" que Romain construit depuis plusieurs mois (charte visuelle Fenix, dégradés bleu club, Bebas Neue), l'absence de vraie photo est le dernier point qui fait "tableur amélioré" plutôt que "outil de club".
+Aujourd'hui, la section Défense de l'onglet "Intention attaque" répond à "quelle intention adverse nous pose problème" (par famille tactique), mais pas à "quel dispositif défensif, avec quels joueurs à quels postes, est le plus efficace face à l'adversaire". Romain n'a aucun moyen de savoir si, par exemple, sa charnière centrale (postes 2 à 5, ceux qui gèrent le cœur du jeu adverse) est plus solide avec telle combinaison de joueurs plutôt que telle autre — une question directement utile pour composer ses lignes défensives en match et à l'entraînement.
 
 ## 3. Utilisateurs
 
-- **Romain (staff/coach)** — usage desktop principalement, consulte la fiche joueur en préparation de match ou d'entretien, exporte en PDF/PPT pour partager en réunion ou avec un joueur/parent.
-- **Joueurs (mode lecture mobile)** — consultent leur propre fiche sur téléphone ; verraient leur propre avatar photo.
-- Contrainte réaliste : toutes les photos ne sont pas encore disponibles pour tous les joueurs (déploiement progressif à mesure que Romain les récupère) — l'app doit rester cohérente avec un mélange joueurs-avec-photo / joueurs-sans-photo.
+Romain (staff), sur desktop principalement (même contexte d'usage que le reste de la page Analyse) — en préparation de match ou en debrief, pour composer ou valider ses choix de lignes défensives.
 
 ## 4. Vision
 
-Chaque joueur avec une photo disponible est identifiable visuellement partout où son nom apparaît en position "carte d'identité" (fiche, export, connexion) — sans jamais casser l'affichage pour un joueur qui n'a pas encore de photo.
+Depuis la page Analyse (vue match ou saison complète), voir sur un visuel de demi-terrain handball quel joueur a occupé quel poste défensif, avec l'efficacité adverse (buts/tirs) associée à chaque poste/joueur/combinaison — et une mise en avant automatique des combinaisons de charnière centrale (postes 2 à 5) les plus efficaces sur la période analysée.
 
 ## 5. Scope
 
 **Dans le scope :**
-1. Portrait joueur en remplacement de l'avatar initiales sur la fiche joueur (`page-joueurs`) et en mode lecture joueur mobile (`player-mode`), avec repli propre sur les initiales si pas de photo.
-2. Photo corps entier intégrée à l'export PDF/PPT du joueur (`printFicheJoueur()` / `exportJoueurPPT()`) — emplacement à définir par le Designer, la page de couverture existante (`pdf-slide-cover`, actuellement juste logo + nom) étant le candidat naturel.
-3. Nouvelle interaction sur la page Joueurs : un clic sur l'avatar (portrait ou initiales) du joueur sélectionné bascule la colonne terrain (`court-container`) vers l'affichage de sa photo corps entier, avec un moyen évident de revenir au terrain.
+1. Import des 7 nouvelles colonnes Excel → Supabase (`match_data`), en réutilisant le pipeline d'import existant (résilient au nom d'en-tête, cf. `docs/arch/migration-supabase.md`).
+2. Nouveau mode d'affichage "Articulation" dans la section "Intention attaque" existante côté Défense (`renderEncFamillesSection`, déjà partagée entre la vue match — onglet dédié — et la vue saison complète) : un demi-terrain handball avec les 6 postes défensifs positionnés selon le type d'articulation (0-6 ou 1-5), affichant qui a joué où et l'efficacité adverse associée.
+3. Sélection d'un poste (ou d'un joueur à un poste) → détail de l'efficacité adverse pour ce poste/joueur, sur le match sélectionné ou la saison complète selon le contexte déjà actif.
+4. Mise en avant automatique des 2-3 meilleures combinaisons de charnière centrale (postes 2 à 5) sur la période, classées par efficacité adverse (plus l'adversaire est inefficace, meilleure est la combinaison défensive).
 
 **Hors scope (explicitement) :**
-- Upload de photo depuis l'interface (Romain ajoute les fichiers lui-même, comme il le fait déjà pour le fichier Excel).
-- Recadrage/édition d'image dans l'app.
-- Photos pour les entités "Adversaire" (uniquement les joueurs Fenix).
+- Simulation "what-if" (composer une ligne hypothétique jamais jouée et projeter un résultat) — l'analyse porte sur des combinaisons réellement observées dans les données, pas une projection.
+- Modification du système de tagging Excel lui-même (déjà fait par Romain).
+- Un poste défensif pour l'attaque FENIX (la donnée n'a de sens que côté défense).
 
 ## 6. Critères de succès
 
-- Un joueur avec photo affiche sa vraie photo à la place des initiales, sur desktop staff ET mobile joueur, sans erreur console si le fichier est absent.
-- Un joueur sans photo continue d'afficher les initiales exactement comme aujourd'hui — aucune régression visuelle.
-- L'export PDF/PPT intègre la photo corps entier sans casser la mise en page existante (ni pour un joueur avec photo, ni pour un joueur sans photo).
-- Le clic sur l'avatar bascule visuellement le terrain vers la photo corps entier et permet un retour simple.
+- Les 7 nouvelles colonnes remontent correctement de l'Excel jusqu'à Supabase après un réimport, sans casser l'import existant pour les lignes non taguées (valeurs vides tolérées).
+- Le nouveau mode "Articulation" est accessible à la fois en vue match (dans l'onglet où vivent déjà les familles d'intention) et en vue saison complète, sans dupliquer la logique entre les deux (réutilise `renderEncFamillesSection`).
+- Le demi-terrain affiche correctement les 6 postes, avec un layout différent selon 0-6 vs 1-5.
+- Cliquer sur un poste ou un joueur affiche l'efficacité adverse réelle pour ce filtre.
+- Les meilleures combinaisons de charnière centrale (P2-P5) sont identifiées automatiquement, avec un seuil minimum de données pour éviter un classement basé sur 1-2 séquences.
 
 ## 7. Questions en suspens
 
-- **Où stocker les fichiers photo** (Supabase Storage vs fichiers statiques bundlés dans le repo) → tranché en Architecture (voir `docs/arch/photos-joueurs.md`), car ça détermine largement l'implémentation.
-- **Convention de nommage** des fichiers pour le mapping nom → photo → tranchée en Architecture.
-- Romain fournira les fichiers progressivement : pas de liste figée du nombre de joueurs concernés au lancement de la feature.
+- **Seuil de significativité** pour le classement automatique des combinaisons (nombre minimum de séquences/tirs avant qu'une combinaison soit éligible) — à trancher en PM/Architecture, par analogie avec les seuils déjà utilisés ailleurs (`n<3` déjà affiché comme avertissement dans le tableau Gardien × Systèmes adverses).
+- **Emplacement exact du nouveau mode** : Romain a écrit "un onglet à côté d'intention attaque" pour la vue match, mais "un onglet articulation dans Défense Fenix — Intention attaque adverses" pour la vue saison — ces deux formulations correspondent en réalité au **même** point d'insertion technique (`renderEncFamillesSection`, mode Défense), qui est déjà partagé entre les deux contextes. Le Designer documente ce choix explicitement ; à confirmer avec Romain à la revue si un onglet de plus haut niveau séparé était réellement souhaité plutôt qu'un mode supplémentaire à l'intérieur de la section existante.
