@@ -79,7 +79,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 - **Nommage HTML/CSS** : IDs et classes en kebab-case (`#filter-joueur-match`, `.jp-avatar`). Préfixes courts par module : `jp-*` (Joueurs), `pmf-*`/`pm-*` (Player Mode), `enc-*` (Enclenchements), `court-*` (terrain SVG).
 - **Fonctions JS** : camelCase. Fonctions privées à un module préfixées `_` (`_renderCourtPhotoState`, `_getJoueurBilanMatchs`).
-- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **8** balises `<link>`/`<script>` du projet (css/style.css + les 7 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v256**.
+- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **8** balises `<link>`/`<script>` du projet (css/style.css + les 7 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v257**.
 - **Résolution de nom joueur** : ne jamais comparer deux noms de joueur par égalité stricte. Le format court "Prénom.Initiale" (ex. `Lucas.G`) coexiste avec des colonnes Excel ne contenant que le prénom (ex. colonne `Gardien`) — toujours passer par `matchPlayerName(a, b)` (`js/utils.js`), qui gère ce cas et met en cache le résultat.
 - **Constantes de configuration maintenues à la main** : `POSTE_POSITIONS`, `GB_ZONE_WEIGHTS`, `EFF_SEUILS`, `PLAYER_PHOTOS` — objets JS statiques édités directement dans le code (par Romain ou en session), pas de table Supabase ni d'UI d'admin pour ces réglages ponctuels.
 - **Import Excel = remplacement complet** : chaque import Excel supprime et réinsère entièrement `match_data`/`joueurs`/`tableau_match`/`bilan` sur Supabase. Ne jamais stocker une donnée éditée en base (famille, note coach, compte joueur) sur une structure qui serait recréée par l'import — toujours une table séparée (`famille_mapping`, `coach_analyses`, `player_profiles`) ou un fichier hors pipeline (`player-photos.js`).
@@ -92,7 +92,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 | Table | Rôle | Remplacée à chaque import Excel ? |
 |---|---|---|
-| `match_data` | Une ligne par action de jeu (21 colonnes, cf. `COLS` dans le HTML) | Oui |
+| `match_data` | Une ligne par action de jeu (29 colonnes, cf. `COLS` dans le HTML — dont `articulation_def`/`p1`-`p6`, ajoutées en v257/STORY-33, données pas encore exploitées par une page) | Oui |
 | `joueurs` | `nom` (clé), `poste`, `saison`, `nom_complet` | Oui |
 | `tableau_match` | Temps de jeu par match/joueur | Oui |
 | `bilan` | Périodes de saison (saison, nom, journée fin) | Oui |
@@ -149,7 +149,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 ## 9. État d'avancement
 
-**Fonctionnel et en production (v256) :**
+**Fonctionnel et en production (v257) :**
 - [x] Import Excel → Supabase (remplacement complet des 4 tables de données)
 - [x] Dashboard, page Analyse (5 onglets internes : Résumé/Timeline/Intention attaque/Gardien/Chat IA)
 - [x] Page Joueurs : terrain interactif (photos ou initiales), fiche staff, sous-onglets Fiche/Notes/Graphique/Impact
