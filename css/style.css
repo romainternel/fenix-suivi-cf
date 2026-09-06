@@ -2730,6 +2730,18 @@
             background: var(--fenix-accent); color: #fff; font-size: 0.55rem; font-weight: 700;
             display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff;
         }
+        .artic-blocks { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+        .artic-block-card {
+            flex: 1 1 150px; max-width: 200px; text-align: center;
+            background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px;
+        }
+        .artic-block-label { font-size: 0.68rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .artic-block-eff { font-size: 1.15rem; font-weight: 700; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
+        .artic-block-eff.fort   { color: #10B981; }
+        .artic-block-eff.moyen  { color: #F59E0B; }
+        .artic-block-eff.faible { color: #EF4444; }
+        .artic-block-eff.noref  { color: #94A3B8; font-size: 0.72rem; font-family: 'Inter', sans-serif; font-weight: 500; }
+        .artic-block-n { font-size: 0.7rem; color: #94A3B8; margin-top: 2px; }
         .artic-detail-panel {
             margin-top: 14px; padding: 10px 14px; background: #F8FAFC;
             border: 1px solid #E2E8F0; border-radius: 10px; font-size: 0.8rem;

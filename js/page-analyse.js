@@ -2574,6 +2574,37 @@
             return entries.slice().sort((a, b) => b[1].possessions - a[1].possessions)[0];
         }
 
+        // 3 blocs de largeur décroissante (6 → 4 → 2 postes) pour évaluer l'efficacité adverse d'une
+        // COMPOSITION de joueurs jouée ensemble, pas d'un joueur isolé à un poste (demande Romain,
+        // v259bis) : plus le bloc est étroit, plus l'échantillon de séquences correspondantes est
+        // grand (moins de contraintes simultanées à satisfaire), donc plus fiable statistiquement.
+        // "Bloc central" = P2-P3-P4-P5 (les 2 ailiers P1/P6 exclus), confirmé avec Romain.
+        const ARTIC_BLOCKS = [
+            { key: 'total', label: 'Bloc Total', postes: ARTIC_POSTES },
+            { key: 'central', label: 'Bloc Central (P2-P5)', postes: ['p2', 'p3', 'p4', 'p5'] },
+            { key: 'p34', label: 'BLOC34 (P3-P4)', postes: ['p3', 'p4'] },
+        ];
+
+        // Efficacité adverse quand EXACTEMENT ce groupe de joueurs (lineup) occupait ensemble les
+        // postes du bloc sur une même séquence — pas juste chacun séparément à son poste.
+        function _articBlockEff(matchData, dispositif, lineup, blockPostes) {
+            if (blockPostes.some(pk => !lineup[pk])) return { possessions: 0, buts: 0, po: 0, eff: 0, incomplete: true };
+            let buts = 0, po = 0, possessions = 0;
+            matchData.filter(r => r[COLS.club] !== 'FENIX').forEach(r => {
+                if (!(r[COLS.possession] || '').toString().trim()) return;
+                const articRaw = (r[COLS.articulation_def] || '').toString().trim();
+                if (!articRaw) return;
+                const disp = articRaw.replace(/^ARTICULATION DEF\s*/i, '').trim();
+                if (disp !== dispositif) return;
+                if (!blockPostes.every(pk => _resolveArticJoueur(r[COLS[pk]]) === lineup[pk])) return;
+                possessions++;
+                const res = (r[COLS.finalite] || '').toString().trim();
+                if (res === 'But') buts++;
+                else if (res === 'PO') po++;
+            });
+            return { possessions, buts, po, eff: possessions > 0 ? Math.round((buts + po) / possessions * 100) : 0, incomplete: false };
+        }
+
         function _drawArticulationCourt(container, matchData) {
             const stats = computeArticulationStats(matchData);
             const available = ['0-6', '1-5'].filter(d => stats.totals[d] > 0);
@@ -2605,11 +2636,13 @@
             const globalHtml = `<div class="artic-global-eff">Efficacité attaque adverse (référence, ${dispositif}) : <strong>${g.eff}%</strong> · ${g.possessions} séq.</div>`;
 
             let postesHtml = '';
+            const lineup = {};
             ARTIC_POSTES.forEach(pKey => {
                 const [x, y] = layout[pKey];
                 const joueurMap = posteMap.get(pKey);
                 const manuel = window._articManualPoste[pKey];
                 if (manuel) {
+                    lineup[pKey] = manuel;
                     const s = joueurMap ? joueurMap.get(manuel) : null;
                     if (!s) {
                         postesHtml += `<div class="artic-poste${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
@@ -2629,11 +2662,13 @@
                     return;
                 }
                 if (!joueurMap || !joueurMap.size) {
+                    lineup[pKey] = null;
                     postesHtml += `<div class="artic-poste" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucune donnée" onclick="_selectArticPoste('${pKey}')">
                         <div class="artic-poste-label">${pKey.toUpperCase()}</div><div class="artic-poste-joueur">—</div></div>`;
                     return;
                 }
                 const [topJoueur, topStats] = _articPrimaryEntry(pKey, joueurMap);
+                lineup[pKey] = topJoueur;
                 const effClass = _articEffClass(topStats.eff, topStats.possessions);
                 const effLabel = topStats.possessions < 5 ? `${topStats.eff}% (n<3)` : `${topStats.eff}%`;
                 const badge = joueurMap.size > 1 ? `<div class="artic-poste-badge">+${joueurMap.size - 1}</div>` : '';
@@ -2644,6 +2679,17 @@
                     <div class="artic-poste-eff ${effClass}">${effLabel}</div>
                 </div>`;
             });
+
+            const blocksHtml = `<div class="artic-blocks">
+                ${ARTIC_BLOCKS.map(b => {
+                    const stat = _articBlockEff(matchData, dispositif, lineup, b.postes);
+                    if (stat.incomplete) return `<div class="artic-block-card"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff noref">composition incomplète</div></div>`;
+                    if (!stat.possessions) return `<div class="artic-block-card"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff noref">aucune séquence avec ce groupe</div></div>`;
+                    const effClass = _articEffClass(stat.eff, stat.possessions);
+                    const effLabel = stat.possessions < 5 ? `${stat.eff}% (n<3)` : `${stat.eff}%`;
+                    return `<div class="artic-block-card"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff ${effClass}">${effLabel}</div><div class="artic-block-n">${stat.possessions} séq.</div></div>`;
+                }).join('')}
+            </div>`;
 
             let detailHtml = '';
             if (window._articSelectedPoste) {
@@ -2674,6 +2720,7 @@
                     ${_articCourtSvg()}
                     ${postesHtml}
                 </div>
+                ${blocksHtml}
                 ${detailHtml}`;
         }
 
