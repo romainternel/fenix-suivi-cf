@@ -1597,7 +1597,6 @@
             if (graphWrap) graphWrap.style.display = mode === 'articulation' ? 'none' : 'flex';
             if (articWrap) articWrap.style.display = mode === 'articulation' ? 'block' : 'none';
             if (mode === 'articulation') {
-                window._articSelectedPoste = null;
                 if (articWrap && window._encCurrentMatchData) _drawArticulationCourt(articWrap, window._encCurrentMatchData);
             } else {
                 requestAnimationFrame(() => _drawEncChart());
@@ -2652,6 +2651,45 @@
             return { possessions, buts, po, eff: possessions > 0 ? Math.round((buts + po) / possessions * 100) : 0, incomplete: false };
         }
 
+        // Les 2 charnières que Romain veut pouvoir parcourir en détail (qui a joué ce duo/quatuor et
+        // combien de fois) — sous-ensemble de ARTIC_BLOCKS (on exclut "total", jamais demandé comme
+        // filtre de listing), mêmes clés/postes/libellés pour rester cohérent avec les cartes du haut.
+        const ARTIC_LISTING_CHARNIERES = ARTIC_BLOCKS.filter(b => b.key !== 'total');
+
+        // Recense TOUTES les compositions distinctes observées sur les postes d'une charnière (pas
+        // seulement celle actuellement affichée sur le terrain, contrairement à _articBlockEff) — pour
+        // le filtre "Charnière" du panneau de listing (STORY-38).
+        function computeArticCombos(matchData, dispositif, blockPostes) {
+            const combos = new Map();
+            matchData.filter(r => r[COLS.club] !== 'FENIX').forEach(r => {
+                if (!(r[COLS.possession] || '').toString().trim()) return;
+                const articRaw = (r[COLS.articulation_def] || '').toString().trim();
+                if (!articRaw) return;
+                const disp = articRaw.replace(/^ARTICULATION DEF\s*/i, '').trim();
+                if (disp !== dispositif) return;
+                const joueurs = blockPostes.map(pk => _resolveArticJoueur(r[COLS[pk]]));
+                if (joueurs.some(j => !j)) return;
+                const key = joueurs.join(' / ');
+                if (!combos.has(key)) combos.set(key, { buts: 0, po: 0, possessions: 0 });
+                const s = combos.get(key);
+                s.possessions++;
+                const res = (r[COLS.finalite] || '').toString().trim();
+                if (res === 'But') s.buts++;
+                else if (res === 'PO') s.po++;
+            });
+            return combos;
+        }
+
+        // Un poste est "en surbrillance" sur le terrain soit parce qu'il est le filtre individuel actif,
+        // soit parce qu'il appartient à la charnière actuellement filtrée (les 2 ou 4 postes concernés).
+        function _articPosteHighlighted(pKey) {
+            const f = window._articListingFilter;
+            if (!f) return false;
+            if (f.type === 'poste') return f.key === pKey;
+            const block = ARTIC_LISTING_CHARNIERES.find(b => b.key === f.key);
+            return block ? block.postes.includes(pKey) : false;
+        }
+
         function _drawArticulationCourt(container, matchData) {
             const stats = computeArticulationStats(matchData);
             const available = ['0-6', '1-5'].filter(d => stats.totals[d] > 0);
@@ -2664,6 +2702,7 @@
             }
             if (!window._articViewMode) window._articViewMode = 'frequent';
             if (!window._articManualPoste) window._articManualPoste = {};
+            if (!window._articListingFilter) window._articListingFilter = { type: 'poste', key: 'p1' };
             const dispositif = window._articDispositif;
             const layout = ARTIC_LAYOUTS[dispositif];
             const posteMap = stats.postes[dispositif];
@@ -2704,7 +2743,7 @@
                     const tip = s
                         ? `${manuel} — sélectionné manuellement sur ${pKey.toUpperCase()} : ${s.possessions} séq. observée(s) à ce poste.`
                         : `${manuel} — sélectionné manuellement sur ${pKey.toUpperCase()} : aucune séquence connue pour ce joueur à ce poste sur cette période.`;
-                    postesHtml += `<div class="artic-poste${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')" title="${_escapeHtml(tip)}">
+                    postesHtml += `<div class="artic-poste${_articPosteHighlighted(pKey)?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')" title="${_escapeHtml(tip)}">
                         ${manualMark}
                         <div class="artic-poste-label">${pKey.toUpperCase()}</div>
                         <div class="artic-poste-joueur">${_escapeHtml(manuel)}</div>
@@ -2723,7 +2762,7 @@
                 const modeLabel = window._articViewMode === 'topdef' ? 'suggéré (le plus économe historiquement)' : 'le plus utilisé';
                 const autresTip = joueurMap.size > 1 ? ` · ${joueurMap.size - 1} autre(s) joueur(s) ont aussi occupé ce poste — cliquer pour le détail.` : '';
                 const tip = `${topJoueur} — ${modeLabel} sur ${pKey.toUpperCase()} : ${topStats.possessions} séq. observée(s).${autresTip}`;
-                postesHtml += `<div class="artic-poste${window._articSelectedPoste === pKey ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')" title="${_escapeHtml(tip)}">
+                postesHtml += `<div class="artic-poste${_articPosteHighlighted(pKey) ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')" title="${_escapeHtml(tip)}">
                     ${badge}
                     <div class="artic-poste-label">${pKey.toUpperCase()}</div>
                     <div class="artic-poste-joueur">${_escapeHtml(topJoueur)}</div>
@@ -2762,36 +2801,63 @@
                 </div>
             </div>`;
 
-            let detailHtml = '';
-            if (window._articSelectedPoste) {
-                const pKey = window._articSelectedPoste;
+            // Panneau de listing (droite du terrain) : filtre par poste individuel (qui a joué là,
+            // combien de fois) ou par charnière (quelles compositions de 2/4 joueurs ont défendu
+            // ensemble, combien de fois) — remplace l'ancien panneau de détail déclenché uniquement
+            // par clic sur un poste (STORY-38 : "ça devrait être un filtre que je viens sélectionner").
+            const listingFilter = window._articListingFilter;
+            const posteFilterOptions = ARTIC_POSTES.map(pk => `<option value="poste:${pk}"${listingFilter.type === 'poste' && listingFilter.key === pk ? ' selected' : ''}>${pk.toUpperCase()}</option>`).join('');
+            const charniereFilterOptions = ARTIC_LISTING_CHARNIERES.map(b => `<option value="charniere:${b.key}"${listingFilter.type === 'charniere' && listingFilter.key === b.key ? ' selected' : ''}>${_escapeHtml(b.label)}</option>`).join('');
+
+            let listingRowsHtml, manualSelectHtml = '';
+            if (listingFilter.type === 'poste') {
+                const pKey = listingFilter.key;
                 const joueurMap = posteMap.get(pKey);
                 const entries = joueurMap ? [...joueurMap.entries()].sort((a, b) => b[1].possessions - a[1].possessions) : [];
+                listingRowsHtml = entries.length
+                    ? entries.map(([joueur, s]) => `<div class="artic-listing-row">${_escapeHtml(joueur)} (${s.possessions})</div>`).join('')
+                    : `<div class="artic-listing-row artic-listing-empty">Aucune donnée pour ce poste.</div>`;
                 const selectOptions = (typeof JOUEURS_TERRAIN !== 'undefined' ? JOUEURS_TERRAIN : [])
                     .slice().sort((a, b) => (a.nomComplet || a.nom).localeCompare(b.nomComplet || b.nom))
                     .map(p => `<option value="${_escapeHtml(p.nom)}"${window._articManualPoste[pKey] === p.nom ? ' selected' : ''}>${_escapeHtml(p.nomComplet || p.nom)}</option>`).join('');
-                detailHtml = `<div class="artic-detail-panel">
-                    <div class="artic-detail-title">${pKey.toUpperCase()} — joueurs vus à ce poste</div>
-                    ${entries.length ? entries.map(([joueur, s]) => `<div class="artic-detail-row"><span>${_escapeHtml(joueur)}</span><span>${s.possessions} séq.</span></div>`).join('') : '<div class="artic-detail-row"><span>Aucune donnée pour ce poste</span></div>'}
-                    <div class="artic-detail-select">
-                        <label>Voir un autre joueur à ce poste :</label>
-                        <select onchange="_setArticManualJoueur('${pKey}', this.value)">
-                            <option value="">— Auto (${window._articViewMode === 'topdef' ? 'suggestion' : 'le plus utilisée'}) —</option>
-                            ${selectOptions}
-                        </select>
-                    </div>
+                manualSelectHtml = `<div class="artic-listing-select">
+                    <label>Placer un joueur sur ${pKey.toUpperCase()} :</label>
+                    <select onchange="_setArticManualJoueur('${pKey}', this.value)">
+                        <option value="">— Auto (${window._articViewMode === 'topdef' ? 'suggestion' : 'le plus utilisée'}) —</option>
+                        ${selectOptions}
+                    </select>
                 </div>`;
+            } else {
+                const block = ARTIC_LISTING_CHARNIERES.find(b => b.key === listingFilter.key);
+                const combos = computeArticCombos(matchData, dispositif, block.postes);
+                const entries = [...combos.entries()].sort((a, b) => b[1].possessions - a[1].possessions);
+                listingRowsHtml = entries.length
+                    ? entries.map(([combo, s]) => `<div class="artic-listing-row">${_escapeHtml(combo)} (${s.possessions})</div>`).join('')
+                    : `<div class="artic-listing-row artic-listing-empty">Aucune composition complète observée pour cette charnière.</div>`;
             }
+
+            const listingHtml = `<div class="artic-listing-col">
+                <select class="artic-listing-filter" onchange="_setArticListingFilter(this.value)">
+                    <optgroup label="Poste">${posteFilterOptions}</optgroup>
+                    <optgroup label="Charnière">${charniereFilterOptions}</optgroup>
+                </select>
+                <div class="artic-listing-rows">${listingRowsHtml}</div>
+                ${manualSelectHtml}
+            </div>`;
 
             container.innerHTML = `
                 ${controlBarHtml}
                 ${blocksHtml}
-                <div class="artic-court">
-                    ${_articCourtSvg()}
-                    ${postesHtml}
-                </div>
-                ${recapHtml}
-                ${detailHtml}`;
+                <div class="artic-main-row">
+                    <div class="artic-court-col">
+                        <div class="artic-court">
+                            ${_articCourtSvg()}
+                            ${postesHtml}
+                        </div>
+                        ${recapHtml}
+                    </div>
+                    ${listingHtml}
+                </div>`;
         }
 
         function _resetArticManual() {
@@ -2805,7 +2871,6 @@
 
         function _setArticDispositif(dispositif) {
             window._articDispositif = dispositif;
-            window._articSelectedPoste = null;
             window._articManualPoste = {};
             _redrawArticCourt();
         }
@@ -2823,7 +2888,13 @@
         }
 
         function _selectArticPoste(pKey) {
-            window._articSelectedPoste = window._articSelectedPoste === pKey ? null : pKey;
+            window._articListingFilter = { type: 'poste', key: pKey };
+            _redrawArticCourt();
+        }
+
+        function _setArticListingFilter(value) {
+            const sep = value.indexOf(':');
+            window._articListingFilter = { type: value.slice(0, sep), key: value.slice(sep + 1) };
             _redrawArticCourt();
         }
 

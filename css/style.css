@@ -2709,13 +2709,17 @@
         }
         .artic-manual-indicator a { color: var(--fenix-accent); font-weight: 600; text-decoration: none; }
         .artic-manual-indicator a:hover { text-decoration: underline; }
+        /* Terrain à gauche, listing filtrable à droite (STORY-38 — "je veux la vue listing joueur à
+           droite du terrain, décalé à gauche, réduite en largeur"). Le terrain garde sa taille de
+           référence (520px), la colonne de listing est volontairement étroite à côté. */
+        .artic-main-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+        .artic-court-col { flex: 1 1 380px; max-width: 520px; }
         /* Lignes du terrain dessinées en SVG (_articCourtSvg, défs locales dupliquées — cf. commentaire
            dans _articCourtSvg()). Le terrain n'est plus l'élément central depuis STORY-37 (identification
            des postes uniquement, l'évaluation se fait dans .artic-blocks-section ci-dessus) — ombre
            allégée pour refléter ce rôle secondaire. */
         .artic-court {
-            width: 100%; max-width: 520px; margin: 0 auto;
-            aspect-ratio: 1 / 1;
+            width: 100%; aspect-ratio: 1 / 1;
             border-radius: 12px; box-shadow: var(--shadow-md);
             position: relative; overflow: hidden;
         }
@@ -2773,16 +2777,24 @@
         .artic-block-eff.faible { color: #EF4444; }
         .artic-block-eff.noref  { color: #94A3B8; font-size: 0.72rem; font-family: 'Inter', sans-serif; font-weight: 500; }
         .artic-block-n { font-size: 0.7rem; color: #94A3B8; margin-top: 2px; }
-        .artic-detail-panel {
-            margin-top: 14px; padding: 10px 14px; background: #F8FAFC;
+        /* Colonne de listing (droite du terrain, STORY-38) : un filtre (poste individuel ou charnière
+           P3-P4/P2-P5) qui remplace l'ancien panneau ouvert uniquement au clic sur un poste — toujours
+           visible, "comme un filtre que Romain vient sélectionner". */
+        .artic-listing-col {
+            flex: 1 1 200px; max-width: 240px; padding: 12px 14px; background: #F8FAFC;
             border: 1px solid #E2E8F0; border-radius: 10px; font-size: 0.8rem;
         }
-        .artic-detail-title { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: #0A2463; letter-spacing: 0.5px; margin-bottom: 6px; }
-        .artic-detail-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #E8EFF5; }
-        .artic-detail-row:last-child { border-bottom: none; }
-        .artic-detail-select { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #CBD5E1; flex-wrap: wrap; }
-        .artic-detail-select label { font-size: 0.72rem; color: #64748B; }
-        .artic-detail-select select { font-size: 0.78rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #CBD5E1; background: #fff; color: var(--fenix-dark); }
+        .artic-listing-filter {
+            width: 100%; font-size: 0.8rem; padding: 6px 8px; margin-bottom: 10px;
+            border-radius: 6px; border: 1px solid #CBD5E1; background: #fff; color: var(--fenix-dark);
+        }
+        .artic-listing-rows { display: flex; flex-direction: column; gap: 2px; }
+        .artic-listing-row { padding: 4px 2px; border-bottom: 1px solid #E8EFF5; color: var(--fenix-dark); }
+        .artic-listing-row:last-child { border-bottom: none; }
+        .artic-listing-empty { color: #94A3B8; font-style: italic; }
+        .artic-listing-select { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #CBD5E1; }
+        .artic-listing-select label { display: block; font-size: 0.72rem; color: #64748B; margin-bottom: 4px; }
+        .artic-listing-select select { width: 100%; font-size: 0.78rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #CBD5E1; background: #fff; color: var(--fenix-dark); }
 
         /* Panel détail (droite) */
         .enc-detail-header-bar {
