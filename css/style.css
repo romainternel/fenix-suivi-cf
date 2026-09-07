@@ -2710,13 +2710,16 @@
         .artic-manual-indicator a { color: var(--fenix-accent); font-weight: 600; text-decoration: none; }
         .artic-manual-indicator a:hover { text-decoration: underline; }
         /* Lignes du terrain dessinées en SVG (_articCourtSvg, défs locales dupliquées — cf. commentaire
-           dans _articCourtSvg()). */
+           dans _articCourtSvg()). Le terrain n'est plus l'élément central depuis STORY-37 (identification
+           des postes uniquement, l'évaluation se fait dans .artic-blocks-section ci-dessus) — ombre
+           allégée pour refléter ce rôle secondaire. */
         .artic-court {
             width: 100%; max-width: 520px; margin: 0 auto;
             aspect-ratio: 1 / 1;
-            border-radius: 12px; box-shadow: var(--shadow-lg);
+            border-radius: 12px; box-shadow: var(--shadow-md);
             position: relative; overflow: hidden;
         }
+        .artic-recap { text-align: center; font-size: 0.75rem; color: #475569; margin-top: 10px; }
         .artic-poste {
             position: absolute; width: 56px; height: 56px; border-radius: 50%;
             transform: translate(-50%, -50%);
@@ -2732,14 +2735,9 @@
         .artic-poste.selected { outline: 2px solid #FCD34D; outline-offset: 2px; }
         .artic-poste-label { font-size: 0.55rem; color: #94A3B8; letter-spacing: 1px; }
         .artic-poste-joueur { font-size: 0.72rem; color: var(--fenix-dark); font-weight: 700; line-height: 1.1; text-align: center; }
-        /* Nom seul dans le rond (STORY-36 — le % a migré vers le panneau de détail et les cartes
-           d'indicateurs) ; l'efficacité individuelle du poste reste lisible d'un coup d'œil via ce
-           liseré coloré. Métrique = efficacité ADVERSE (pas FENIX) : vert = adversaire inefficace ici
-           = bonne défense, seuils repris de _articEffClass (appliqués en sens inverse). */
-        .artic-poste.fort   { box-shadow: 0 0 0 3px #10B981; }
-        .artic-poste.moyen  { box-shadow: 0 0 0 3px #F59E0B; }
-        .artic-poste.faible { box-shadow: 0 0 0 3px #EF4444; }
-        .artic-poste.noref  { box-shadow: 0 0 0 3px #CBD5E1; }
+        /* Nom seul dans le rond — depuis STORY-37, plus aucune évaluation individuelle sur le terrain
+           (ni %, ni liseré de couleur) : Romain ne juge que la performance collective d'une charnière,
+           affichée dans .artic-blocks-section. Le terrain sert uniquement à identifier qui est où. */
         .artic-poste-manual {
             position: absolute; top: -6px; left: -6px; width: 16px; height: 16px; border-radius: 50%;
             background: var(--fenix-accent); color: #fff; font-size: 0.6rem;
@@ -2750,15 +2748,26 @@
             background: var(--fenix-accent); color: #fff; font-size: 0.55rem; font-weight: 700;
             display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff;
         }
-        .artic-blocks { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+        /* Charnières défensives — élément central de l'écran depuis STORY-37 (avant le terrain dans le
+           HTML généré par _drawArticulationCourt) : c'est CE que Romain regarde en premier, le terrain
+           ne sert plus qu'à identifier qui est où. */
+        .artic-blocks-section {
+            background: #FAFBFC; border: 1px solid #E2E8F0; border-radius: 12px;
+            padding: 16px; margin-bottom: 16px;
+        }
+        .artic-blocks-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.5px; color: var(--fenix-blue); margin-bottom: 10px; }
+        .artic-blocks { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
         .artic-block-card {
             flex: 1 1 150px; max-width: 200px; text-align: center;
-            background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px;
+            background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 12px;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
         .artic-block-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .artic-block-label { font-size: 0.68rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-        .artic-block-eff { font-size: 1.15rem; font-weight: 700; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
+        .artic-block-label { font-size: 0.7rem; color: #475569; font-weight: 700; letter-spacing: 0.3px; margin-bottom: 2px; }
+        .artic-block-sub { font-size: 0.62rem; color: #94A3B8; margin-bottom: 6px; }
+        .artic-block-eff { font-size: 1.4rem; font-weight: 700; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
+        /* % de réussite DÉFENSIVE (STORY-37, remplace l'ancienne efficacité attaque adverse) : plus
+           haut = meilleure défense, sémantique de couleur normale (vert = haut = bon). */
         .artic-block-eff.fort   { color: #10B981; }
         .artic-block-eff.moyen  { color: #F59E0B; }
         .artic-block-eff.faible { color: #EF4444; }

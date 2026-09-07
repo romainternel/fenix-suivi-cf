@@ -2450,7 +2450,8 @@
             container.innerHTML = html;
         }
 
-        // A-05bis — Articulation défensive (STORY-34) : efficacité adverse par poste défensif occupé
+        // A-05bis — Articulation défensive (STORY-34, recentrage collectif STORY-37) : taux de réussite
+        // défensive des charnières (groupes de joueurs), pas de l'efficacité d'un joueur isolé à un poste
         const ARTIC_POSTES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
 
         function _resolveArticJoueur(nomRaw) {
@@ -2511,6 +2512,24 @@
             if (possessions < 5) return 'noref';
             if (eff < 38) return 'fort';
             if (eff <= 55) return 'moyen';
+            return 'faible';
+        }
+
+        // STORY-37 : Romain ne veut plus lire l'efficacité de l'ATTAQUE adverse (plus bas = meilleure
+        // défense, une inversion qui prêtait à confusion) mais un taux de RÉUSSITE DÉFENSIVE direct
+        // (plus haut = meilleure défense). Dérivé à l'affichage à partir des mêmes compteurs
+        // (buts/po/possessions) déjà produits par computeArticulationStats()/_articBlockEff() — aucun
+        // recalcul de fond, seule la formule de sortie change.
+        function _articTauxDefense(stat) {
+            return stat.possessions > 0 ? Math.round((stat.possessions - stat.buts - stat.po) / stat.possessions * 100) : 0;
+        }
+
+        // Seuils en miroir exact de _articEffClass (100-38=62, 100-55=45) : les mêmes séquences
+        // tombent dans les mêmes catégories qualitatives, seul le sens de lecture du nombre change.
+        function _articDefClass(tauxDef, possessions) {
+            if (possessions < 5) return 'noref';
+            if (tauxDef > 62) return 'fort';
+            if (tauxDef >= 45) return 'moyen';
             return 'faible';
         }
 
@@ -2585,8 +2604,10 @@
         }
 
         // Choix du joueur "principal" affiché sur un poste : override manuel (Romain a choisi qui il
-        // veut voir) > mode Top Def (le plus efficace, au-dessus du seuil de significativité) > mode
-        // par défaut (le plus utilisé à ce poste sur la période).
+        // veut voir) > mode Suggestion (le plus économe individuellement, au-dessus du seuil de
+        // significativité — critère de sélection interne, jamais affiché comme un chiffre à l'écran
+        // depuis STORY-37) > mode par défaut (le plus utilisé à ce poste sur la période). Le paramètre
+        // interne 'topdef' n'est pas renommé : seul l'habillage visible (bouton "💡 Suggestion") change.
         function _articPrimaryEntry(pKey, joueurMap) {
             const manuel = window._articManualPoste && window._articManualPoste[pKey];
             if (manuel) return [manuel, _articJoueurStats(pKey, manuel, { get: () => joueurMap }) || joueurMap.get(manuel) || null];
@@ -2599,15 +2620,16 @@
             return entries.slice().sort((a, b) => b[1].possessions - a[1].possessions)[0];
         }
 
-        // 3 blocs de largeur décroissante (6 → 4 → 2 postes) pour évaluer l'efficacité adverse d'une
-        // COMPOSITION de joueurs jouée ensemble, pas d'un joueur isolé à un poste (demande Romain,
-        // v259bis) : plus le bloc est étroit, plus l'échantillon de séquences correspondantes est
-        // grand (moins de contraintes simultanées à satisfaire), donc plus fiable statistiquement.
-        // "Bloc central" = P2-P3-P4-P5 (les 2 ailiers P1/P6 exclus), confirmé avec Romain.
+        // 3 charnières de largeur décroissante (6 → 4 → 2 postes) pour évaluer le taux de réussite
+        // DÉFENSIVE d'une COMPOSITION de joueurs jouée ensemble, pas d'un joueur isolé à un poste
+        // (demande Romain, v259bis puis recentrage collectif STORY-37) : plus la charnière est étroite,
+        // plus l'échantillon de séquences correspondantes est grand (moins de contraintes simultanées
+        // à satisfaire), donc plus fiable statistiquement. "À 4 (centre)" = P2-P3-P4-P5 (les 2 ailiers
+        // P1/P6 exclus), confirmé avec Romain.
         const ARTIC_BLOCKS = [
-            { key: 'total', label: 'Bloc Total', postes: ARTIC_POSTES },
-            { key: 'central', label: 'Bloc Central (P2-P5)', postes: ['p2', 'p3', 'p4', 'p5'] },
-            { key: 'p34', label: 'BLOC34 (P3-P4)', postes: ['p3', 'p4'] },
+            { key: 'total', label: 'À 6 (ligne complète)', postes: ARTIC_POSTES },
+            { key: 'central', label: 'À 4 (centre)', postes: ['p2', 'p3', 'p4', 'p5'] },
+            { key: 'p34', label: 'À 2 (les deux centraux)', postes: ['p3', 'p4'] },
         ];
 
         // Efficacité adverse quand EXACTEMENT ce groupe de joueurs (lineup) occupait ensemble les
@@ -2660,10 +2682,10 @@
                     </div>
                 </div>` : ''}
                 <div class="artic-control-row">
-                    <span class="artic-control-label">AFFICHAGE</span>
+                    <span class="artic-control-label">COMPOSITION</span>
                     <div class="artic-dispositif-toggle">
-                        <button class="enc-pie-mode-btn${window._articViewMode!=='topdef'?' active':''}" onclick="_setArticViewMode('frequent')" title="Affiche à chaque poste le joueur qui l'a le plus souvent occupé sur cette période.">Le + utilisé</button>
-                        <button class="enc-pie-mode-btn${window._articViewMode==='topdef'?' active':''}" onclick="_setArticViewMode('topdef')" title="Affiche à chaque poste le joueur le plus efficace (adversaire le moins performant face à lui), à partir de 5 séquences observées — sinon retombe sur le plus utilisé.">🏆 Top Def</button>
+                        <button class="enc-pie-mode-btn${window._articViewMode!=='topdef'?' active':''}" onclick="_setArticViewMode('frequent')" title="Affiche à chaque poste le joueur qui l'a le plus souvent occupé sur cette période.">Le + utilisée</button>
+                        <button class="enc-pie-mode-btn${window._articViewMode==='topdef'?' active':''}" onclick="_setArticViewMode('topdef')" title="Compose automatiquement le terrain avec le joueur historiquement le plus économe à chaque poste, à titre de suggestion — juge ensuite la charnière obtenue dans les cartes ci-dessus.">💡 Suggestion</button>
                     </div>
                 </div>
                 ${nManual > 0 ? `<div class="artic-manual-indicator">⚙ ${nManual} poste${nManual > 1 ? 's' : ''} modifié${nManual > 1 ? 's' : ''} manuellement · <a href="#" onclick="_resetArticManual();return false;" title="Retire toutes les sélections manuelles de joueur sur les postes.">Réinitialiser</a></div>` : ''}
@@ -2679,11 +2701,10 @@
                 if (manuel) {
                     lineup[pKey] = manuel;
                     const s = joueurMap ? joueurMap.get(manuel) : null;
-                    const effClass = s ? _articEffClass(s.eff, s.possessions) : 'noref';
                     const tip = s
-                        ? `${manuel} — sélectionné manuellement sur ${pKey.toUpperCase()} : ${s.possessions} séq. observée(s) · ${s.eff}% d'efficacité adverse à ce poste (plus bas = meilleure défense).`
+                        ? `${manuel} — sélectionné manuellement sur ${pKey.toUpperCase()} : ${s.possessions} séq. observée(s) à ce poste.`
                         : `${manuel} — sélectionné manuellement sur ${pKey.toUpperCase()} : aucune séquence connue pour ce joueur à ce poste sur cette période.`;
-                    postesHtml += `<div class="artic-poste ${effClass}${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')" title="${_escapeHtml(tip)}">
+                    postesHtml += `<div class="artic-poste${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')" title="${_escapeHtml(tip)}">
                         ${manualMark}
                         <div class="artic-poste-label">${pKey.toUpperCase()}</div>
                         <div class="artic-poste-joueur">${_escapeHtml(manuel)}</div>
@@ -2692,46 +2713,53 @@
                 }
                 if (!joueurMap || !joueurMap.size) {
                     lineup[pKey] = null;
-                    postesHtml += `<div class="artic-poste noref" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucun joueur connu sur ${pKey.toUpperCase()} sur cette période." onclick="_selectArticPoste('${pKey}')">
+                    postesHtml += `<div class="artic-poste" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucun joueur connu sur ${pKey.toUpperCase()} sur cette période." onclick="_selectArticPoste('${pKey}')">
                         <div class="artic-poste-label">${pKey.toUpperCase()}</div><div class="artic-poste-joueur">—</div></div>`;
                     return;
                 }
                 const [topJoueur, topStats] = _articPrimaryEntry(pKey, joueurMap);
                 lineup[pKey] = topJoueur;
-                const effClass = _articEffClass(topStats.eff, topStats.possessions);
                 const badge = joueurMap.size > 1 ? `<div class="artic-poste-badge">+${joueurMap.size - 1}</div>` : '';
-                const modeLabel = window._articViewMode === 'topdef' ? 'le plus efficace (Top Def)' : 'le plus utilisé';
+                const modeLabel = window._articViewMode === 'topdef' ? 'suggéré (le plus économe historiquement)' : 'le plus utilisé';
                 const autresTip = joueurMap.size > 1 ? ` · ${joueurMap.size - 1} autre(s) joueur(s) ont aussi occupé ce poste — cliquer pour le détail.` : '';
-                const tip = `${topJoueur} — ${modeLabel} sur ${pKey.toUpperCase()} : ${topStats.possessions} séq. observée(s) · ${topStats.eff}% d'efficacité adverse à ce poste (plus bas = meilleure défense).${autresTip}`;
-                postesHtml += `<div class="artic-poste ${effClass}${window._articSelectedPoste === pKey ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')" title="${_escapeHtml(tip)}">
+                const tip = `${topJoueur} — ${modeLabel} sur ${pKey.toUpperCase()} : ${topStats.possessions} séq. observée(s).${autresTip}`;
+                postesHtml += `<div class="artic-poste${window._articSelectedPoste === pKey ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')" title="${_escapeHtml(tip)}">
                     ${badge}
                     <div class="artic-poste-label">${pKey.toUpperCase()}</div>
                     <div class="artic-poste-joueur">${_escapeHtml(topJoueur)}</div>
                 </div>`;
             });
 
-            const refTip = `Efficacité de l'attaque adverse sur TOUTES les séquences taguées ${dispositif} de la période, sans tenir compte des joueurs affichés sur le terrain — sert de référence pour juger si un bloc fait mieux ou moins bien que la moyenne.`;
-            const referenceCard = `<div class="artic-block-card" title="${_escapeHtml(refTip)}"><div class="artic-block-label">Référence adverse</div><div class="artic-block-eff ${_articEffClass(g.eff, g.possessions)}">${g.possessions < 5 ? `${g.eff}% (n<3)` : `${g.eff}%`}</div><div class="artic-block-n">${g.possessions} séq.</div></div>`;
-            const blocksHtml = `<div class="artic-blocks">
-                ${referenceCard}
-                ${ARTIC_BLOCKS.map(b => {
-                    const joueursBloc = b.postes.map(pk => lineup[pk] || '?').join(', ');
-                    const posteLabel = b.postes.map(pk => pk.toUpperCase()).join('-');
-                    const stat = _articBlockEff(matchData, dispositif, lineup, b.postes);
-                    if (stat.incomplete) {
-                        const manquants = b.postes.filter(pk => !lineup[pk]).map(pk => pk.toUpperCase()).join(', ');
-                        const tip = `${b.label} : au moins un poste (${manquants}) n'a pas de joueur connu actuellement affiché — impossible de calculer l'efficacité de ce groupe.`;
-                        return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff noref">composition incomplète</div></div>`;
-                    }
-                    if (!stat.possessions) {
-                        const tip = `${b.label} : efficacité adverse quand EXACTEMENT ${joueursBloc} occupaient ensemble ${posteLabel} sur la même séquence. Cette combinaison précise n'a jamais été observée sur cette période.`;
-                        return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff noref">aucune séquence avec ce groupe</div></div>`;
-                    }
-                    const effClass = _articEffClass(stat.eff, stat.possessions);
-                    const effLabel = stat.possessions < 5 ? `${stat.eff}% (n<3)` : `${stat.eff}%`;
-                    const tip = `${b.label} : efficacité de l'attaque adverse quand EXACTEMENT ${joueursBloc} occupaient ensemble ${posteLabel} sur la même séquence (${stat.possessions} séq. observée(s)) — plus bas = meilleure défense de ce groupe.`;
-                    return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff ${effClass}">${effLabel}</div><div class="artic-block-n">${stat.possessions} séq.</div></div>`;
-                }).join('')}
+            const recapHtml = `<div class="artic-recap">${ARTIC_POSTES.map(pk => _escapeHtml(lineup[pk] || '—')).join(' · ')}</div>`;
+
+            const refTauxDef = _articTauxDefense(g);
+            const refTip = `Taux de réussite défensive sur TOUTES les séquences taguées ${dispositif} de la période, sans tenir compte des joueurs affichés sur le terrain — sert de référence pour juger si une charnière fait mieux ou moins bien que la moyenne.`;
+            const referenceCard = `<div class="artic-block-card" title="${_escapeHtml(refTip)}"><div class="artic-block-label">Référence</div><div class="artic-block-sub">Toutes compositions (${dispositif})</div><div class="artic-block-eff ${_articDefClass(refTauxDef, g.possessions)}">${g.possessions < 5 ? `${refTauxDef}% (n<3)` : `${refTauxDef}%`}</div><div class="artic-block-n">${g.possessions} séq.</div></div>`;
+            const blocksHtml = `<div class="artic-blocks-section">
+                <div class="artic-blocks-title">🛡️ Charnières défensives — % de séquences arrêtées</div>
+                <div class="artic-blocks">
+                    ${referenceCard}
+                    ${ARTIC_BLOCKS.map(b => {
+                        const joueursBloc = b.postes.map(pk => lineup[pk] || '?').join(', ');
+                        const posteLabel = b.postes.map(pk => pk.toUpperCase()).join('-');
+                        const stat = _articBlockEff(matchData, dispositif, lineup, b.postes);
+                        const subHtml = `<div class="artic-block-sub">${posteLabel}</div>`;
+                        if (stat.incomplete) {
+                            const manquants = b.postes.filter(pk => !lineup[pk]).map(pk => pk.toUpperCase()).join(', ');
+                            const tip = `${b.label} : au moins un poste (${manquants}) n'a pas de joueur connu actuellement affiché — impossible de calculer la réussite défensive de ce groupe.`;
+                            return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div>${subHtml}<div class="artic-block-eff noref">composition incomplète</div></div>`;
+                        }
+                        if (!stat.possessions) {
+                            const tip = `${b.label} : taux de réussite défensive quand EXACTEMENT ${joueursBloc} occupaient ensemble ${posteLabel} sur la même séquence. Cette combinaison précise n'a jamais été observée sur cette période.`;
+                            return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div>${subHtml}<div class="artic-block-eff noref">aucune séquence avec ce groupe</div></div>`;
+                        }
+                        const tauxDef = _articTauxDefense(stat);
+                        const effClass = _articDefClass(tauxDef, stat.possessions);
+                        const effLabel = stat.possessions < 5 ? `${tauxDef}% (n<3)` : `${tauxDef}%`;
+                        const tip = `${b.label} : taux de réussite défensive quand EXACTEMENT ${joueursBloc} occupaient ensemble ${posteLabel} sur la même séquence (${stat.possessions} séq. observée(s)) — plus haut = meilleure défense de ce groupe.`;
+                        return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div>${subHtml}<div class="artic-block-eff ${effClass}">${effLabel}</div><div class="artic-block-n">${stat.possessions} séq.</div></div>`;
+                    }).join('')}
+                </div>
             </div>`;
 
             let detailHtml = '';
@@ -2743,12 +2771,12 @@
                     .slice().sort((a, b) => (a.nomComplet || a.nom).localeCompare(b.nomComplet || b.nom))
                     .map(p => `<option value="${_escapeHtml(p.nom)}"${window._articManualPoste[pKey] === p.nom ? ' selected' : ''}>${_escapeHtml(p.nomComplet || p.nom)}</option>`).join('');
                 detailHtml = `<div class="artic-detail-panel">
-                    <div class="artic-detail-title">${pKey.toUpperCase()} — détail par joueur</div>
-                    ${entries.length ? entries.map(([joueur, s]) => `<div class="artic-detail-row"><span>${_escapeHtml(joueur)}</span><span>${s.possessions} séq. · ${s.possessions < 5 ? `${s.eff}% (n<3)` : `${s.eff}% eff. adverse`}</span></div>`).join('') : '<div class="artic-detail-row"><span>Aucune donnée pour ce poste</span></div>'}
+                    <div class="artic-detail-title">${pKey.toUpperCase()} — joueurs vus à ce poste</div>
+                    ${entries.length ? entries.map(([joueur, s]) => `<div class="artic-detail-row"><span>${_escapeHtml(joueur)}</span><span>${s.possessions} séq.</span></div>`).join('') : '<div class="artic-detail-row"><span>Aucune donnée pour ce poste</span></div>'}
                     <div class="artic-detail-select">
                         <label>Voir un autre joueur à ce poste :</label>
                         <select onchange="_setArticManualJoueur('${pKey}', this.value)">
-                            <option value="">— Auto (${window._articViewMode === 'topdef' ? 'top def' : 'le plus utilisé'}) —</option>
+                            <option value="">— Auto (${window._articViewMode === 'topdef' ? 'suggestion' : 'le plus utilisée'}) —</option>
                             ${selectOptions}
                         </select>
                     </div>
@@ -2757,11 +2785,12 @@
 
             container.innerHTML = `
                 ${controlBarHtml}
+                ${blocksHtml}
                 <div class="artic-court">
                     ${_articCourtSvg()}
                     ${postesHtml}
                 </div>
-                ${blocksHtml}
+                ${recapHtml}
                 ${detailHtml}`;
         }
 
