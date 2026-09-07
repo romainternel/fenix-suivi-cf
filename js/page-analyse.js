@@ -2648,21 +2648,25 @@
             const g = stats.global[dispositif];
 
             const nManual = Object.keys(window._articManualPoste).length;
+            const ARTIC_DISPOSITIF_TIP = {
+                '0-6': 'Défense alignée : les 6 joueurs tiennent la ligne des 6m côte à côte.',
+                '1-5': 'Défense décalée : 4 joueurs tiennent la ligne des 6m, 1 recule en couverture (P3), 1 sort en avancé (P4).',
+            };
             const controlBarHtml = `<div class="artic-control-bar">
                 ${available.length > 1 ? `<div class="artic-control-row">
                     <span class="artic-control-label">DISPOSITIF</span>
                     <div class="artic-dispositif-toggle">
-                        ${available.map(d => `<button class="enc-pie-mode-btn${d === dispositif ? ' active' : ''}" onclick="_setArticDispositif('${d}')">${d} (${stats.totals[d]} séq.)</button>`).join('')}
+                        ${available.map(d => `<button class="enc-pie-mode-btn${d === dispositif ? ' active' : ''}" onclick="_setArticDispositif('${d}')" title="${ARTIC_DISPOSITIF_TIP[d] || ''}">${d} (${stats.totals[d]} séq.)</button>`).join('')}
                     </div>
                 </div>` : ''}
                 <div class="artic-control-row">
                     <span class="artic-control-label">AFFICHAGE</span>
                     <div class="artic-dispositif-toggle">
-                        <button class="enc-pie-mode-btn${window._articViewMode!=='topdef'?' active':''}" onclick="_setArticViewMode('frequent')">Le + utilisé</button>
-                        <button class="enc-pie-mode-btn${window._articViewMode==='topdef'?' active':''}" onclick="_setArticViewMode('topdef')">🏆 Top Def</button>
+                        <button class="enc-pie-mode-btn${window._articViewMode!=='topdef'?' active':''}" onclick="_setArticViewMode('frequent')" title="Affiche à chaque poste le joueur qui l'a le plus souvent occupé sur cette période.">Le + utilisé</button>
+                        <button class="enc-pie-mode-btn${window._articViewMode==='topdef'?' active':''}" onclick="_setArticViewMode('topdef')" title="Affiche à chaque poste le joueur le plus efficace (adversaire le moins performant face à lui), à partir de 5 séquences observées — sinon retombe sur le plus utilisé.">🏆 Top Def</button>
                     </div>
                 </div>
-                ${nManual > 0 ? `<div class="artic-manual-indicator">⚙ ${nManual} poste${nManual > 1 ? 's' : ''} modifié${nManual > 1 ? 's' : ''} manuellement · <a href="#" onclick="_resetArticManual();return false;">Réinitialiser</a></div>` : ''}
+                ${nManual > 0 ? `<div class="artic-manual-indicator">⚙ ${nManual} poste${nManual > 1 ? 's' : ''} modifié${nManual > 1 ? 's' : ''} manuellement · <a href="#" onclick="_resetArticManual();return false;" title="Retire toutes les sélections manuelles de joueur sur les postes.">Réinitialiser</a></div>` : ''}
             </div>`;
 
             let postesHtml = '';
@@ -2676,7 +2680,10 @@
                     lineup[pKey] = manuel;
                     const s = joueurMap ? joueurMap.get(manuel) : null;
                     const effClass = s ? _articEffClass(s.eff, s.possessions) : 'noref';
-                    postesHtml += `<div class="artic-poste ${effClass}${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
+                    const tip = s
+                        ? `${manuel} — sélectionné manuellement sur ${pKey.toUpperCase()} : ${s.possessions} séq. observée(s) · ${s.eff}% d'efficacité adverse à ce poste (plus bas = meilleure défense).`
+                        : `${manuel} — sélectionné manuellement sur ${pKey.toUpperCase()} : aucune séquence connue pour ce joueur à ce poste sur cette période.`;
+                    postesHtml += `<div class="artic-poste ${effClass}${window._articSelectedPoste===pKey?' selected':''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')" title="${_escapeHtml(tip)}">
                         ${manualMark}
                         <div class="artic-poste-label">${pKey.toUpperCase()}</div>
                         <div class="artic-poste-joueur">${_escapeHtml(manuel)}</div>
@@ -2685,7 +2692,7 @@
                 }
                 if (!joueurMap || !joueurMap.size) {
                     lineup[pKey] = null;
-                    postesHtml += `<div class="artic-poste noref" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucune donnée" onclick="_selectArticPoste('${pKey}')">
+                    postesHtml += `<div class="artic-poste noref" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucun joueur connu sur ${pKey.toUpperCase()} sur cette période." onclick="_selectArticPoste('${pKey}')">
                         <div class="artic-poste-label">${pKey.toUpperCase()}</div><div class="artic-poste-joueur">—</div></div>`;
                     return;
                 }
@@ -2693,23 +2700,37 @@
                 lineup[pKey] = topJoueur;
                 const effClass = _articEffClass(topStats.eff, topStats.possessions);
                 const badge = joueurMap.size > 1 ? `<div class="artic-poste-badge">+${joueurMap.size - 1}</div>` : '';
-                postesHtml += `<div class="artic-poste ${effClass}${window._articSelectedPoste === pKey ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')">
+                const modeLabel = window._articViewMode === 'topdef' ? 'le plus efficace (Top Def)' : 'le plus utilisé';
+                const autresTip = joueurMap.size > 1 ? ` · ${joueurMap.size - 1} autre(s) joueur(s) ont aussi occupé ce poste — cliquer pour le détail.` : '';
+                const tip = `${topJoueur} — ${modeLabel} sur ${pKey.toUpperCase()} : ${topStats.possessions} séq. observée(s) · ${topStats.eff}% d'efficacité adverse à ce poste (plus bas = meilleure défense).${autresTip}`;
+                postesHtml += `<div class="artic-poste ${effClass}${window._articSelectedPoste === pKey ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_selectArticPoste('${pKey}')" title="${_escapeHtml(tip)}">
                     ${badge}
                     <div class="artic-poste-label">${pKey.toUpperCase()}</div>
                     <div class="artic-poste-joueur">${_escapeHtml(topJoueur)}</div>
                 </div>`;
             });
 
-            const referenceCard = `<div class="artic-block-card"><div class="artic-block-label">Référence adverse</div><div class="artic-block-eff ${_articEffClass(g.eff, g.possessions)}">${g.possessions < 5 ? `${g.eff}% (n<3)` : `${g.eff}%`}</div><div class="artic-block-n">${g.possessions} séq.</div></div>`;
+            const refTip = `Efficacité de l'attaque adverse sur TOUTES les séquences taguées ${dispositif} de la période, sans tenir compte des joueurs affichés sur le terrain — sert de référence pour juger si un bloc fait mieux ou moins bien que la moyenne.`;
+            const referenceCard = `<div class="artic-block-card" title="${_escapeHtml(refTip)}"><div class="artic-block-label">Référence adverse</div><div class="artic-block-eff ${_articEffClass(g.eff, g.possessions)}">${g.possessions < 5 ? `${g.eff}% (n<3)` : `${g.eff}%`}</div><div class="artic-block-n">${g.possessions} séq.</div></div>`;
             const blocksHtml = `<div class="artic-blocks">
                 ${referenceCard}
                 ${ARTIC_BLOCKS.map(b => {
+                    const joueursBloc = b.postes.map(pk => lineup[pk] || '?').join(', ');
+                    const posteLabel = b.postes.map(pk => pk.toUpperCase()).join('-');
                     const stat = _articBlockEff(matchData, dispositif, lineup, b.postes);
-                    if (stat.incomplete) return `<div class="artic-block-card"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff noref">composition incomplète</div></div>`;
-                    if (!stat.possessions) return `<div class="artic-block-card"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff noref">aucune séquence avec ce groupe</div></div>`;
+                    if (stat.incomplete) {
+                        const manquants = b.postes.filter(pk => !lineup[pk]).map(pk => pk.toUpperCase()).join(', ');
+                        const tip = `${b.label} : au moins un poste (${manquants}) n'a pas de joueur connu actuellement affiché — impossible de calculer l'efficacité de ce groupe.`;
+                        return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff noref">composition incomplète</div></div>`;
+                    }
+                    if (!stat.possessions) {
+                        const tip = `${b.label} : efficacité adverse quand EXACTEMENT ${joueursBloc} occupaient ensemble ${posteLabel} sur la même séquence. Cette combinaison précise n'a jamais été observée sur cette période.`;
+                        return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff noref">aucune séquence avec ce groupe</div></div>`;
+                    }
                     const effClass = _articEffClass(stat.eff, stat.possessions);
                     const effLabel = stat.possessions < 5 ? `${stat.eff}% (n<3)` : `${stat.eff}%`;
-                    return `<div class="artic-block-card"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff ${effClass}">${effLabel}</div><div class="artic-block-n">${stat.possessions} séq.</div></div>`;
+                    const tip = `${b.label} : efficacité de l'attaque adverse quand EXACTEMENT ${joueursBloc} occupaient ensemble ${posteLabel} sur la même séquence (${stat.possessions} séq. observée(s)) — plus bas = meilleure défense de ce groupe.`;
+                    return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div><div class="artic-block-eff ${effClass}">${effLabel}</div><div class="artic-block-n">${stat.possessions} séq.</div></div>`;
                 }).join('')}
             </div>`;
 
