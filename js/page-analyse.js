@@ -65,6 +65,7 @@
                 document.getElementById('essentiel-saison').style.display = 'block';
                 renderEncFamillesSection(DATA);
                 generateSeasonCorrelations();
+                _analyseTab(sessionStorage.getItem('an_active_tab') || 'tactique');
                 return;
             }
 
@@ -118,30 +119,39 @@
             renderBasculContext(matchData, _bascules);
             renderEncFamillesSection(matchData);
             renderGardienEncSection(matchData);
-            _analyseTab(sessionStorage.getItem('an_active_tab') || 'resume');
+            _analyseTab(sessionStorage.getItem('an_active_tab') || 'overview');
         }
 
-        // STORY-14 — Onglets page Analyse (structure calquée sur pmTab(), js/player-mode.js).
-        // Toujours appelée quand #analyse-content est affiché (un match est sélectionné) :
-        // les 5 onglets ont donc toujours un contenu valide, pas de cas "onglet vide" à gérer ici.
-        const AN_TABS = ['resume', 'timeline', 'enclenchements', 'gardien', 'chat'];
+        // STORY-40 — Onglets page Analyse regroupés 5→3 en vue match, 2 en vue saison (structure
+        // calquée sur pmTab(), js/player-mode.js). Les deux jeux d'onglets partagent la même clé
+        // sessionStorage (an_active_tab) et le nom logique "tactique" leur est commun (continuité
+        // visuelle en basculant match↔saison) — mais leurs panneaux DOM sont des éléments distincts
+        // (#an-tab-tactique vs #an-tab-saison-tactique) car #analyse-content et #analyse-empty
+        // existent tous les deux en permanence dans le DOM (un seul affiché à la fois), donc deux
+        // ids identiques y coexisteraient sinon.
+        const AN_TABS_MATCH  = ['overview', 'tactique', 'notes'];
+        const AN_TABS_SAISON = ['tactique', 'tendances'];
         function _analyseTab(tab) {
-            if (!AN_TABS.includes(tab)) tab = 'resume';
+            const isMatch = !!document.getElementById('filter-match-global').value;
+            const tabs = isMatch ? AN_TABS_MATCH : AN_TABS_SAISON;
+            if (!tabs.includes(tab)) tab = tabs[0];
             sessionStorage.setItem('an_active_tab', tab);
-            document.querySelectorAll('.an-tab-btn').forEach(b => {
+            const scope = document.getElementById(isMatch ? 'analyse-content' : 'analyse-empty');
+            scope.querySelectorAll('.an-tab-btn').forEach(b => {
                 const active = b.dataset.tab === tab;
                 b.classList.toggle('active', active);
                 b.setAttribute('aria-selected', active ? 'true' : 'false');
             });
-            AN_TABS.forEach(t => {
-                const el = document.getElementById('an-tab-' + t);
+            const idPrefix = isMatch ? 'an-tab-' : 'an-tab-saison-';
+            tabs.forEach(t => {
+                const el = document.getElementById(idPrefix + t);
                 if (el) el.style.display = (t === tab) ? 'block' : 'none';
             });
             // Canvas dimensionnés via clientWidth du conteneur : redessiner à l'ouverture de
             // l'onglet évite un canvas figé sur la taille du dernier onglet actif au moment du rendu.
-            if (tab === 'timeline' && window._currentMatchName && window._currentMatchData) {
+            if (isMatch && tab === 'overview' && window._currentMatchName && window._currentMatchData) {
                 drawTimeline(window._currentMatchName, window._currentMatchData);
-            } else if (tab === 'enclenchements') {
+            } else if (tab === 'tactique') {
                 requestAnimationFrame(() => _drawEncChart());
             }
         }

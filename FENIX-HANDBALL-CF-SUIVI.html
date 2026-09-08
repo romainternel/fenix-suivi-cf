@@ -11,15 +11,15 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=271">
-    <script src="js/supabase-client.js?v=271"></script>
-    <script src="js/utils.js?v=271"></script>
-    <script src="js/player-photos.js?v=271"></script>
-    <script src="js/impact-images.js?v=271"></script>
-    <script src="js/player-mode.js?v=271"></script>
-    <script src="js/page-joueurs.js?v=271"></script>
-    <script src="js/page-notes-graph.js?v=271"></script>
-    <script src="js/page-analyse.js?v=271"></script>
+    <link rel="stylesheet" href="css/style.css?v=272">
+    <script src="js/supabase-client.js?v=272"></script>
+    <script src="js/utils.js?v=272"></script>
+    <script src="js/player-photos.js?v=272"></script>
+    <script src="js/impact-images.js?v=272"></script>
+    <script src="js/player-mode.js?v=272"></script>
+    <script src="js/page-joueurs.js?v=272"></script>
+    <script src="js/page-notes-graph.js?v=272"></script>
+    <script src="js/page-analyse.js?v=272"></script>
 </head>
 <body>
 
@@ -469,40 +469,23 @@
                 <div id="analyse-content" style="display: none;">
                     <div id="periode-warning"></div>
 
-                    <!-- Onglets Analyse (STORY-14) -->
+                    <!-- Onglets Analyse (STORY-14, regroupés 5→3 en STORY-40) -->
                     <div class="an-tabs" role="tablist">
-                        <button class="an-tab-btn active" data-tab="resume" role="tab" aria-selected="true" onclick="_analyseTab('resume')">Résumé</button>
-                        <button class="an-tab-btn" data-tab="timeline" role="tab" aria-selected="false" onclick="_analyseTab('timeline')">Timeline</button>
-                        <button class="an-tab-btn" data-tab="enclenchements" role="tab" aria-selected="false" onclick="_analyseTab('enclenchements')">Intention attaque</button>
-                        <button class="an-tab-btn" data-tab="gardien" role="tab" aria-selected="false" onclick="_analyseTab('gardien')">Gardien</button>
-                        <button class="an-tab-btn" data-tab="chat" role="tab" aria-selected="false" onclick="_analyseTab('chat')">Chat IA</button>
+                        <button class="an-tab-btn active" data-tab="overview" role="tab" aria-selected="true" onclick="_analyseTab('overview')">Vue d'ensemble</button>
+                        <button class="an-tab-btn" data-tab="tactique" role="tab" aria-selected="false" onclick="_analyseTab('tactique')">Tactique</button>
+                        <button class="an-tab-btn" data-tab="notes" role="tab" aria-selected="false" onclick="_analyseTab('notes')">Notes &amp; Outils</button>
                     </div>
 
-                    <div id="an-tab-resume" class="an-tab-panel">
-                        <!-- Avis Coach — résumé automatique déplacé dans le bloc Essentiel (STORY-39) -->
-                        <div class="analyse-card coach-card" style="margin-bottom:1.5rem;">
-                            <div class="analyse-card-header">
-                                <span>👨‍🏫</span>
-                                <h3>Ton Analyse (Coach)</h3>
-                            </div>
-                            <div class="analyse-card-body">
-                                <textarea id="coach-analyse" placeholder="Écris ici ton analyse personnelle du match...&#10;&#10;Ex: 'On a perdu le match à cause de la gestion des temps faibles. Les 5 dernières minutes de MT1 ont été catastrophiques...'"></textarea>
-                                <button class="save-coach-btn" onclick="saveCoachAnalyse()">💾 Sauvegarder mon analyse</button>
-                                <div id="coach-saved-msg" class="saved-msg" style="display: none;">✓ Analyse sauvegardée</div>
-                            </div>
-                        </div>
-
-                        <!-- Indicateurs clés -->
+                    <div id="an-tab-overview" class="an-tab-panel">
+                        <!-- Indicateurs clés (ex-onglet Résumé) -->
                         <div class="analyse-section">
                             <h3 class="analyse-section-title">📊 Indicateurs Clés</h3>
                             <div class="indicateurs-grid" id="indicateurs-grid">
                                 <!-- Généré automatiquement -->
                             </div>
                         </div>
-                    </div>
 
-                    <div id="an-tab-timeline" class="an-tab-panel" style="display:none">
-                        <!-- Timeline du score -->
+                        <!-- Timeline du score (ex-onglet Timeline) -->
                         <div class="analyse-section">
                             <h3 class="analyse-section-title">📈 ÉVOLUTION DU SCORE</h3>
                             <div id="timeline-scores" class="timeline-scores"></div>
@@ -538,21 +521,32 @@
                         </div>
                     </div>
 
-                    <div id="an-tab-enclenchements" class="an-tab-panel" style="display:none">
+                    <div id="an-tab-tactique" class="an-tab-panel" style="display:none">
                         <!-- Enclenchements offensifs (A-01/02/03) -->
                         <div class="analyse-section">
                             <div id="enc-familles-section"></div>
                         </div>
-                    </div>
 
-                    <div id="an-tab-gardien" class="an-tab-panel" style="display:none">
                         <!-- Gardien × systèmes adverses (A-06/07) -->
                         <div class="analyse-section">
                             <div id="enc-gardien-section"></div>
                         </div>
                     </div>
 
-                    <div id="an-tab-chat" class="an-tab-panel" style="display:none">
+                    <div id="an-tab-notes" class="an-tab-panel" style="display:none">
+                        <!-- Avis Coach — résumé automatique déplacé dans le bloc Essentiel (STORY-39) -->
+                        <div class="analyse-card coach-card" style="margin-bottom:1.5rem;">
+                            <div class="analyse-card-header">
+                                <span>👨‍🏫</span>
+                                <h3>Ton Analyse (Coach)</h3>
+                            </div>
+                            <div class="analyse-card-body">
+                                <textarea id="coach-analyse" placeholder="Écris ici ton analyse personnelle du match...&#10;&#10;Ex: 'On a perdu le match à cause de la gestion des temps faibles. Les 5 dernières minutes de MT1 ont été catastrophiques...'"></textarea>
+                                <button class="save-coach-btn" onclick="saveCoachAnalyse()">💾 Sauvegarder mon analyse</button>
+                                <div id="coach-saved-msg" class="saved-msg" style="display: none;">✓ Analyse sauvegardée</div>
+                            </div>
+                        </div>
+
                         <!-- Chat IA -->
                         <div class="analyse-section">
                             <h3 class="analyse-section-title">💬 Chat IA - Pose tes questions</h3>
@@ -573,8 +567,20 @@
                 </div>
 
                 <div id="analyse-empty">
-                    <div id="enc-familles-section-saison"></div>
-                    <div id="saison-correlations"></div>
+                    <!-- Onglets vue saison (STORY-40) : même mécanisme _analyseTab(), 2 sections -->
+                    <div class="an-tabs" role="tablist">
+                        <button class="an-tab-btn active" data-tab="tactique" role="tab" aria-selected="true" onclick="_analyseTab('tactique')">Tactique</button>
+                        <button class="an-tab-btn" data-tab="tendances" role="tab" aria-selected="false" onclick="_analyseTab('tendances')">Tendances</button>
+                    </div>
+
+                    <div id="an-tab-saison-tactique" class="an-tab-panel">
+                        <div id="enc-familles-section-saison"></div>
+                    </div>
+
+                    <div id="an-tab-saison-tendances" class="an-tab-panel" style="display:none">
+                        <div id="saison-correlations"></div>
+                    </div>
+
                     <div class="no-data" style="margin-top:1.5rem">
                         <div class="no-data-icon">🔍</div>
                         <p>Sélectionne un match pour voir l'analyse détaillée</p>
