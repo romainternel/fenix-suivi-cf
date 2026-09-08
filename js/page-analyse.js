@@ -2774,11 +2774,21 @@
             const refTauxDef = _articTauxDefense(g);
             const refTip = `Taux de réussite défensive sur TOUTES les séquences taguées ${dispositif} de la période, sans tenir compte des joueurs affichés sur le terrain — sert de référence pour juger si une charnière fait mieux ou moins bien que la moyenne.`;
             const referenceCard = `<div class="artic-block-card" title="${_escapeHtml(refTip)}"><div class="artic-block-label">Référence</div><div class="artic-block-sub">Toutes compositions (${dispositif})</div><div class="artic-block-eff ${_articDefClass(refTauxDef, g.possessions)}">${g.possessions < 5 ? `${refTauxDef}% (n<3)` : `${refTauxDef}%`}</div><div class="artic-block-n">${g.possessions} séq.</div></div>`;
+            // Poste(s) concerné(s) par le filtre actif — sert à distinguer, parmi les 3 cartes de
+            // charnière, celles que le poste/charnière actuellement sélectionné peut faire varier
+            // (Romain : "le % devrait changer quand je sélectionne un autre joueur" — répond au fait
+            // que changer P2 par ex. n'affecte QUE "À 4"/"À 6", jamais "À 2" ni la Référence, ce qui
+            // sans indice visuel ressemble à un bug plutôt qu'à un résultat statistique honnête).
+            const filterPostes = window._articListingFilter.type === 'poste'
+                ? [window._articListingFilter.key]
+                : (ARTIC_LISTING_CHARNIERES.find(b => b.key === window._articListingFilter.key) || { postes: [] }).postes;
             const blocksHtml = `<div class="artic-blocks-section">
                 <div class="artic-blocks-title">🛡️ Charnières défensives — % de séquences arrêtées</div>
                 <div class="artic-blocks">
                     ${referenceCard}
                     ${ARTIC_BLOCKS.map(b => {
+                        const isConcerned = b.postes.some(pk => filterPostes.includes(pk));
+                        const cardClass = `artic-block-card${isConcerned ? ' concerned' : ' unconcerned'}`;
                         const joueursBloc = b.postes.map(pk => lineup[pk] || '?').join(', ');
                         const posteLabel = b.postes.map(pk => pk.toUpperCase()).join('-');
                         const stat = _articBlockEff(matchData, dispositif, lineup, b.postes);
@@ -2786,17 +2796,17 @@
                         if (stat.incomplete) {
                             const manquants = b.postes.filter(pk => !lineup[pk]).map(pk => pk.toUpperCase()).join(', ');
                             const tip = `${b.label} : au moins un poste (${manquants}) n'a pas de joueur connu actuellement affiché — impossible de calculer la réussite défensive de ce groupe.`;
-                            return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div>${subHtml}<div class="artic-block-eff noref">composition incomplète</div></div>`;
+                            return `<div class="${cardClass}" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div>${subHtml}<div class="artic-block-eff noref">composition incomplète</div></div>`;
                         }
                         if (!stat.possessions) {
                             const tip = `${b.label} : taux de réussite défensive quand EXACTEMENT ${joueursBloc} occupaient ensemble ${posteLabel} sur la même séquence. Cette combinaison précise n'a jamais été observée sur cette période.`;
-                            return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div>${subHtml}<div class="artic-block-eff noref">aucune séquence avec ce groupe</div></div>`;
+                            return `<div class="${cardClass}" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div>${subHtml}<div class="artic-block-eff noref">aucune séquence avec ce groupe</div></div>`;
                         }
                         const tauxDef = _articTauxDefense(stat);
                         const effClass = _articDefClass(tauxDef, stat.possessions);
                         const effLabel = stat.possessions < 5 ? `${tauxDef}% (n<3)` : `${tauxDef}%`;
                         const tip = `${b.label} : taux de réussite défensive quand EXACTEMENT ${joueursBloc} occupaient ensemble ${posteLabel} sur la même séquence (${stat.possessions} séq. observée(s)) — plus haut = meilleure défense de ce groupe.`;
-                        return `<div class="artic-block-card" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div>${subHtml}<div class="artic-block-eff ${effClass}">${effLabel}</div><div class="artic-block-n">${stat.possessions} séq.</div></div>`;
+                        return `<div class="${cardClass}" title="${_escapeHtml(tip)}"><div class="artic-block-label">${b.label}</div>${subHtml}<div class="artic-block-eff ${effClass}">${effLabel}</div><div class="artic-block-n">${stat.possessions} séq.</div></div>`;
                     }).join('')}
                 </div>
             </div>`;
@@ -2814,8 +2824,13 @@
                 const pKey = listingFilter.key;
                 const joueurMap = posteMap.get(pKey);
                 const entries = joueurMap ? [...joueurMap.entries()].sort((a, b) => b[1].possessions - a[1].possessions) : [];
+                // Lignes cliquables directement (au lieu d'obliger à rouvrir le <select> "Placer un
+                // joueur" qui liste les 21 joueurs du club pour choisir parmi les 2-3 déjà affichés
+                // ici) — demande explicite de Romain après livraison v265. data-* + lecture par
+                // .dataset plutôt qu'une interpolation directe dans onclick, pour rester sûr si un nom
+                // de joueur contient un caractère spécial (apostrophe...), cf. _renderEncFamilleDetail.
                 listingRowsHtml = entries.length
-                    ? entries.map(([joueur, s]) => `<div class="artic-listing-row">${_escapeHtml(joueur)} (${s.possessions})</div>`).join('')
+                    ? entries.map(([joueur, s]) => `<div class="artic-listing-row artic-listing-row-clickable${lineup[pKey] === joueur ? ' active' : ''}" data-pkey="${pKey}" data-joueur="${_escapeHtml(joueur)}" onclick="_setArticManualJoueur(this.dataset.pkey, this.dataset.joueur)" title="Placer ${_escapeHtml(joueur)} sur ${pKey.toUpperCase()}">${_escapeHtml(joueur)} (${s.possessions})</div>`).join('')
                     : `<div class="artic-listing-row artic-listing-empty">Aucune donnée pour ce poste.</div>`;
                 const selectOptions = (typeof JOUEURS_TERRAIN !== 'undefined' ? JOUEURS_TERRAIN : [])
                     .slice().sort((a, b) => (a.nomComplet || a.nom).localeCompare(b.nomComplet || b.nom))

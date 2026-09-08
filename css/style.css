@@ -2767,6 +2767,11 @@
             transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
         .artic-block-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        /* Distingue les cartes que le poste/charnière actuellement filtré peut faire varier de celles
+           qui n'en dépendent pas (ex. changer P2 n'affecte jamais "À 2" = P3-P4) — sans cet indice,
+           une carte qui ne bouge pas après une sélection manuelle ressemble à un bug (retour Romain). */
+        .artic-block-card.concerned { border-color: var(--fenix-accent); box-shadow: 0 0 0 1px rgba(59,130,246,0.15); }
+        .artic-block-card.unconcerned { opacity: 0.5; }
         .artic-block-label { font-size: 0.7rem; color: #475569; font-weight: 700; letter-spacing: 0.3px; margin-bottom: 2px; }
         .artic-block-sub { font-size: 0.62rem; color: #94A3B8; margin-bottom: 6px; }
         .artic-block-eff { font-size: 1.4rem; font-weight: 700; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
@@ -2795,6 +2800,11 @@
         }
         .artic-listing-row:last-child { border-bottom: none; }
         .artic-listing-empty { color: #94A3B8; font-style: italic; }
+        /* Lignes cliquables du filtre Poste : place directement ce joueur sur le poste (au lieu
+           d'obliger à rouvrir le <select> "Placer un joueur" qui liste tout le club, STORY-38bis). */
+        .artic-listing-row-clickable { cursor: pointer; border-radius: 6px; transition: background 0.15s ease; }
+        .artic-listing-row-clickable:hover { background: #EEF2F7; }
+        .artic-listing-row-clickable.active { background: #DBEAFE; font-weight: 700; color: var(--fenix-blue); }
         .artic-listing-hint { font-size: 0.62rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; text-align: right; }
         /* % réussite défensive du duo/quatuor (STORY-38bis) — même palette/sens que .artic-block-eff :
            plus haut = meilleure défense de cette composition précise, permet de comparer les charnières
