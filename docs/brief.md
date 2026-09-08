@@ -1,53 +1,54 @@
-# Brief — Recentrage collectif du mode Articulation (charnières défensives)
+# Brief — Simplification du mode Articulation (un seul flux : largeur → classement → terrain)
 
 **Agent :** Analyst
-**Date :** 2026-09-07
+**Date :** 2026-09-08
 
 ---
 
 ## 1. Contexte
 
-STORY-36 (v261) a réorganisé la présentation du mode Articulation autour d'un principe implicite hérité de STORY-34 : évaluer la défense poste par poste, joueur par joueur (liseré de couleur individuel sur chaque rond, détail par joueur au clic). Romain vient de corriger ce principe de fond, après avoir eu le temps d'utiliser la v261/v262 : ce n'est pas la performance d'un joueur isolé à un poste qui l'intéresse, mais la performance d'un **groupe de joueurs qui défendent ensemble** — ce qu'il appelle une "charnière défensive", à 6 (toute la ligne), à 4 (le bloc central) ou à 2 (les deux postes les plus centraux). Ce concept existe déjà dans le code (`ARTIC_BLOCKS`/`_articBlockEff`, ajouté en v260) mais reste aujourd'hui relégué en bas d'écran, sous un terrain qui met en avant l'évaluation individuelle — l'inverse de la priorité réelle de Romain.
-
-Romain a aussi identifié une ambiguïté de lecture qu'il ne pouvait pas trancher lui-même dans l'instant : le % actuellement affiché est une "efficacité de l'attaque adverse" (plus bas = meilleure défense), une convention déjà inversée par rapport au reste de l'application. Interrogé directement avant ce cycle, il a choisi de basculer vers un **% de réussite défensive** (plus haut = meilleure défense) pour tout ce qui concerne les charnières — décision actée, pas un point à re-challenger en conception.
+Entre v264 et v267, le mode Articulation a reçu quatre ajouts rapprochés sans reprise d'ensemble : un layout en deux colonnes (terrain + listing), un double système de filtre (Poste individuel / Charnière), des lignes cliquables, un marquage visuel "concerné/non concerné" sur les cartes du haut, et un panneau de détail séparé. Chaque ajout répondait à un retour ponctuel de Romain, mais l'empilement produit aujourd'hui un écran qu'il juge lui-même "pas clair du tout" : l'information pertinente (qui est le mieux, à quel point, pourquoi) est dispersée entre une rangée de cartes en haut, une colonne de liste à droite, et un panneau de détail encore plus bas.
 
 ## 2. Problème
 
-Ce que Romain ne peut pas faire aujourd'hui avec l'écran actuel :
-- **Juger un groupe de joueurs comme un tout.** L'écran met en avant 6 évaluations individuelles (un liseré par rond) alors que la question qu'il se pose est "est-ce que CETTE charnière (ces joueurs ensemble) défend bien ?" — une question à laquelle les cartes Bloc répondent déjà, mais noyées en bas de page après le terrain.
-- **Lire le pourcentage sans effort mental.** "37% d'efficacité adverse" oblige à se souvenir que plus bas est meilleur — une convention à contre-sens de tout le reste de l'appli, qu'il a lui-même signalée comme source de confusion.
-- **Ignorer l'individuel quand il n'en a pas besoin.** Le détail par joueur et le liseré individuel occupent une place centrale à l'écran alors qu'ils répondent à une question secondaire (qui a joué là, pas comment défend-il seul).
+Romain formule directement ce qui ne va pas et ce qu'il veut à la place :
+- Trop de mécanismes de filtre coexistent (Dispositif, Composition Le+utilisée/Suggestion, Poste, Charnière) alors qu'il n'a besoin que d'un seul axe de choix : la **largeur de la charnière** (à 6, à 4, à 2).
+- L'information de performance (% de réussite, détail du résultat adverse) est **loin du terrain** (colonne de droite, panneau séparé) alors qu'il veut la voir **directement sous le terrain**, au même endroit où il regarde déjà qui est où.
+- Le réglage fin joueur-par-joueur doit se faire **en cliquant directement sur le rond du poste concerné**, pas via une liste ou un menu déroulant séparé du terrain.
 
 ## 3. Utilisateurs
 
-Romain, staff/coach, en préparation ou débrief tactique, desktop. Inchangé par rapport aux cycles précédents (cf. `docs/archive/articulation-lisibilite/brief.md`).
+Inchangé : Romain, staff/coach, desktop, préparation/débrief tactique (cf. cycles précédents).
 
 ## 4. Vision
 
-Le mode Articulation devient un outil de lecture des **charnières défensives collectives** : le terrain sert uniquement à voir qui occupe quel poste (identification, pas d'évaluation individuelle visible), et l'évaluation de performance se fait exclusivement à travers 3 indicateurs de groupe — à 6, à 4 (bloc central), à 2 (les deux centraux) — exprimés en % de réussite défensive lu dans le sens normal : plus haut, meilleure est la défense.
+Un seul flux de lecture, dans l'ordre où l'œil doit le parcourir : je choisis une largeur de charnière (6, 4 ou 2) → je vois un classement cliquable des meilleures compositions à cette largeur, triées par % de réussite défensive → je clique la meilleure (ou une autre) → le terrain affiche cette composition → juste sous le terrain, je vois son % et le détail du résultat adverse (But/Tir raté/PB/PO/Jet franc) → si je veux ajuster un seul joueur, je clique directement sur son rond.
 
 ## 5. Scope
 
 **Dans le scope :**
-- Retirer tout affichage d'efficacité individuelle : liseré de couleur sur les ronds-poste, % individuel dans le panneau de détail par joueur.
-- Repenser la hiérarchie visuelle pour que les 3 charnières (6/4/2) deviennent l'élément central de l'écran, pas un ajout sous le terrain.
-- Basculer le calcul et l'affichage vers un "% de réussite défensive" (`(possessions − buts − PO) / possessions`), y compris pour la carte Référence, avec une sémantique de couleur normale (vert = haut = bon).
-- Réévaluer la fonction du toggle "Top Def" : décider s'il reste comme heuristique interne de suggestion de composition (sans jamais afficher de chiffre individuel à l'écran) ou s'il doit disparaître.
-- Réévaluer ce que garde le panneau de détail par poste (probablement : liste des joueurs vus à ce poste + nombre de séquences, comme repère descriptif pour la sélection manuelle — sans % individuel).
+- Remplacer les filtres actuels (Dispositif + Composition + Poste + Charnière) par exactement : **Dispositif** (0-6/1-5, inchangé, nécessaire car change la géométrie du terrain) + **Largeur de charnière** (À 6 / À 4 / À 2, remplace Poste+Charnière+Composition).
+- Un classement cliquable des compositions pour la largeur choisie, trié par % de réussite défensive (les meilleures défenses en premier — "il me faut les meilleures défenses"), avec le nombre de séquences.
+- Cliquer une ligne du classement place cette composition sur le terrain.
+- Sous le terrain (pas sur le côté, pas dans un panneau séparé) : le % de réussite défensive de la composition actuellement affichée + le détail du résultat adverse (But/Tir raté/PB/PO/Jet franc), pour la largeur actuellement choisie.
+- Cliquer directement sur un rond du terrain permet de changer le joueur de CE poste précis, sans passer par une liste séparée.
 
-**Hors scope :**
-- Le calcul sous-jacent des séquences/possessions/buts/PO (`computeArticulationStats`, filtre dispositif, résolution de nom) reste inchangé — seule la métrique dérivée et sa mise en avant changent.
-- Le tracé du terrain et le placement géométrique des postes sur la courbe du 6m (STORY-36) restent inchangés.
-- Aucune nouvelle donnée Excel/Supabase.
+**Hors scope (retiré, pas remplacé) :**
+- Le filtre "Poste" autonome et sa liste dédiée (qui a joué là, combien de fois) — remplacé par le clic direct sur le rond.
+- Le toggle "Composition" (Le + utilisée / 💡 Suggestion) — remplacé par le classement par % qui répond directement à "quelle est la meilleure composition", sans avoir besoin d'un mode de calcul séparé.
+- Le marquage visuel "concerné/non concerné" des cartes — n'a plus lieu d'être si une seule largeur est affichée à la fois (plus de cartes multiples simultanées à distinguer).
+- La rangée de 4 cartes "Référence + À6/À4/À2" en haut d'écran — remplacée par l'affichage unique sous le terrain, propre à la largeur actuellement choisie (éviter de montrer la même information à deux endroits).
+- Le calcul sous-jacent (`computeArticulationStats`, `_articBlockEff`, `_articBlockDetail`, `computeArticCombos`, `_articTauxDefense`) reste inchangé — c'est uniquement l'organisation de l'écran et le nombre de filtres visibles qui changent.
 
 ## 6. Critères de succès
 
-- Un utilisateur regardant l'écran comprend immédiatement, sans lire de tooltip, qu'un pourcentage haut = bonne défense.
-- Les 3 charnières (6/4/2) sont la première chose que l'œil rencontre après le terrain, avant tout retour à l'individuel.
-- Aucun chiffre d'efficacité individuelle n'apparaît plus nulle part sur l'écran (ronds, badges, panneau de détail).
-- Les chiffres de séquences/possessions restent identiques à avant (seule la métrique de réussite change de sens et de mise en avant).
+- Un seul groupe de contrôles visible pour choisir la vue (Dispositif + Largeur), plus aucun autre filtre.
+- Le classement des compositions est trié par % de réussite défensive, meilleure en tête.
+- Le % et le détail du résultat adverse apparaissent sous le terrain, jamais ailleurs.
+- Modifier un joueur se fait en cliquant sur son rond, sans liste séparée ni menu déroulant flottant à côté du terrain.
+- Rien de plus à l'écran que ce qui précède — tout élément de v264-v267 non listé ci-dessus disparaît.
 
 ## 7. Questions en suspens
 
-- Le devenir exact de "Top Def" (le conserver comme suggestion silencieuse de composition vs le retirer entièrement) est tranché en conception par le Designer/PM plutôt que re-demandé à Romain — la relation entre STORY-35 (classement des charnières centrales, jamais démarré) et ce recentrage doit aussi être clarifiée : STORY-35 pourrait devenir largement redondante avec ce cycle.
-- Le contenu exact conservé dans le panneau de détail par poste (juste la liste des joueurs + fréquence, ou autre chose) est laissé à la conception — le principe (pas de % individuel) est acquis, la forme ne l'est pas encore.
+- Interaction exacte du clic sur un rond (sélecteur inline apparaissant au clic vs autre mécanisme) — à trancher par le Designer, la seule contrainte ferme étant "pas de liste séparée du terrain".
+- Tri du classement strictement par % (avec le repère `(n<3)` déjà en place pour les échantillons faibles) vs un tri qui priorise d'abord les échantillons fiables — à trancher par le Designer/PM, Romain n'ayant précisé que "les meilleures défenses", pas la gestion des petits échantillons.
