@@ -1859,15 +1859,22 @@
             });
         }
 
+        // STORY-45 — refonte visuelle uniquement (positions/valeurs des bulles inchangées) :
+        // matrice agrandie, bulles avec ombre portée + libellé nom/eff% toujours visible (avant
+        // cette story, seul le nombre de possessions apparaissait sur la bulle, nom+eff% seulement
+        // au survol/dans la légende), quadrants recolorés plus francs, agrandissement au survol
+        // (_encMatrixHoverFamille, mis à jour par _initEncMatrixHover ci-dessous).
+        let _encMatrixHoverFamille = null;
+
         function _drawEncMatrix() {
             const canvas = document.getElementById('enc-radar-canvas');
             if (!canvas) return;
-            // Auto-resize to container
+            // Auto-resize to container — plafond relevé (430→500) pour une matrice plus présente
             const wrap = canvas.parentElement;
             if (wrap && wrap.clientWidth > 0) {
                 const cw = Math.max(300, wrap.clientWidth - 28);
                 canvas.width = cw;
-                canvas.height = Math.max(220, Math.min(Math.round(cw * 0.50), 430));
+                canvas.height = Math.max(260, Math.min(Math.round(cw * 0.54), 500));
                 canvas.style.width = cw + 'px';
                 canvas.style.height = canvas.height + 'px';
             }
@@ -1892,12 +1899,13 @@
             const xS = v => PAD.left + (v / maxP) * pw;
             const yS = v => PAD.top + ph - Math.min(1, v / 100) * ph;
             const mx = xS(avgP), my = yS(EFF_MID);
-            // Quadrant backgrounds
+            // Quadrant backgrounds — teintes plus franches qu'avant (0.4→0.55+ d'opacité) pour
+            // que les 4 zones se distinguent au premier coup d'œil, pas seulement en y regardant de près
             const zones = [
-                { x:PAD.left, y:PAD.top,    w:mx-PAD.left,        h:my-PAD.top,           bg:'rgba(219,234,254,0.4)', label:'Sous-utilisé', ta:'left',  tx:PAD.left+4,      ty:PAD.top+4 },
-                { x:mx,       y:PAD.top,    w:PAD.left+pw-mx,     h:my-PAD.top,           bg:'rgba(209,250,229,0.5)', label:'Exploiter ⭐', ta:'right', tx:PAD.left+pw-4,   ty:PAD.top+4 },
-                { x:PAD.left, y:my,         w:mx-PAD.left,        h:PAD.top+ph-my,        bg:'rgba(241,245,249,0.3)', label:'Abandonner',   ta:'left',  tx:PAD.left+4,      ty:PAD.top+ph-12 },
-                { x:mx,       y:my,         w:PAD.left+pw-mx,     h:PAD.top+ph-my,        bg:'rgba(254,243,199,0.55)', label:'Corriger ⚠',  ta:'right', tx:PAD.left+pw-4,   ty:PAD.top+ph-12 },
+                { x:PAD.left, y:PAD.top,    w:mx-PAD.left,        h:my-PAD.top,           bg:'rgba(203,213,225,0.35)', color:'#64748B', label:'Sous-utilisé', ta:'left',  tx:PAD.left+6,      ty:PAD.top+6 },
+                { x:mx,       y:PAD.top,    w:PAD.left+pw-mx,     h:my-PAD.top,           bg:'rgba(16,185,129,0.16)',  color:'#059669', label:'Exploiter ⭐', ta:'right', tx:PAD.left+pw-6,   ty:PAD.top+6 },
+                { x:PAD.left, y:my,         w:mx-PAD.left,        h:PAD.top+ph-my,        bg:'rgba(148,163,184,0.14)', color:'#64748B', label:'Abandonner',   ta:'left',  tx:PAD.left+6,      ty:PAD.top+ph-14 },
+                { x:mx,       y:my,         w:PAD.left+pw-mx,     h:PAD.top+ph-my,        bg:'rgba(245,158,11,0.18)',  color:'#B45309', label:'Corriger ⚠',  ta:'right', tx:PAD.left+pw-6,   ty:PAD.top+ph-14 },
             ];
             // Quadrant backgrounds only (labels drawn after dots)
             zones.forEach(z => { ctx.fillStyle = z.bg; ctx.fillRect(z.x, z.y, z.w, z.h); });
@@ -1910,7 +1918,7 @@
             ctx.strokeStyle = '#CBD5E1'; ctx.lineWidth = 1;
             ctx.strokeRect(PAD.left, PAD.top, pw, ph);
             // Y axis ticks
-            const fAxis = Math.max(8, Math.round(W * 0.014));
+            const fAxis = Math.max(9, Math.round(W * 0.016));
             ctx.font = `${fAxis}px system-ui`; ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
             [0, 50, 100].forEach(v => { ctx.fillText(v+'%', PAD.left-4, yS(v)); });
             // Axis legends
@@ -1919,31 +1927,80 @@
             ctx.fillText('← Utilisation FENIX (possessions) →', PAD.left+pw/2, PAD.top+ph+5);
             ctx.save(); ctx.translate(9, PAD.top+ph/2); ctx.rotate(-Math.PI/2);
             ctx.textBaseline = 'top'; ctx.fillText('Efficacité (b+PO)/poss. →', 0, 0); ctx.restore();
-            // Dots — colored circles with number inside
+            // Dots — colored circles with number inside, ombre portée pour plus de relief,
+            // nom de famille + eff% toujours affichés à côté (plus seulement au survol/légende).
+            // Bulle survolée (_encMatrixHoverFamille) légèrement agrandie.
             const DOT_R = 13;
+            const abbrDot = {'Faire courir':'F.courir','Spéciaux':'Spéc.'};
             window._encMatrixDots = [];
-            used.forEach(f => {
+            const dotInfos = used.map(f => {
                 const s = stats.get(f)||{possessions:0,eff:0};
-                const x = xS(s.possessions), y = yS(s.eff||0);
-                const col = getHex(f);
-                ctx.beginPath(); ctx.arc(x, y, DOT_R, 0, 2*Math.PI);
+                return { f, s, x: xS(s.possessions), y: yS(s.eff||0), col: getHex(f) };
+            });
+            // Dots d'abord (sous les labels)
+            dotInfos.forEach(({ f, s, x, y, col }) => {
+                const hovered = f === _encMatrixHoverFamille;
+                const r = hovered ? DOT_R * 1.25 : DOT_R;
+                ctx.save();
+                ctx.shadowColor = 'rgba(15,23,42,0.35)';
+                ctx.shadowBlur = hovered ? 10 : 5;
+                ctx.shadowOffsetY = 2;
+                ctx.beginPath(); ctx.arc(x, y, r, 0, 2*Math.PI);
                 ctx.fillStyle = col; ctx.fill();
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.shadowColor = 'transparent';
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = hovered ? 2.5 : 2; ctx.stroke();
+                ctx.restore();
                 ctx.font = `bold ${s.possessions >= 10 ? 9 : 10}px system-ui`;
                 ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText(s.possessions, x, y);
                 const totalPossMatrix = window._encCurrentTotalPoss || 1;
                 const utilisPctMatrix = Math.round(s.possessions / totalPossMatrix * 100);
-                window._encMatrixDots.push({ x, y, famille: f, eff: s.eff||0, possessions: s.possessions, utilisPct: utilisPctMatrix });
+                window._encMatrixDots.push({ x, y, r: DOT_R, famille: f, eff: s.eff||0, possessions: s.possessions, utilisPct: utilisPctMatrix });
             });
-            // Zone labels drawn LAST (on top of dots) with white bg for legibility
+            // Labels ensuite, avec anti-collision simple (nudge progressif si chevauchement avec
+            // un label déjà placé — les bulles d'une même matrice sont peu nombreuses, ≤8, un
+            // placement glouton séquentiel suffit à éviter le texte illisible superposé).
+            const placedBoxes = [];
+            const LABEL_GAP = 5; // marge minimale entre 2 libellés — sans elle, des boîtes juste
+                                  // adjacentes (à 1-2px près) passent le test "pas de chevauchement"
+                                  // mais se lisent comme superposées une fois le texte rendu
+            const overlaps = (a, b) => a.x0 - LABEL_GAP < b.x1 && a.x1 + LABEL_GAP > b.x0 && a.y0 - LABEL_GAP < b.y1 && a.y1 + LABEL_GAP > b.y0;
+            dotInfos.forEach(({ f, s, x, y, col }) => {
+                const hovered = f === _encMatrixHoverFamille;
+                const r = hovered ? DOT_R * 1.25 : DOT_R;
+                const label = `${abbrDot[f] || f} · ${s.eff||0}%`;
+                ctx.font = `${hovered ? 'bold ' : ''}${fAxis}px system-ui`;
+                const tw = ctx.measureText(label).width;
+                // Centre du libellé bridé aux bords du canvas — sinon un point proche de x=0 ou
+                // x=W (ex. la famille la plus utilisée) fait déborder la moitié du texte hors-canvas
+                // avec un textAlign 'center' non contraint.
+                const lx = Math.min(Math.max(x, tw/2 + 4), W - tw/2 - 4);
+                const labelUp = y - PAD.top > ph * 0.25;
+                let dist = r + 5;
+                let box;
+                for (let attempt = 0; attempt < 6; attempt++) {
+                    const ly = labelUp ? y - dist : y + dist + fAxis * 0.7;
+                    box = labelUp
+                        ? { x0: lx - tw/2 - 3, x1: lx + tw/2 + 3, y0: ly - fAxis - 1, y1: ly + 3, ly }
+                        : { x0: lx - tw/2 - 3, x1: lx + tw/2 + 3, y0: ly - 1, y1: ly + fAxis + 3, ly };
+                    if (!placedBoxes.some(pb => overlaps(box, pb))) break;
+                    dist += fAxis + 3; // pousse le label plus loin de sa bulle, même côté
+                }
+                placedBoxes.push(box);
+                ctx.textAlign = 'center'; ctx.textBaseline = labelUp ? 'bottom' : 'top';
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0);
+                ctx.fillStyle = hovered ? col : '#334155';
+                ctx.fillText(label, lx, box.ly);
+            });
+            // Zone labels drawn LAST (on top des bulles), en couleur pleine (plus de gris uniforme)
             ctx.font = `bold ${fAxis}px system-ui`;
             zones.forEach(z => {
                 ctx.textAlign = z.ta; ctx.textBaseline = 'top';
                 const tw = ctx.measureText(z.label).width;
                 const bgX = z.ta === 'right' ? z.tx - tw - 2 : z.tx - 2;
-                ctx.fillStyle = 'rgba(255,255,255,0.82)'; ctx.fillRect(bgX, z.ty - 1, tw + 4, 10);
-                ctx.fillStyle = 'rgba(100,116,139,0.9)'; ctx.fillText(z.label, z.tx, z.ty);
+                ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(bgX, z.ty - 2, tw + 4, fAxis + 4);
+                ctx.fillStyle = z.color; ctx.fillText(z.label, z.tx, z.ty);
             });
             _initEncMatrixHover();
             // Legend HTML (below canvas)
@@ -2042,6 +2099,13 @@
                 const cx = (e.clientX - rect.left) * sx, cy = (e.clientY - rect.top) * sy;
                 const dots = window._encMatrixDots || [];
                 const found = dots.find(d => Math.sqrt((cx-d.x)**2+(cy-d.y)**2) <= 15);
+                // STORY-45 — agrandissement léger de la bulle survolée (redessin seulement si la
+                // famille survolée change, pas à chaque pixel de mousemove).
+                const foundFamille = found ? found.famille : null;
+                if (foundFamille !== _encMatrixHoverFamille) {
+                    _encMatrixHoverFamille = foundFamille;
+                    _drawEncMatrix();
+                }
                 if (found) {
                     tip.innerHTML = `<strong>${found.famille}</strong> · ${found.possessions} poss. (${found.utilisPct}% util.) · eff. ${found.eff}%`;
                     tip.style.display = 'block';
@@ -2053,7 +2117,10 @@
                     canvas.style.cursor = 'default';
                 }
             }, { signal });
-            canvas.addEventListener('mouseleave', () => { const t = document.getElementById('enc-matrix-tooltip'); if (t) t.style.display = 'none'; }, { signal });
+            canvas.addEventListener('mouseleave', () => {
+                const t = document.getElementById('enc-matrix-tooltip'); if (t) t.style.display = 'none';
+                if (_encMatrixHoverFamille) { _encMatrixHoverFamille = null; _drawEncMatrix(); }
+            }, { signal });
             canvas.addEventListener('click', e => {
                 const rect = canvas.getBoundingClientRect();
                 const sx = canvas.width / rect.width, sy = canvas.height / rect.height;
