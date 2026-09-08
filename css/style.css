@@ -1571,6 +1571,27 @@
         }
 
         /* Chat styles */
+        /* STORY-46 — questions types cliquables, au-dessus de la conversation */
+        .chat-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .chat-chip {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            border: 1px solid #DBEAFE;
+            background: #EFF6FF;
+            color: var(--fenix-blue);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .chat-chip:hover { background: #DBEAFE; }
+
         .chat-container {
             border: 2px solid #E5E7EB;
             border-radius: 16px;

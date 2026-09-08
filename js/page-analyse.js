@@ -1088,6 +1088,24 @@
             }, 800);
         }
 
+        // STORY-46 — questions types cliquables (chips), au-dessus de la conversation. Réutilise
+        // exactement le chemin d'envoi existant (sendChatMessage) plutôt que de dupliquer sa logique,
+        // pour garantir que le clic produit rigoureusement la même réponse qu'une saisie manuelle.
+        function _sendChatSuggestion(text) {
+            const input = document.getElementById('chat-input');
+            if (!input) return;
+            input.value = text;
+            sendChatMessage();
+        }
+
+        // Chaque pattern reconnu par generateChatResponse() ci-dessous, avec un exemple de question
+        // type qui le déclenche (cf. chips HTML, FENIX-HANDBALL-CF-SUIVI.html) — à revoir cette liste
+        // si un de ces mots-clés change un jour (Risk R8, docs/risks/reorganisation-page-analyse.md) :
+        //   enclenchement/marqué/type de but → "Comment on a marqué ?"
+        //   supériorité/infériorité/+/-      → "Bilan des supériorités numériques ?"
+        //   efficace/meilleur/buteur         → "Qui est le meilleur buteur ?"
+        //   gardien/arrêt                    → "Comment a joué le gardien ?"
+        //   perte/pb                         → "Combien de pertes de balle ?"
         function generateChatResponse(question, matchName) {
             const matchData = DATA.filter(row => row[COLS.rencontre] === matchName);
             const fenixData = matchData.filter(row => row[COLS.club] === 'FENIX');

@@ -11,15 +11,15 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=276">
-    <script src="js/supabase-client.js?v=276"></script>
-    <script src="js/utils.js?v=276"></script>
-    <script src="js/player-photos.js?v=276"></script>
-    <script src="js/impact-images.js?v=276"></script>
-    <script src="js/player-mode.js?v=276"></script>
-    <script src="js/page-joueurs.js?v=276"></script>
-    <script src="js/page-notes-graph.js?v=276"></script>
-    <script src="js/page-analyse.js?v=276"></script>
+    <link rel="stylesheet" href="css/style.css?v=277">
+    <script src="js/supabase-client.js?v=277"></script>
+    <script src="js/utils.js?v=277"></script>
+    <script src="js/player-photos.js?v=277"></script>
+    <script src="js/impact-images.js?v=277"></script>
+    <script src="js/player-mode.js?v=277"></script>
+    <script src="js/page-joueurs.js?v=277"></script>
+    <script src="js/page-notes-graph.js?v=277"></script>
+    <script src="js/page-analyse.js?v=277"></script>
 </head>
 <body>
 
@@ -560,6 +560,16 @@
                         <!-- Chat IA -->
                         <div class="analyse-section">
                             <h3 class="analyse-section-title">💬 Chat IA - Pose tes questions</h3>
+                            <!-- STORY-46 — questions types : chaque libellé est choisi pour déclencher un
+                                 pattern précis de generateChatResponse() (cf. commentaire à côté de cette
+                                 fonction, js/page-analyse.js) — à revoir si le moteur de réponse change un jour. -->
+                            <div class="chat-suggestions">
+                                <button type="button" class="chat-chip" onclick="_sendChatSuggestion('Comment on a marqué ?')">Comment on a marqué ?</button>
+                                <button type="button" class="chat-chip" onclick="_sendChatSuggestion('Bilan des supériorités numériques ?')">Bilan des supériorités ?</button>
+                                <button type="button" class="chat-chip" onclick="_sendChatSuggestion('Qui est le meilleur buteur ?')">Meilleur buteur ?</button>
+                                <button type="button" class="chat-chip" onclick="_sendChatSuggestion('Comment a joué le gardien ?')">Comment a joué le gardien ?</button>
+                                <button type="button" class="chat-chip" onclick="_sendChatSuggestion('Combien de pertes de balle ?')">Pertes de balle ?</button>
+                            </div>
                             <div class="chat-container">
                                 <div class="chat-messages" id="chat-messages">
                                     <div class="chat-message ia">
