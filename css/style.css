@@ -2585,7 +2585,7 @@
         /* Niveaux typographiques de la card (STORY-16, règle "max 3 niveaux simultanés") :
            Valeur clé = .enc-famille-eff · Corps = .enc-stat-main-val/.enc-stat-sec-val (même taille,
            hiérarchie par poids/couleur) · Micro = .enc-famille-name/.enc-famille-sublabel/
-           .enc-stat-pair-label/.enc-footnote/.enc-badge-mini (même taille 0.7rem) */
+           .enc-stat-pair-label/.enc-footnote (même taille 0.7rem) */
         .enc-stat-pair { display: flex; align-items: flex-start; gap: 6px; margin: 5px 0 2px; }
         .enc-stat-main-val { font-size: 0.82rem; font-weight: 700; color: #1E293B; line-height: 1; }
         .enc-stat-sec-val { font-size: 0.82rem; font-weight: 600; color: #94A3B8; line-height: 1; }
@@ -2809,14 +2809,6 @@
             justify-content: center; flex-shrink: 0; line-height: 1;
         }
         .enc-detail-back:hover { background: #E2E8F0; }
-
-        /* Mini badges dans cards */
-        .enc-badge-mini {
-            display: inline-block; padding: 2px 5px; border-radius: 3px;
-            font-size: 0.7rem; font-weight: 700; margin-top: 4px;
-        }
-        .enc-badge-mini.faiblesse { background: #FEF3C7; color: #92400E; }
-        .enc-badge-mini.force { background: #D1FAE5; color: #065F46; }
 
         /* Légende matrice 2x2 */
         .enc-legend-grid { display: flex; flex-wrap: wrap; gap: 4px 10px; }

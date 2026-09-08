@@ -1465,17 +1465,12 @@
                 const utilisPct = totalPoss > 0 ? Math.round(s.possessions / totalPoss * 100) : 0;
                 const totalTirs = s.buts + s.tirs;
                 const tirEff = totalTirs > 0 ? Math.round(s.buts / totalTirs * 100) : 0;
-                let badgeHtml = '';
-                if (sd.matchCount >= 3 && s.possessions >= 5) {
-                    const em = sd.effMoy, ec = s.eff;
-                    if (isAdv) {
-                        if (em > 0 && ec / em >= 1.5) badgeHtml = `<div class="enc-badge-mini faiblesse">⚠ POINT FAIBLE</div>`;
-                        else if (em > 0 && Math.abs(ec - em) / em <= 0.10 && sd.cv < 0.20) badgeHtml = `<div class="enc-badge-mini force">⭐ FORCE DÉFENSE</div>`;
-                    } else {
-                        if (em > 0 && ec / em >= 1.5) badgeHtml = `<div class="enc-badge-mini faiblesse">⚡ FAIBLESSE ADV</div>`;
-                        else if (em > 0 && Math.abs(ec - em) / em <= 0.10 && sd.cv < 0.20) badgeHtml = `<div class="enc-badge-mini force">⭐ FORCE</div>`;
-                    }
-                }
+                // Badge FORCE/POINT FAIBLE retiré (retour Romain, 2026-09-08) : la "moyenne saison"
+                // (sd.effMoy) mélange des adversaires différents sans les distinguer, et en vue Saison
+                // complète, cette carte compare le total saison à sa propre moyenne — comparaison à
+                // elle-même, signal mécaniquement faux. Pas assez de matchs/historique par adversaire
+                // pour rendre ce badge fiable. `sd`/`statsSaison` restent utilisées par le delta ▲▼pts
+                // ci-dessous, non concerné par ce retrait.
                 const hasRef = sd.matchCount >= 3;
                 const fillClass = !hasRef ? 'noref' : (s.eff >= sd.effMoy ? 'above' : 'below');
                 const delta = hasRef ? s.eff - sd.effMoy : null;
@@ -1495,7 +1490,6 @@
                         <div><div class="enc-stat-sec-val">${tirEff}%</div><div class="enc-stat-pair-label">tir</div></div>
                     </div>
                     <div class="enc-footnote">${s.possessions}p${deltaHtml}</div>
-                    ${badgeHtml}
                 </div>`;
             });
             // Carte "Non classifié" : enc non vides sans famille connue
