@@ -61,6 +61,8 @@
             if (!matchFilter) {
                 document.getElementById('analyse-content').style.display = 'none';
                 document.getElementById('analyse-empty').style.display = 'block';
+                document.getElementById('essentiel-match').style.display = 'none';
+                document.getElementById('essentiel-saison').style.display = 'block';
                 renderEncFamillesSection(DATA);
                 generateSeasonCorrelations();
                 return;
@@ -68,6 +70,8 @@
 
             document.getElementById('analyse-content').style.display = 'block';
             document.getElementById('analyse-empty').style.display = 'none';
+            document.getElementById('essentiel-saison').style.display = 'none';
+            document.getElementById('essentiel-match').style.display = 'block';
 
             const matchData = DATA.filter(row => row[COLS.rencontre] === matchFilter);
 
@@ -263,7 +267,12 @@
                     html += `<div class="ia-point"><span class="ia-point-icon">${p.icon}</span><span>${p.text}</span></div>`;
                 });
             }
-            document.getElementById('ia-analyse').innerHTML = html;
+            // STORY-39 — le résumé s'affiche désormais dans le bloc "Essentiel" en tête de page
+            // (plus dans l'onglet Résumé) ; resultClass porté sur le conteneur lui-même pour la
+            // bordure gauche colorée (cf. docs/visual/reorganisation-page-analyse.md §1).
+            const essentielEl = document.getElementById('essentiel-match');
+            essentielEl.className = 'essentiel ' + resultClass;
+            essentielEl.innerHTML = html;
         }
 
         function generateIndicateurs(matchName, matchData, hasPeriode) {
@@ -1220,6 +1229,18 @@
             return `Pour ce match (${matchName}), voici les stats clés : Score ${fenixButs}-${advButs}, Efficacité ${fenixEff}%, ${fenixPB} pertes de balle.<br><br><strong>Tu peux me demander :</strong><br>• "Enclenchements" - comment on a marqué<br>• "Supériorités" - bilan des + et -<br>• "Meilleur buteur"<br>• "Gardien"`;
         }
 
+        // STORY-39 — bloc "Essentiel" en vue saison : construit à partir des mêmes moyennes/écarts
+        // déjà calculés pour le tableau de corrélations (aucun nouveau calcul, cf. docs/design
+        // reorganisation-page-analyse.md §4). N'affiche que l'en-tête (N matchs + V/D/N) quand
+        // aucun signal fort ne peut être dégagé (pas assez de matchs, pas assez de diversité V/D,
+        // ou aucun écart >15% cette saison) — jamais un bloc cassé ou vide silencieusement.
+        function _renderEssentielSaison(headerHtml, signauxHtml) {
+            const el = document.getElementById('essentiel-saison');
+            if (!el) return;
+            el.className = 'essentiel';
+            el.innerHTML = `<div class="essentiel-header">${headerHtml}</div>${signauxHtml}`;
+        }
+
         function generateSeasonCorrelations() {
             const container = document.getElementById('saison-correlations');
             if (!container) return;
@@ -1228,6 +1249,12 @@
                 container.innerHTML = MATCHS && MATCHS.length > 0
                     ? `<p style="color:#64748B;font-size:0.85rem;text-align:center;padding:16px 0">Minimum 3 matchs nécessaires pour calculer les corrélations (${MATCHS.length} match${MATCHS.length > 1 ? 's' : ''} actuellement).</p>`
                     : '';
+                if (MATCHS && MATCHS.length > 0) {
+                    _renderEssentielSaison(
+                        `📊 ${MATCHS.length} match${MATCHS.length > 1 ? 's' : ''} analysé${MATCHS.length > 1 ? 's' : ''} cette saison`,
+                        `<p style="color:#6B7280;font-size:0.85rem;margin-top:0.4rem;">Pas assez de matchs pour dégager des tendances (minimum 3).</p>`
+                    );
+                }
                 return;
             }
 
@@ -1278,13 +1305,23 @@
             if (groups.D.length > 0) colHeaders.push({ key: 'D', label: `Défaites (${groups.D.length})`,  color: '#EF4444' });
             if (groups.N.length > 0) colHeaders.push({ key: 'N', label: `Nuls (${groups.N.length})`,      color: '#6B7280' });
 
-            if (colHeaders.length < 2) { container.innerHTML = ''; return; }
+            const bilanSaison = `${groups.V.length} victoire${groups.V.length !== 1 ? 's' : ''} · ${groups.D.length} défaite${groups.D.length !== 1 ? 's' : ''} · ${groups.N.length} nul${groups.N.length !== 1 ? 's' : ''}`;
+
+            if (colHeaders.length < 2) {
+                container.innerHTML = '';
+                _renderEssentielSaison(
+                    `📊 ${MATCHS.length} matchs analysés cette saison`,
+                    `<div class="essentiel-sub">${bilanSaison}</div><p style="color:#6B7280;font-size:0.85rem;margin-top:0.4rem;">Pas assez de diversité de résultats pour dégager des tendances.</p>`
+                );
+                return;
+            }
 
             const fmtVal = (val, unit) => val !== null
                 ? (Number.isInteger(Math.round(val * 10) / 10) ? val.toFixed(0) : val.toFixed(1)) + unit
                 : null;
 
             let rows = '';
+            const signauxForts = [];
             statsDef.forEach(stat => {
                 const avgs = {};
                 colHeaders.forEach(col => { avgs[col.key] = avg(groups[col.key], stat.key); });
@@ -1320,6 +1357,12 @@
                             ? `↑↓ Signal modéré : cet écart est notable mais moins déterminant (plus favorable en ${better}).`
                             : `Écart trop faible pour être significatif.`;
                     tooltip = `${compare} ${meaning}`;
+                    if (sigLevel === 'fort') {
+                        signauxForts.push({
+                            pct: Math.round(relDiff * 100),
+                            text: `🔑 ${stat.label} — signal fort : ${fmtVal(avgs.V, stat.unit)} en victoire vs ${fmtVal(avgs.D, stat.unit)} en défaite (écart de ${pct}%)`
+                        });
+                    }
                 }
 
                 let cells = `<td class="corr-label">${stat.label}<span class="enc-info-btn" style="margin-left:5px;width:16px;height:16px;font-size:0.6rem;vertical-align:middle" title="${tooltip.replace(/"/g, '&quot;')}">i</span></td>`;
@@ -1351,6 +1394,16 @@
                     </div>
                 </div>
             `;
+
+            signauxForts.sort((a, b) => b.pct - a.pct);
+            const topSignaux = signauxForts.slice(0, 2);
+            const signauxHtml = topSignaux.length > 0
+                ? topSignaux.map(s => `<div class="ia-point">${s.text}</div>`).join('')
+                : `<p style="color:#6B7280;font-size:0.85rem;margin-top:0.4rem;">Pas de signal fort marquant pour l'instant.</p>`;
+            _renderEssentielSaison(
+                `📊 ${MATCHS.length} matchs analysés cette saison`,
+                `<div class="essentiel-sub">${bilanSaison}</div>${signauxHtml}`
+            );
         }
 
         // ====================================================================
