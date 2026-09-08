@@ -2689,12 +2689,14 @@
         }
         .enc-info-btn:hover { background: #CBD5E1; }
 
-        /* Mode Articulation défensive (STORY-34, refonte lisibilité STORY-36) — demi-terrain, postes P1-P6 */
+        /* Mode Articulation défensive (STORY-34, flux unique STORY-38) — demi-terrain, postes P1-P6.
+           Un seul flux de lecture : Largeur (bandeau) → classement cliquable (colonne de droite) →
+           terrain → résumé sous le terrain. Plus de toggle Composition, plus de filtre Poste séparé,
+           plus de cartes multiples en haut d'écran (tout ça retiré, pas juste caché, cf. Architecture
+           articulation-flux-unique.md). */
         .enc-pie-mode-btn.artic-disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
         .artic-empty { color: #94A3B8; font-size: 0.85rem; text-align: center; padding: 24px 0; }
-        /* Bandeau de contrôles : regroupe dispositif/mode/reset dans un conteneur visuellement séparé
-           du terrain et des indicateurs (STORY-36 — auparavant, ces toggles flottaient directement
-           au-dessus du terrain sans hiérarchie claire). */
+        /* Bandeau de contrôles : Dispositif + Largeur, les 2 seuls axes de choix restants. */
         .artic-control-bar {
             background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;
             padding: 10px 14px; margin-bottom: 14px; box-shadow: var(--shadow-sm);
@@ -2703,21 +2705,12 @@
         .artic-control-row:last-of-type { margin-bottom: 0; }
         .artic-control-label { font-size: 0.68rem; font-weight: 700; color: #64748B; letter-spacing: 0.5px; min-width: 80px; }
         .artic-dispositif-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
-        .artic-manual-indicator {
-            font-size: 0.72rem; color: #64748B; margin-top: 6px; padding-top: 6px;
-            border-top: 1px dashed #CBD5E1; transition: opacity 0.15s ease;
-        }
-        .artic-manual-indicator a { color: var(--fenix-accent); font-weight: 600; text-decoration: none; }
-        .artic-manual-indicator a:hover { text-decoration: underline; }
-        /* Terrain à gauche, listing filtrable à droite (STORY-38 — "je veux la vue listing joueur à
-           droite du terrain, décalé à gauche, réduite en largeur"). Le terrain garde sa taille de
-           référence (520px), la colonne de listing est volontairement étroite à côté. */
+        /* Terrain à gauche, classement à droite. Le terrain garde sa taille de référence (520px), la
+           colonne de droite est volontairement étroite à côté. */
         .artic-main-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
         .artic-court-col { flex: 1 1 380px; max-width: 520px; }
         /* Lignes du terrain dessinées en SVG (_articCourtSvg, défs locales dupliquées — cf. commentaire
-           dans _articCourtSvg()). Le terrain n'est plus l'élément central depuis STORY-37 (identification
-           des postes uniquement, l'évaluation se fait dans .artic-blocks-section ci-dessus) — ombre
-           allégée pour refléter ce rôle secondaire. */
+           dans _articCourtSvg()). */
         .artic-court {
             width: 100%; aspect-ratio: 1 / 1;
             border-radius: 12px; box-shadow: var(--shadow-md);
@@ -2734,14 +2727,11 @@
             cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
         .artic-poste:hover { transform: translate(-50%, -50%) scale(1.08); box-shadow: var(--shadow-lg); }
-        /* Sélection en outline (pas box-shadow) pour coexister avec le liseré d'efficacité ci-dessous,
-           qui utilise déjà box-shadow — les deux doivent rester visibles simultanément (STORY-36). */
+        /* "selected" = encart d'édition ouvert pour ce poste (clic sur le rond), pas un liseré
+           d'efficacité (retiré depuis STORY-37 — aucune évaluation individuelle sur le terrain). */
         .artic-poste.selected { outline: 2px solid #FCD34D; outline-offset: 2px; }
         .artic-poste-label { font-size: 0.55rem; color: #94A3B8; letter-spacing: 1px; }
         .artic-poste-joueur { font-size: 0.72rem; color: var(--fenix-dark); font-weight: 700; line-height: 1.1; text-align: center; }
-        /* Nom seul dans le rond — depuis STORY-37, plus aucune évaluation individuelle sur le terrain
-           (ni %, ni liseré de couleur) : Romain ne juge que la performance collective d'une charnière,
-           affichée dans .artic-blocks-section. Le terrain sert uniquement à identifier qui est où. */
         .artic-poste-manual {
             position: absolute; top: -6px; left: -6px; width: 16px; height: 16px; border-radius: 50%;
             background: var(--fenix-accent); color: #fff; font-size: 0.6rem;
@@ -2752,47 +2742,39 @@
             background: var(--fenix-accent); color: #fff; font-size: 0.55rem; font-weight: 700;
             display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff;
         }
-        /* Charnières défensives — élément central de l'écran depuis STORY-37 (avant le terrain dans le
-           HTML généré par _drawArticulationCourt) : c'est CE que Romain regarde en premier, le terrain
-           ne sert plus qu'à identifier qui est où. */
-        .artic-blocks-section {
-            background: #FAFBFC; border: 1px solid #E2E8F0; border-radius: 12px;
-            padding: 16px; margin-bottom: 16px;
+        /* Encart d'édition d'un poste, ouvert par clic sur son rond — sous le terrain, au-dessus du
+           résumé. Cadre bleu pour signaler une action en cours (Visual §1/§4). */
+        .artic-poste-editor {
+            margin-top: 10px; padding: 10px 14px; background: #fff;
+            border: 2px solid var(--fenix-accent); border-radius: 10px; font-size: 0.8rem;
+            box-shadow: var(--shadow-md);
+            animation: articEditorIn 0.15s ease-out;
         }
-        .artic-blocks-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.5px; color: var(--fenix-blue); margin-bottom: 10px; }
-        .artic-blocks { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .artic-block-card {
-            flex: 1 1 150px; max-width: 200px; text-align: center;
-            background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 12px;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        @keyframes articEditorIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        .artic-poste-editor-title { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; color: #0A2463; letter-spacing: 0.5px; margin-bottom: 6px; }
+        /* Résumé de la largeur active, sous le terrain — LE point focal de l'écran (Visual §2). */
+        .artic-summary {
+            margin-top: 10px; padding: 14px; background: #F8FAFC;
+            border: 1px solid #E2E8F0; border-radius: 10px; text-align: center; box-shadow: var(--shadow-sm);
         }
-        .artic-block-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        /* Distingue les cartes que le poste/charnière actuellement filtré peut faire varier de celles
-           qui n'en dépendent pas (ex. changer P2 n'affecte jamais "À 2" = P3-P4) — sans cet indice,
-           une carte qui ne bouge pas après une sélection manuelle ressemble à un bug (retour Romain). */
-        .artic-block-card.concerned { border-color: var(--fenix-accent); box-shadow: 0 0 0 1px rgba(59,130,246,0.15); }
-        .artic-block-card.unconcerned { opacity: 0.5; }
-        .artic-block-label { font-size: 0.7rem; color: #475569; font-weight: 700; letter-spacing: 0.3px; margin-bottom: 2px; }
-        .artic-block-sub { font-size: 0.62rem; color: #94A3B8; margin-bottom: 6px; }
-        .artic-block-eff { font-size: 1.4rem; font-weight: 700; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
-        /* % de réussite DÉFENSIVE (STORY-37, remplace l'ancienne efficacité attaque adverse) : plus
-           haut = meilleure défense, sémantique de couleur normale (vert = haut = bon). */
-        .artic-block-eff.fort   { color: #10B981; }
-        .artic-block-eff.moyen  { color: #F59E0B; }
-        .artic-block-eff.faible { color: #EF4444; }
-        .artic-block-eff.noref  { color: #94A3B8; font-size: 0.72rem; font-family: 'Inter', sans-serif; font-weight: 500; }
-        .artic-block-n { font-size: 0.7rem; color: #94A3B8; margin-top: 2px; }
-        /* Colonne de listing (droite du terrain, STORY-38) : un filtre (poste individuel ou charnière
-           P3-P4/P2-P5) qui remplace l'ancien panneau ouvert uniquement au clic sur un poste — toujours
-           visible, "comme un filtre que Romain vient sélectionner". */
+        .artic-summary-eff { font-size: 2rem; font-weight: 700; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
+        .artic-summary-eff-label { font-size: 0.85rem; font-family: 'Inter', sans-serif; font-weight: 500; color: #64748B; }
+        /* Même sens que _articDefClass : plus haut = meilleure défense, vert = bon. */
+        .artic-summary-eff.fort   { color: #10B981; }
+        .artic-summary-eff.moyen  { color: #F59E0B; }
+        .artic-summary-eff.faible { color: #EF4444; }
+        .artic-summary-eff.noref  { color: #94A3B8; }
+        .artic-summary-noms { font-size: 0.85rem; font-weight: 600; color: var(--fenix-dark); margin-top: 4px; }
+        .artic-summary-detail { font-size: 0.78rem; color: #64748B; margin-top: 6px; }
+        .artic-summary-empty { color: #94A3B8; font-size: 0.85rem; padding: 8px 0; }
+        /* Colonne de classement (droite du terrain) : un titre + la liste groupée Fiable/Échantillon
+           faible pour la largeur active — plus de <select> de filtre, la largeur se choisit dans le
+           bandeau de contrôles. */
         .artic-listing-col {
             flex: 1 1 200px; max-width: 240px; padding: 12px 14px; background: #F8FAFC;
             border: 1px solid #E2E8F0; border-radius: 10px; font-size: 0.8rem;
         }
-        .artic-listing-filter {
-            width: 100%; font-size: 0.8rem; padding: 6px 8px; margin-bottom: 10px;
-            border-radius: 6px; border: 1px solid #CBD5E1; background: #fff; color: var(--fenix-dark);
-        }
+        .artic-listing-title { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--fenix-blue); letter-spacing: 0.3px; margin-bottom: 8px; }
         .artic-listing-rows { display: flex; flex-direction: column; gap: 2px; }
         .artic-listing-row {
             display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
@@ -2800,15 +2782,12 @@
         }
         .artic-listing-row:last-child { border-bottom: none; }
         .artic-listing-empty { color: #94A3B8; font-style: italic; }
-        /* Lignes cliquables du filtre Poste : place directement ce joueur sur le poste (au lieu
-           d'obliger à rouvrir le <select> "Placer un joueur" qui liste tout le club, STORY-38bis). */
         .artic-listing-row-clickable { cursor: pointer; border-radius: 6px; transition: background 0.15s ease; }
         .artic-listing-row-clickable:hover { background: #EEF2F7; }
         .artic-listing-row-clickable.active { background: #DBEAFE; font-weight: 700; color: var(--fenix-blue); }
-        .artic-listing-hint { font-size: 0.62rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; text-align: right; }
-        /* % réussite défensive du duo/quatuor (STORY-38bis) — même palette/sens que .artic-block-eff :
-           plus haut = meilleure défense de cette composition précise, permet de comparer les charnières
-           entre elles plutôt que de seulement voir combien de fois elles ont joué ensemble. */
+        .artic-listing-hint { font-size: 0.62rem; color: #475569; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin: 8px 0 4px; }
+        .artic-listing-hint:first-child { margin-top: 0; }
+        /* % réussite défensive du duo/quatuor — même palette/sens que .artic-summary-eff. */
         .artic-listing-eff { font-weight: 700; white-space: nowrap; }
         .artic-listing-eff.fort   { color: #10B981; }
         .artic-listing-eff.moyen  { color: #F59E0B; }
@@ -2816,15 +2795,7 @@
         .artic-listing-eff.noref  { color: #94A3B8; font-weight: 500; }
         .artic-listing-n { font-weight: 400; color: #94A3B8; font-size: 0.72rem; }
         .artic-listing-select { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #CBD5E1; }
-        .artic-listing-select label { display: block; font-size: 0.72rem; color: #64748B; margin-bottom: 4px; }
         .artic-listing-select select { width: 100%; font-size: 0.78rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #CBD5E1; background: #fff; color: var(--fenix-dark); }
-        /* Détail adverse (But/Tir raté/PB/PO/Jet franc) de la composition affichée pour une charnière
-           (STORY-38ter — Romain veut ce détail une fois une charnière sélectionnée, pas juste le %). */
-        .artic-listing-detail { display: flex; flex-direction: column; gap: 2px; font-size: 0.78rem; }
-        .artic-listing-detail > div { display: flex; justify-content: space-between; padding: 2px 0; }
-        .artic-listing-detail > div span:first-child { color: #64748B; }
-        .artic-listing-detail > div span:last-child { font-weight: 700; color: var(--fenix-dark); }
-        .artic-listing-detail-total { margin-top: 4px; padding-top: 4px; border-top: 1px solid #E8EFF5; }
 
         /* Panel détail (droite) */
         .enc-detail-header-bar {
