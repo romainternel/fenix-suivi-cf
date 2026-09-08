@@ -1,4 +1,4 @@
-# Brief — Simplification du mode Articulation (un seul flux : largeur → classement → terrain)
+# Brief — Réorganisation de la page Analyse
 
 **Agent :** Analyst
 **Date :** 2026-09-08
@@ -7,48 +7,46 @@
 
 ## 1. Contexte
 
-Entre v264 et v267, le mode Articulation a reçu quatre ajouts rapprochés sans reprise d'ensemble : un layout en deux colonnes (terrain + listing), un double système de filtre (Poste individuel / Charnière), des lignes cliquables, un marquage visuel "concerné/non concerné" sur les cartes du haut, et un panneau de détail séparé. Chaque ajout répondait à un retour ponctuel de Romain, mais l'empilement produit aujourd'hui un écran qu'il juge lui-même "pas clair du tout" : l'information pertinente (qui est le mieux, à quel point, pourquoi) est dispersée entre une rangée de cartes en haut, une colonne de liste à droite, et un panneau de détail encore plus bas.
+La page Analyse existe depuis le tout début du projet et a reçu des ajouts story par story pendant des mois (STORY-14 pour les onglets, modules A-01 à A-07 pour les familles/gardien, STORY-33 à 38 pour l'Articulation, etc.) — chaque ajout a été pensé et testé isolément, jamais l'ensemble. Résultat, recensé dans `docs/brainstorm/reorganisation-page-analyse.md` : 15 blocs de contenu distincts, répartis entre un bloc fixe en haut de page (terrain + cartes comparatives), 5 onglets, et une vue "Saison complète" quasiment indépendante. Romain formule directement le symptôme : "un vrai problème de lecture logique et simplifiée... il y a plein de choses mais ça me paraît fouillis."
 
 ## 2. Problème
 
-Romain formule directement ce qui ne va pas et ce qu'il veut à la place :
-- Trop de mécanismes de filtre coexistent (Dispositif, Composition Le+utilisée/Suggestion, Poste, Charnière) alors qu'il n'a besoin que d'un seul axe de choix : la **largeur de la charnière** (à 6, à 4, à 2).
-- L'information de performance (% de réussite, détail du résultat adverse) est **loin du terrain** (colonne de droite, panneau séparé) alors qu'il veut la voir **directement sous le terrain**, au même endroit où il regarde déjà qui est où.
-- Le réglage fin joueur-par-joueur doit se faire **en cliquant directement sur le rond du poste concerné**, pas via une liste ou un menu déroulant séparé du terrain.
+Ce n'est pas un problème de qualité de contenu (chaque bloc individuel a été validé en son temps) mais d'**agencement d'ensemble** :
+- Le découpage en 5 onglets (Résumé/Timeline/Intention attaque/Gardien/Chat IA) reflète l'ordre historique de développement, pas nécessairement un vrai parcours de lecture pour un coach.
+- Un bloc lourd (terrain + nuage de tirs + cartes comparatives) occupe une place fixe en haut de page, avant tout onglet, sans certitude qu'il soit consulté à chaque visite.
+- L'information de synthèse ("comment s'est passé ce match") est dispersée entre le résumé IA, les indicateurs clés et l'ancien système de badges (retiré en v269) — jamais réunie à un seul endroit.
+- La vue "Saison complète" ne partage presque aucune structure visuelle avec la vue d'un match précis, ce qui casse la prévisibilité de l'appli.
 
 ## 3. Utilisateurs
 
-Inchangé : Romain, staff/coach, desktop, préparation/débrief tactique (cf. cycles précédents).
+Romain, staff/coach, desktop, en session de préparation ou de débrief tactique — inchangé par rapport aux cycles précédents. Point ajouté par ce cycle : le CONTEXTE d'usage varie (débrief juste après un match vs préparation d'un futur adversaire vs suivi de tendances saison), et la page actuelle ne s'adapte pas à ce contexte — elle présente toujours la même chose dans le même ordre.
 
 ## 4. Vision
 
-Un seul flux de lecture, dans l'ordre où l'œil doit le parcourir : je choisis une largeur de charnière (6, 4 ou 2) → je vois un classement cliquable des meilleures compositions à cette largeur, triées par % de réussite défensive → je clique la meilleure (ou une autre) → le terrain affiche cette composition → juste sous le terrain, je vois son % et le détail du résultat adverse (But/Tir raté/PB/PO/Jet franc) → si je veux ajuster un seul joueur, je clique directement sur son rond.
+Une page qui se lit en 10 secondes pour l'essentiel, et qui s'approfondit à la demande — pas l'inverse. Moins de sections de même rang visuel, un seul endroit pour "comprendre le match tout de suite", et un accès secondaire (pas supprimé, juste moins mis en avant) pour ce qui est réellement consulté rarement (Chat IA, terrain/nuage de tirs).
 
 ## 5. Scope
 
-**Dans le scope :**
-- Remplacer les filtres actuels (Dispositif + Composition + Poste + Charnière) par exactement : **Dispositif** (0-6/1-5, inchangé, nécessaire car change la géométrie du terrain) + **Largeur de charnière** (À 6 / À 4 / À 2, remplace Poste+Charnière+Composition).
-- Un classement cliquable des compositions pour la largeur choisie, trié par % de réussite défensive (les meilleures défenses en premier — "il me faut les meilleures défenses"), avec le nombre de séquences.
-- Cliquer une ligne du classement place cette composition sur le terrain.
-- Sous le terrain (pas sur le côté, pas dans un panneau séparé) : le % de réussite défensive de la composition actuellement affichée + le détail du résultat adverse (But/Tir raté/PB/PO/Jet franc), pour la largeur actuellement choisie.
-- Cliquer directement sur un rond du terrain permet de changer le joueur de CE poste précis, sans passer par une liste séparée.
+**Dans le scope de ce cycle (Designer/Visual Crafter à détailler) :**
+- Un bloc de synthèse unique en tête de page ("Essentiel du match"), qui réunit ce qui est aujourd'hui dispersé (résumé IA, indicateurs clés, tendance tactique la plus marquante).
+- Réduction du nombre de sections de même rang (piste retenue du brainstorm : fusionner Résumé+Timeline et Intention attaque+Gardien) — le Designer tranche la structure exacte.
+- Le bloc terrain/nuage de tirs replié par défaut (accordéon), pour libérer la hauteur d'écran au profit du contenu qui varie selon la section active.
+- Une structure commune entre vue match et vue "Saison complète", pour que l'appli reste prévisible d'un contexte à l'autre.
+- **Livrable attendu avant toute validation : un exemple visuel concret de la page reorganisée**, que Romain doit pouvoir regarder et juger avant qu'on ne découpe quoi que ce soit en stories.
 
-**Hors scope (retiré, pas remplacé) :**
-- Le filtre "Poste" autonome et sa liste dédiée (qui a joué là, combien de fois) — remplacé par le clic direct sur le rond.
-- Le toggle "Composition" (Le + utilisée / 💡 Suggestion) — remplacé par le classement par % qui répond directement à "quelle est la meilleure composition", sans avoir besoin d'un mode de calcul séparé.
-- Le marquage visuel "concerné/non concerné" des cartes — n'a plus lieu d'être si une seule largeur est affichée à la fois (plus de cartes multiples simultanées à distinguer).
-- La rangée de 4 cartes "Référence + À6/À4/À2" en haut d'écran — remplacée par l'affichage unique sous le terrain, propre à la largeur actuellement choisie (éviter de montrer la même information à deux endroits).
-- Le calcul sous-jacent (`computeArticulationStats`, `_articBlockEff`, `_articBlockDetail`, `computeArticCombos`, `_articTauxDefense`) reste inchangé — c'est uniquement l'organisation de l'écran et le nombre de filtres visibles qui changent.
+**Hors scope (retenu pour une vision plus tardive, pas ce cycle) :**
+- Le mode "Préparation / Debrief / Saison" qui réorganiserait dynamiquement les sections selon le contexte d'usage (idée du brainstorm, vision 12 mois) — trop structurant pour être tranché en un seul cycle sans d'abord valider la réorganisation de base.
+- Retrait pur et simple du Chat IA — reste accessible, seulement moins mis en avant visuellement.
+- Aucune modification des calculs/données sous-jacents à aucun des blocs existants — uniquement leur organisation et leur présentation.
 
 ## 6. Critères de succès
 
-- Un seul groupe de contrôles visible pour choisir la vue (Dispositif + Largeur), plus aucun autre filtre.
-- Le classement des compositions est trié par % de réussite défensive, meilleure en tête.
-- Le % et le détail du résultat adverse apparaissent sous le terrain, jamais ailleurs.
-- Modifier un joueur se fait en cliquant sur son rond, sans liste séparée ni menu déroulant flottant à côté du terrain.
-- Rien de plus à l'écran que ce qui précède — tout élément de v264-v267 non listé ci-dessus disparaît.
+- Romain regarde l'exemple visuel et dit "oui, c'est plus clair" avant qu'aucune ligne de code de production ne soit touchée.
+- Le nombre de sections de même niveau hiérarchique diminue par rapport aux 5 onglets actuels.
+- Aucune fonctionnalité existante ne disparaît — seulement leur place et leur mise en avant relative changent.
+- La vue match et la vue saison partagent une structure reconnaissable.
 
 ## 7. Questions en suspens
 
-- Interaction exacte du clic sur un rond (sélecteur inline apparaissant au clic vs autre mécanisme) — à trancher par le Designer, la seule contrainte ferme étant "pas de liste séparée du terrain".
-- Tri du classement strictement par % (avec le repère `(n<3)` déjà en place pour les échantillons faibles) vs un tri qui priorise d'abord les échantillons fiables — à trancher par le Designer/PM, Romain n'ayant précisé que "les meilleures défenses", pas la gestion des petits échantillons.
+- La fusion exacte des onglets (Résumé+Timeline, Intention attaque+Gardien) proposée par le Brainstormer est une piste, pas une décision actée — à valider ou ajuster par Romain une fois qu'il voit le résultat visuel, pas avant.
+- Le contenu précis du bloc "Essentiel du match" (quels indicateurs, quelle formulation du verdict) est à concevoir par le Designer à partir de ce qui existe déjà (pas de nouvelle donnée à calculer).
