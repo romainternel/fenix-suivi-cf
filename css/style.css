@@ -1406,6 +1406,118 @@
             color: #DC2626;
         }
 
+        /* STORY-42 — jauge de rythme du match (carte Possessions, 1 seule valeur) */
+        .tempo-scale {
+            position: relative;
+            height: 10px;
+            border-radius: 6px;
+            margin: 0.7rem 0 0.35rem;
+            display: flex;
+            overflow: visible;
+        }
+        .tempo-seg:first-child { border-radius: 6px 0 0 6px; }
+        .tempo-seg:last-child { border-radius: 0 6px 6px 0; }
+        .tempo-marker {
+            position: absolute;
+            top: -4px;
+            width: 2px;
+            height: 18px;
+            background: var(--fenix-dark);
+            transform: translateX(-50%);
+        }
+        .tempo-marker::after {
+            content: attr(data-val);
+            position: absolute;
+            top: -17px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: var(--fenix-dark);
+            white-space: nowrap;
+        }
+        .tempo-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.58rem;
+            color: #9CA3AF;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        /* STORY-42 — carte Supériorités/infériorités numériques (score agrégé, sans mi-temps) */
+        .sup-card { grid-column: span 2; text-align: left; }
+        .sup-score-main {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.7rem;
+            letter-spacing: 0.5px;
+            margin: 0.5rem 0 0.4rem;
+            color: var(--fenix-dark);
+        }
+        .sup-eff-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            font-size: 0.74rem;
+            color: #6B7280;
+            font-weight: 600;
+        }
+        .sup-eff-row .sep { color: #9CA3AF; }
+
+        /* Info-bulle (ⓘ) — explique le calcul d'un indicateur, CSS pur */
+        .info-i {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #E2E8F0;
+            color: #6B7280;
+            font-size: 0.62rem;
+            font-weight: 800;
+            font-style: normal;
+            text-transform: none;
+            margin-left: 5px;
+            cursor: help;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .info-i:hover, .info-i:focus {
+            background: var(--fenix-accent);
+            color: #fff;
+        }
+        .info-i:hover::after, .info-i:focus::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 135%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0F172A;
+            color: #fff;
+            padding: 0.55rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.68rem;
+            font-weight: 500;
+            width: 230px;
+            line-height: 1.45;
+            box-shadow: var(--shadow-md);
+            z-index: 20;
+            text-align: left;
+            letter-spacing: normal;
+        }
+        .info-i:hover::before, .info-i:focus::before {
+            content: '';
+            position: absolute;
+            bottom: 122%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #0F172A;
+            z-index: 20;
+        }
+
         /* Chat styles */
         .chat-container {
             border: 2px solid #E5E7EB;

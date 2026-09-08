@@ -142,6 +142,30 @@
             }
         }
 
+        // STORY-42 — Bilan agrégé des séquences en supériorité/infériorité numérique (phase_att).
+        // Remplace l'ancien calcul (dans generateResume3Points/generateIndicateurs) qui comparait
+        // chaque équipe à SA PROPRE colonne phase_att indépendamment — il ne pouvait donc jamais
+        // capturer un but encaissé pendant qu'on est nous-mêmes en supériorité (phase_att '-' côté
+        // adverse), qui est justement le cas qui intéresse Romain. Ici, une ligne est comptée dès
+        // que sa phase_att contient '+' ou '-' (peu importe le club), et attribuée au club de la
+        // ligne — l'agrégat sur tout le match est donc déjà la somme de tous les blocs +/- séparés
+        // décrits par Romain (pas besoin de matérialiser les frontières de bloc : le total ne
+        // dépend pas d'où elles tombent, seulement de l'ensemble des lignes taguées).
+        function computeSuperiorites(matchData) {
+            const fenix = { buts: 0, tirs: 0 };
+            const adv = { buts: 0, tirs: 0 };
+            let hasData = false;
+            matchData.forEach(row => {
+                const phase = (row[COLS.phase_att] || '').toString();
+                if (!phase.includes('+') && !phase.includes('-')) return;
+                hasData = true;
+                const side = row[COLS.club] === 'FENIX' ? fenix : adv;
+                if (row[COLS.resultat] === 'But') { side.buts++; side.tirs++; }
+                else if (row[COLS.resultat] === 'Tir raté') { side.tirs++; }
+            });
+            return { fenix, adv, hasData };
+        }
+
         function generateResume3Points(matchName, matchData, hasPeriode) {
             const fenixData = matchData.filter(row => row[COLS.club] === 'FENIX');
             const advData   = matchData.filter(row => row[COLS.club] !== 'FENIX');
@@ -162,12 +186,7 @@
             const advArrets      = fenixData.filter(r => r[COLS.finalite] === 'Tir arrêté').length;
             const advGardEff     = advTirsSubis > 0 ? Math.round(advArrets / advTirsSubis * 100) : 0;
 
-            const getSup = (data, sign) => data.filter(r => (r[COLS.phase_att] || '').toString().includes(sign));
-            const fSup = getSup(fenixData, '+'), aSup = getSup(advData, '+');
-            const fSupB = fSup.filter(r => r[COLS.resultat] === 'But').length;
-            const fSupT = fSupB + fSup.filter(r => r[COLS.resultat] === 'Tir raté').length;
-            const aSupB = aSup.filter(r => r[COLS.resultat] === 'But').length;
-            const aSupT = aSupB + aSup.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const sup = computeSuperiorites(matchData);
 
             const candidates = [];
 
@@ -201,14 +220,14 @@
                     : `Gardien en difficulté : ${fenixGardEff}% d'arrêts (vs ${advGardEff}%)`
             });
 
-            // Supériorités
-            const supDiff = fSupB - aSupB;
-            if (Math.abs(supDiff) >= 1 && (fSupT > 0 || aSupT > 0)) candidates.push({
+            // Supériorités/infériorités numériques — bilan agrégé (cf. computeSuperiorites)
+            const supDiff = sup.fenix.buts - sup.adv.buts;
+            if (sup.hasData && Math.abs(supDiff) >= 1) candidates.push({
                 score: Math.abs(supDiff) * 3,
                 icon: supDiff > 0 ? '💪' : '⚠️',
                 text: supDiff > 0
-                    ? `Supériorités gagnées : FENIX ${fSupB}/${fSupT} vs ADV ${aSupB}/${aSupT}`
-                    : `Supériorités perdues : FENIX ${fSupB}/${fSupT} vs ADV ${aSupB}/${aSupT}`
+                    ? `Bilan supériorités gagné : FENIX ${sup.fenix.buts} – ${sup.adv.buts} Adversaire`
+                    : `Bilan supériorités perdu : FENIX ${sup.fenix.buts} – ${sup.adv.buts} Adversaire`
             });
 
             // Momentum MT2 (si données période fiables)
@@ -268,12 +287,34 @@
             const mt1 = { f: stats(subData(fenixData, 1)), a: stats(subData(advData, 1)) };
             const mt2 = { f: stats(subData(fenixData, 2)), a: stats(subData(advData, 2)) };
 
-            const getSup = (data, s) => data.filter(r => (r[COLS.phase_att] || '').toString().includes(s));
-            const fSup = getSup(fenixData, '+'), aSup = getSup(advData, '+');
-            const fSupB = fSup.filter(r => r[COLS.resultat] === 'But').length;
-            const fSupT = fSupB + fSup.filter(r => r[COLS.resultat] === 'Tir raté').length;
-            const aSupB = aSup.filter(r => r[COLS.resultat] === 'But').length;
-            const aSupT = aSupB + aSup.filter(r => r[COLS.resultat] === 'Tir raté').length;
+            const sup = computeSuperiorites(matchData);
+
+            // STORY-42 — jauge de rythme (nombre de possessions FENIX, représentatif des 2 équipes
+            // qui ont mécaniquement un volume proche) plutôt qu'une comparaison FENIX/Adversaire.
+            function rythmeCard(poss) {
+                const bands = [
+                    { until: 53, label: 'Faible' },
+                    { until: 56, label: 'Normal' },
+                    { until: 60, label: 'Élevé' },
+                    { until: Infinity, label: 'Très élevé' }
+                ];
+                const band = bands.find(b => poss < b.until) || bands[bands.length - 1];
+                const domainMin = 50, domainMax = 64;
+                const markerPct = Math.max(0, Math.min(100, (poss - domainMin) / (domainMax - domainMin) * 100)).toFixed(1);
+                return `<div class="indicateur-card">
+                    <div class="indicateur-label">Rythme du match <span style="font-weight:600;text-transform:none;">(possessions)</span></div>
+                    <div class="indicateur-values"><span class="indicateur-fenix">${poss}</span></div>
+                    <div class="tempo-scale">
+                        <div class="tempo-seg" style="width:21.4%; background:#CBD5E1;"></div>
+                        <div class="tempo-seg" style="width:21.4%; background:#93C5FD;"></div>
+                        <div class="tempo-seg" style="width:28.6%; background:#F59E0B;"></div>
+                        <div class="tempo-seg" style="width:28.6%; background:#EF4444;"></div>
+                        <div class="tempo-marker" style="left:${markerPct}%;" data-val="${poss}"></div>
+                    </div>
+                    <div class="tempo-labels"><span>Faible</span><span>Normal</span><span>Élevé</span><span>Très élevé</span></div>
+                    <div class="ind-sub" style="font-weight:700;">${band.label}</div>
+                </div>`;
+            }
 
             function card(label, fVal, aVal, { inverse = false, isPct = false, fMT1 = null, aMT1 = null, fMT2 = null, aMT2 = null } = {}) {
                 const cls = fVal == null || aVal == null ? '' :
@@ -294,21 +335,29 @@
                 </div>`;
             }
 
-            const supCls = fSupB > aSupB ? 'avantage' : fSupB < aSupB ? 'desavantage' : '';
+            const supDiff = sup.fenix.buts - sup.adv.buts;
+            const supCls = supDiff > 0 ? 'avantage' : supDiff < 0 ? 'desavantage' : '';
+            const fSupPct = sup.fenix.tirs > 0 ? Math.round(sup.fenix.buts / sup.fenix.tirs * 100) : 0;
+            const aSupPct = sup.adv.tirs > 0 ? Math.round(sup.adv.buts / sup.adv.tirs * 100) : 0;
+            const supBody = sup.hasData
+                ? `<div class="sup-score-main">FENIX <b>${sup.fenix.buts}</b> — <b>${sup.adv.buts}</b> Adversaire</div>
+                   <div class="sup-eff-row">
+                       <span>FENIX ${sup.fenix.buts}/${sup.fenix.tirs} possessions (${fSupPct}%)</span><span class="sep">·</span><span>Adversaire ${sup.adv.buts}/${sup.adv.tirs} possessions (${aSupPct}%)</span>
+                   </div>`
+                : `<div class="ind-sub">Non disponible pour ce match</div>`;
 
             let html = '';
             html += card('Buts',           tot.f.buts, tot.a.buts, { fMT1: mt1.f.buts, aMT1: mt1.a.buts, fMT2: mt2.f.buts, aMT2: mt2.a.buts });
             html += card('Tirs',           tot.f.tirs, tot.a.tirs, { fMT1: mt1.f.tirs, aMT1: mt1.a.tirs, fMT2: mt2.f.tirs, aMT2: mt2.a.tirs });
             html += card('Efficacité',     tot.f.eff,  tot.a.eff,  { isPct: true, fMT1: mt1.f.eff, aMT1: mt1.a.eff, fMT2: mt2.f.eff, aMT2: mt2.a.eff });
             html += card('Pertes de balle', tot.f.pb,  tot.a.pb,   { inverse: true, fMT1: mt1.f.pb, aMT1: mt1.a.pb, fMT2: mt2.f.pb, aMT2: mt2.a.pb });
-            html += card('Possessions',    tot.f.poss, tot.a.poss, { fMT1: mt1.f.poss, aMT1: mt1.a.poss, fMT2: mt2.f.poss, aMT2: mt2.a.poss });
-            html += `<div class="indicateur-card ${supCls}">
-                <div class="indicateur-label">Supériorités (+)</div>
-                <div class="indicateur-values">
-                    <span class="indicateur-fenix">${fSupB}b/${fSupT}t</span>
-                    <span class="indicateur-vs">vs</span>
-                    <span class="indicateur-adv">${aSupB}b/${aSupT}t</span>
+            html += rythmeCard(tot.f.poss);
+            html += `<div class="indicateur-card sup-card ${sup.hasData ? supCls : ''}">
+                <div class="indicateur-label">
+                    <span>Supériorités / infériorités numériques</span>
+                    <span class="info-i" tabindex="0" data-tip="Calculé par blocs de séquences consécutives où phase_att contient '+' (nous) ou '-' (adversaire) : dès qu'une ligne est taguée, elle compte pour son camp. On additionne les buts/tirs de chaque équipe sur tout le match, dans les deux sens (nous en supériorité, eux en supériorité).">i</span>
                 </div>
+                ${supBody}
             </div>`;
 
             document.getElementById('indicateurs-grid').innerHTML = html;
@@ -1111,9 +1160,12 @@
                 });
                 const advInfButs = advInfData.filter(r => r[COLS.resultat] === 'But').length;
                 
-                // Bilan
-                const fenixGagne = fenixSupButs > advSupButs;
-                const bilan = fenixGagne ? '✅ FENIX gagne les supériorités' : (fenixSupButs < advSupButs ? '❌ Adversaire gagne les supériorités' : '➖ Égalité');
+                // Bilan — agrégé sur toutes les séquences +/- des deux camps (cf. computeSuperiorites,
+                // STORY-42) : comparer fenixSupButs à advSupButs ici serait le même bug déjà corrigé
+                // ailleurs (deux colonnes phase_att différentes, jamais la même séquence de jeu).
+                const supBilan = computeSuperiorites(matchData);
+                const fenixGagne = supBilan.fenix.buts > supBilan.adv.buts;
+                const bilan = fenixGagne ? '✅ FENIX gagne les supériorités' : (supBilan.fenix.buts < supBilan.adv.buts ? '❌ Adversaire gagne les supériorités' : '➖ Égalité');
                 
                 let response = `<strong>Supériorités numériques :</strong><br><br>`;
                 response += `<strong>FENIX en supériorité (+) :</strong> ${fenixSupButs}/${fenixSupTirs} tirs<br>`;
