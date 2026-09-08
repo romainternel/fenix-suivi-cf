@@ -535,6 +535,10 @@
 
         // parseTimecode, getPeriodeNum, getSortedGoals → déplacées dans utils.js
 
+        // STORY-43 — refonte visuelle : aire d'écart FENIX-Adversaire dégradée (vert/rouge) avec
+        // grille verticale toutes les 10 min, remplace les 2 courbes absolues + l'ancien overlay
+        // drawMomentumOverlay (fusionné ici, il n'était appelé que depuis cette fonction). Calcul
+        // inchangé : getSortedGoals/normPos/scoreHistory identiques à avant cette story.
         function drawTimeline(matchName, matchData) {
             const canvas = document.getElementById('timeline-canvas');
             const container = canvas.parentElement;
@@ -585,30 +589,38 @@
                     : `Score final : ${fenixScore}-${advScore}`;
             }
 
-            const padding = { top: 40, right: 30, bottom: 70, left: 45 };
+            const padding = { top: 40, right: 30, bottom: 30, left: 32 };
             const graphWidth  = logicalW - padding.left - padding.right;
             const graphHeight = logicalH - padding.top  - padding.bottom;
-            const maxScore   = Math.max(fenixScore, advScore, 5);
-            const roundedMax = Math.ceil(maxScore / 5) * 5;
-            const maxPos     = 60;
+            const maxPos = 60;
+            const posToX = pos => padding.left + (pos / maxPos) * graphWidth;
 
-            // Grille horizontale
+            const diffs  = scoreHistory.map(p => p.fenix - p.adv);
+            const maxAbs = Math.max(...diffs.map(Math.abs), 1);
+            const midY   = padding.top + graphHeight / 2;
+            const diffToY = d => midY - (d / maxAbs) * (graphHeight / 2) * 0.9;
+
+            // Grille verticale toutes les 10 minutes
             ctx.strokeStyle = '#E5E7EB';
             ctx.lineWidth = 1;
-            for (let i = 0; i <= 5; i++) {
-                const y = padding.top + (graphHeight * (5 - i) / 5);
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '10px Inter';
+            ctx.textAlign = 'center';
+            for (let min = 0; min <= maxPos; min += 10) {
+                const x = posToX(min);
                 ctx.beginPath();
-                ctx.moveTo(padding.left, y);
-                ctx.lineTo(logicalW - padding.right, y);
+                ctx.moveTo(x, padding.top);
+                ctx.lineTo(x, padding.top + graphHeight);
                 ctx.stroke();
+                ctx.fillText(min + "'", x, padding.top + graphHeight + 16);
             }
 
-            // Ligne de mi-temps (30')
+            // Ligne de mi-temps (30'), par-dessus la grille
             if (hasTwo) {
-                const xHalf = padding.left + (30 / maxPos) * graphWidth;
+                const xHalf = posToX(30);
                 ctx.save();
                 ctx.strokeStyle = '#94A3B8';
-                ctx.lineWidth = 1;
+                ctx.lineWidth = 1.5;
                 ctx.setLineDash([5, 4]);
                 ctx.beginPath();
                 ctx.moveTo(xHalf, padding.top);
@@ -621,61 +633,58 @@
                 ctx.fillText('MI-TEMPS', xHalf, padding.top - 6);
             }
 
-            // Axe Y labels
-            ctx.fillStyle = '#6B7280';
-            ctx.font = '11px Inter';
-            ctx.textAlign = 'right';
-            for (let i = 0; i <= 5; i++) {
-                const y = padding.top + (graphHeight * (5 - i) / 5);
-                ctx.fillText(Math.round(roundedMax * i / 5), padding.left - 8, y + 4);
+            // Aire dégradée : zones où FENIX mène (vert) / où l'adversaire mène (rouge),
+            // dégradé du trait vers la ligne zéro (clip sur la zone, remplissage en gradient).
+            function fillZone(positive) {
+                ctx.save();
+                ctx.beginPath();
+                let open = false;
+                scoreHistory.forEach(p => {
+                    const d = p.fenix - p.adv, x = posToX(p.pos);
+                    const inZone = positive ? d >= 0 : d <= 0;
+                    if (inZone && !open) { ctx.moveTo(x, midY); open = true; }
+                    if (open) ctx.lineTo(x, diffToY(d));
+                    if (!inZone && open) { ctx.lineTo(x, midY); ctx.closePath(); open = false; }
+                });
+                if (open) { ctx.lineTo(posToX(scoreHistory[scoreHistory.length - 1].pos), midY); ctx.closePath(); }
+                ctx.clip();
+                const grad = ctx.createLinearGradient(0, padding.top, 0, padding.top + graphHeight);
+                if (positive) {
+                    grad.addColorStop(0, 'rgba(16,185,129,0.35)');
+                    grad.addColorStop(1, 'rgba(16,185,129,0.04)');
+                } else {
+                    grad.addColorStop(0, 'rgba(239,68,68,0.04)');
+                    grad.addColorStop(1, 'rgba(239,68,68,0.35)');
+                }
+                ctx.fillStyle = grad;
+                ctx.fillRect(padding.left, padding.top, graphWidth, graphHeight);
+                ctx.restore();
             }
+            fillZone(true);
+            fillZone(false);
 
-            // Axe X labels (minutes)
-            ctx.fillStyle = '#6B7280';
-            ctx.font = '10px Inter';
-            ctx.textAlign = 'center';
-            [0, 15, 30, 45, 60].forEach(min => {
-                const x = padding.left + (min / maxPos) * graphWidth;
-                ctx.fillText(min + "'", x, padding.top + graphHeight + 14);
-            });
+            // Ligne zéro
+            ctx.strokeStyle = '#94A3B8';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(padding.left, midY);
+            ctx.lineTo(logicalW - padding.right, midY);
+            ctx.stroke();
+            ctx.setLineDash([]);
 
-            // Courbe FENIX
+            // Courbe d'écart
             ctx.strokeStyle = '#0A2463';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2.5;
+            ctx.lineJoin = 'round';
             ctx.beginPath();
             scoreHistory.forEach((p, i) => {
-                const x = padding.left + (p.pos / maxPos) * graphWidth;
-                const y = padding.top + graphHeight - (p.fenix / roundedMax * graphHeight);
+                const x = posToX(p.pos), y = diffToY(p.fenix - p.adv);
                 i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             });
             ctx.stroke();
-            scoreHistory.forEach((p, i) => {
-                if (i === 0) return;
-                const x = padding.left + (p.pos / maxPos) * graphWidth;
-                const y = padding.top + graphHeight - (p.fenix / roundedMax * graphHeight);
-                ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = '#0A2463'; ctx.fill();
-            });
 
-            // Courbe Adversaire
-            ctx.strokeStyle = '#DC2626';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            scoreHistory.forEach((p, i) => {
-                const x = padding.left + (p.pos / maxPos) * graphWidth;
-                const y = padding.top + graphHeight - (p.adv / roundedMax * graphHeight);
-                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-            });
-            ctx.stroke();
-            scoreHistory.forEach((p, i) => {
-                if (i === 0) return;
-                const x = padding.left + (p.pos / maxPos) * graphWidth;
-                const y = padding.top + graphHeight - (p.adv / roundedMax * graphHeight);
-                ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = '#DC2626'; ctx.fill();
-            });
-
-            // Score final
+            // Score final, en tête de graphique
             ctx.font = 'bold 16px Inter';
             ctx.textAlign = 'right';
             ctx.fillStyle = '#0A2463';
@@ -685,54 +694,41 @@
             ctx.fillStyle = '#DC2626';
             ctx.fillText(advScore, logicalW - padding.right, padding.top - 15);
 
-            // Légende
-            ctx.font = '12px Inter';
-            // Légende dans le padding top (ligne du bas du padding)
-            const legY = padding.top - 14;
-            ctx.textAlign = 'left';
-            ctx.fillStyle = '#0A2463';
-            ctx.fillRect(padding.left, legY - 9, 14, 3);
-            ctx.beginPath();
-            ctx.arc(padding.left + 7, legY - 7, 4, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#333';
+            // Légende (sens des couleurs, plus de comparaison de 2 courbes)
+            const advLabel = document.getElementById('adversaire-title-text')?.textContent?.trim() || 'Adversaire';
             ctx.font = '10px Inter, sans-serif';
-            ctx.fillText('FENIX', padding.left + 18, legY);
-            ctx.fillStyle = '#DC2626';
-            ctx.fillRect(padding.left + 70, legY - 9, 14, 3);
-            ctx.beginPath();
-            ctx.arc(padding.left + 77, legY - 7, 4, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.textAlign = 'left';
+            const legY = padding.top - 15;
+            ctx.fillStyle = '#10B981';
+            ctx.fillRect(padding.left, legY - 8, 10, 10);
             ctx.fillStyle = '#333';
-            ctx.fillText('Adversaire', padding.left + 88, legY);
+            ctx.fillText('FENIX devant', padding.left + 14, legY);
+            ctx.fillStyle = '#EF4444';
+            ctx.fillRect(padding.left + 90, legY - 8, 10, 10);
+            ctx.fillStyle = '#333';
+            ctx.fillText(advLabel + ' devant', padding.left + 104, legY);
 
             // Marqueurs MC — ligne verticale fine + petit cercle + numéro
             if (_momentsCles && _momentsCles.length > 0) {
                 _momentsCles.forEach((mc, idx) => {
-                    const normX = normPos(mc.rawPos);
-                    const x = padding.left + (normX / maxPos) * graphWidth;
+                    const x = posToX(normPos(mc.rawPos));
                     const isPositif = mc.type === 'positif';
 
-                    // Ligne verticale fine
                     ctx.save();
                     ctx.beginPath();
                     ctx.strokeStyle = isPositif ? 'rgba(22,163,74,0.6)' : 'rgba(220,38,38,0.6)';
                     ctx.lineWidth = 1.5;
-                    if (!isPositif) {
-                        ctx.setLineDash([3, 3]);
-                    }
+                    if (!isPositif) ctx.setLineDash([3, 3]);
                     ctx.moveTo(x, padding.top + 4);
                     ctx.lineTo(x, padding.top + graphHeight);
                     ctx.stroke();
                     ctx.setLineDash([]);
 
-                    // Petit cercle en haut de la ligne
                     ctx.beginPath();
                     ctx.fillStyle = isPositif ? '#16a34a' : '#dc2626';
                     ctx.arc(x, padding.top + 4, 4, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // Numéro MC en petit au-dessus
                     ctx.font = 'bold 7px Inter, sans-serif';
                     ctx.fillStyle = isPositif ? '#16a34a' : '#dc2626';
                     ctx.textAlign = 'center';
@@ -741,45 +737,57 @@
                 });
             }
 
-            // Marqueurs bascule ⚡ — triangles sous l'axe X (anti-collision verticale)
-            const basculeXPositions = _bascules.map(b => {
-                if (b.rawPos == null) return null;
-                return padding.left + (normPos(b.rawPos) / maxPos) * graphWidth;
-            });
-
-            const basculeRows = new Array(_bascules.length).fill(0);
+            // Marqueurs bascule ⚡ — losange directement sur la courbe + ligne pointillée verticale
+            // (remplace les triangles sous l'axe : la bascule se lit maintenant au même endroit que
+            // l'écart qu'elle a produit, pas dans une zone séparée). Positionné sur le score d'écart
+            // "après" la bascule (b.apres, déjà calculé par detectAllBascules — aucun recalcul ici).
+            const basculeXPositions = _bascules.map(b => b.rawPos == null ? null : posToX(normPos(b.rawPos)));
+            // Anti-collision du libellé (le losange reste sur la courbe, seul le texte alterne de niveau)
+            const basculeLabelRow = new Array(_bascules.length).fill(0);
             for (let i = 1; i < basculeXPositions.length; i++) {
                 if (basculeXPositions[i] == null) continue;
                 for (let j = i - 1; j >= 0; j--) {
                     if (basculeXPositions[j] == null) continue;
-                    if (Math.abs(basculeXPositions[i] - basculeXPositions[j]) < 32) {
-                        basculeRows[i] = basculeRows[j] === 0 ? 1 : 0;
+                    if (Math.abs(basculeXPositions[i] - basculeXPositions[j]) < 28) {
+                        basculeLabelRow[i] = basculeLabelRow[j] === 0 ? 1 : 0;
                         break;
                     }
                 }
             }
 
             _bascules.forEach((b, idx) => {
-                if (b.rawPos == null) return;
                 const x = basculeXPositions[idx];
                 if (x == null) return;
-                const row = basculeRows[idx];
-                const baseY = padding.top + graphHeight + 8;
-                const y = baseY + row * 22; // row 0 = premier niveau, row 1 = deuxième niveau
+                const y = diffToY(b.apres != null ? b.apres : 0);
 
                 ctx.save();
+                ctx.strokeStyle = 'rgba(245,158,11,0.55)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
                 ctx.beginPath();
-                ctx.fillStyle = '#f59e0b';
-                ctx.moveTo(x, y);
-                ctx.lineTo(x - 6, y + 12);
-                ctx.lineTo(x + 6, y + 12);
-                ctx.closePath();
-                ctx.fill();
+                ctx.moveTo(x, padding.top);
+                ctx.lineTo(x, padding.top + graphHeight);
+                ctx.stroke();
+                ctx.setLineDash([]);
 
+                const r = 5;
+                ctx.beginPath();
+                ctx.moveTo(x, y - r);
+                ctx.lineTo(x + r, y);
+                ctx.lineTo(x, y + r);
+                ctx.lineTo(x - r, y);
+                ctx.closePath();
+                ctx.fillStyle = '#F59E0B';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                const labelY = padding.top + 12 + basculeLabelRow[idx] * 11;
                 ctx.font = 'bold 7px Inter, sans-serif';
                 ctx.fillStyle = '#92400e';
                 ctx.textAlign = 'center';
-                ctx.fillText('⚡' + (idx + 1), x, y + 22);
+                ctx.fillText('⚡' + (idx + 1), x, labelY);
                 ctx.restore();
             });
 
@@ -787,12 +795,11 @@
             window._timelineHitAreas = [];
 
             _momentsCles.forEach((mc, idx) => {
-                const x = padding.left + (normPos(mc.rawPos) / maxPos) * graphWidth;
-                // Zone réduite au cercle MC (rayon 4px en haut de la ligne, centré sur padding.top + 4)
+                const x = posToX(normPos(mc.rawPos));
                 window._timelineHitAreas.push({
                     type: 'mc',
-                    x, y: padding.top + 4 - 8,   // top du cercle (centre - 8px)
-                    w: 16, h: 16,                  // zone 16x16 autour du cercle
+                    x, y: padding.top + 4 - 8,
+                    w: 16, h: 16,
                     label: 'MC' + (idx + 1),
                     text: mc.text,
                     positif: mc.type === 'positif',
@@ -805,13 +812,11 @@
             _bascules.forEach((b, idx) => {
                 const x = basculeXPositions[idx];
                 if (x == null) return;
-                const row = basculeRows[idx];
-                const baseY = padding.top + graphHeight + 8;
-                const y = baseY + row * 22;
+                const y = diffToY(b.apres != null ? b.apres : 0);
                 window._timelineHitAreas.push({
                     type: 'bascule',
-                    x, y,
-                    w: 14, h: 34,
+                    x, y: y - 8,
+                    w: 16, h: 16,
                     label: '⚡ ' + b.label,
                     text: b.description || '',
                     positif: b.positif,
@@ -822,35 +827,19 @@
                 });
             });
 
-            // Points des courbes de score (skip i=0 : point à 0-0 initial)
-            const advLabel = document.getElementById('adversaire-title-text')?.textContent?.trim() || 'Adversaire';
+            // Points de la courbe d'écart (skip i=0 : point à 0-0 initial)
             scoreHistory.forEach((p, i) => {
                 if (i === 0) return;
-                const x = padding.left + (p.pos / maxPos) * graphWidth;
-                const yFenix = padding.top + graphHeight - (p.fenix / roundedMax) * graphHeight;
-                const yAdv   = padding.top + graphHeight - (p.adv   / roundedMax) * graphHeight;
+                const x = posToX(p.pos), y = diffToY(p.fenix - p.adv);
                 const scoreText = `FENIX <strong>${p.fenix}</strong> · ${advLabel} <strong>${p.adv}</strong>`;
-
                 window._timelineHitAreas.push({
                     type: 'score',
-                    x, y: yFenix,
+                    x, y,
                     w: 16, h: 16,
                     label: `${p.fenix} — ${p.adv}`,
                     text: scoreText
                 });
-                if (Math.abs(yAdv - yFenix) > 8) {
-                    window._timelineHitAreas.push({
-                        type: 'score',
-                        x, y: yAdv,
-                        w: 16, h: 16,
-                        label: `${p.fenix} — ${p.adv}`,
-                        text: scoreText
-                    });
-                }
             });
-
-            // Overlay momentum + détection bascule (A-04)
-            drawMomentumOverlay(ctx, scoreHistory, logicalW, logicalH, padding, roundedMax, maxPos);
         }
 
         function findMomentsCles(matchName, matchData) {
@@ -2490,43 +2479,6 @@
             if (crossingIdx === -1 && minIdx === -1) return null;
             const idx = crossingIdx !== -1 ? crossingIdx : minIdx;
             return { index: idx, avant: diffs[idx-1] !== undefined ? diffs[idx-1] : 0, apres: diffs[idx] };
-        }
-
-        function drawMomentumOverlay(ctx, scoreHistory, logicalW, logicalH, padding, roundedMax, maxPos) {
-            if (!scoreHistory || scoreHistory.length < 2) return;
-            const gW = logicalW - padding.left - padding.right;
-            const gH = logicalH - padding.top - padding.bottom;
-            const diffs = scoreHistory.map(p => p.fenix - p.adv);
-            const maxAbs = Math.max(...diffs.map(Math.abs), 1);
-            const midY = padding.top + gH / 2;
-            const diffToY = d => midY - (d / maxAbs) * (gH / 2) * 0.75;
-            const posToX  = p => padding.left + (p / maxPos) * gW;
-            ctx.save();
-            // Zones colorées
-            const drawZone = (positive) => {
-                ctx.fillStyle = positive ? 'rgba(16,185,129,0.10)' : 'rgba(239,68,68,0.10)';
-                let open = false;
-                ctx.beginPath();
-                scoreHistory.forEach(p => {
-                    const d = p.fenix - p.adv, x = posToX(p.pos);
-                    const inZone = positive ? d > 0 : d < 0;
-                    if (inZone && !open) { ctx.moveTo(x, midY); open = true; }
-                    if (open) ctx.lineTo(x, diffToY(d));
-                    if (!inZone && open) { ctx.lineTo(x, midY); ctx.closePath(); ctx.fill(); ctx.beginPath(); open = false; }
-                });
-                if (open) { ctx.lineTo(posToX(scoreHistory[scoreHistory.length-1].pos), midY); ctx.closePath(); ctx.fill(); }
-            };
-            drawZone(true); drawZone(false);
-            // Ligne zéro tiretée
-            ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
-            ctx.beginPath(); ctx.moveTo(padding.left, midY); ctx.lineTo(logicalW - padding.right, midY); ctx.stroke(); ctx.setLineDash([]);
-            // Courbe d'écart gold
-            ctx.strokeStyle = '#F59E0B'; ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            scoreHistory.forEach((p, i) => { const x = posToX(p.pos), y = diffToY(p.fenix-p.adv); i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
-            ctx.stroke();
-            // Bascule désormais gérée par detectAllBascules + marqueurs ⚡ dans drawTimeline
-            ctx.restore();
         }
 
         // A-05 — Section bascules (plusieurs par match)
