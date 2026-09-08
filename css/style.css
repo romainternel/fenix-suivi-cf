@@ -350,7 +350,61 @@
         }
 
         /* Bloc terrain+cartes (Analyse) : niveau 2 "hero", bloc le plus important de l'écran (STORY-16) */
-        #match-block-section { border-radius: 14px; box-shadow: var(--shadow-lg); }
+        /* STORY-41 : replié en accordéon par défaut — padding retiré du conteneur, repris par
+           .terrain-accordion-body une fois déplié (l'en-tête doit border-to-border sur toute la largeur) */
+        #match-block-section { border-radius: 14px; box-shadow: var(--shadow-lg); padding: 0; overflow: hidden; }
+
+        .terrain-accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.9rem 1.5rem;
+            background: #F1F5F9;
+            color: #475569;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .terrain-accordion-header:hover { background: #E2E8F0; }
+        .terrain-accordion-chevron {
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            transition: transform 0.2s ease;
+        }
+        .terrain-accordion-header span:last-child {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: normal;
+        }
+        .terrain-accordion-header.open .terrain-accordion-chevron { transform: rotate(180deg); }
+        .terrain-accordion-body {
+            padding: 0 1.5rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease, padding 0.2s ease;
+        }
+        .terrain-accordion-body.open {
+            padding: 1.5rem;
+            max-height: 1400px; /* valeur fixe suffisante pour le contenu réel, cf. docs/visual */
+        }
+
+        .terrain-mode-toggle { display: flex; gap: 0.4rem; margin-bottom: 0.6rem; }
+        .terrain-mode-btn {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            border: 1px solid var(--gray-200);
+            background: #fff;
+            color: #64748B;
+            cursor: pointer;
+        }
+        .terrain-mode-btn.active { background: var(--fenix-blue); border-color: var(--fenix-blue); color: #fff; }
 
         .section-header {
             display: flex;
