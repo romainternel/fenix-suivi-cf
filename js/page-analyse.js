@@ -2409,7 +2409,7 @@
             rows.forEach(r => {
                 const cle = (r[COLS.intention_attaque] || '').toString().trim();
                 const label = cle || 'Non défini';
-                if (!byEnc.has(cle)) byEnc.set(cle, { cle, label, tirs:0, buts:0, pb:0, po:0, possessions:0 });
+                if (!byEnc.has(cle)) byEnc.set(cle, { cle, label, tirs:0, buts:0, pb:0, po:0, jf:0, possessions:0 });
                 const s = byEnc.get(cle);
                 const res = isAdv ? (r[COLS.finalite]||'') : (r[COLS.resultat]||'');
                 s.possessions++;
@@ -2418,18 +2418,31 @@
                 else if (res === 'PB') s.pb++;
                 else if (res === 'PO') s.po++;
             });
+            // STORY-44 — Jet franc subi : sous-événement sans valeur "possession" (cf. commentaire
+            // de computeEncCoverage plus haut dans ce fichier), donc exclu de `rows` ci-dessus par
+            // construction — compté séparément sur les mêmes lignes (club + famille), sans toucher
+            // au calcul déjà en place des possessions/buts/tirs/PB/PO.
+            const jfRows = matchData.filter(r =>
+                (isAdv ? r[COLS.club] !== 'FENIX' : r[COLS.club] === 'FENIX') &&
+                (isAdv ? r[COLS.finalite] : r[COLS.resultat]) === 'Jet franc' &&
+                getEncFamille(r[COLS.intention_attaque]) === famille);
+            jfRows.forEach(r => {
+                const cle = (r[COLS.intention_attaque] || '').toString().trim();
+                if (!byEnc.has(cle)) byEnc.set(cle, { cle, label: cle || 'Non défini', tirs:0, buts:0, pb:0, po:0, jf:0, possessions:0 });
+                byEnc.get(cle).jf++;
+            });
             if (!byEnc.size) return '<p style="color:#94A3B8;font-size:0.82rem;padding:8px 0">Aucune donnée.</p>';
             const sorted = [...byEnc.entries()].sort((a, b) => b[1].possessions - a[1].possessions);
-            let tt = 0, tb = 0, tp = 0, tpo = 0, tposs = 0;
-            sorted.forEach(([, s]) => { tt += s.tirs; tb += s.buts; tp += s.pb; tpo += s.po; tposs += s.possessions; });
+            let tt = 0, tb = 0, tp = 0, tpo = 0, tjf = 0, tposs = 0;
+            sorted.forEach(([, s]) => { tt += s.tirs; tb += s.buts; tp += s.pb; tpo += s.po; tjf += s.jf; tposs += s.possessions; });
             const te = tposs > 0 ? Math.round((tb + tpo) / tposs * 100) : 0;
             let lignes = '';
             sorted.forEach(([, s]) => {
                 const eff = s.possessions > 0 ? Math.round((s.buts + s.po) / s.possessions * 100) : 0;
                 const c = eff >= 60 ? '#059669' : eff < 40 ? '#DC2626' : '#64748B';
-                lignes += `<tr class="enc-detail-row-clickable" data-famille="${_escapeHtml(famille)}" data-intention="${_escapeHtml(s.cle)}" onclick="_selectEncIntention(this.dataset.famille, this.dataset.intention)" title="Voir les enclenchements utilisés pour cette intention"><td>${_escapeHtml(s.label)}</td><td>${s.buts}</td><td>${s.po}</td><td>${s.tirs}</td><td>${s.pb}</td><td>${s.possessions}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
+                lignes += `<tr class="enc-detail-row-clickable" data-famille="${_escapeHtml(famille)}" data-intention="${_escapeHtml(s.cle)}" onclick="_selectEncIntention(this.dataset.famille, this.dataset.intention)" title="Voir les enclenchements utilisés pour cette intention"><td>${_escapeHtml(s.label)}</td><td>${s.buts}</td><td>${s.po}</td><td>${s.tirs}</td><td>${s.pb}</td><td>${s.jf}</td><td>${s.possessions}</td><td style="color:${c};font-weight:600">${eff}%</td></tr>`;
             });
-            return `<table class="enc-detail-table"><thead><tr><th>Intention attaque</th><th>Buts</th><th>PO</th><th>Ratés</th><th>PB</th><th>Poss.</th><th>Eff. <span title="(Buts + PO) / Possessions - le PO compte comme efficace" style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:#94A3B8;color:#fff;font-size:9px;font-weight:700;cursor:help;vertical-align:middle;line-height:1">i</span></th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tpo}</td><td>${tt}</td><td>${tp}</td><td>${tposs}</td><td>${te}%</td></tr></tfoot></table>`;
+            return `<table class="enc-detail-table"><thead><tr><th>Intention attaque</th><th>Buts</th><th>PO</th><th>Ratés</th><th>PB</th><th>JF</th><th>Poss.</th><th>Eff. <span title="(Buts + PO) / Possessions - le PO compte comme efficace" style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:#94A3B8;color:#fff;font-size:9px;font-weight:700;cursor:help;vertical-align:middle;line-height:1">i</span></th></tr></thead><tbody>${lignes}</tbody><tfoot><tr class="enc-detail-total"><td>Total</td><td>${tb}</td><td>${tpo}</td><td>${tt}</td><td>${tp}</td><td>${tjf}</td><td>${tposs}</td><td>${te}%</td></tr></tfoot></table>`;
         }
 
         // Niveau 2 — enclenchements bruts enregistrés pour une intention attaque précise
