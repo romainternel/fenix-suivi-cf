@@ -2651,6 +2651,42 @@
             return { possessions, buts, po, eff: possessions > 0 ? Math.round((buts + po) / possessions * 100) : 0, incomplete: false };
         }
 
+        // COLS.finalite est plus fin que le libellé qu'utilise Romain ("Tir raté") : il distingue Tir
+        // arrêté/Tir non cadré/Tir contré/Poteau (vérifié sur les données réelles via Supabase). On les
+        // regroupe sous "Tir raté" pour retomber sur le même vocabulaire que le reste de l'appli
+        // (computeEncStats, dashboard : But/Tir raté/PB/PO), plus "Jet franc" (colonne resultat/finalite
+        // partagent cette valeur telle quelle). "PF" est une variante orthographique de "PB" vue dans
+        // les données (2 lignes) — regroupée avec PB plutôt que traitée comme une 6e catégorie inventée.
+        const ARTIC_FINALITE_GROUPS = {
+            'But': 'but',
+            'Tir arrêté': 'tir', 'Tir non cadré': 'tir', 'Tir contré': 'tir', 'Poteau': 'tir', 'Tir raté': 'tir',
+            'PB': 'pb', 'PF': 'pb',
+            'PO': 'po',
+            'Jet franc': 'jf',
+        };
+
+        // Détail du résultat adverse (But/Tir raté/PB/PO/Jet franc) pour EXACTEMENT ce groupe de joueurs
+        // — demande de Romain après sélection d'une charnière : voir la répartition fine, pas seulement
+        // le % global. Même filtrage que _articBlockEff, calcul complémentaire (pas un remplacement).
+        function _articBlockDetail(matchData, dispositif, lineup, blockPostes) {
+            const detail = { but: 0, tir: 0, pb: 0, po: 0, jf: 0, autre: 0, possessions: 0 };
+            if (blockPostes.some(pk => !lineup[pk])) return detail;
+            matchData.filter(r => r[COLS.club] !== 'FENIX').forEach(r => {
+                if (!(r[COLS.possession] || '').toString().trim()) return;
+                const articRaw = (r[COLS.articulation_def] || '').toString().trim();
+                if (!articRaw) return;
+                const disp = articRaw.replace(/^ARTICULATION DEF\s*/i, '').trim();
+                if (disp !== dispositif) return;
+                if (!blockPostes.every(pk => _resolveArticJoueur(r[COLS[pk]]) === lineup[pk])) return;
+                detail.possessions++;
+                const fin = (r[COLS.finalite] || '').toString().trim();
+                const group = ARTIC_FINALITE_GROUPS[fin];
+                if (group) detail[group]++;
+                else detail.autre++;
+            });
+            return detail;
+        }
+
         // Les 2 charnières que Romain veut pouvoir parcourir en détail (qui a joué ce duo/quatuor et
         // combien de fois) — sous-ensemble de ARTIC_BLOCKS (on exclut "total", jamais demandé comme
         // filtre de listing), mêmes clés/postes/libellés pour rester cohérent avec les cartes du haut.
@@ -2819,7 +2855,7 @@
             const posteFilterOptions = ARTIC_POSTES.map(pk => `<option value="poste:${pk}"${listingFilter.type === 'poste' && listingFilter.key === pk ? ' selected' : ''}>${pk.toUpperCase()}</option>`).join('');
             const charniereFilterOptions = ARTIC_LISTING_CHARNIERES.map(b => `<option value="charniere:${b.key}"${listingFilter.type === 'charniere' && listingFilter.key === b.key ? ' selected' : ''}>${_escapeHtml(b.label)}</option>`).join('');
 
-            let listingRowsHtml, manualSelectHtml = '';
+            let listingRowsHtml, secondaryHtml = '';
             if (listingFilter.type === 'poste') {
                 const pKey = listingFilter.key;
                 const joueurMap = posteMap.get(pKey);
@@ -2835,7 +2871,7 @@
                 const selectOptions = (typeof JOUEURS_TERRAIN !== 'undefined' ? JOUEURS_TERRAIN : [])
                     .slice().sort((a, b) => (a.nomComplet || a.nom).localeCompare(b.nomComplet || b.nom))
                     .map(p => `<option value="${_escapeHtml(p.nom)}"${window._articManualPoste[pKey] === p.nom ? ' selected' : ''}>${_escapeHtml(p.nomComplet || p.nom)}</option>`).join('');
-                manualSelectHtml = `<div class="artic-listing-select">
+                secondaryHtml = `<div class="artic-listing-select">
                     <label>Placer un joueur sur ${pKey.toUpperCase()} :</label>
                     <select onchange="_setArticManualJoueur('${pKey}', this.value)">
                         <option value="">— Auto (${window._articViewMode === 'topdef' ? 'suggestion' : 'le plus utilisée'}) —</option>
@@ -2846,17 +2882,39 @@
                 const block = ARTIC_LISTING_CHARNIERES.find(b => b.key === listingFilter.key);
                 const combos = computeArticCombos(matchData, dispositif, block.postes);
                 const entries = [...combos.entries()].sort((a, b) => b[1].possessions - a[1].possessions);
+                const postesCsv = block.postes.join(',');
                 // Le % (réussite défensive de CE duo/quatuor précis) est ce qui permet de comparer les
                 // compositions entre elles — sans lui, la liste ne dit que "qui a joué ensemble", pas
                 // "qui défend le mieux ensemble" (demande explicite de Romain après livraison v264).
+                // Ligne cliquable (v267) : place D'UN COUP tous les joueurs du combo sur leurs postes
+                // ("je dois pouvoir sélectionner la charnière... en fonction du %").
                 listingRowsHtml = entries.length
                     ? `<div class="artic-listing-hint">% réussite défensive · séquences</div>` + entries.map(([combo, s]) => {
                         const tauxDef = _articTauxDefense(s);
                         const cls = _articDefClass(tauxDef, s.possessions);
                         const effLabel = s.possessions < 5 ? `${tauxDef}% (n<3)` : `${tauxDef}%`;
-                        return `<div class="artic-listing-row"><span>${_escapeHtml(combo)}</span><span class="artic-listing-eff ${cls}">${effLabel} <span class="artic-listing-n">(${s.possessions})</span></span></div>`;
+                        const joueursArr = combo.split(' / ');
+                        const isActive = block.postes.every((pk, i) => lineup[pk] === joueursArr[i]);
+                        return `<div class="artic-listing-row artic-listing-row-clickable${isActive ? ' active' : ''}" data-postes="${postesCsv}" data-joueurs="${_escapeHtml(joueursArr.join(','))}" onclick="_setArticManualCombo(this.dataset.postes, this.dataset.joueurs)" title="Placer ${_escapeHtml(combo)} sur ${block.postes.map(pk=>pk.toUpperCase()).join('-')}"><span>${_escapeHtml(combo)}</span><span class="artic-listing-eff ${cls}">${effLabel} <span class="artic-listing-n">(${s.possessions})</span></span></div>`;
                     }).join('')
                     : `<div class="artic-listing-row artic-listing-empty">Aucune composition complète observée pour cette charnière.</div>`;
+
+                // Détail du résultat adverse pour la composition ACTUELLEMENT affichée sur le terrain à
+                // cette charnière (celle qu'on vient de sélectionner, ou la composition par défaut) —
+                // demande de Romain : "une fois sélectionné le détail adverse de résultat".
+                const d = _articBlockDetail(matchData, dispositif, lineup, block.postes);
+                const joueursActuels = block.postes.map(pk => lineup[pk] || '?').join(' / ');
+                secondaryHtml = d.possessions > 0 ? `<div class="artic-listing-select">
+                    <label>Détail adverse — ${_escapeHtml(joueursActuels)} :</label>
+                    <div class="artic-listing-detail">
+                        <div><span>But</span><span>${d.but}</span></div>
+                        <div><span>Tir raté</span><span>${d.tir}</span></div>
+                        <div><span>PB</span><span>${d.pb}</span></div>
+                        <div><span>PO</span><span>${d.po}</span></div>
+                        <div><span>Jet franc</span><span>${d.jf}</span></div>
+                        <div class="artic-listing-detail-total"><span>Total</span><span>${d.possessions} séq.</span></div>
+                    </div>
+                </div>` : '';
             }
 
             const listingHtml = `<div class="artic-listing-col">
@@ -2865,7 +2923,7 @@
                     <optgroup label="Charnière">${charniereFilterOptions}</optgroup>
                 </select>
                 <div class="artic-listing-rows">${listingRowsHtml}</div>
-                ${manualSelectHtml}
+                ${secondaryHtml}
             </div>`;
 
             container.innerHTML = `
@@ -2907,6 +2965,19 @@
             if (!window._articManualPoste) window._articManualPoste = {};
             if (joueurNom) window._articManualPoste[pKey] = joueurNom;
             else delete window._articManualPoste[pKey];
+            _redrawArticCourt();
+        }
+
+        // Sélectionner une charnière dans le listing place D'UN COUP tous les joueurs du combo sur
+        // leurs postes respectifs (ex. clic sur "Lukas.J / Marius.C" pour P3-P4 → place Lukas.J en P3
+        // ET Marius.C en P4) — demande de Romain : "je dois pouvoir sélectionner la charnière... en
+        // fonction du %". postesCsv/joueursCsv en paramètres (pas une interpolation directe des noms
+        // dans l'attribut onclick) pour rester sûr si un nom contient un caractère spécial.
+        function _setArticManualCombo(postesCsv, joueursCsv) {
+            const postes = postesCsv.split(',');
+            const joueurs = joueursCsv.split(',');
+            if (!window._articManualPoste) window._articManualPoste = {};
+            postes.forEach((pk, i) => { window._articManualPoste[pk] = joueurs[i]; });
             _redrawArticCourt();
         }
 

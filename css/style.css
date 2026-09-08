@@ -2818,6 +2818,13 @@
         .artic-listing-select { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #CBD5E1; }
         .artic-listing-select label { display: block; font-size: 0.72rem; color: #64748B; margin-bottom: 4px; }
         .artic-listing-select select { width: 100%; font-size: 0.78rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #CBD5E1; background: #fff; color: var(--fenix-dark); }
+        /* Détail adverse (But/Tir raté/PB/PO/Jet franc) de la composition affichée pour une charnière
+           (STORY-38ter — Romain veut ce détail une fois une charnière sélectionnée, pas juste le %). */
+        .artic-listing-detail { display: flex; flex-direction: column; gap: 2px; font-size: 0.78rem; }
+        .artic-listing-detail > div { display: flex; justify-content: space-between; padding: 2px 0; }
+        .artic-listing-detail > div span:first-child { color: #64748B; }
+        .artic-listing-detail > div span:last-child { font-weight: 700; color: var(--fenix-dark); }
+        .artic-listing-detail-total { margin-top: 4px; padding-top: 4px; border-top: 1px solid #E8EFF5; }
 
         /* Panel détail (droite) */
         .enc-detail-header-bar {

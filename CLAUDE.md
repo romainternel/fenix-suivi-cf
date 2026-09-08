@@ -79,7 +79,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 - **Nommage HTML/CSS** : IDs et classes en kebab-case (`#filter-joueur-match`, `.jp-avatar`). Préfixes courts par module : `jp-*` (Joueurs), `pmf-*`/`pm-*` (Player Mode), `enc-*` (Enclenchements), `court-*` (terrain SVG).
 - **Fonctions JS** : camelCase. Fonctions privées à un module préfixées `_` (`_renderCourtPhotoState`, `_getJoueurBilanMatchs`).
-- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **9** balises `<link>`/`<script>` du projet (css/style.css + les 8 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v266**.
+- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **9** balises `<link>`/`<script>` du projet (css/style.css + les 8 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v267**.
 - **Résolution de nom joueur** : ne jamais comparer deux noms de joueur par égalité stricte. Le format court "Prénom.Initiale" (ex. `Lucas.G`) coexiste avec des colonnes Excel ne contenant que le prénom (ex. colonne `Gardien`) — toujours passer par `matchPlayerName(a, b)` (`js/utils.js`), qui gère ce cas et met en cache le résultat.
 - **Constantes de configuration maintenues à la main** : `POSTE_POSITIONS`, `GB_ZONE_WEIGHTS`, `EFF_SEUILS`, `PLAYER_PHOTOS` — objets JS statiques édités directement dans le code (par Romain ou en session), pas de table Supabase ni d'UI d'admin pour ces réglages ponctuels.
 - **Import Excel = remplacement complet** : chaque import Excel supprime et réinsère entièrement `match_data`/`joueurs`/`tableau_match`/`bilan` sur Supabase. Ne jamais stocker une donnée éditée en base (famille, note coach, compte joueur) sur une structure qui serait recréée par l'import — toujours une table séparée (`famille_mapping`, `coach_analyses`, `player_profiles`) ou un fichier hors pipeline (`player-photos.js`).
@@ -101,6 +101,8 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 | `player_profiles` | Lien `auth.users.id` ↔ `nom`/`poste` (pas de mot de passe stocké ici) | **Non** |
 
 Client : `js/supabase-client.js` (`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` en clair — clé publishable, RLS permissive, pas un secret). Chargement boot via `loadFromSupabase()` (7 fetch en parallèle) déclenché au `DOMContentLoaded`.
+
+**Colonnes `resultat` (`COLS.resultat = 6`) vs `finalite` (`COLS.finalite = 8`)** — deux classifications distinctes de l'issue d'une action, souvent confondues car proches : `resultat` est la classification "brute" (5 valeurs vues en base : `But`, `Tir raté`, `PB`, `PO`, `Jet franc`), utilisée partout pour les stats FENIX et les stats génériques (dashboard, fiches joueurs). `finalite` est la même classification vue **du point de vue défensif/gardien** — sur les lignes adverses, elle porte les mêmes valeurs que `resultat` (`But`, `PB`, `PO`, `Jet franc`, vérifié par requête directe sur `match_data`) **sauf pour les tirs manqués**, où elle distingue `Tir arrêté` (arrêt gardien), `Tir non cadré`, `Tir contré`, `Poteau` — 4 sous-catégories que `resultat` regroupe toutes sous `Tir raté`. Une variante orthographique `PF` (2 lignes vues) existe pour `PB` côté `finalite` — à regrouper avec `PB`, pas une vraie 6e catégorie. Le mode Articulation (`_articBlockDetail`, `js/page-analyse.js`) et les stats gardien lisent `finalite` sur les lignes adverses précisément pour cette granularité ; le reste de l'app (stats FENIX, dashboard) lit `resultat`.
 
 **Colonne `intention_attaque`** (`COLS.intention_attaque = 21`) est la source de classification tactique principale — remplace l'ancienne colonne `enclenchement` (texte libre, `COLS.enclenchement = 9`) pour ce rôle. `getEncFamille()` (`js/page-analyse.js`) résout une valeur `intention_attaque` en famille via `famille_mapping`, avec un filet de sécurité `_ENC_FAMILLE_CUSTOM` (localStorage) pour les valeurs non encore classifiées. **`enclenchement` reste activement utilisée ailleurs** (vérifié dans le code, 3 usages) : réponses du Chat IA rule-based, tableau de détail niveau 2 (répartition brute *dans* une intention_attaque sélectionnée, `_buildEncIntentionDetailTable`), et colonne "avancée" du tableau détaillé des actions — à ne pas supprimer du schéma.
 
@@ -149,7 +151,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 ## 9. État d'avancement
 
-**Fonctionnel et en production (v266) :**
+**Fonctionnel et en production (v267) :**
 - [x] Import Excel → Supabase (remplacement complet des 4 tables de données)
 - [x] Dashboard, page Analyse (5 onglets internes : Résumé/Timeline/Intention attaque/Gardien/Chat IA)
 - [x] Page Joueurs : terrain interactif (photos ou initiales), fiche staff, sous-onglets Fiche/Notes/Graphique/Impact
