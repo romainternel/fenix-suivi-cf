@@ -2831,8 +2831,16 @@
                 const block = ARTIC_LISTING_CHARNIERES.find(b => b.key === listingFilter.key);
                 const combos = computeArticCombos(matchData, dispositif, block.postes);
                 const entries = [...combos.entries()].sort((a, b) => b[1].possessions - a[1].possessions);
+                // Le % (réussite défensive de CE duo/quatuor précis) est ce qui permet de comparer les
+                // compositions entre elles — sans lui, la liste ne dit que "qui a joué ensemble", pas
+                // "qui défend le mieux ensemble" (demande explicite de Romain après livraison v264).
                 listingRowsHtml = entries.length
-                    ? entries.map(([combo, s]) => `<div class="artic-listing-row">${_escapeHtml(combo)} (${s.possessions})</div>`).join('')
+                    ? `<div class="artic-listing-hint">% réussite défensive · séquences</div>` + entries.map(([combo, s]) => {
+                        const tauxDef = _articTauxDefense(s);
+                        const cls = _articDefClass(tauxDef, s.possessions);
+                        const effLabel = s.possessions < 5 ? `${tauxDef}% (n<3)` : `${tauxDef}%`;
+                        return `<div class="artic-listing-row"><span>${_escapeHtml(combo)}</span><span class="artic-listing-eff ${cls}">${effLabel} <span class="artic-listing-n">(${s.possessions})</span></span></div>`;
+                    }).join('')
                     : `<div class="artic-listing-row artic-listing-empty">Aucune composition complète observée pour cette charnière.</div>`;
             }
 

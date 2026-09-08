@@ -2789,9 +2789,22 @@
             border-radius: 6px; border: 1px solid #CBD5E1; background: #fff; color: var(--fenix-dark);
         }
         .artic-listing-rows { display: flex; flex-direction: column; gap: 2px; }
-        .artic-listing-row { padding: 4px 2px; border-bottom: 1px solid #E8EFF5; color: var(--fenix-dark); }
+        .artic-listing-row {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+            padding: 4px 2px; border-bottom: 1px solid #E8EFF5; color: var(--fenix-dark);
+        }
         .artic-listing-row:last-child { border-bottom: none; }
         .artic-listing-empty { color: #94A3B8; font-style: italic; }
+        .artic-listing-hint { font-size: 0.62rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; text-align: right; }
+        /* % réussite défensive du duo/quatuor (STORY-38bis) — même palette/sens que .artic-block-eff :
+           plus haut = meilleure défense de cette composition précise, permet de comparer les charnières
+           entre elles plutôt que de seulement voir combien de fois elles ont joué ensemble. */
+        .artic-listing-eff { font-weight: 700; white-space: nowrap; }
+        .artic-listing-eff.fort   { color: #10B981; }
+        .artic-listing-eff.moyen  { color: #F59E0B; }
+        .artic-listing-eff.faible { color: #EF4444; }
+        .artic-listing-eff.noref  { color: #94A3B8; font-weight: 500; }
+        .artic-listing-n { font-weight: 400; color: #94A3B8; font-size: 0.72rem; }
         .artic-listing-select { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #CBD5E1; }
         .artic-listing-select label { display: block; font-size: 0.72rem; color: #64748B; margin-bottom: 4px; }
         .artic-listing-select select { width: 100%; font-size: 0.78rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #CBD5E1; background: #fff; color: var(--fenix-dark); }
