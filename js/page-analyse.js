@@ -2127,8 +2127,14 @@
                 if (found) {
                     tip.innerHTML = `<strong>${found.famille}</strong> · ${found.possessions} poss. (${found.utilisPct}% util.) · eff. ${found.eff}%`;
                     tip.style.display = 'block';
-                    tip.style.left = (e.clientX + 14) + 'px';
-                    tip.style.top = (e.clientY - 12) + 'px';
+                    // Bridé aux bords du viewport — sinon un point proche du bord droit/bas fait
+                    // déborder l'infobulle hors écran (position:fixed, pas de scroll pour la voir).
+                    const tw = tip.offsetWidth, th = tip.offsetHeight;
+                    let left = e.clientX + 14;
+                    if (left + tw > window.innerWidth - 8) left = e.clientX - tw - 14;
+                    let top = Math.min(e.clientY - 12, window.innerHeight - th - 8);
+                    tip.style.left = Math.max(8, left) + 'px';
+                    tip.style.top = Math.max(8, top) + 'px';
                     canvas.style.cursor = 'pointer';
                 } else {
                     tip.style.display = 'none';
@@ -3420,8 +3426,15 @@
                         tooltip.style.background = 'rgba(15,23,42,0.95)';
                     }
                     tooltip.style.display = 'block';
-                    tooltip.style.left = (e.clientX + 14) + 'px';
-                    tooltip.style.top = (e.clientY - 10) + 'px';
+                    // Bridé aux bords du viewport — même correctif que la Matrice 2×2 (STORY-45
+                    // suite) : un marqueur proche du bord droit/bas faisait déborder l'infobulle
+                    // hors écran (position:fixed, pas de scroll pour la voir).
+                    const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+                    let left = e.clientX + 14;
+                    if (left + tw > window.innerWidth - 8) left = e.clientX - tw - 14;
+                    let top = Math.min(e.clientY - 10, window.innerHeight - th - 8);
+                    tooltip.style.left = Math.max(8, left) + 'px';
+                    tooltip.style.top = Math.max(8, top) + 'px';
                 } else {
                     tooltip.style.display = 'none';
                 }
