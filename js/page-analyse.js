@@ -169,8 +169,23 @@
             const fenix = { buts: 0, tirs: 0 };
             const adv = { buts: 0, tirs: 0 };
             let hasData = false;
-            matchData.forEach(row => {
-                const phase = (row[COLS.phase_att] || '').toString();
+            // Tri chronologique explicite (Position) — "Pen" hérite ci-dessous du signe de la ligne
+            // précédente, donc l'ordre doit être garanti plutôt que supposé (même précaution que
+            // getSortedGoals/detectAllBascules ailleurs dans ce fichier, qui ne font jamais confiance
+            // à l'ordre d'arrivée de matchData tel quel).
+            const sorted = matchData.slice().sort((a, b) => parseTimecode(a[COLS.position]) - parseTimecode(b[COLS.position]));
+            sorted.forEach((row, i) => {
+                let phase = (row[COLS.phase_att] || '').toString().trim();
+                // "Pen" n'est jamais rattaché à sa propre possession (même famille de cas que "Jet
+                // franc", cf. computeEncCoverage) — un penalty pendant une séquence +/- hérite du
+                // signe de la ligne non-Pen précédente (confirmé par Romain : un Pen prolonge
+                // toujours la séquence en cours, ce n'est jamais une possession isolée).
+                if (phase === 'Pen') {
+                    for (let j = i - 1; j >= 0; j--) {
+                        const p = (sorted[j][COLS.phase_att] || '').toString().trim();
+                        if (p !== 'Pen') { phase = p; break; }
+                    }
+                }
                 if (!phase.includes('+') && !phase.includes('-')) return;
                 hasData = true;
                 const side = row[COLS.club] === 'FENIX' ? fenix : adv;
