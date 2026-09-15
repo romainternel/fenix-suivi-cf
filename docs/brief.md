@@ -1,52 +1,46 @@
-# Brief — Réorganisation de la page Analyse
+# Brief — Articulation offensive (mode "Articulation" côté Attaque)
 
 **Agent :** Analyst
-**Date :** 2026-09-08
+**Date :** 2026-09-15
 
 ---
 
-## 1. Contexte
+## Origine de la demande
 
-La page Analyse existe depuis le tout début du projet et a reçu des ajouts story par story pendant des mois (STORY-14 pour les onglets, modules A-01 à A-07 pour les familles/gardien, STORY-33 à 38 pour l'Articulation, etc.) — chaque ajout a été pensé et testé isolément, jamais l'ensemble. Résultat, recensé dans `docs/brainstorm/reorganisation-page-analyse.md` : 15 blocs de contenu distincts, répartis entre un bloc fixe en haut de page (terrain + cartes comparatives), 5 onglets, et une vue "Saison complète" quasiment indépendante. Romain formule directement le symptôme : "un vrai problème de lecture logique et simplifiée... il y a plein de choses mais ça me paraît fouillis."
+Romain a montré une capture d'écran du fichier Excel source (`IA STAT SAISON 26-27.xlsm`, onglet DATA) mettant en évidence 7 colonnes jusqu'ici jamais exploitées par l'application : **ARTICULATION ATT** (colonne AD) puis **ALG / ARG / DC / ARD / ALD / PVT** (colonnes AE à AJ). Sa demande, verbatim : *"penses-tu que tu peux me faire l'articulation attaque comme l'articulation défense [...] Tous les postes occupés sur ATT PLAC, j'aimerais bien avoir un visuel comme pour articulation def et avec % de réussite qui me donnerait le meilleur 6, la meilleure base arr[ière]"*.
 
-## 2. Problème
+La demande cite explicitement le mode **"Articulation" existant côté Défense** (livré STORY-33/34/36/37/38, v257-268) comme référence directe — ce n'est pas une nouvelle idée à explorer, mais une fonctionnalité miroir déjà validée à transposer côté attaque FENIX, avec les adaptations que la structure réelle des données impose.
 
-Ce n'est pas un problème de qualité de contenu (chaque bloc individuel a été validé en son temps) mais d'**agencement d'ensemble** :
-- Le découpage en 5 onglets (Résumé/Timeline/Intention attaque/Gardien/Chat IA) reflète l'ordre historique de développement, pas nécessairement un vrai parcours de lecture pour un coach.
-- Un bloc lourd (terrain + nuage de tirs + cartes comparatives) occupe une place fixe en haut de page, avant tout onglet, sans certitude qu'il soit consulté à chaque visite.
-- L'information de synthèse ("comment s'est passé ce match") est dispersée entre le résumé IA, les indicateurs clés et l'ancien système de badges (retiré en v269) — jamais réunie à un seul endroit.
-- La vue "Saison complète" ne partage presque aucune structure visuelle avec la vue d'un match précis, ce qui casse la prévisibilité de l'appli.
+## Vérification des données réelles (lecture directe des deux fichiers Excel du repo)
 
-## 3. Utilisateurs
+Avant de cadrer quoi que ce soit, les colonnes AD-AJ ont été inspectées directement (`IA STAT SAISON 26-27.xlsm`, 351 lignes DATA ; `ESSAI IA STAT.xlsm`, 702 lignes DATA — colonnes présentes mais vides sur ce fichier plus ancien, confirmant que la saisie de cette donnée est récente, saison 2026-2027 uniquement) :
 
-Romain, staff/coach, desktop, en session de préparation ou de débrief tactique — inchangé par rapport aux cycles précédents. Point ajouté par ce cycle : le CONTEXTE d'usage varie (débrief juste après un match vs préparation d'un futur adversaire vs suivi de tendances saison), et la page actuelle ne s'adapte pas à ce contexte — elle présente toujours la même chose dans le même ordre.
+- **ARTICULATION ATT** ne contient que 2 valeurs distinctes : `"ARTICULATION ATT"` et `"ARTICULATION ATT +"`. Le `"+"` coïncide exactement avec `Phase att = "+"` (séquence FENIX en supériorité numérique, cf. STORY-42) — ce n'est donc pas un descripteur de dispositif géométrique comme côté défense (`"ARTICULATION DEF 0-6"` / `"ARTICULATION DEF 1-5"` encodait directement la largeur défensive), juste un marqueur de contexte.
+- Les 6 colonnes de poste (ALG/ARG/DC/ARD/ALD/PVT) sont remplies **ensemble, sur la même ligne que le résultat de l'action** (`Résultat`/`Finalité`), exactement comme `P1`-`P6` le sont côté défense sur les lignes adverses — chaque ligne FENIX en `GE = ATT PLAC` avec ARTICULATION ATT renseigné porte la composition offensive complète au moment de cette action précise.
+- Remplissage : 120/227 lignes ATT PLAC sur la saison en cours (53%, cohérence de saisie comparable à ce qui avait été observé côté défense en son temps).
+- Aucune ligne ATT PLAC hors club FENIX ne porte cette donnée (logique : c'est la composition offensive de FENIX, pas celle de l'adversaire).
 
-## 4. Vision
+## Différences structurelles avec l'articulation défensive — implications de cadrage
 
-Une page qui se lit en 10 secondes pour l'essentiel, et qui s'approfondit à la demande — pas l'inverse. Moins de sections de même rang visuel, un seul endroit pour "comprendre le match tout de suite", et un accès secondaire (pas supprimé, juste moins mis en avant) pour ce qui est réellement consulté rarement (Chat IA, terrain/nuage de tirs).
+| Aspect | Défense (existant) | Attaque (à construire) |
+|---|---|---|
+| Dispositif géométrique | 2 valeurs (0-6 / 1-5), bascule le layout du terrain | Aucun — une seule disposition offensive standard (ALG-ARG-DC-ARD-ALD-PVT) |
+| Marqueur texte | Encode le dispositif lui-même | Encode seulement normal vs supériorité (`+`) — **décision : les deux sont regroupés sans distinction pour cette v1**, la distinction +/- étant déjà couverte ailleurs (carte "Supériorités numériques", STORY-42) ; à revoir seulement si Romain demande explicitement un jour à isoler le rendement des compositions en supériorité |
+| Club analysé | Adversaire (défense adverse vs attaque FENIX) | FENIX (attaque FENIX elle-même) |
+| Résultat évalué | Taux de réussite **défensive** (inversion : but/PO adverse = échec défensif) — formule bespoke demandée explicitement par Romain (STORY-37) | **Efficacité standard de l'app** (buts / (buts+tirs ratés)) — même formule que partout ailleurs (dashboard, fiches joueurs, cartes familles) ; PB/PO/Jet franc affichés en détail mais hors du ratio principal, pas de formule inventée |
+| Groupements ("Largeur") | 3 paliers géométriques (À6 / À4 centre / À2 centraux) | 2 groupements demandés explicitement par Romain : **6 complet** et **Base arrière** (ARG-DC-ARD) |
 
-## 5. Scope
+## Portée de ce cycle
 
-**Dans le scope de ce cycle (Designer/Visual Crafter à détailler) :**
-- Un bloc de synthèse unique en tête de page ("Essentiel du match"), qui réunit ce qui est aujourd'hui dispersé (résumé IA, indicateurs clés, tendance tactique la plus marquante).
-- Réduction du nombre de sections de même rang (piste retenue du brainstorm : fusionner Résumé+Timeline et Intention attaque+Gardien) — le Designer tranche la structure exacte.
-- Le bloc terrain/nuage de tirs replié par défaut (accordéon), pour libérer la hauteur d'écran au profit du contenu qui varie selon la section active.
-- Une structure commune entre vue match et vue "Saison complète", pour que l'appli reste prévisible d'un contexte à l'autre.
-- **Livrable attendu avant toute validation : un exemple visuel concret de la page reorganisée**, que Romain doit pouvoir regarder et juger avant qu'on ne découpe quoi que ce soit en stories.
+1. **Import** : ajouter les 7 nouvelles colonnes Excel (`ARTICULATION ATT`, `ALG`, `ARG`, `DC`, `ARD`, `ALD`, `PVT`) au pipeline d'import → `match_data` (Supabase), sur le modèle exact de STORY-33 (colonnes `articulation_def`/P1-P6).
+2. **Visuel** : dans l'onglet Tactique de la page Analyse, le bouton "🎯 Articulation" (aujourd'hui grisé en mode Attaque, actif seulement en mode Défense) devient disponible **dans les deux modes** — Défense affiche l'existant inchangé, Attaque affiche le nouveau mode miroir : demi-terrain avec les 6 postes offensifs, clic pour changer un joueur (identique au geste défense), % d'efficacité de la composition affichée pour le groupement actif, classement des compositions observées (Fiable ≥5 séq. / Échantillon faible), pour les 2 groupements "6 complet" et "Base arrière".
 
-**Hors scope (retenu pour une vision plus tardive, pas ce cycle) :**
-- Le mode "Préparation / Debrief / Saison" qui réorganiserait dynamiquement les sections selon le contexte d'usage (idée du brainstorm, vision 12 mois) — trop structurant pour être tranché en un seul cycle sans d'abord valider la réorganisation de base.
-- Retrait pur et simple du Chat IA — reste accessible, seulement moins mis en avant visuellement.
-- Aucune modification des calculs/données sous-jacents à aucun des blocs existants — uniquement leur organisation et leur présentation.
+## Hors périmètre (explicitement, pour ce cycle)
 
-## 6. Critères de succès
+- Distinction +/- (supériorité numérique) dans l'articulation attaque — regroupé, cf. tableau ci-dessus.
+- Tout groupement autre que "6 complet" et "Base arrière" (ex. "Ailiers seuls") — non demandé, ajoutable trivialement plus tard si besoin (même pattern que `ARTIC_BLOCKS`).
+- Édition/correction manuelle en masse de la donnée d'articulation dans l'Excel source — hors périmètre applicatif.
 
-- Romain regarde l'exemple visuel et dit "oui, c'est plus clair" avant qu'aucune ligne de code de production ne soit touchée.
-- Le nombre de sections de même niveau hiérarchique diminue par rapport aux 5 onglets actuels.
-- Aucune fonctionnalité existante ne disparaît — seulement leur place et leur mise en avant relative changent.
-- La vue match et la vue saison partagent une structure reconnaissable.
+## Utilisateur et contexte d'usage
 
-## 7. Questions en suspens
-
-- La fusion exacte des onglets (Résumé+Timeline, Intention attaque+Gardien) proposée par le Brainstormer est une piste, pas une décision actée — à valider ou ajuster par Romain une fois qu'il voit le résultat visuel, pas avant.
-- Le contenu précis du bloc "Essentiel du match" (quels indicateurs, quelle formulation du verdict) est à concevoir par le Designer à partir de ce qui existe déjà (pas de nouvelle donnée à calculer).
+Identique à l'articulation défensive : Romain, en préparation de match ou en debrief post-match, sur desktop/iPad, cherchant à objectiver quelle composition offensive (ou quelle base arrière) produit le meilleur rendement réel plutôt que de se fier à l'impression de terrain.
