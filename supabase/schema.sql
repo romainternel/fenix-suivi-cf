@@ -34,8 +34,17 @@ create table match_data (
   p3                 text,
   p4                 text,
   p5                 text,
-  p6                 text
+  p6                 text,
+  articulation_att   text,
+  att_alg            text,
+  att_arg            text,
+  att_dc             text,
+  att_ard            text,
+  att_ald            text,
+  att_pvt            text
 );
+-- Ordre des 7 colonnes ci-dessus aligné sur les en-têtes Excel AD-AJ (ARTICULATION ATT, ALG, ARG,
+-- DC, ARD, ALD, PVT) et sur COLS (FENIX-HANDBALL-CF-SUIVI.html, indices 29-35, STORY-47).
 
 create table joueurs (
   nom         text primary key,
