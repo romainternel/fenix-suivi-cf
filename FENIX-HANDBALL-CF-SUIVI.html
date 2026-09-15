@@ -11,15 +11,15 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=278">
-    <script src="js/supabase-client.js?v=278"></script>
-    <script src="js/utils.js?v=278"></script>
-    <script src="js/player-photos.js?v=278"></script>
-    <script src="js/impact-images.js?v=278"></script>
-    <script src="js/player-mode.js?v=278"></script>
-    <script src="js/page-joueurs.js?v=278"></script>
-    <script src="js/page-notes-graph.js?v=278"></script>
-    <script src="js/page-analyse.js?v=278"></script>
+    <link rel="stylesheet" href="css/style.css?v=279">
+    <script src="js/supabase-client.js?v=279"></script>
+    <script src="js/utils.js?v=279"></script>
+    <script src="js/player-photos.js?v=279"></script>
+    <script src="js/impact-images.js?v=279"></script>
+    <script src="js/player-mode.js?v=279"></script>
+    <script src="js/page-joueurs.js?v=279"></script>
+    <script src="js/page-notes-graph.js?v=279"></script>
+    <script src="js/page-analyse.js?v=279"></script>
 </head>
 <body>
 
@@ -3006,9 +3006,15 @@ let _effInfoPoste = null;
                 return row[COLS.resultat] === resultatFilter;
             };
 
-            // Stats générales : tous les tirs (avec ou sans coordonnées d'impact)
+            // Stats générales : tous les tirs (avec ou sans coordonnées d'impact), scopées à la
+            // zone sélectionnée le cas échéant — la couleur neutre du % en cas de zone active
+            // (ligne ~3035) supposait déjà ce scope zone, mais le calcul ne l'appliquait pas :
+            // le total/% restait celui de toutes les zones alors que le nuage de points affiché
+            // (canvas `filtered` ci-dessous) était bien limité à la zone choisie.
             const filteredAll = DATA.filter(row =>
-                clubOK(row) && eligible(row) && nameOK(row) && (!bilanM || bilanM.includes(row[COLS.rencontre]))
+                clubOK(row) && eligible(row) && nameOK(row) &&
+                (!impactZoneFilter || row[COLS.field_position] === impactZoneFilter) &&
+                (!bilanM || bilanM.includes(row[COLS.rencontre]))
             );
             // Canvas / zones : uniquement les tirs avec coordonnées d'impact
             const filtered = DATA.filter(row =>
