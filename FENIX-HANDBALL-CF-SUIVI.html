@@ -11,15 +11,15 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=279">
-    <script src="js/supabase-client.js?v=279"></script>
-    <script src="js/utils.js?v=279"></script>
-    <script src="js/player-photos.js?v=279"></script>
-    <script src="js/impact-images.js?v=279"></script>
-    <script src="js/player-mode.js?v=279"></script>
-    <script src="js/page-joueurs.js?v=279"></script>
-    <script src="js/page-notes-graph.js?v=279"></script>
-    <script src="js/page-analyse.js?v=279"></script>
+    <link rel="stylesheet" href="css/style.css?v=280">
+    <script src="js/supabase-client.js?v=280"></script>
+    <script src="js/utils.js?v=280"></script>
+    <script src="js/player-photos.js?v=280"></script>
+    <script src="js/impact-images.js?v=280"></script>
+    <script src="js/player-mode.js?v=280"></script>
+    <script src="js/page-joueurs.js?v=280"></script>
+    <script src="js/page-notes-graph.js?v=280"></script>
+    <script src="js/page-analyse.js?v=280"></script>
 </head>
 <body>
 
@@ -1087,10 +1087,23 @@ let _effInfoPoste = null;
             setupFileInput();
             setupFilters();
             loadFromSupabase();
-            // Ajuster le top de la barre sticky selon la hauteur réelle de la header
+            // Ajuster le top des barres sticky sous le header selon sa hauteur réelle — via
+            // ResizeObserver plutôt qu'une mesure one-shot, car le header grandit après ce point
+            // (le <select> de saison passe de display:none à 'block' dans populateFilters(),
+            // une fois SAISONS chargé depuis Supabase). Une mesure figée à DOMContentLoaded (ou
+            // une valeur codée en dur dans le CSS, cas de .joueurs-subnav) laissait ces barres
+            // collées sous l'ancienne hauteur, donc cachées derrière le header une fois celui-ci
+            // agrandi — invisibles dès qu'on scrollait la page Analyse ou Joueurs.
             const hdr = document.querySelector('.header');
-            const stickyBar = document.getElementById('analyse-sticky-bar');
-            if (hdr && stickyBar) stickyBar.style.top = hdr.offsetHeight + 'px';
+            const stickyUnderHeader = [
+                document.getElementById('analyse-sticky-bar'),
+                document.querySelector('.joueurs-subnav')
+            ].filter(Boolean);
+            if (hdr && stickyUnderHeader.length) {
+                const syncStickyTop = () => stickyUnderHeader.forEach(el => { el.style.top = hdr.offsetHeight + 'px'; });
+                syncStickyTop();
+                if (typeof ResizeObserver !== 'undefined') new ResizeObserver(syncStickyTop).observe(hdr);
+            }
             // Redraw impact canvases on resize
             if (typeof ResizeObserver !== 'undefined') {
                 const impactObs = new ResizeObserver(() => {
