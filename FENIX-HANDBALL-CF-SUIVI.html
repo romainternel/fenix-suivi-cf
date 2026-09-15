@@ -11,15 +11,15 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=280">
-    <script src="js/supabase-client.js?v=280"></script>
-    <script src="js/utils.js?v=280"></script>
-    <script src="js/player-photos.js?v=280"></script>
-    <script src="js/impact-images.js?v=280"></script>
-    <script src="js/player-mode.js?v=280"></script>
-    <script src="js/page-joueurs.js?v=280"></script>
-    <script src="js/page-notes-graph.js?v=280"></script>
-    <script src="js/page-analyse.js?v=280"></script>
+    <link rel="stylesheet" href="css/style.css?v=281">
+    <script src="js/supabase-client.js?v=281"></script>
+    <script src="js/utils.js?v=281"></script>
+    <script src="js/player-photos.js?v=281"></script>
+    <script src="js/impact-images.js?v=281"></script>
+    <script src="js/player-mode.js?v=281"></script>
+    <script src="js/page-joueurs.js?v=281"></script>
+    <script src="js/page-notes-graph.js?v=281"></script>
+    <script src="js/page-analyse.js?v=281"></script>
 </head>
 <body>
 
@@ -1965,9 +1965,13 @@ let _effInfoPoste = null;
             
             const clubFilter = document.getElementById('filter-club');
             if (clubFilter) {
-                const clubs = [...new Set(DATA.map(row => row[COLS.club]).filter(Boolean))];
-                clubFilter.innerHTML = '<option value="">Tous</option>';
-                clubs.forEach(c => clubFilter.innerHTML += `<option value="${c}">${c}</option>`);
+                // "ADV GEN" — valeur spéciale (pas un vrai club) qui filtre le nuage de tirs
+                // sur tous les adversaires confondus, sans avoir à en choisir un précis
+                // (utile en vue "Saison complète", où plusieurs clubs adverses coexistent).
+                const advClubs = [...new Set(DATA.map(row => row[COLS.club]).filter(Boolean))]
+                    .filter(c => c !== 'FENIX').sort();
+                clubFilter.innerHTML = '<option value="">Tous</option><option value="FENIX">FENIX</option><option value="ADV_GEN">ADV GEN</option>';
+                advClubs.forEach(c => clubFilter.innerHTML += `<option value="${c}">${c}</option>`);
             }
             
             // Filtre GE
@@ -1992,7 +1996,7 @@ let _effInfoPoste = null;
             });
             const sel = document.getElementById('filter-club');
             const current = sel.value;
-            sel.innerHTML = '<option value="">Tous</option><option value="FENIX">FENIX</option>';
+            sel.innerHTML = '<option value="">Tous</option><option value="FENIX">FENIX</option><option value="ADV_GEN">ADV GEN</option>';
             [...clubs].sort().forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
             if (current && sel.querySelector(`option[value="${current}"]`)) sel.value = current;
         }
@@ -2502,7 +2506,8 @@ let _effInfoPoste = null;
             const selectedResultats = getSelectedResultats();
             const geFilter = document.getElementById('filter-ge').value;
             const terrainData = matchData.filter(row => {
-                if (clubFilter && row[COLS.club] !== clubFilter) return false;
+                if (clubFilter === 'ADV_GEN') { if (row[COLS.club] === 'FENIX') return false; }
+                else if (clubFilter && row[COLS.club] !== clubFilter) return false;
                 if (selectedResultats.length && !selectedResultats.includes(row[COLS.resultat])) return false;
                 if (geFilter && row[COLS.ge] !== geFilter) return false;
                 return true;
