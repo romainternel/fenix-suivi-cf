@@ -1694,7 +1694,24 @@
                     <div id="enc-matrix-legend" style="margin-left:auto"></div>
                     <span class="enc-section-meta">n=${totalPoss} poss. · Couv. ${coverage.pct}%</span>
                 </div>`;
-            requestAnimationFrame(() => _drawEncChart());
+            // Bug réel trouvé en vérifiant STORY-48 (critère 7) : ce rebuild complet du HTML (déclenché
+            // par un changement de match, de filtre, ou _setEncTeamMode) recrée #enc-articulation-wrap
+            // vide à chaque fois — seul _setEncGraphMode() sait le repeupler, jamais appelé ici. Résultat
+            // observé en conditions réelles : basculer Attaque/Défense (ou changer de match) pendant que
+            // le mode Articulation est actif laisse le panneau totalement vide, des deux côtés (pas
+            // propre à STORY-48, le bug existe depuis la défense/STORY-34, jamais testé dans cet ordre
+            // précis avant). Correctif : reproduire ici le même dispatch que _setEncGraphMode.
+            requestAnimationFrame(() => {
+                if (window._encGraphMode === 'articulation') {
+                    const articWrap = document.getElementById('enc-articulation-wrap');
+                    if (articWrap && window._encCurrentMatchData) {
+                        if (window._encTeamMode === 'adv') _drawArticulationCourt(articWrap, window._encCurrentMatchData);
+                        else _drawArticulationAttCourt(articWrap, window._encCurrentMatchData);
+                    }
+                } else {
+                    _drawEncChart();
+                }
+            });
         }
 
         function _setEncTeamMode(mode) {
