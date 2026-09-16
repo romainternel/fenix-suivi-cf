@@ -3133,20 +3133,23 @@
             { key: 'base_arriere', label: 'Base arrière', postes: ['att_arg', 'att_dc', 'att_ard'] },
         ];
 
-        // Filtre possession : identique au principe défense (une ligne comptée par séquence), AVEC
-        // une tolérance vérifiée sur données réelles (Risk R1/STORY-48 §⚠️) — 4 des 28 "Tir raté" FENIX
-        // tagués articulation_att n'ont pas le tag Possession, alors que les 31 "But" l'ont tous
-        // systématiquement. Vérifié un par un (positions/joueurs différents du tir voisin dans la
-        // même séquence) : ce ne sont pas des doublons d'une ligne déjà comptée ailleurs, mais de
-        // vrais tirs ratés distincts (rebond enchaîné) — même famille de lacune que "Jet franc"/
-        // "2' obt" (STORY-44), corrigée ici par une tolérance ciblée sur ce seul résultat plutôt
-        // qu'un filtre Possession désactivé en bloc (qui réintroduirait les vrais doublons de
-        // séquence : Jet franc, 2' obt, Pen).
+        // Règle confirmée par Romain (2026-09-16) : le tag Possession sert à dédoublonner une SÉQUENCE
+        // qui s'étale sur plusieurs lignes (une séquence adverse taguée une seule fois, peu importe le
+        // nombre d'actions qui la composent) — il n'a de sens que pour des sous-événements qui
+        // PROLONGENT une séquence déjà comptée ailleurs (PB, PO, Jet franc, "2' obt" ; Pen également,
+        // mais Pen ne porte de toute façon jamais articulation_att — vérifié, aucune des lignes Pen de
+        // la saison n'a cette colonne remplie). Un TIR (But/Tir raté) est par nature un événement
+        // terminal et unique : la possession n'entre pas dans le calcul d'un % de réussite au tir
+        // (buts/(buts+tirs ratés), §3.4) — qu'il porte ou non le tag Possession ne change rien à sa
+        // réalité de tir. Vérifié sur données réelles : 4 des 28 "Tir raté" FENIX tagués
+        // articulation_att n'ont pas le tag Possession (contre 0 des 31 "But"), tous confirmés
+        // distincts (positions/joueurs différents du tir voisin dans la séquence, pas des doublons) —
+        // sans cette règle, le % de réussite affiché aurait été mesuré sur un dénominateur incomplet.
         function _articAttCounts(r) {
-            const res = (r[COLS.resultat] || '').toString().trim();
-            const hasPossession = !!(r[COLS.possession] || '').toString().trim();
-            if (!hasPossession && res !== 'Tir raté') return null;
             if (!(r[COLS.articulation_att] || '').toString().trim()) return null;
+            const res = (r[COLS.resultat] || '').toString().trim();
+            if (res === 'But' || res === 'Tir raté') return res; // tir : la possession n'entre pas en jeu
+            if (!(r[COLS.possession] || '').toString().trim()) return null; // sous-événement : dédoublonné par séquence
             return res;
         }
 
