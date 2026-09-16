@@ -1667,7 +1667,7 @@
                         <button class="enc-toggle-btn${mode!=='matrice'&&mode!=='articulation'?' active':''}" data-mode="pie" onclick="_setEncGraphMode('pie')">Vue générale</button>
                         <button class="enc-toggle-btn${mode==='matrice'?' active':''}" data-mode="matrice" onclick="_setEncGraphMode('matrice')">Matrice 2×2</button>
                         <span class="enc-info-btn" id="enc-graph-info-btn" onclick="if(window._encGraphMode==='matrice')_toggleEncGraphInfo()" title="Comprendre la matrice" style="opacity:${mode!=='matrice'?'0.3':'1'}">i</span>
-                        <button class="enc-pie-mode-btn${mode==='articulation'?' active':''}${!isAdv?' artic-disabled':''}" onclick="_setEncGraphMode('articulation')" title="${isAdv?'':'Disponible uniquement en mode Défense'}">🎯 Articulation</button>
+                        <button class="enc-pie-mode-btn${mode==='articulation'?' active':''}" onclick="_setEncGraphMode('articulation')" title="Voir la composition ${isAdv?'défensive':'offensive'} par poste">🎯 Articulation</button>
                     </div>
                 </div>
                 ${warningHtml}
@@ -1700,8 +1700,8 @@
         function _setEncTeamMode(mode) {
             window._encTeamMode = mode;
             window._encSelectedFamille = null;
-            // L'articulation défensive n'existe pas côté attaque FENIX — retombe sur la vue générale
-            if (mode === 'fenix' && window._encGraphMode === 'articulation') window._encGraphMode = 'pie';
+            // STORY-48 : l'articulation existe désormais des deux côtés (offensive FENIX, défensive
+            // adverse) — le mode Articulation reste actif quel que soit le côté choisi.
             if (window._encCurrentMatchData) renderEncFamillesSection(window._encCurrentMatchData);
         }
 
@@ -1728,7 +1728,10 @@
             if (graphWrap) graphWrap.style.display = mode === 'articulation' ? 'none' : 'flex';
             if (articWrap) articWrap.style.display = mode === 'articulation' ? 'block' : 'none';
             if (mode === 'articulation') {
-                if (articWrap && window._encCurrentMatchData) _drawArticulationCourt(articWrap, window._encCurrentMatchData);
+                if (articWrap && window._encCurrentMatchData) {
+                    if (window._encTeamMode === 'adv') _drawArticulationCourt(articWrap, window._encCurrentMatchData);
+                    else _drawArticulationAttCourt(articWrap, window._encCurrentMatchData);
+                }
             } else {
                 requestAnimationFrame(() => _drawEncChart());
             }
@@ -3098,6 +3101,339 @@
         function _toggleArticPosteEditor(pKey) {
             window._articOpenPoste = window._articOpenPoste === pKey ? null : pKey;
             _redrawArticCourt();
+        }
+
+        // A-05ter — Articulation offensive (STORY-48, miroir de l'articulation défensive ci-dessus) :
+        // taux de réussite offensive FENIX par poste/composition. Pas de dispositif (0-6/1-5 n'existe
+        // pas côté attaque), formule directe (pas d'inversion — plus haut = attaque plus efficace).
+        // État (_articAtt*) volontairement séparé de l'état défense (_artic*) — jamais partagé
+        // (STORY-48 critère 7 : bascule Attaque/Défense sans réinitialiser l'autre côté).
+        const ARTIC_ATT_POSTES = ['att_alg', 'att_arg', 'att_dc', 'att_ard', 'att_ald', 'att_pvt'];
+        const _articAttPosteLabel = pk => pk.replace(/^att_/, '').toUpperCase();
+
+        // Arc des 9m — même terrain que _articCourtSvg() (tracé pointillé "M 0,25 A 52,44 0 0,0
+        // 100,25"), centre déduit géométriquement de ce path (cf. Architecture §3.1).
+        const ARTIC_ATT_9M_ARC = { cx: 50, cy: 12.92, rx: 52, ry: 44 };
+
+        // PVT/ALG/ALD sur la courbe des 6m (même arc que la défense, ARTIC_6M_ARC) — les 3 postes de
+        // finition les plus proches du but. ARG/DC/ARD (la base arrière) sur l'arc des 9m ci-dessus.
+        const ARTIC_ATT_LAYOUT = (() => {
+            const sixM = { att_alg: 12, att_pvt: 50, att_ald: 88 };
+            const neufM = { att_arg: 25, att_dc: 50, att_ard: 75 };
+            const out = {};
+            Object.keys(sixM).forEach(k => { out[k] = [sixM[k], _articArcY(sixM[k], ARTIC_6M_ARC)]; });
+            Object.keys(neufM).forEach(k => { out[k] = [neufM[k], _articArcY(neufM[k], ARTIC_ATT_9M_ARC)]; });
+            return out;
+        })();
+
+        // 2 groupements (Brief/PRD) — "Base arrière" répond directement à la demande de Romain
+        // ("la meilleure base arrière").
+        const ARTIC_ATT_BLOCKS = [
+            { key: 'total', label: '6 complet', postes: ARTIC_ATT_POSTES },
+            { key: 'base_arriere', label: 'Base arrière', postes: ['att_arg', 'att_dc', 'att_ard'] },
+        ];
+
+        // Filtre possession : identique au principe défense (une ligne comptée par séquence), AVEC
+        // une tolérance vérifiée sur données réelles (Risk R1/STORY-48 §⚠️) — 4 des 28 "Tir raté" FENIX
+        // tagués articulation_att n'ont pas le tag Possession, alors que les 31 "But" l'ont tous
+        // systématiquement. Vérifié un par un (positions/joueurs différents du tir voisin dans la
+        // même séquence) : ce ne sont pas des doublons d'une ligne déjà comptée ailleurs, mais de
+        // vrais tirs ratés distincts (rebond enchaîné) — même famille de lacune que "Jet franc"/
+        // "2' obt" (STORY-44), corrigée ici par une tolérance ciblée sur ce seul résultat plutôt
+        // qu'un filtre Possession désactivé en bloc (qui réintroduirait les vrais doublons de
+        // séquence : Jet franc, 2' obt, Pen).
+        function _articAttCounts(r) {
+            const res = (r[COLS.resultat] || '').toString().trim();
+            const hasPossession = !!(r[COLS.possession] || '').toString().trim();
+            if (!hasPossession && res !== 'Tir raté') return null;
+            if (!(r[COLS.articulation_att] || '').toString().trim()) return null;
+            return res;
+        }
+
+        function computeArticulationAttStats(matchData) {
+            const postes = new Map(); // pKey -> Map(joueur -> {buts, tirs, possessions, eff})
+            let total = 0;
+            const global = { buts: 0, tirs: 0, possessions: 0, eff: 0 };
+            matchData.filter(r => r[COLS.club] === 'FENIX').forEach(r => {
+                const res = _articAttCounts(r);
+                if (res === null) return;
+                const isBut = res === 'But', isTir = res === 'Tir raté';
+                total++;
+                global.possessions++;
+                if (isBut) global.buts++; else if (isTir) global.tirs++;
+                ARTIC_ATT_POSTES.forEach(pKey => {
+                    const joueur = _resolveArticJoueur(r[COLS[pKey]]);
+                    if (!joueur) return;
+                    if (!postes.has(pKey)) postes.set(pKey, new Map());
+                    const joueurMap = postes.get(pKey);
+                    if (!joueurMap.has(joueur)) joueurMap.set(joueur, { buts: 0, tirs: 0, possessions: 0, eff: 0 });
+                    const s = joueurMap.get(joueur);
+                    s.possessions++;
+                    if (isBut) s.buts++; else if (isTir) s.tirs++;
+                });
+            });
+            postes.forEach(joueurMap => joueurMap.forEach(s => {
+                const denom = s.buts + s.tirs;
+                s.eff = denom > 0 ? Math.round(s.buts / denom * 100) : 0;
+            }));
+            const gDenom = global.buts + global.tirs;
+            global.eff = gDenom > 0 ? Math.round(global.buts / gDenom * 100) : 0;
+            return { postes, total, global };
+        }
+
+        // Jumelle de _articPrimaryEntry lisant l'état attaque séparé (window._articAttManualPoste) —
+        // dupliquée plutôt que paramétrée pour ne pas risquer de régression sur l'appelant défense
+        // déjà en production (Architecture §3.3).
+        function _articAttPrimaryEntry(pKey, joueurMap) {
+            const manuel = window._articAttManualPoste && window._articAttManualPoste[pKey];
+            if (manuel) return [manuel, joueurMap.get(manuel) || null];
+            return [...joueurMap.entries()].sort((a, b) => b[1].possessions - a[1].possessions)[0];
+        }
+
+        // Contrairement à _articTauxDefense (inversion nécessaire côté défense, STORY-37), l'efficacité
+        // offensive se lit directement : plus haut = attaque plus efficace. Seuils repris de
+        // _articEffClass (38/55) mais appliqués dans le sens direct.
+        function _articAttEffClass(eff, possessions) {
+            if (possessions < 5) return 'noref';
+            if (eff >= 55) return 'fort';
+            if (eff >= 38) return 'moyen';
+            return 'faible';
+        }
+
+        // Miroir de _articBlockEff : efficacité FENIX quand EXACTEMENT ce groupe de joueurs (lineup)
+        // occupait ensemble les postes du bloc sur la même ligne (pas de dispositif à filtrer ici).
+        function _articAttBlockEff(matchData, lineup, blockPostes) {
+            if (blockPostes.some(pk => !lineup[pk])) return { possessions: 0, buts: 0, tirs: 0, eff: 0, incomplete: true };
+            let buts = 0, tirs = 0, possessions = 0;
+            matchData.filter(r => r[COLS.club] === 'FENIX').forEach(r => {
+                const res = _articAttCounts(r);
+                if (res === null) return;
+                if (!blockPostes.every(pk => _resolveArticJoueur(r[COLS[pk]]) === lineup[pk])) return;
+                possessions++;
+                if (res === 'But') buts++; else if (res === 'Tir raté') tirs++;
+            });
+            const denom = buts + tirs;
+            return { possessions, buts, tirs, eff: denom > 0 ? Math.round(buts / denom * 100) : 0, incomplete: false };
+        }
+
+        // Miroir de _articBlockDetail — ARTIC_FINALITE_GROUPS réutilisé tel quel (resultat porte les
+        // mêmes valeurs que finalite sur les lignes FENIX, cf. CLAUDE.md §5).
+        function _articAttBlockDetail(matchData, lineup, blockPostes) {
+            const detail = { but: 0, tir: 0, pb: 0, po: 0, jf: 0, autre: 0, possessions: 0 };
+            if (blockPostes.some(pk => !lineup[pk])) return detail;
+            matchData.filter(r => r[COLS.club] === 'FENIX').forEach(r => {
+                const res = _articAttCounts(r);
+                if (res === null) return;
+                if (!blockPostes.every(pk => _resolveArticJoueur(r[COLS[pk]]) === lineup[pk])) return;
+                detail.possessions++;
+                const group = ARTIC_FINALITE_GROUPS[res];
+                if (group) detail[group]++;
+                else detail.autre++;
+            });
+            return detail;
+        }
+
+        // Miroir de computeArticCombos/_articRankedCombos — tri décroissant sur eff (pas tauxDef, pas
+        // d'inversion côté attaque).
+        function computeArticAttCombos(matchData, blockPostes) {
+            const combos = new Map();
+            matchData.filter(r => r[COLS.club] === 'FENIX').forEach(r => {
+                const res = _articAttCounts(r);
+                if (res === null) return;
+                const joueurs = blockPostes.map(pk => _resolveArticJoueur(r[COLS[pk]]));
+                if (joueurs.some(j => !j)) return;
+                const key = joueurs.join(' / ');
+                if (!combos.has(key)) combos.set(key, { buts: 0, tirs: 0, possessions: 0 });
+                const s = combos.get(key);
+                s.possessions++;
+                if (res === 'But') s.buts++; else if (res === 'Tir raté') s.tirs++;
+            });
+            return combos;
+        }
+
+        function _articRankedAttCombos(matchData, blockPostes) {
+            const combos = computeArticAttCombos(matchData, blockPostes);
+            const entries = [...combos.entries()].map(([combo, s]) => {
+                const denom = s.buts + s.tirs;
+                return { combo, ...s, eff: denom > 0 ? Math.round(s.buts / denom * 100) : 0 };
+            });
+            const fiables = entries.filter(e => e.possessions >= 5).sort((a, b) => b.eff - a.eff);
+            const faibles = entries.filter(e => e.possessions < 5).sort((a, b) => b.eff - a.eff);
+            return { fiables, faibles };
+        }
+
+        function _drawArticulationAttCourt(container, matchData) {
+            const stats = computeArticulationAttStats(matchData);
+            if (!stats.total) {
+                container.innerHTML = `<p class="artic-empty">Pas encore de données d'articulation offensive sur cette période.</p>`;
+                return;
+            }
+            if (!window._articAttManualPoste) window._articAttManualPoste = {};
+            if (!window._articAttWidth) window._articAttWidth = 'total';
+            const posteMap = stats.postes;
+
+            // Pas de bloc DISPOSITIF côté attaque (n'existe pas) — seule la ligne LARGEUR reste.
+            const controlBarHtml = `<div class="artic-control-bar">
+                <div class="artic-control-row">
+                    <span class="artic-control-label">LARGEUR</span>
+                    <div class="artic-dispositif-toggle">
+                        ${ARTIC_ATT_BLOCKS.map(b => `<button class="enc-pie-mode-btn${window._articAttWidth === b.key ? ' active' : ''}" onclick="_setArticAttWidth('${b.key}')" title="${_escapeHtml(b.label)} (${b.postes.map(_articAttPosteLabel).join('-')})">${b.label}</button>`).join('')}
+                    </div>
+                </div>
+            </div>`;
+
+            let postesHtml = '';
+            const lineup = {};
+            ARTIC_ATT_POSTES.forEach(pKey => {
+                const [x, y] = ARTIC_ATT_LAYOUT[pKey];
+                const joueurMap = posteMap.get(pKey);
+                const manuel = window._articAttManualPoste[pKey];
+                const manualMark = manuel ? `<div class="artic-poste-manual">✎</div>` : '';
+                const isOpen = window._articAttOpenPoste === pKey;
+                const label = _articAttPosteLabel(pKey);
+                if (manuel) {
+                    lineup[pKey] = manuel;
+                    const s = joueurMap ? joueurMap.get(manuel) : null;
+                    const tip = s
+                        ? `${manuel} — sélectionné manuellement sur ${label} : ${s.possessions} séq. observée(s) à ce poste. Cliquer pour changer.`
+                        : `${manuel} — sélectionné manuellement sur ${label} : aucune séquence connue pour ce joueur à ce poste. Cliquer pour changer.`;
+                    postesHtml += `<div class="artic-poste${isOpen ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_toggleArticAttPosteEditor('${pKey}')" title="${_escapeHtml(tip)}">
+                        ${manualMark}
+                        <div class="artic-poste-label">${label}</div>
+                        <div class="artic-poste-joueur">${_escapeHtml(manuel)}</div>
+                    </div>`;
+                    return;
+                }
+                if (!joueurMap || !joueurMap.size) {
+                    lineup[pKey] = null;
+                    postesHtml += `<div class="artic-poste${isOpen ? ' selected' : ''}" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucun joueur connu sur ${label} sur cette période. Cliquer pour en choisir un." onclick="_toggleArticAttPosteEditor('${pKey}')">
+                        <div class="artic-poste-label">${label}</div><div class="artic-poste-joueur">—</div></div>`;
+                    return;
+                }
+                const [topJoueur, topStats] = _articAttPrimaryEntry(pKey, joueurMap);
+                lineup[pKey] = topJoueur;
+                const badge = joueurMap.size > 1 ? `<div class="artic-poste-badge">+${joueurMap.size - 1}</div>` : '';
+                const autresTip = joueurMap.size > 1 ? ` · ${joueurMap.size - 1} autre(s) joueur(s) ont aussi occupé ce poste.` : '';
+                const tip = `${topJoueur} — le plus utilisé sur ${label} : ${topStats.possessions} séq. observée(s).${autresTip} Cliquer pour changer.`;
+                postesHtml += `<div class="artic-poste${isOpen ? ' selected' : ''}" style="left:${x}%;top:${y}%" onclick="_toggleArticAttPosteEditor('${pKey}')" title="${_escapeHtml(tip)}">
+                    ${badge}
+                    <div class="artic-poste-label">${label}</div>
+                    <div class="artic-poste-joueur">${_escapeHtml(topJoueur)}</div>
+                </div>`;
+            });
+
+            const recapHtml = `<div class="artic-recap">${ARTIC_ATT_POSTES.map(pk => _escapeHtml(lineup[pk] || '—')).join(' · ')}</div>`;
+
+            let editorHtml = '';
+            if (window._articAttOpenPoste) {
+                const pKey = window._articAttOpenPoste;
+                const label = _articAttPosteLabel(pKey);
+                const joueurMap = posteMap.get(pKey);
+                const entries = joueurMap ? [...joueurMap.entries()].sort((a, b) => b[1].possessions - a[1].possessions) : [];
+                const selectOptions = (typeof JOUEURS_TERRAIN !== 'undefined' ? JOUEURS_TERRAIN : [])
+                    .slice().sort((a, b) => (a.nomComplet || a.nom).localeCompare(b.nomComplet || b.nom))
+                    .map(p => `<option value="${_escapeHtml(p.nom)}"${window._articAttManualPoste[pKey] === p.nom ? ' selected' : ''}>${_escapeHtml(p.nomComplet || p.nom)}</option>`).join('');
+                editorHtml = `<div class="artic-poste-editor">
+                    <div class="artic-poste-editor-title">${label} — changer le joueur</div>
+                    ${entries.length ? `<div class="artic-listing-rows">${entries.map(([joueur, s]) => `<div class="artic-listing-row artic-listing-row-clickable${lineup[pKey] === joueur ? ' active' : ''}" data-pkey="${pKey}" data-joueur="${_escapeHtml(joueur)}" onclick="_setArticAttManualJoueur(this.dataset.pkey, this.dataset.joueur)">${_escapeHtml(joueur)} (${s.possessions})</div>`).join('')}</div>` : ''}
+                    <div class="artic-listing-select">
+                        <select onchange="_setArticAttManualJoueur('${pKey}', this.value)">
+                            <option value="">— Auto (le plus utilisée) —</option>
+                            ${selectOptions}
+                        </select>
+                    </div>
+                </div>`;
+            }
+
+            // Résumé sous le terrain pour la largeur active — réutilise _articAttBlockEff/_articAttBlockDetail.
+            const widthBlock = ARTIC_ATT_BLOCKS.find(b => b.key === window._articAttWidth);
+            const widthStat = _articAttBlockEff(matchData, lineup, widthBlock.postes);
+            const widthNoms = widthBlock.postes.map(pk => lineup[pk] || '?').join(' / ');
+            let summaryHtml;
+            if (widthStat.incomplete) {
+                summaryHtml = `<div class="artic-summary"><div class="artic-summary-empty">Composition incomplète pour cette largeur (au moins un poste sans joueur connu).</div></div>`;
+            } else if (!widthStat.possessions) {
+                summaryHtml = `<div class="artic-summary"><div class="artic-summary-noms">${_escapeHtml(widthNoms)}</div><div class="artic-summary-empty">Cette composition n'a jamais été observée ensemble sur cette période.</div></div>`;
+            } else {
+                const cls = _articAttEffClass(widthStat.eff, widthStat.possessions);
+                const effLabel = widthStat.possessions < 5 ? `${widthStat.eff}% (n<3)` : `${widthStat.eff}%`;
+                const d = _articAttBlockDetail(matchData, lineup, widthBlock.postes);
+                summaryHtml = `<div class="artic-summary">
+                    <div class="artic-summary-eff ${cls}">${effLabel} <span class="artic-summary-eff-label">de réussite offensive</span></div>
+                    <div class="artic-summary-noms">${_escapeHtml(widthNoms)} — ${widthStat.possessions} séq.</div>
+                    <div class="artic-summary-detail">But ${d.but} · Tir raté ${d.tir} · PB ${d.pb} · PO ${d.po} · Jet franc ${d.jf}</div>
+                </div>`;
+            }
+
+            // Classement (colonne de droite) pour la largeur active, groupé Fiable/Échantillon faible.
+            const ranked = _articRankedAttCombos(matchData, widthBlock.postes);
+            const postesCsv = widthBlock.postes.join(',');
+            const renderComboRow = (e) => {
+                const cls = _articAttEffClass(e.eff, e.possessions);
+                const effLabel = e.possessions < 5 ? `${e.eff}% (n<3)` : `${e.eff}%`;
+                const joueursArr = e.combo.split(' / ');
+                const isActive = widthBlock.postes.every((pk, i) => lineup[pk] === joueursArr[i]);
+                return `<div class="artic-listing-row artic-listing-row-clickable${isActive ? ' active' : ''}" data-postes="${postesCsv}" data-joueurs="${_escapeHtml(joueursArr.join(','))}" onclick="_setArticAttManualCombo(this.dataset.postes, this.dataset.joueurs)" title="Placer ${_escapeHtml(e.combo)} sur ${widthBlock.postes.map(_articAttPosteLabel).join('-')}"><span>${_escapeHtml(e.combo)}</span><span class="artic-listing-eff ${cls}">${effLabel} <span class="artic-listing-n">(${e.possessions})</span></span></div>`;
+            };
+            let rankedHtml;
+            if (!ranked.fiables.length && !ranked.faibles.length) {
+                rankedHtml = `<div class="artic-listing-row artic-listing-empty">Aucune composition observée pour cette largeur.</div>`;
+            } else {
+                rankedHtml = `<div class="artic-listing-hint">Fiable (≥5 séq.)</div>`
+                    + (ranked.fiables.length ? ranked.fiables.map(renderComboRow).join('') : `<div class="artic-listing-row artic-listing-empty">Aucune composition fiable observée.</div>`)
+                    + (ranked.faibles.length ? `<div class="artic-listing-hint">Échantillon faible (n&lt;5)</div>${ranked.faibles.map(renderComboRow).join('')}` : '');
+            }
+
+            const listingHtml = `<div class="artic-listing-col">
+                <div class="artic-listing-title">Classement — ${_escapeHtml(widthBlock.label)} (${widthBlock.postes.map(_articAttPosteLabel).join('-')})</div>
+                <div class="artic-listing-rows">${rankedHtml}</div>
+            </div>`;
+
+            container.innerHTML = `
+                ${controlBarHtml}
+                <div class="artic-main-row">
+                    <div class="artic-court-col">
+                        <div class="artic-court">
+                            ${_articCourtSvg()}
+                            ${postesHtml}
+                        </div>
+                        ${recapHtml}
+                        ${editorHtml}
+                        ${summaryHtml}
+                    </div>
+                    ${listingHtml}
+                </div>`;
+        }
+
+        function _redrawArticAttCourt() {
+            if (window._encCurrentMatchData) _drawArticulationAttCourt(document.getElementById('enc-articulation-wrap'), window._encCurrentMatchData);
+        }
+
+        function _setArticAttWidth(widthKey) {
+            window._articAttWidth = widthKey;
+            _redrawArticAttCourt();
+        }
+
+        function _setArticAttManualJoueur(pKey, joueurNom) {
+            if (!window._articAttManualPoste) window._articAttManualPoste = {};
+            if (joueurNom) window._articAttManualPoste[pKey] = joueurNom;
+            else delete window._articAttManualPoste[pKey];
+            window._articAttOpenPoste = null;
+            _redrawArticAttCourt();
+        }
+
+        function _setArticAttManualCombo(postesCsv, joueursCsv) {
+            const postes = postesCsv.split(',');
+            const joueurs = joueursCsv.split(',');
+            if (!window._articAttManualPoste) window._articAttManualPoste = {};
+            postes.forEach((pk, i) => { window._articAttManualPoste[pk] = joueurs[i]; });
+            window._articAttOpenPoste = null;
+            _redrawArticAttCourt();
+        }
+
+        function _toggleArticAttPosteEditor(pKey) {
+            window._articAttOpenPoste = window._articAttOpenPoste === pKey ? null : pKey;
+            _redrawArticAttCourt();
         }
 
         // A-06/07 — Gardien × famille

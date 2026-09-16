@@ -79,7 +79,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 - **Nommage HTML/CSS** : IDs et classes en kebab-case (`#filter-joueur-match`, `.jp-avatar`). Préfixes courts par module : `jp-*` (Joueurs), `pmf-*`/`pm-*` (Player Mode), `enc-*` (Enclenchements), `court-*` (terrain SVG).
 - **Fonctions JS** : camelCase. Fonctions privées à un module préfixées `_` (`_renderCourtPhotoState`, `_getJoueurBilanMatchs`).
-- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **9** balises `<link>`/`<script>` du projet (css/style.css + les 8 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v283**.
+- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **9** balises `<link>`/`<script>` du projet (css/style.css + les 8 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v284**.
 - **Résolution de nom joueur** : ne jamais comparer deux noms de joueur par égalité stricte. Le format court "Prénom.Initiale" (ex. `Lucas.G`) coexiste avec des colonnes Excel ne contenant que le prénom (ex. colonne `Gardien`) — toujours passer par `matchPlayerName(a, b)` (`js/utils.js`), qui gère ce cas et met en cache le résultat.
 - **Constantes de configuration maintenues à la main** : `POSTE_POSITIONS`, `GB_ZONE_WEIGHTS`, `EFF_SEUILS`, `PLAYER_PHOTOS` — objets JS statiques édités directement dans le code (par Romain ou en session), pas de table Supabase ni d'UI d'admin pour ces réglages ponctuels.
 - **Import Excel = remplacement complet** : chaque import Excel supprime et réinsère entièrement `match_data`/`joueurs`/`tableau_match`/`bilan` sur Supabase. Ne jamais stocker une donnée éditée en base (famille, note coach, compte joueur) sur une structure qui serait recréée par l'import — toujours une table séparée (`famille_mapping`, `coach_analyses`, `player_profiles`) ou un fichier hors pipeline (`player-photos.js`).
@@ -165,6 +165,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 - [x] Photos joueurs : avatar portrait (fiche + mode joueur), terrain avec photos, bascule directe vers la photo corps entier, couverture d'export avec photo corps entier (18/21 joueurs couverts)
 - [x] Migration locale → Supabase (one-shot, pour les données antérieures à la migration)
 - [x] Articulation défensive : import des colonnes Excel (`articulation_def`/`p1`-`p6`) + mode "Articulation" (demi-terrain par poste, dispositifs 0-6/1-5) dans la section Intention attaque, vue match et saison
+- [x] Articulation offensive (STORY-47/48, v284) : mode "Articulation" cliquable aussi côté ⚡ Attaque — demi-terrain 6 postes (ALG/ARG/DC/ARD/ALD/PVT), formule directe (pas d'inversion), groupements "6 complet"/"Base arrière", classement des compositions observées. État (`_articAtt*`) séparé de l'état défense (`_artic*`), jamais partagé
 
 **En attente / non couvert :**
 - [ ] Classement automatique des meilleures charnières centrales P2-P5 (STORY-35, à venir)

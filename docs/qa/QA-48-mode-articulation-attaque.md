@@ -1,0 +1,35 @@
+# QA-48 — Mode "Articulation" côté Attaque
+
+**Agent :** QA
+**Date :** 2026-09-16
+**Méthode :** lecture de code exhaustive + script Node reproduisant fidèlement les fonctions de calcul (`computeArticulationAttStats`, `_articAttBlockEff`, `computeArticAttCombos`/`_articRankedAttCombos`) sur données Supabase de production réelles. **Le serveur MCP Playwright est indisponible (`CONNECT_TIMEOUT`) pendant tout ce cycle** — aucune vérification par clic réel n'a été possible ; chaque critère ci-dessous précise sa méthode de vérification réelle, rien n'est présenté comme testé au clic si ça ne l'a pas été.
+
+---
+
+## Critères d'acceptation (`docs/stories/STORY-48-mode-articulation-attaque.md`)
+
+1. **Bouton cliquable en Attaque, terrain peuplé avec de vraies données** — ⚠️ *vérifié partiellement*. Câblage vérifié par lecture de code : la condition `!isAdv` a bien été retirée du bouton, `_setEncGraphMode('articulation')` dispatche correctement vers `_drawArticulationAttCourt` quand `window._encTeamMode !== 'adv'`. Peuplement des 6 postes avec de vraies données vérifié par script Node (saison entière : ALG=Julien.L/41%, ARG=Marius.C/39%, DC=Issa.S/46%, ARD=Louis.M/53%, ALD=Zach.D/57%, PVT=Yoran.C/47% — cohérent, aucune valeur aberrante). **Le rendu visuel réel des 6 ronds sur le terrain n'a pas été observé dans un navigateur.**
+
+2. **Bascule "6 complet"/"Base arrière" → recalcul correct, vérifié sur un cas réel** — ✅ *vérifié par calcul*. J01 BILLERE-FENIX, "6 complet" : 42 séquences, 11 buts, 13 tirs ratés, 46%. Saison entière, "Base arrière" : composition la plus fiable observée "Issa.S / Siméo.R / Louis.M" à 75% (n=9, 6 buts/2 tirs). Formules validées manuellement (46 = round(11/24×100), 75 = round(6/8×100)).
+
+3. **Clic sur un poste → panneau d'édition, changement reflété partout** — ⚠️ *non vérifiable sans navigateur*. Code lu : `_toggleArticAttPosteEditor`/`_setArticAttManualJoueur` sont des jumelles fidèles des fonctions défense équivalentes (déjà éprouvées en production depuis STORY-38), lisant/écrivant `window._articAttManualPoste`/`window._articAttOpenPoste` puis appelant `_redrawArticAttCourt()`. Aucune raison structurelle de doute, mais **le clic réel (ouverture du panneau, sélection dans la liste, `<select>` "Auto") n'a pas été exécuté**.
+
+4. **Clic sur une ligne du classement → place toute la composition** — ⚠️ *non vérifiable sans navigateur*, mêmes réserves que le critère 3. `_setArticAttManualCombo` est une jumelle fidèle de `_setArticManualCombo`.
+
+5. **Résumé "de réussite offensive", % = buts/(buts+tirs ratés), formule directe** — ✅ *vérifié par calcul et lecture de code*. `_articAttEffClass` compare `eff >= 55`/`eff >= 38` (sens direct), à l'opposé de `_articDefClass` qui compare `tauxDef > 62`/`tauxDef >= 45` sur une valeur déjà inversée par `_articTauxDefense`. Confirmé numériquement : `_articAttBlockEff` retourne `eff: Math.round(buts/(buts+tirs)*100)` sans aucune transformation supplémentaire.
+
+6. **Cas vides gérés explicitement** — ✅ *vérifié par lecture de code, un cas observé en conditions réelles*. Trois chemins distincts : `stats.total === 0` (aucune donnée sur la période) → `<p class="artic-empty">`, `widthStat.incomplete` (poste manquant dans la composition) → message dédié, `widthStat.possessions === 0` (composition jamais observée) → message dédié. Le script de vérification a effectivement rencontré ce 3e cas en conditions réelles : le lineup "auto" complet ("6 complet") n'a été observé qu'1 seule fois sur toute la saison (`possessions: 1`, ni le cas `incomplete` ni le cas `possessions === 0` — le chemin nominal du résumé s'affiche avec 0% et 1 tir raté, sans erreur).
+
+7. **État Attaque/Défense indépendant en basculant plusieurs fois** — ⚠️ *non vérifiable sans navigateur*. Vérifié par lecture de code que `window._articAtt*` (3 variables) et `window._artic*` (4 variables, dont `_articDispositif` qui n'a pas d'équivalent côté attaque) ne se croisent jamais dans le code (recherche croisée : aucune occurrence de `_articAtt` dans le bloc défense ni l'inverse), et que `_setEncTeamMode` ne réinitialise plus `window._encGraphMode` en changeant de côté. **La persistance réelle d'un poste ouvert/override manuel en basculant plusieurs fois de suite n'a pas été cliquée.**
+
+8. **Non-régression totale du mode Défense** — ✅ *vérifié par `git diff*, ⚠️ pas par clic*. Les 3 seules lignes supprimées du diff correspondent exactement aux 3 points d'intégration autorisés (bouton, `_setEncTeamMode`, `_setEncGraphMode`) ; aucune ligne des fonctions défense (`computeArticulationStats` → `_toggleArticPosteEditor`) n'apparaît dans le diff. Preuve par construction qu'aucune régression de calcul n'est possible côté défense. **Le rendu visuel du mode Défense n'a pas été re-cliqué ce cycle** (checklist I22 mise à jour en conséquence).
+
+9. **Testé en conditions réelles sur au moins 2 matchs, y compris "peu de données"** — ⚠️ *vérifié par calcul sur les 2 matchs disponibles, pas par clic*. J01 BILLERE-FENIX (61 lignes taguées) et J02 FENIX-LA CRAU (59 lignes) tous deux exploitables. Cas "peu de données" rencontré et géré (critère 6, le lineup "6 complet" à n=1).
+
+## Point additionnel vérifié — Risk R1 (obligatoire selon la story)
+
+Comparaison avec/sans filtre `possession` faite sur données réelles (imposée par la story avant de figer le calcul) : 36 des 120 lignes `articulation_att` FENIX n'ont pas de tag `Possession`. Décomposées par `resultat` : très majoritairement `Jet franc`/`2' obt` (connus, hors calcul par nature — ce sont des sous-événements, pas des tirs), mais **4 `Tir raté`** authentiques (vérifiés un par un : joueurs et horaires différents des lignes voisines, donc pas des doublons). Comparaison avec 31 `But` FENIX taguées : 0 sans `Possession`. Correctif appliqué (`_articAttCounts`) : tolérance ciblée sur "Tir raté" uniquement. Sans ce correctif, le % de réussite global aurait été mesuré à un niveau artificiellement plus haut (84 possessions au lieu de 88, dénominateur sous-évalué côté tirs manqués uniquement). Documenté en détail dans `docs/code-review/STORY-48.md`.
+
+## Verdict
+
+**PASSED SOUS RÉSERVE** — la logique de calcul est vérifiée juste et robuste sur données réelles (y compris le correctif R1, non prévu par l'Architecture d'origine mais explicitement exigé par la story), le câblage est conforme par lecture de code, et le CSS ne manque aucune classe. **Réserve explicite et non négociable** : cette story ajoute une interface cliquable complexe (terrain interactif, panneau d'édition, classement cliquable, état à préserver en basculant) et **aucun clic réel n'a pu être exécuté** (MCP Playwright indisponible tout le cycle). Les critères 1 (rendu visuel), 3, 4, 7 et la partie clic du critère 8/9 ne sont couverts que par la solidité du code réutilisé (jumelles fidèles de fonctions déjà éprouvées en production), pas par une observation réelle. **Ne pas considérer cette story comme définitivement close avant un passage manuel de Romain** (script de vérification ci-dessous, section E2E).
