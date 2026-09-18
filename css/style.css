@@ -593,6 +593,8 @@
         [data-theme="dark"] .team-card,
         [data-theme="dark"] #players-section { background: var(--dk-panel); border-color: var(--dk-line); }
         [data-theme="dark"] .team-card-header { border-bottom-color: var(--dk-line); }
+        [data-theme="dark"] .team-card.fenix .team-card-header h3 { color: var(--dk-text); }
+        [data-theme="dark"] .matchs-bar-title { color: var(--dk-text); }
         [data-theme="dark"] .team-stat-item { background: var(--dk-panel2); }
         [data-theme="dark"] .team-stat-item .label,
         [data-theme="dark"] .team-stat-item .sub-value { color: var(--dk-mut); }
