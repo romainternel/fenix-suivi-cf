@@ -608,6 +608,26 @@
         #players-section th { position: sticky; top: 0; z-index: 1; }
         #players-section td, #players-section th { font-variant-numeric: tabular-nums; }
 
+        /* ── Thème sombre (phase 2 : page Joueurs) ──
+           Mêmes principes que la phase 1 : chaque sélecteur vérifié un par un (grep) pour
+           confirmer qu'il n'est pas partagé avec une autre page avant de l'ajouter ici.
+           .jm-table/.jm-total-row sont aussi utilisées par le Mode Lecture Joueur (player-mode.js)
+           — accepté volontairement, cohérent puisque le fond de page y devient sombre aussi
+           (règle body ci-dessus, globale) si jamais la bascule est active dans ce contexte. */
+        [data-theme="dark"] .joueur-panel,
+        [data-theme="dark"] #joueur-matches { background: #101E34; border-color: #233A5C; }
+        [data-theme="dark"] .jp-stat { border-right-color: #233A5C; }
+        [data-theme="dark"] .jp-lbl { color: #8CA3C4; }
+        [data-theme="dark"] .jp-val { color: var(--fenix-accent); }
+        [data-theme="dark"] .jp-empty { color: #8CA3C4; }
+        [data-theme="dark"] .jm-header { color: var(--fenix-accent); border-bottom-color: #233A5C; }
+        [data-theme="dark"] .jm-table th { background: #17284A; border-bottom-color: #233A5C; color: #8CA3C4; }
+        [data-theme="dark"] .jm-table td { border-bottom-color: #233A5C; color: #EEF3FB; }
+        [data-theme="dark"] .jm-table td:first-child { color: var(--fenix-accent); }
+        [data-theme="dark"] .jm-table tbody tr:hover { background: rgba(76,141,255,0.12); }
+        [data-theme="dark"] .jm-total-row td { background: #17284A !important; color: var(--fenix-accent) !important; border-top-color: #345683; }
+        [data-theme="dark"] .court-photo-view { background: linear-gradient(180deg, #17284A 0%, #101E34 100%); }
+
         /* Bouton graphique */
         .graph-btn {
             background: rgba(255,255,255,0.2);
