@@ -271,9 +271,14 @@
         #players-section { border: 1px solid var(--gray-200); border-radius: 12px; box-shadow: var(--shadow-sm); }
         #players-section th { cursor: pointer; user-select: none; white-space: nowrap; }
         #players-section th:hover { background: #EFF6FF; }
-        #players-section th.sort-active { color: var(--fenix-blue); }
+        /* Bug pré-existant trouvé le 2026-09-18 en vérifiant le thème sombre (sans lien avec lui) :
+           le texte de la colonne triée par défaut ("Buts") était strictement invisible, sa couleur
+           (var(--fenix-blue)) étant identique au fond bleu du <th> (th { background: var(--fenix-blue) }).
+           Remis en blanc comme le reste de l'en-tête — aucune autre table ne réutilise .sort-active/
+           .sort-icon (vérifié), correctif sans risque ailleurs. */
+        #players-section th.sort-active { color: var(--fenix-white); }
         .sort-icon { font-size: 0.65em; margin-left: 0.25em; color: #CBD5E1; vertical-align: middle; }
-        th.sort-active .sort-icon { color: var(--fenix-blue); }
+        th.sort-active .sort-icon { color: var(--fenix-white); }
 
         .avg-toggle-btn {
             background: transparent;
