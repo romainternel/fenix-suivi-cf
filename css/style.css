@@ -211,8 +211,8 @@
         }
 
         .nav-btn:hover { color: #fff; }
-        .nav-btn.active { color: #fff; border-bottom-color: var(--fenix-accent); }
-        .nav-btn:focus-visible { outline: 2px solid var(--fenix-accent); outline-offset: -2px; }
+        .nav-btn.active { color: #fff; border-bottom-color: #31CBE8; }
+        .nav-btn:focus-visible { outline: 2px solid #31CBE8; outline-offset: -2px; }
 
         .main { padding: 2rem; max-width: 1600px; margin: 0 auto; }
 
@@ -577,26 +577,34 @@
            ci-dessous ont leur propre réglage sombre pour l'instant ; les autres pages (Analyse,
            Joueurs, etc.) n'ont pas encore le leur et restent visuellement identiques même
            bascule activée — migration prévue page par page, pas d'un coup (demande Romain). */
-        [data-theme="dark"] body { background: #0A1220; color: #EEF3FB; }
+        /* Tokens repris tels quels (mêmes valeurs hex) de l'app "Tests physiques" de référence —
+           demande explicite de Romain ("même code couleur"), pas une approximation avec notre bleu. */
+        [data-theme="dark"] {
+            --dk-bg: #071322; --dk-panel: #0D1F33; --dk-panel2: #14304C;
+            --dk-line: #21456B; --dk-line2: #2E5A85;
+            --dk-text: #E9F2FA; --dk-mut: #8CA6C2;
+            --dk-accent: #31CBE8; --dk-red: #F0685F;
+        }
+        [data-theme="dark"] body { background: var(--dk-bg); color: var(--dk-text); }
         [data-theme="dark"] .import-section,
         [data-theme="dark"] .team-card,
-        [data-theme="dark"] #players-section { background: #101E34; border-color: #233A5C; }
-        [data-theme="dark"] .team-card-header { border-bottom-color: #233A5C; }
-        [data-theme="dark"] .team-stat-item { background: #17284A; }
+        [data-theme="dark"] #players-section { background: var(--dk-panel); border-color: var(--dk-line); }
+        [data-theme="dark"] .team-card-header { border-bottom-color: var(--dk-line); }
+        [data-theme="dark"] .team-stat-item { background: var(--dk-panel2); }
         [data-theme="dark"] .team-stat-item .label,
-        [data-theme="dark"] .team-stat-item .sub-value { color: #8CA3C4; }
-        [data-theme="dark"] .team-stat-item .value { color: var(--fenix-accent); }
-        [data-theme="dark"] .team-card.adversaire .team-stat-item .value { color: var(--fenix-danger); }
-        [data-theme="dark"] .adversaire-name { color: #EEF3FB; }
-        [data-theme="dark"] .matchs-bar { background: #101E34; border-color: #233A5C; }
-        [data-theme="dark"] #players-section .table-container { border-color: #233A5C; }
-        [data-theme="dark"] #players-section td { border-bottom-color: #233A5C; color: #EEF3FB; }
-        [data-theme="dark"] #players-section tr:hover { background: rgba(76,141,255,0.12); }
-        [data-theme="dark"] .avg-toggle-btn { border-color: #345683; color: #8CA3C4; background: transparent; }
-        [data-theme="dark"] .avg-toggle-btn:hover { border-color: var(--fenix-accent); color: var(--fenix-accent); }
-        [data-theme="dark"] .avg-toggle-btn.active { background: var(--fenix-accent); border-color: var(--fenix-accent); color: #fff; }
-        [data-theme="dark"] .import-section p { color: #8CA3C4; }
-        [data-theme="dark"] #players-section .section-title { color: var(--fenix-accent); }
+        [data-theme="dark"] .team-stat-item .sub-value { color: var(--dk-mut); }
+        [data-theme="dark"] .team-stat-item .value { color: var(--dk-accent); }
+        [data-theme="dark"] .team-card.adversaire .team-stat-item .value { color: var(--dk-red); }
+        [data-theme="dark"] .adversaire-name { color: var(--dk-text); }
+        [data-theme="dark"] .matchs-bar { background: var(--dk-panel); border-color: var(--dk-line); }
+        [data-theme="dark"] #players-section .table-container { border-color: var(--dk-line); }
+        [data-theme="dark"] #players-section td { border-bottom-color: var(--dk-line); color: var(--dk-text); }
+        [data-theme="dark"] #players-section tr:hover { background: rgba(49,203,232,0.12); }
+        [data-theme="dark"] .avg-toggle-btn { border-color: var(--dk-line2); color: var(--dk-mut); background: transparent; }
+        [data-theme="dark"] .avg-toggle-btn:hover { border-color: var(--dk-accent); color: var(--dk-accent); }
+        [data-theme="dark"] .avg-toggle-btn.active { background: var(--dk-panel2); border-color: var(--dk-accent); color: var(--dk-accent); }
+        [data-theme="dark"] .import-section p { color: var(--dk-mut); }
+        [data-theme="dark"] #players-section .section-title { color: var(--dk-accent); }
 
         .theme-toggle-btn {
             background: rgba(255,255,255,0.1);
@@ -624,18 +632,18 @@
            — accepté volontairement, cohérent puisque le fond de page y devient sombre aussi
            (règle body ci-dessus, globale) si jamais la bascule est active dans ce contexte. */
         [data-theme="dark"] .joueur-panel,
-        [data-theme="dark"] #joueur-matches { background: #101E34; border-color: #233A5C; }
-        [data-theme="dark"] .jp-stat { border-right-color: #233A5C; }
-        [data-theme="dark"] .jp-lbl { color: #8CA3C4; }
-        [data-theme="dark"] .jp-val { color: var(--fenix-accent); }
-        [data-theme="dark"] .jp-empty { color: #8CA3C4; }
-        [data-theme="dark"] .jm-header { color: var(--fenix-accent); border-bottom-color: #233A5C; }
-        [data-theme="dark"] .jm-table th { background: #17284A; border-bottom-color: #233A5C; color: #8CA3C4; }
-        [data-theme="dark"] .jm-table td { border-bottom-color: #233A5C; color: #EEF3FB; }
-        [data-theme="dark"] .jm-table td:first-child { color: var(--fenix-accent); }
-        [data-theme="dark"] .jm-table tbody tr:hover { background: rgba(76,141,255,0.12); }
-        [data-theme="dark"] .jm-total-row td { background: #17284A !important; color: var(--fenix-accent) !important; border-top-color: #345683; }
-        [data-theme="dark"] .court-photo-view { background: linear-gradient(180deg, #17284A 0%, #101E34 100%); }
+        [data-theme="dark"] #joueur-matches { background: var(--dk-panel); border-color: var(--dk-line); }
+        [data-theme="dark"] .jp-stat { border-right-color: var(--dk-line); }
+        [data-theme="dark"] .jp-lbl { color: var(--dk-mut); }
+        [data-theme="dark"] .jp-val { color: var(--dk-accent); }
+        [data-theme="dark"] .jp-empty { color: var(--dk-mut); }
+        [data-theme="dark"] .jm-header { color: var(--dk-accent); border-bottom-color: var(--dk-line); }
+        [data-theme="dark"] .jm-table th { background: var(--dk-panel2); border-bottom-color: var(--dk-line); color: var(--dk-mut); }
+        [data-theme="dark"] .jm-table td { border-bottom-color: var(--dk-line); color: var(--dk-text); }
+        [data-theme="dark"] .jm-table td:first-child { color: var(--dk-accent); }
+        [data-theme="dark"] .jm-table tbody tr:hover { background: rgba(49,203,232,0.12); }
+        [data-theme="dark"] .jm-total-row td { background: var(--dk-panel2) !important; color: var(--dk-accent) !important; border-top-color: var(--dk-line2); }
+        [data-theme="dark"] .court-photo-view { background: linear-gradient(180deg, var(--dk-panel2) 0%, var(--dk-panel) 100%); }
 
         /* Bouton graphique */
         .graph-btn {
