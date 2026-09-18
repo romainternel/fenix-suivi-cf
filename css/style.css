@@ -159,10 +159,13 @@
 
         /* Bandeau à 2 lignes (comparatif de design, 2026-09-18) : ligne 1 = logo + actions
            (Outils, thème), ligne 2 = onglets de page soulignés, style repris de l'app "Tests
-           physiques" de l'ami de Romain — même principe de navigation, couleur de marque FENIX
-           conservée (pas le bleu/cyan de l'autre app). */
+           physiques" de l'ami de Romain — même principe de navigation. Fond recoloré (2026-09-18,
+           "le fond bleu est différent") sur le même code couleur que l'app de référence : le bleu
+           FENIX (--fenix-blue-light) était trop saturé, mauvais contraste avec le texte clair
+           semi-transparent ("bleu sur bleu on voit rien") — remplacé par la palette dark de
+           référence, ici toujours visible (pas conditionné par [data-theme="dark"]). */
         .header {
-            background: linear-gradient(135deg, var(--fenix-blue) 0%, var(--fenix-blue-light) 100%);
+            background: linear-gradient(135deg, #071322 0%, #0D1F33 100%);
             padding: 0.5rem 1.5rem 0;
             display: flex;
             flex-direction: column;
