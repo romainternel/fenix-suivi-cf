@@ -1,3 +1,7 @@
 supabase/.temp/
 node_modules/
 PHOTO JOUEURS/
+.claude/
+.playwright-mcp/
+*.xlsm
+*.xlsx
