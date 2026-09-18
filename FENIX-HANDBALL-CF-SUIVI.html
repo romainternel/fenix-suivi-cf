@@ -11,15 +11,15 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=292">
-    <script src="js/supabase-client.js?v=292"></script>
-    <script src="js/utils.js?v=292"></script>
-    <script src="js/player-photos.js?v=292"></script>
-    <script src="js/impact-images.js?v=292"></script>
-    <script src="js/player-mode.js?v=292"></script>
-    <script src="js/page-joueurs.js?v=292"></script>
-    <script src="js/page-notes-graph.js?v=292"></script>
-    <script src="js/page-analyse.js?v=292"></script>
+    <link rel="stylesheet" href="css/style.css?v=293">
+    <script src="js/supabase-client.js?v=293"></script>
+    <script src="js/utils.js?v=293"></script>
+    <script src="js/player-photos.js?v=293"></script>
+    <script src="js/impact-images.js?v=293"></script>
+    <script src="js/player-mode.js?v=293"></script>
+    <script src="js/page-joueurs.js?v=293"></script>
+    <script src="js/page-notes-graph.js?v=293"></script>
+    <script src="js/page-analyse.js?v=293"></script>
 </head>
 <body>
 
@@ -184,12 +184,11 @@
         }
     </script>
 
-    <div id="joueurs-subnav" class="joueurs-subnav" style="display:none;">
-        <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
-        <button class="jsub-btn" data-jsub="notes" onclick="switchJoueursTab('notes')">⭐ Notes</button>
-        <span class="jsub-sep"></span>
-        <button id="btn-joueur-graph" class="btn-joueur-context" disabled onclick="openGraphiqueForSelected()">📈 Graphique</button>
-        <button id="btn-joueur-impact" class="btn-joueur-context" disabled onclick="openImpactForSelected()">🎯 Impact</button>
+    <div id="joueurs-subnav" class="joueurs-subnav" style="display:none;" role="tablist">
+        <button class="jsub-btn active" data-jsub="joueurs" role="tab" aria-selected="true" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>
+        <button class="jsub-btn" data-jsub="notes" role="tab" aria-selected="false" onclick="switchJoueursTab('notes')">⭐ Notes</button>
+        <button id="btn-joueur-graph" class="jsub-btn" data-jsub="notegraph" role="tab" aria-selected="false" disabled onclick="switchJoueursTab('notegraph')">📈 Graphique</button>
+        <button id="btn-joueur-impact" class="jsub-btn" data-jsub="impact" role="tab" aria-selected="false" disabled onclick="switchJoueursTab('impact')">🎯 Impact</button>
     </div>
 
     <main class="main">
@@ -862,8 +861,8 @@
         </div>
 
         <!-- Graphiques combinés : Joueur + GB -->
-        <div class="page" id="page-notegraph" onclick="ngGoBack()">
-            <div class="ng-page-layout" onclick="event.stopPropagation()">
+        <div class="page" id="page-notegraph">
+            <div class="ng-page-layout">
                 <div class="ng-header">
                     <button class="btn-comparer" onclick="toggleCompare('ng-filters', this)">🔀 Comparer</button>
                     <div id="ng-filters" style="display:none;" class="compare-filters">
@@ -892,13 +891,11 @@
                             </select>
                         </div>
                     </div>
-                    <span style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-left:auto">Cliquer en dehors pour fermer</span>
                 </div>
                 <div class="ng-charts-body">
                     <div id="ng-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:rgba(255,255,255,0.5);gap:12px;">
                         <span style="font-size:2.5rem">📈</span>
                         <span style="font-size:0.9rem;font-weight:600">Sélectionne un joueur sur le terrain</span>
-                        <button onclick="ngGoBack()" style="margin-top:8px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:7px 18px;border-radius:20px;cursor:pointer;font-size:0.82rem">← Retour</button>
                     </div>
                     <div class="ng-chart-section" id="ng-section-joueur" style="display:none">
                         <canvas id="ng-canvas"></canvas>
@@ -1216,9 +1213,9 @@ let _effInfoPoste = null;
         function switchJoueursTab(page) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
-            document.querySelectorAll('.jsub-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.jsub-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
             const subBtn = document.querySelector(`[data-jsub="${page}"]`);
-            if (subBtn) subBtn.classList.add('active');
+            if (subBtn) { subBtn.classList.add('active'); subBtn.setAttribute('aria-selected', 'true'); }
 
             if (page === 'notes') {
                 // Sync bilan
@@ -1243,7 +1240,59 @@ let _effInfoPoste = null;
                 }
             }
 
+            if (page === 'notegraph' && typeof currentSelectedJoueur !== 'undefined' && currentSelectedJoueur) {
+                const isGB = detectIsGB(currentSelectedJoueur);
+                if (isGB) {
+                    const selGB = document.getElementById('gbg-gardien');
+                    if (selGB) {
+                        selGB.value = '';
+                        for (let i = 0; i < selGB.options.length; i++) {
+                            if (matchPlayerName(selGB.options[i].value, currentSelectedJoueur)) { selGB.value = selGB.options[i].value; break; }
+                        }
+                    }
+                    const selNG = document.getElementById('ng-joueur');
+                    if (selNG) selNG.value = '';
+                } else {
+                    const selNG = document.getElementById('ng-joueur');
+                    if (selNG) {
+                        selNG.value = '';
+                        for (let i = 0; i < selNG.options.length; i++) {
+                            if (matchPlayerName(selNG.options[i].value, currentSelectedJoueur)) { selNG.value = selNG.options[i].value; break; }
+                        }
+                    }
+                    const selGB = document.getElementById('gbg-gardien');
+                    if (selGB) selGB.value = '';
+                }
+                _ngBilanMatches = (typeof _getJoueurBilanMatchs === 'function') ? _getJoueurBilanMatchs() : null;
+                hideCompareFilters();
+            }
+
+            // STORY-27 : un gardien route vers la même page-impact qu'un joueur de champ
+            // (au lieu de l'ancienne page-gardiens, orpheline et cassée — cf. docs/arch/impact-gardien.md).
+            if (page === 'impact' && typeof currentSelectedJoueur !== 'undefined' && currentSelectedJoueur) {
+                const sel = document.getElementById('filter-impact-joueur');
+                if (sel) {
+                    sel.value = '';
+                    for (let i = 0; i < sel.options.length; i++) {
+                        if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) { sel.value = sel.options[i].value; break; }
+                    }
+                }
+                const _joueurBilanVal = document.getElementById('filter-joueur-bilan')?.value || '';
+                impactBilanFilter = _joueurBilanVal;
+                const impactBilanSel = document.getElementById('filter-impact-bilan');
+                if (impactBilanSel) impactBilanSel.value = _joueurBilanVal;
+                hideCompareFilters();
+            }
+
             if (DATA.length > 0) refreshPage(page);
+
+            // Retour sur Notes après un aller-retour vers le graphique d'un joueur (raccourci
+            // 📈 depuis le détail Notes) : rouvre le même détail plutôt que de le perdre.
+            if (page === 'notes' && typeof _ngFromDetail !== 'undefined' && _ngFromDetail) {
+                const _backJoueur = _ngFromDetail;
+                _ngFromDetail = null;
+                if (typeof openNotesDetail === 'function') openNotesDetail(_backJoueur);
+            }
         }
 
         function togglePmMenu() {
@@ -1315,77 +1364,6 @@ let _effInfoPoste = null;
                     label.innerHTML = '<span style="color:#94A3B8">← Clique un joueur sur le terrain</span>';
                 }
             }
-        }
-
-        function openGraphiqueForSelected() {
-            if (!currentSelectedJoueur) return;
-            const isGB = detectIsGB(currentSelectedJoueur);
-
-            if (isGB) {
-                // GB → pré-sélectionner dans gbg-gardien
-                const selGB = document.getElementById('gbg-gardien');
-                if (selGB) {
-                    selGB.value = '';
-                    for (let i = 0; i < selGB.options.length; i++) {
-                        if (matchPlayerName(selGB.options[i].value, currentSelectedJoueur)) {
-                            selGB.value = selGB.options[i].value;
-                            break;
-                        }
-                    }
-                }
-                // Vider le filtre joueur de champ
-                const selNG = document.getElementById('ng-joueur');
-                if (selNG) selNG.value = '';
-            } else {
-                // Joueur de champ → pré-sélectionner dans ng-joueur
-                const selNG = document.getElementById('ng-joueur');
-                if (selNG) {
-                    selNG.value = '';
-                    for (let i = 0; i < selNG.options.length; i++) {
-                        if (matchPlayerName(selNG.options[i].value, currentSelectedJoueur)) {
-                            selNG.value = selNG.options[i].value;
-                            break;
-                        }
-                    }
-                }
-                // Vider le filtre gardien
-                const selGB = document.getElementById('gbg-gardien');
-                if (selGB) selGB.value = '';
-            }
-
-            // Passer le filtre bilan au notegraph
-            _ngBilanMatches = (typeof _getJoueurBilanMatchs === 'function') ? _getJoueurBilanMatchs() : null;
-            hideCompareFilters();
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-notegraph').classList.add('active');
-            _ngFromDetail = null;
-            updateNoteGraph();
-            updateGbGraph();
-        }
-
-        // STORY-27 : un gardien route désormais vers la même page-impact qu'un joueur de champ
-        // (au lieu de l'ancienne page-gardiens, orpheline et cassée — cf. docs/arch/impact-gardien.md).
-        function openImpactForSelected() {
-            if (!currentSelectedJoueur) return;
-            const sel = document.getElementById('filter-impact-joueur');
-            if (sel) {
-                sel.value = '';
-                for (let i = 0; i < sel.options.length; i++) {
-                    if (matchPlayerName(sel.options[i].value, currentSelectedJoueur)) {
-                        sel.value = sel.options[i].value;
-                        break;
-                    }
-                }
-            }
-            // Sync bilan depuis page Joueurs
-            const _joueurBilanVal = document.getElementById('filter-joueur-bilan')?.value || '';
-            impactBilanFilter = _joueurBilanVal;
-            const impactBilanSel = document.getElementById('filter-impact-bilan');
-            if (impactBilanSel) impactBilanSel.value = _joueurBilanVal;
-            hideCompareFilters();
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-impact').classList.add('active');
-            updateImpactPage();
         }
 
         function goToAnalysePage() {

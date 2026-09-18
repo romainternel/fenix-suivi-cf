@@ -322,6 +322,12 @@
         let noteGraphChart = null;
         let _ngFromDetail = null;
 
+        function _activateJsubTab(name) {
+            document.querySelectorAll('.jsub-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+            const btn = document.querySelector(`[data-jsub="${name}"]`);
+            if (btn) { btn.classList.add('active'); btn.setAttribute('aria-selected', 'true'); }
+        }
+
         function goToNoteGraph(joueur, bilanCsv) {
             _ngFromDetail = joueur;
             // bilanCsv peut être une chaîne CSV de matchs ou null
@@ -329,21 +335,9 @@
                 _ngBilanMatches = bilanCsv ? bilanCsv.split(',') : null;
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-notegraph').classList.add('active');
+            _activateJsubTab('notegraph');
             document.getElementById('ng-joueur').value = joueur;
             updateNoteGraph();
-        }
-
-        function ngGoBack() {
-            const joueur = _ngFromDetail;
-            _ngFromDetail = null;
-            if (joueur) {
-                // came from Notes detail → back to Notes
-                switchJoueursTab('notes');
-                if (typeof openNotesDetail === 'function') openNotesDetail(joueur);
-            } else {
-                // came from Joueurs contextual button → back to Fiche
-                switchJoueursTab('joueurs');
-            }
         }
 
         function _updateNgEmptyState() {
@@ -600,6 +594,7 @@
             _gbgFromNotes = gardien;
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-notegraph').classList.add('active');
+            _activateJsubTab('notegraph');
             document.getElementById('gbg-gardien').value = gardien;
             updateGbGraph();
         }

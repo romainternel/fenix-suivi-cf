@@ -1217,8 +1217,6 @@
         .joueurs-topbar label { font-size: 0.8rem; font-weight: 600; color: #64748B; white-space: nowrap; }
         .joueurs-context-bar { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; padding: 0.5rem 0.75rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; }
         .joueurs-context-label { font-size: 0.78rem; font-weight: 600; color: #94A3B8; flex: 1; }
-        .btn-joueur-context { background: var(--fenix-blue); color: #fff; border: none; border-radius: 20px; padding: 5px 14px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-        .btn-joueur-context:disabled { background: #F1F5F9; color: #CBD5E1; border: 1.5px dashed #CBD5E1; cursor: not-allowed; }
         .btn-comparer { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; padding: 5px 14px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .btn-comparer:hover { background: rgba(255,255,255,0.25); }
         .btn-comparer-active { background: rgba(255,255,255,0.3) !important; }
@@ -1848,10 +1846,9 @@
         .nd-clickable { cursor: pointer; text-decoration: underline; text-decoration-color: #CBD5E1; text-underline-offset: 2px; }
         .nd-clickable:hover { color: var(--fenix-accent); }
 
-        /* Graph — overlay modal (Joueurs + GB combiné) */
-        #page-notegraph { padding: 0; cursor: pointer; }
-        #page-notegraph.active { display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10,36,99,0.55); z-index: 500; align-items: center; justify-content: center; }
-        .ng-page-layout { width: 88vw; height: 84vh; background: white; border-radius: 16px; cursor: default; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.3); }
+        /* Graph (Joueurs + GB combiné) — onglet normal au même titre que Fiche/Notes/Impact,
+           plus un overlay modal (ancienne architecture, remplacée pour matcher les onglets pairs) */
+        .ng-page-layout { width: 100%; height: 78vh; background: white; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
         .ng-header { display: flex; align-items: center; gap: 1.5rem; background: var(--fenix-blue); padding: 0.5rem 1rem; flex-shrink: 0; flex-wrap: wrap; }
         .ng-charts-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
         .ng-chart-section { flex: 1; min-height: 0; position: relative; padding: 0.4rem 1rem 0.8rem; }
@@ -2663,41 +2660,40 @@
             .pmf-graph-wrap { height: 220px; }
         }
 
-        /* ── Sous-navigation Joueurs (barre contenu) ────────────────────────── */
+        /* ── Sous-navigation Joueurs (onglets soulignés, même architecture que le
+           bandeau principal — Fiche/Notes/Graphique/Impact sont des onglets pairs,
+           plus des boutons d'action contextuels séparés) ─────────────────────── */
         .joueurs-subnav {
             position: sticky;
             top: 42px;
             z-index: 99;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 6px;
-            padding: 4px 1.5rem;
+            gap: 4px;
+            padding: 0 1.5rem;
             background: #fff;
             border-bottom: 1px solid #E2E8F0;
             box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
-        .jsub-sep { width: 1px; height: 20px; background: #E2E8F0; flex-shrink: 0; }
         .jsub-btn {
-            background: #F1F5F9;
-            border: 1px solid #E2E8F0;
-            border-radius: 20px;
-            padding: 5px 14px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            color: #64748B;
+            padding: 0.55rem 0.9rem 0.45rem;
             font-family: 'Inter', sans-serif;
             font-size: 0.85rem;
             font-weight: 700;
             letter-spacing: 0.3px;
-            color: #475569;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: color 0.15s ease, border-color 0.15s ease;
             white-space: nowrap;
         }
-        .jsub-btn:hover { background: #E2E8F0; }
-        .jsub-btn.active {
-            background: var(--fenix-blue);
-            color: #fff;
-            border-color: var(--fenix-blue);
-        }
+        .jsub-btn:hover { color: #1E293B; }
+        .jsub-btn:disabled { color: #CBD5E1; cursor: not-allowed; }
+        .jsub-btn.active { color: #0A2463; border-bottom-color: #31CBE8; }
+        .jsub-btn:focus-visible { outline: 2px solid #31CBE8; outline-offset: -2px; }
 
         /* ── Badge données dans le header ────────────────────────────────────── */
         .header-data-badge {
