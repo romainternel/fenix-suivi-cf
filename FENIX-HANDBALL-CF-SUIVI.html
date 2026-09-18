@@ -11,15 +11,15 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=286">
-    <script src="js/supabase-client.js?v=286"></script>
-    <script src="js/utils.js?v=286"></script>
-    <script src="js/player-photos.js?v=286"></script>
-    <script src="js/impact-images.js?v=286"></script>
-    <script src="js/player-mode.js?v=286"></script>
-    <script src="js/page-joueurs.js?v=286"></script>
-    <script src="js/page-notes-graph.js?v=286"></script>
-    <script src="js/page-analyse.js?v=286"></script>
+    <link rel="stylesheet" href="css/style.css?v=287">
+    <script src="js/supabase-client.js?v=287"></script>
+    <script src="js/utils.js?v=287"></script>
+    <script src="js/player-photos.js?v=287"></script>
+    <script src="js/impact-images.js?v=287"></script>
+    <script src="js/player-mode.js?v=287"></script>
+    <script src="js/page-joueurs.js?v=287"></script>
+    <script src="js/page-notes-graph.js?v=287"></script>
+    <script src="js/page-analyse.js?v=287"></script>
 </head>
 <body>
 
@@ -73,6 +73,11 @@
     </div>
 
     <script>
+        // Applique la bascule thème sombre avant le rendu du header pour éviter un flash clair->sombre
+        // (phase 1 du nouveau design, cf. css/style.css — pour l'instant seul le Dashboard en tient compte).
+        (function() {
+            try { if (localStorage.getItem('fenix-theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch(e) {}
+        })();
         (function() {
             const stored = sessionStorage.getItem('fenix_session');
             if (stored) {
@@ -159,8 +164,22 @@
                     <button id="btn-migrate-local" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); checkAndOfferLocalMigration(true);">🔄 Migrer mes données locales</button>
                 </div>
             </div>
+            <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleAppTheme()" title="Thème sombre (Dashboard pour l'instant)">🌙</button>
         </nav>
     </header>
+    <script>
+        // Phase 1 du nouveau design (comparatif 2026-09-18) : bascule thème sombre, pour l'instant
+        // uniquement appliquée au Dashboard (voir commentaire css/style.css). L'attribut lui-même
+        // est déjà posé plus haut (avant le header) pour éviter un flash clair->sombre ; ici on ne
+        // fait que synchroniser l'icône du bouton avec l'état déjà appliqué.
+        if (document.documentElement.dataset.theme === 'dark') document.getElementById('theme-toggle-btn').textContent = '☀️';
+        function toggleAppTheme() {
+            const html = document.documentElement, isDark = html.dataset.theme === 'dark';
+            if (isDark) delete html.dataset.theme; else html.dataset.theme = 'dark';
+            document.getElementById('theme-toggle-btn').textContent = isDark ? '🌙' : '☀️';
+            try { localStorage.setItem('fenix-theme', isDark ? 'light' : 'dark'); } catch(e) {}
+        }
+    </script>
 
     <div id="joueurs-subnav" class="joueurs-subnav" style="display:none;">
         <button class="jsub-btn active" data-jsub="joueurs" onclick="switchJoueursTab('joueurs')">👥 Fiche</button>

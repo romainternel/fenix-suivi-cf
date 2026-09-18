@@ -555,6 +555,54 @@
 
         .total-row td { color: var(--fenix-white); }
 
+        /* ── Thème sombre (phase 1 : fondations + Dashboard uniquement) ──
+           Bascule via document.documentElement.dataset.theme = 'dark' (toggleAppTheme(),
+           FENIX-HANDBALL-CF-SUIVI.html), persistée en localStorage 'fenix-theme'. Par défaut
+           (aucun attribut posé), zéro changement visuel — rien n'est modifié tant que personne
+           ne clique sur la bascule. Seuls le fond de page et les composants du Dashboard listés
+           ci-dessous ont leur propre réglage sombre pour l'instant ; les autres pages (Analyse,
+           Joueurs, etc.) n'ont pas encore le leur et restent visuellement identiques même
+           bascule activée — migration prévue page par page, pas d'un coup (demande Romain). */
+        [data-theme="dark"] body { background: #0A1220; color: #EEF3FB; }
+        [data-theme="dark"] .import-section,
+        [data-theme="dark"] .team-card,
+        [data-theme="dark"] .section { background: #101E34; border-color: #233A5C; }
+        [data-theme="dark"] .team-card-header { border-bottom-color: #233A5C; }
+        [data-theme="dark"] .team-stat-item { background: #17284A; }
+        [data-theme="dark"] .team-stat-item .label,
+        [data-theme="dark"] .team-stat-item .sub-value { color: #8CA3C4; }
+        [data-theme="dark"] .team-stat-item .value { color: var(--fenix-accent); }
+        [data-theme="dark"] .team-card.adversaire .team-stat-item .value { color: var(--fenix-danger); }
+        [data-theme="dark"] .adversaire-name { color: #EEF3FB; }
+        [data-theme="dark"] .matchs-bar { background: #101E34; border-color: #233A5C; }
+        [data-theme="dark"] .table-container { border-color: #233A5C; }
+        [data-theme="dark"] td { border-bottom-color: #233A5C; color: #EEF3FB; }
+        [data-theme="dark"] tr:hover { background: rgba(76,141,255,0.12); }
+        [data-theme="dark"] .avg-toggle-btn { border-color: #345683; color: #8CA3C4; background: transparent; }
+        [data-theme="dark"] .avg-toggle-btn:hover { border-color: var(--fenix-accent); color: var(--fenix-accent); }
+        [data-theme="dark"] .avg-toggle-btn.active { background: var(--fenix-accent); border-color: var(--fenix-accent); color: #fff; }
+        [data-theme="dark"] .import-section p { color: #8CA3C4; }
+        [data-theme="dark"] .section-title { color: var(--fenix-accent); }
+
+        .theme-toggle-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--fenix-white);
+            padding: 0.3rem 0.65rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            line-height: 1;
+            transition: background 0.2s ease;
+        }
+        .theme-toggle-btn:hover { background: rgba(255,255,255,0.25); }
+
+        /* Table joueurs : en-tête collante + chiffres alignés en colonnes — amélioration
+           permanente indépendante du thème (recommandation du comparatif de design, 2026-09-18) */
+        #players-section .table-container { max-height: 68vh; overflow-y: auto; }
+        #players-section th { position: sticky; top: 0; z-index: 1; }
+        #players-section td, #players-section th { font-variant-numeric: tabular-nums; }
+
         /* Bouton graphique */
         .graph-btn {
             background: rgba(255,255,255,0.2);
