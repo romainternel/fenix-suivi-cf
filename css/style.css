@@ -674,6 +674,40 @@
         [data-theme="dark"] #notes-detail-modal .nd-total-avg { color: var(--dk-mut); }
         [data-theme="dark"] #notes-detail-modal .nd-total-main { background: var(--dk-panel); border-color: var(--dk-accent); }
 
+        /* Phase 5 (2026-09-20) : page Analyse — 1ère passe (onglets Vue d'ensemble/Notes & Outils
+           + bloc Terrain/Comparatif + barre sticky, tous des conteneurs CSS classiques). Les
+           canvas dessinés en JS (timeline #timeline-canvas, camembert/matrice familles, terrain
+           d'articulation, nuage de tirs #terrain-canvas) figent leurs couleurs à la création comme
+           Chart.js (cf. v298) — pas couverts ici, chantier séparé. Classes déjà spécifiques à cette
+           page (vérifié : aucune réutilisée par Dashboard/Joueurs/Notes), pas besoin de scoper par
+           #page-analyse en plus. */
+        [data-theme="dark"] #analyse-sticky-bar { background: var(--dk-panel); border-bottom-color: var(--dk-line); }
+        [data-theme="dark"] .sticky-sep { background: var(--dk-line); }
+        [data-theme="dark"] #match-block-section { background: var(--dk-panel); border-color: var(--dk-line); }
+        [data-theme="dark"] .terrain-accordion-header { background: var(--dk-panel2); color: var(--dk-mut); }
+        [data-theme="dark"] .terrain-accordion-header:hover { background: var(--dk-line); }
+        [data-theme="dark"] .match-team-card { background: var(--dk-panel2); }
+        [data-theme="dark"] .mtc-section { border-bottom-color: var(--dk-line); }
+        [data-theme="dark"] .mtc-val, [data-theme="dark"] .mtc-but { color: var(--dk-accent); }
+        [data-theme="dark"] .analyse-section,
+        [data-theme="dark"] .analyse-card { background: var(--dk-panel); border-color: var(--dk-line); }
+        [data-theme="dark"] .analyse-section-title { color: var(--dk-accent); }
+        [data-theme="dark"] .analyse-card-body { color: var(--dk-text); }
+        [data-theme="dark"] .essentiel { background: linear-gradient(135deg, var(--dk-panel) 0%, var(--dk-panel2) 100%); }
+        [data-theme="dark"] .essentiel-header { color: var(--dk-text); }
+        [data-theme="dark"] .ia-point { background: rgba(255,255,255,0.05); }
+        [data-theme="dark"] #coach-analyse { background: var(--dk-panel2); border-color: var(--dk-line2); color: var(--dk-text); }
+        [data-theme="dark"] .indicateur-card { background: var(--dk-panel2); }
+        [data-theme="dark"] .indicateur-label { color: var(--dk-mut); }
+        [data-theme="dark"] .indicateur-fenix { color: var(--dk-accent); }
+        [data-theme="dark"] .chat-container { border-color: var(--dk-line); }
+        [data-theme="dark"] .chat-messages { background: var(--dk-panel); }
+        [data-theme="dark"] .chat-message.ia .chat-content { background: var(--dk-panel2); border-color: var(--dk-line); color: var(--dk-text); }
+        [data-theme="dark"] .chat-input-container { background: var(--dk-panel); border-top-color: var(--dk-line); }
+        [data-theme="dark"] #chat-input { background: var(--dk-panel2); border-color: var(--dk-line2); color: var(--dk-text); }
+        [data-theme="dark"] .chat-chip { background: var(--dk-panel2); border-color: var(--dk-line2); color: var(--dk-accent); }
+        [data-theme="dark"] .chat-chip:hover { background: var(--dk-line); }
+
         /* Bouton graphique */
         .graph-btn {
             background: rgba(255,255,255,0.2);
