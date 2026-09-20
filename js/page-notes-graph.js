@@ -757,7 +757,7 @@
                     const tbodyId = `notes-table-${i}`;
 
                     const headerHTML = hasBilans
-                        ? `<div style="font-size:0.8rem;font-weight:700;color:#1E3A8A;margin:${i > 0 ? '1.2rem' : '0'} 0 0.4rem;text-transform:uppercase;letter-spacing:0.05em;border-left:3px solid var(--fenix-accent);padding-left:8px;">${period.label}</div>`
+                        ? `<div class="notes-period-label" style="margin:${i > 0 ? '1.2rem' : '0'} 0 0.4rem;">${period.label}</div>`
                         : '';
 
                     const block = document.createElement('div');
