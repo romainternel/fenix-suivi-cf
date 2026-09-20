@@ -1907,6 +1907,7 @@
         [data-theme="dark"] #impact-buts, [data-theme="dark"] #impact-total { color: var(--dk-text); }
         [data-theme="dark"] #page-impact .pmz-filter-item { color: var(--dk-mut); }
         [data-theme="dark"] #page-impact .pmz-filter-active { background: var(--dk-panel2); }
+        [data-theme="dark"] #impact-joueur-nom { color: var(--dk-mut) !important; }
 
         /* Modal */
         .modal-overlay {
