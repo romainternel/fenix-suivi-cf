@@ -1907,7 +1907,12 @@
         [data-theme="dark"] #impact-buts, [data-theme="dark"] #impact-total { color: var(--dk-text); }
         [data-theme="dark"] #page-impact .pmz-filter-item { color: var(--dk-mut); }
         [data-theme="dark"] #page-impact .pmz-filter-active { background: var(--dk-panel2); }
+        /* #impact-joueur-nom : soit du texte direct (aucun joueur filtré), soit un <strong>+<span>
+           imbriqués (nom + poste) — chacun avec sa propre couleur inline (updateImpactPage()) qui
+           prime sur la couleur du parent. Les 3 cas sont donc ciblés séparément. */
         [data-theme="dark"] #impact-joueur-nom { color: var(--dk-mut) !important; }
+        [data-theme="dark"] #impact-joueur-nom strong { color: var(--dk-text) !important; }
+        [data-theme="dark"] #impact-joueur-nom span { color: var(--dk-mut) !important; }
 
         /* Modal */
         .modal-overlay {
