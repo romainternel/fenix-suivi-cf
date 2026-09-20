@@ -11,15 +11,15 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=297">
-    <script src="js/supabase-client.js?v=297"></script>
-    <script src="js/utils.js?v=297"></script>
-    <script src="js/player-photos.js?v=297"></script>
-    <script src="js/impact-images.js?v=297"></script>
-    <script src="js/player-mode.js?v=297"></script>
-    <script src="js/page-joueurs.js?v=297"></script>
-    <script src="js/page-notes-graph.js?v=297"></script>
-    <script src="js/page-analyse.js?v=297"></script>
+    <link rel="stylesheet" href="css/style.css?v=298">
+    <script src="js/supabase-client.js?v=298"></script>
+    <script src="js/utils.js?v=298"></script>
+    <script src="js/player-photos.js?v=298"></script>
+    <script src="js/impact-images.js?v=298"></script>
+    <script src="js/player-mode.js?v=298"></script>
+    <script src="js/page-joueurs.js?v=298"></script>
+    <script src="js/page-notes-graph.js?v=298"></script>
+    <script src="js/page-analyse.js?v=298"></script>
 </head>
 <body>
 
@@ -181,6 +181,11 @@
             if (isDark) delete html.dataset.theme; else html.dataset.theme = 'dark';
             document.getElementById('theme-toggle-btn').textContent = isDark ? '🌙' : '☀️';
             try { localStorage.setItem('fenix-theme', isDark ? 'light' : 'dark'); } catch(e) {}
+            // Chart.js fige ses couleurs à la création — recolore le graphique si déjà ouvert
+            if (document.getElementById('page-notegraph')?.classList.contains('active')) {
+                if (typeof updateNoteGraph === 'function') updateNoteGraph();
+                if (typeof updateGbGraph === 'function') updateGbGraph();
+            }
         }
     </script>
 
@@ -893,7 +898,7 @@
                     </div>
                 </div>
                 <div class="ng-charts-body">
-                    <div id="ng-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:rgba(255,255,255,0.5);gap:12px;">
+                    <div id="ng-empty-state" class="ng-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:12px;">
                         <span style="font-size:2.5rem">📈</span>
                         <span style="font-size:0.9rem;font-weight:600">Sélectionne un joueur sur le terrain</span>
                     </div>
@@ -946,12 +951,12 @@
                     </div>
                     <div style="display:flex;gap:0.5rem;align-items:center;flex-shrink:0;padding-bottom:0.1rem;">
                         <div style="text-align:center;">
-                            <div style="font-size:1.5rem;font-weight:800;color:#1e293b;" id="impact-buts">0</div>
+                            <div style="font-size:1.5rem;font-weight:800;" id="impact-buts">0</div>
                             <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.04em;" id="impact-lbl-buts">Buts</div>
                         </div>
                         <div style="font-size:1.3rem;font-weight:300;color:#cbd5e1;line-height:1;">/</div>
                         <div style="text-align:center;">
-                            <div style="font-size:1.5rem;font-weight:800;color:#1e293b;" id="impact-total">0</div>
+                            <div style="font-size:1.5rem;font-weight:800;" id="impact-total">0</div>
                             <div style="font-size:0.68rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.04em;" id="impact-lbl-tirs">Tirs</div>
                         </div>
                         <div style="font-size:1.3rem;font-weight:300;color:#cbd5e1;line-height:1;margin-left:0.25rem;">|</div>
@@ -3059,7 +3064,8 @@ let _effInfoPoste = null;
                 effEl.textContent = '—'; effEl.style.color = '#94a3b8';
             } else {
                 effEl.textContent = pct + '%';
-                effEl.style.color = impactZoneFilter ? '#0f172a' : getEffColor(pct, poste);
+                const isDarkTheme = document.documentElement.dataset.theme === 'dark';
+                effEl.style.color = impactZoneFilter ? (isDarkTheme ? '#E9F2FA' : '#0f172a') : getEffColor(pct, poste);
             }
 
             drawImpactCanvas('impact-canvas-alg',  IMPACT_IMAGES.alg,  filtered.filter(r => getImpactView(r) === 'alg'),  isGB);

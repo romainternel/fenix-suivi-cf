@@ -322,6 +322,20 @@
         let noteGraphChart = null;
         let _ngFromDetail = null;
 
+        // Chart.js dessine sur canvas avec des couleurs figées au moment de la creation du chart —
+        // contrairement au reste de l'app (CSS pur), la bascule de theme ne les recolore pas
+        // automatiquement. Palette calculee a chaque (re)construction de graphique.
+        function _chartDarkColors() {
+            const dark = document.documentElement.dataset.theme === 'dark';
+            return {
+                dark,
+                text: dark ? '#E9F2FA' : '#1E3A5F',
+                muted: dark ? '#8CA6C2' : '#666',
+                grid: dark ? '#21456B' : '#F1F5F9',
+                neutralTick: dark ? '#E9F2FA' : '#334155',
+            };
+        }
+
         function _activateJsubTab(name) {
             document.querySelectorAll('.jsub-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
             const btn = document.querySelector(`[data-jsub="${name}"]`);
@@ -422,6 +436,9 @@
             const intercept = yMean - slope * xMean;
             const trend = played.map((_, i) => +(slope * i + intercept).toFixed(2));
 
+            const cc = _chartDarkColors();
+            Chart.defaults.color = cc.muted;
+            Chart.defaults.borderColor = cc.grid;
             const ctx = document.getElementById('ng-canvas').getContext('2d');
             noteGraphChart = new Chart(ctx, {
                 data: {
@@ -437,8 +454,8 @@
                         },
                         {
                             type: 'line', label: `TOTAL ${joueur}`, data: total,
-                            borderColor: '#1E3A5F', backgroundColor: '#1E3A5F',
-                            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: '#1E3A5F',
+                            borderColor: cc.text, backgroundColor: cc.text,
+                            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: cc.text,
                             tension: 0.3, order: 1,
                         },
                         ...(total2 ? [{
@@ -459,7 +476,7 @@
                         },
                         {
                             type: 'line', label: '__zero__', data: played.map(() => 0),
-                            borderColor: '#1E3A5F', borderWidth: 1, borderDash: [],
+                            borderColor: cc.text, borderWidth: 1, borderDash: [],
                             pointRadius: 0, tension: 0, order: 6,
                         },
                     ],
@@ -473,7 +490,7 @@
                             display: true,
                             text: joueur2 ? `Notes par rencontre — ${joueur}  vs  ${joueur2}` : `Notes par rencontre — ${joueur}`,
                             font: { size: 18, weight: 'bold', family: 'Bebas Neue' },
-                            color: '#1E3A5F', padding: { bottom: 14 },
+                            color: cc.text, padding: { bottom: 14 },
                         },
                         legend: {
                             position: 'bottom',
@@ -491,19 +508,19 @@
                                 maxRotation: 45,
                                 color: ctx => {
                                     const m = played[ctx.index];
-                                    if (!m) return '#334155';
+                                    if (!m) return cc.neutralTick;
                                     const fenix = DATA.filter(r => r[COLS.rencontre] === m && r[COLS.club] === 'FENIX' && r[COLS.resultat] === 'But').length;
                                     const adv   = DATA.filter(r => r[COLS.rencontre] === m && r[COLS.club] !== 'FENIX' && r[COLS.resultat] === 'But').length;
                                     if (fenix > adv) return '#16A34A';
                                     if (fenix < adv) return '#DC2626';
-                                    return '#1E293B';
+                                    return cc.neutralTick;
                                 },
                             },
                             grid: { display: false },
                         },
                         y: {
                             title: { display: true, text: 'Note', font: { size: 13 } },
-                            grid: { color: '#F1F5F9' },
+                            grid: { color: cc.grid },
                             ticks: { font: { size: 12 } },
                             afterDataLimits(scale) { scale.max += 2; scale.min -= 2; },
                         },
@@ -517,7 +534,7 @@
                         const yPx = scales.y.getPixelForValue(median);
                         dc.save();
                         dc.font = 'bold 13px Inter, sans-serif';
-                        dc.fillStyle = '#1E3A5F';
+                        dc.fillStyle = cc.text;
                         dc.textAlign = 'left';
                         dc.fillText(median % 1 === 0 ? String(median) : median.toFixed(1), chartArea.right + 4, yPx + 4);
                         dc.restore();
@@ -652,6 +669,7 @@
             // Aligner 0% (axe droit) avec 0 (axe gauche) : y1Min = 100 * yMin / yMax
             const y1Min = yMax > 0 ? Math.floor(100 * yMin / yMax) : 0;
 
+            const cc = _chartDarkColors();
             const tempsPlugin = {
                 id: 'gbTempsJeu',
                 afterDatasetsDraw(chart) {
@@ -664,7 +682,7 @@
                         if (nb === 0) return;
                         c.save();
                         c.font = 'bold 11px Inter, sans-serif';
-                        c.fillStyle = '#065f46';
+                        c.fillStyle = cc.dark ? '#3ECF8E' : '#065f46';
                         c.textAlign = 'center';
                         c.textBaseline = 'bottom';
                         c.fillText(nb + (tj !== null ? ' | ' + tj + "'" : ''), bar.x, bar.y - 3);
@@ -673,6 +691,8 @@
                 }
             };
 
+            Chart.defaults.color = cc.muted;
+            Chart.defaults.borderColor = cc.grid;
             const ctx = document.getElementById('gbg-canvas').getContext('2d');
             gbGraphChart = new Chart(ctx, {
                 data: {
@@ -684,8 +704,8 @@
                         },
                         {
                             type: 'line', label: 'Score Total', data: scores, yAxisID: 'y',
-                            borderColor: '#1E3A5F', backgroundColor: '#1E3A5F',
-                            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: '#1E3A5F',
+                            borderColor: cc.text, backgroundColor: cc.text,
+                            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: cc.text,
                             tension: 0.3, order: 1,
                         },
                         {
@@ -696,7 +716,7 @@
                         },
                         {
                             type: 'line', label: '__zero__', data: played.map(() => 0), yAxisID: 'y',
-                            borderColor: '#1E3A5F', borderWidth: 1, borderDash: [],
+                            borderColor: cc.text, borderWidth: 1, borderDash: [],
                             pointRadius: 0, tension: 0, order: 6,
                         },
                     ],
@@ -710,7 +730,7 @@
                             display: true,
                             text: `Performances par rencontre — ${gardien}`,
                             font: { size: 18, weight: 'bold', family: 'Bebas Neue' },
-                            color: '#1E3A5F', padding: { bottom: 14 },
+                            color: cc.text, padding: { bottom: 14 },
                         },
                         legend:  { position: 'bottom', labels: { font: { size: 13 }, padding: 18, usePointStyle: true, filter: item => item.text !== '__zero__' } },
                         tooltip: { filter: item => item.dataset.label !== '__zero__' },

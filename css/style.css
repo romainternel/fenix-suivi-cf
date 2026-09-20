@@ -1890,6 +1890,23 @@
         .ng-chart-wrapper { flex: 1; min-height: 0; position: relative; padding: 0.5rem 1rem 1rem; }
         .ng-shortcut { background: none; border: none; cursor: pointer; font-size: 0.82rem; opacity: 0.55; transition: opacity 0.15s; padding: 0 0 0 0.3rem; line-height: 1; }
         .ng-shortcut:hover { opacity: 1; }
+        /* Bug préexistant (pas lié au thème sombre) : couleur codée en dur blanc à 50% d'opacité
+           sur un fond blanc (.ng-page-layout) — texte quasi invisible même en mode clair. */
+        .ng-empty-state { color: #94A3B8; }
+        [data-theme="dark"] .ng-page-layout { background: var(--dk-panel); }
+        [data-theme="dark"] .ng-chart-section + .ng-chart-section { border-top-color: var(--dk-line); }
+        [data-theme="dark"] .ng-empty-state { color: var(--dk-mut); }
+
+        /* Impact page (#page-impact) — table.section/.pmz-filter-item partagés par d'autres pages,
+           scopés ici par #page-impact. Le calque photo (court + points de tir) est théme-agnostique
+           (image + points colorés, jamais de texte dessus) — pas d'override nécessaire. */
+        #impact-buts, #impact-total { color: #1e293b; }
+        [data-theme="dark"] #page-impact .section { background: var(--dk-panel); border-color: var(--dk-line); }
+        [data-theme="dark"] #page-impact .section-header { border-bottom-color: var(--dk-line); }
+        [data-theme="dark"] #page-impact .section-title { color: var(--dk-accent); }
+        [data-theme="dark"] #impact-buts, [data-theme="dark"] #impact-total { color: var(--dk-text); }
+        [data-theme="dark"] #page-impact .pmz-filter-item { color: var(--dk-mut); }
+        [data-theme="dark"] #page-impact .pmz-filter-active { background: var(--dk-panel2); }
 
         /* Modal */
         .modal-overlay {
