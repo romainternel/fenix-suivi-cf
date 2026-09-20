@@ -683,7 +683,8 @@
            #page-analyse en plus. */
         [data-theme="dark"] #analyse-sticky-bar { background: var(--dk-panel); border-bottom-color: var(--dk-line); }
         [data-theme="dark"] .sticky-sep { background: var(--dk-line); }
-        [data-theme="dark"] #match-block-section { background: var(--dk-panel); border-color: var(--dk-line); }
+        [data-theme="dark"] #match-block-section,
+        [data-theme="dark"] #analyse-tabs-section { background: var(--dk-panel); border-color: var(--dk-line); }
         [data-theme="dark"] .terrain-accordion-header { background: var(--dk-panel2); color: var(--dk-mut); }
         [data-theme="dark"] .terrain-accordion-header:hover { background: var(--dk-line); }
         [data-theme="dark"] .match-team-card { background: var(--dk-panel2); }
