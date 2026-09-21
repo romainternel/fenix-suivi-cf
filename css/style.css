@@ -709,6 +709,64 @@
         [data-theme="dark"] .chat-chip { background: var(--dk-panel2); border-color: var(--dk-line2); color: var(--dk-accent); }
         [data-theme="dark"] .chat-chip:hover { background: var(--dk-line); }
 
+        /* Phase 5b (2026-09-21) : page Analyse — onglet Tactique (.enc-*/.artic-* : cartes familles
+           d'enclenchement, articulation attaque/défense, section Gardien). Classes déjà spécifiques
+           à cette page (mêmes vérifications que Phase 5a). Les canvas (camembert/matrice familles,
+           terrain d'articulation SVG, mini heatmap gardien) restent hors scope ici. */
+        [data-theme="dark"] .enc-section-title { color: var(--dk-accent); }
+        [data-theme="dark"] .enc-section-meta,
+        [data-theme="dark"] .enc-famille-meta,
+        [data-theme="dark"] .artic-control-label,
+        [data-theme="dark"] .artic-summary-eff-label,
+        [data-theme="dark"] .artic-summary-detail,
+        [data-theme="dark"] .artic-listing-hint,
+        [data-theme="dark"] .enc-gardien-select-label,
+        [data-theme="dark"] .enc-bascule-ecart,
+        [data-theme="dark"] .enc-signal-neutre { color: var(--dk-mut); }
+        [data-theme="dark"] .enc-famille-card,
+        [data-theme="dark"] .enc-card-mini,
+        [data-theme="dark"] .artic-poste,
+        [data-theme="dark"] .artic-poste-editor,
+        [data-theme="dark"] .artic-summary,
+        [data-theme="dark"] .artic-listing-col,
+        [data-theme="dark"] .artic-control-bar,
+        [data-theme="dark"] .enc-bascule-item { background: var(--dk-panel2); border-color: var(--dk-line); }
+        [data-theme="dark"] .enc-famille-eff { color: var(--dk-accent); }
+        [data-theme="dark"] .enc-famille-name,
+        [data-theme="dark"] .enc-stat-main-val,
+        [data-theme="dark"] .enc-legend-item,
+        [data-theme="dark"] .artic-poste-joueur,
+        [data-theme="dark"] .artic-summary-noms,
+        [data-theme="dark"] .artic-listing-row,
+        [data-theme="dark"] .enc-bascule-item-desc { color: var(--dk-text); }
+        [data-theme="dark"] .enc-progress-track { background: var(--dk-line); }
+        [data-theme="dark"] .enc-team-btn,
+        [data-theme="dark"] .enc-toggle-btn,
+        [data-theme="dark"] .enc-pie-mode-btn,
+        [data-theme="dark"] .enc-filter-reset,
+        [data-theme="dark"] .enc-info-btn,
+        [data-theme="dark"] .enc-detail-back { background: var(--dk-panel2); border-color: var(--dk-line2); color: var(--dk-mut); }
+        [data-theme="dark"] .enc-team-btn:hover:not(.active),
+        [data-theme="dark"] .enc-toggle-btn:hover:not(.active),
+        [data-theme="dark"] .enc-pie-mode-btn:hover:not(.active),
+        [data-theme="dark"] .enc-filter-reset:hover,
+        [data-theme="dark"] .enc-info-btn:hover,
+        [data-theme="dark"] .enc-detail-back:hover { background: var(--dk-line); }
+        [data-theme="dark"] .enc-card-mini.selected { background: var(--dk-panel); box-shadow: 0 0 0 2px var(--dk-accent); }
+        [data-theme="dark"] .artic-poste-editor-title,
+        [data-theme="dark"] .artic-listing-title { color: var(--dk-accent); }
+        [data-theme="dark"] .artic-listing-row { border-bottom-color: var(--dk-line); }
+        [data-theme="dark"] .artic-listing-row-clickable:hover { background: var(--dk-line); }
+        [data-theme="dark"] .artic-listing-row-clickable.active { background: var(--dk-panel); color: var(--dk-accent); }
+        [data-theme="dark"] .artic-listing-select { border-top-color: var(--dk-line2); }
+        [data-theme="dark"] .enc-gardien-row:hover td { background: var(--dk-panel2); }
+        [data-theme="dark"] .enc-gardien-row.selected td { background: var(--dk-line); }
+        [data-theme="dark"] .enc-gardien-total,
+        [data-theme="dark"] .enc-detail-total { background: var(--dk-panel2); }
+        [data-theme="dark"] .enc-detail-row-clickable:hover { background: var(--dk-line); }
+        [data-theme="dark"] .enc-detail-header-bar { border-bottom-color: var(--dk-line); }
+        [data-theme="dark"] .enc-footer-row { border-top-color: var(--dk-line); }
+
         /* Bouton graphique */
         .graph-btn {
             background: rgba(255,255,255,0.2);
