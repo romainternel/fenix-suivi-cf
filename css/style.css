@@ -709,7 +709,7 @@
         [data-theme="dark"] .chat-chip { background: var(--dk-panel2); border-color: var(--dk-line2); color: var(--dk-accent); }
         [data-theme="dark"] .chat-chip:hover { background: var(--dk-line); }
 
-        /* Phase 5b (2026-09-21) : page Analyse — onglet Tactique (.enc-*/.artic-* : cartes familles
+        /* Phase 5b (2026-09-21) : page Analyse — onglet Tactique (.enc-* et .artic-* : cartes familles
            d'enclenchement, articulation attaque/défense, section Gardien). Classes déjà spécifiques
            à cette page (mêmes vérifications que Phase 5a). Les canvas (camembert/matrice familles,
            terrain d'articulation SVG, mini heatmap gardien) restent hors scope ici. */
