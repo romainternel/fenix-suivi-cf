@@ -79,7 +79,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 - **Nommage HTML/CSS** : IDs et classes en kebab-case (`#filter-joueur-match`, `.jp-avatar`). Préfixes courts par module : `jp-*` (Joueurs), `pmf-*`/`pm-*` (Player Mode), `enc-*` (Enclenchements), `court-*` (terrain SVG).
 - **Fonctions JS** : camelCase. Fonctions privées à un module préfixées `_` (`_renderCourtPhotoState`, `_getJoueurBilanMatchs`).
-- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **9** balises `<link>`/`<script>` du projet (css/style.css + les 8 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v305**.
+- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **9** balises `<link>`/`<script>` du projet (css/style.css + les 8 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v306**.
 - **Résolution de nom joueur** : ne jamais comparer deux noms de joueur par égalité stricte. Le format court "Prénom.Initiale" (ex. `Lucas.G`) coexiste avec des colonnes Excel ne contenant que le prénom (ex. colonne `Gardien`) — toujours passer par `matchPlayerName(a, b)` (`js/utils.js`), qui gère ce cas et met en cache le résultat.
 - **Constantes de configuration maintenues à la main** : `POSTE_POSITIONS`, `GB_ZONE_WEIGHTS`, `EFF_SEUILS`, `PLAYER_PHOTOS` — objets JS statiques édités directement dans le code (par Romain ou en session), pas de table Supabase ni d'UI d'admin pour ces réglages ponctuels.
 - **Import Excel = remplacement complet** : chaque import Excel supprime et réinsère entièrement `match_data`/`joueurs`/`tableau_match`/`bilan` sur Supabase. Ne jamais stocker une donnée éditée en base (famille, note coach, compte joueur) sur une structure qui serait recréée par l'import — toujours une table séparée (`famille_mapping`, `coach_analyses`, `player_profiles`) ou un fichier hors pipeline (`player-photos.js`).
@@ -156,7 +156,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 - [x] Dashboard, page Analyse (5 onglets internes : Résumé/Timeline/Intention attaque/Gardien/Chat IA)
 - [x] Page Joueurs : terrain interactif (photos ou initiales), fiche staff, sous-onglets Fiche/Notes/Graphique/Impact
 - [x] Page Impact : zones de tir joueur de champ et gardien, mode comparaison
-- [x] Mode Lecture Joueur mobile (Ma Fiche/Stats Match/Impact), authentification Supabase Auth
+- [x] Mode Lecture Joueur mobile (Ma Fiche/Stats Match/Impact), authentification Supabase Auth. **v306** : carte "NOTE GB" retirée de "Ma Fiche" pour un gardien (retour Romain : score pas assez représentatif pour être montré tel quel au joueur) — reste affichée côté staff (fiche Joueurs, page Notes)
 - [x] Classification tactique par `intention_attaque` + éditeur de familles en app (`famille_mapping`)
 - [x] Éditeur de bilans en app
 - [x] Notes coach par match (Supabase, multi-appareil)
