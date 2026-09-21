@@ -1754,6 +1754,12 @@
             }
         }
 
+        // Les canvas (contrairement au reste de l'app, en CSS pur) figent leurs couleurs au
+        // dessin — même limitation que Chart.js (cf. js/page-notes-graph.js, _chartDarkColors()).
+        function _encCanvasIsDark() {
+            return document.documentElement.dataset.theme === 'dark';
+        }
+
         function _drawEncChart() {
             const pieC = document.getElementById('enc-pie-canvas');
             const radC = document.getElementById('enc-radar-canvas');
@@ -1901,11 +1907,11 @@
 
                 const tx = p3x + (isRight ? 3 : -3);
                 ctx.textAlign = isRight ? 'left' : 'right';
-                ctx.fillStyle = '#1E293B';
+                ctx.fillStyle = _encCanvasIsDark() ? '#E9F2FA' : '#1E293B';
                 ctx.font = 'bold 14px Inter,sans-serif';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(name, tx, p2y);
-                ctx.fillStyle = '#475569';
+                ctx.fillStyle = _encCanvasIsDark() ? '#8CA6C2' : '#475569';
                 ctx.font = '12.5px Inter,sans-serif';
                 ctx.textBaseline = 'top';
                 ctx.fillText(pct + '%', tx, p2y);
@@ -1955,10 +1961,10 @@
             // Quadrant backgrounds — teintes plus franches qu'avant (0.4→0.55+ d'opacité) pour
             // que les 4 zones se distinguent au premier coup d'œil, pas seulement en y regardant de près
             const zones = [
-                { x:PAD.left, y:PAD.top,    w:mx-PAD.left,        h:my-PAD.top,           bg:'rgba(203,213,225,0.35)', color:'#64748B', label:'Sous-utilisé', ta:'left',  tx:PAD.left+6,      ty:PAD.top+6 },
-                { x:mx,       y:PAD.top,    w:PAD.left+pw-mx,     h:my-PAD.top,           bg:'rgba(16,185,129,0.16)',  color:'#059669', label:'Exploiter ⭐', ta:'right', tx:PAD.left+pw-6,   ty:PAD.top+6 },
-                { x:PAD.left, y:my,         w:mx-PAD.left,        h:PAD.top+ph-my,        bg:'rgba(148,163,184,0.14)', color:'#64748B', label:'Abandonner',   ta:'left',  tx:PAD.left+6,      ty:PAD.top+ph-14 },
-                { x:mx,       y:my,         w:PAD.left+pw-mx,     h:PAD.top+ph-my,        bg:'rgba(245,158,11,0.18)',  color:'#B45309', label:'Corriger ⚠',  ta:'right', tx:PAD.left+pw-6,   ty:PAD.top+ph-14 },
+                { x:PAD.left, y:PAD.top,    w:mx-PAD.left,        h:my-PAD.top,           bg:'rgba(203,213,225,0.35)', color:'#64748B', colorDark:'#8CA6C2', label:'Sous-utilisé', ta:'left',  tx:PAD.left+6,      ty:PAD.top+6 },
+                { x:mx,       y:PAD.top,    w:PAD.left+pw-mx,     h:my-PAD.top,           bg:'rgba(16,185,129,0.16)',  color:'#059669', colorDark:'#3ECF8E', label:'Exploiter ⭐', ta:'right', tx:PAD.left+pw-6,   ty:PAD.top+6 },
+                { x:PAD.left, y:my,         w:mx-PAD.left,        h:PAD.top+ph-my,        bg:'rgba(148,163,184,0.14)', color:'#64748B', colorDark:'#8CA6C2', label:'Abandonner',   ta:'left',  tx:PAD.left+6,      ty:PAD.top+ph-14 },
+                { x:mx,       y:my,         w:PAD.left+pw-mx,     h:PAD.top+ph-my,        bg:'rgba(245,158,11,0.18)',  color:'#B45309', colorDark:'#F2B347', label:'Corriger ⚠',  ta:'right', tx:PAD.left+pw-6,   ty:PAD.top+ph-14 },
             ];
             // Quadrant backgrounds only (labels drawn after dots)
             zones.forEach(z => { ctx.fillStyle = z.bg; ctx.fillRect(z.x, z.y, z.w, z.h); });
@@ -1971,11 +1977,12 @@
             ctx.strokeStyle = '#CBD5E1'; ctx.lineWidth = 1;
             ctx.strokeRect(PAD.left, PAD.top, pw, ph);
             // Y axis ticks
+            const isDark = _encCanvasIsDark();
             const fAxis = Math.max(9, Math.round(W * 0.016));
-            ctx.font = `${fAxis}px system-ui`; ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+            ctx.font = `${fAxis}px system-ui`; ctx.fillStyle = isDark ? '#8CA6C2' : '#94A3B8'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
             [0, 50, 100].forEach(v => { ctx.fillText(v+'%', PAD.left-4, yS(v)); });
             // Axis legends
-            ctx.fillStyle = '#64748B'; ctx.font = `${fAxis}px system-ui`;
+            ctx.fillStyle = isDark ? '#E9F2FA' : '#64748B'; ctx.font = `${fAxis}px system-ui`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'top';
             ctx.fillText('← Utilisation FENIX (possessions) →', PAD.left+pw/2, PAD.top+ph+5);
             ctx.save(); ctx.translate(9, PAD.top+ph/2); ctx.rotate(-Math.PI/2);
@@ -2041,9 +2048,9 @@
                 }
                 placedBoxes.push(box);
                 ctx.textAlign = 'center'; ctx.textBaseline = labelUp ? 'bottom' : 'top';
-                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.fillStyle = isDark ? 'rgba(13,31,51,0.85)' : 'rgba(255,255,255,0.85)';
                 ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0);
-                ctx.fillStyle = hovered ? col : '#334155';
+                ctx.fillStyle = hovered ? col : (isDark ? '#E9F2FA' : '#334155');
                 ctx.fillText(label, lx, box.ly);
             });
             // Zone labels drawn LAST (on top des bulles), en couleur pleine (plus de gris uniforme)
@@ -2052,8 +2059,8 @@
                 ctx.textAlign = z.ta; ctx.textBaseline = 'top';
                 const tw = ctx.measureText(z.label).width;
                 const bgX = z.ta === 'right' ? z.tx - tw - 2 : z.tx - 2;
-                ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(bgX, z.ty - 2, tw + 4, fAxis + 4);
-                ctx.fillStyle = z.color; ctx.fillText(z.label, z.tx, z.ty);
+                ctx.fillStyle = isDark ? 'rgba(13,31,51,0.85)' : 'rgba(255,255,255,0.85)'; ctx.fillRect(bgX, z.ty - 2, tw + 4, fAxis + 4);
+                ctx.fillStyle = isDark ? (z.colorDark || z.color) : z.color; ctx.fillText(z.label, z.tx, z.ty);
             });
             _initEncMatrixHover();
             // Legend HTML (below canvas)
@@ -3582,6 +3589,7 @@
                 const idx = ZONE_MAP[zone];
                 if (idx !== undefined) { counts[idx]++; if (r[COLS.finalite]==='But') buts[idx]++; }
             });
+            const isDark = _encCanvasIsDark();
             const cw = canvas.width, ch = canvas.height - 18;
             const cellW = cw/3, cellH = ch/3;
             const maxC = Math.max(...counts, 1);
@@ -3589,10 +3597,10 @@
                 const col = i%3, row = Math.floor(i/3), x = col*cellW, y = row*cellH, intensity = counts[i]/maxC;
                 ctx.fillStyle = buts[i] > 0 ? `rgba(220,38,38,${0.1+intensity*0.5})` : `rgba(16,185,129,${0.08+intensity*0.3})`;
                 ctx.fillRect(x+1,y+1,cellW-2,cellH-2);
-                ctx.strokeStyle='#CBD5E1'; ctx.lineWidth=1; ctx.strokeRect(x,y,cellW,cellH);
-                if (counts[i] > 0) { ctx.fillStyle='#0F172A'; ctx.font='700 11px Inter,sans-serif'; ctx.textAlign='center'; ctx.fillText(counts[i], x+cellW/2, y+cellH/2+4); }
+                ctx.strokeStyle = isDark ? '#21456B' : '#CBD5E1'; ctx.lineWidth=1; ctx.strokeRect(x,y,cellW,cellH);
+                if (counts[i] > 0) { ctx.fillStyle = isDark ? '#E9F2FA' : '#0F172A'; ctx.font='700 11px Inter,sans-serif'; ctx.textAlign='center'; ctx.fillText(counts[i], x+cellW/2, y+cellH/2+4); }
             }
-            ctx.fillStyle='#64748B'; ctx.font='8px Inter,sans-serif'; ctx.textAlign='left';
+            ctx.fillStyle = isDark ? '#8CA6C2' : '#64748B'; ctx.font='8px Inter,sans-serif'; ctx.textAlign='left';
             ctx.fillText('Rouge=But · Vert=Arrêt', 2, ch+13);
         }
 
