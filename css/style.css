@@ -155,6 +155,8 @@
             color: var(--fenix-dark);
             min-height: 100vh;
             min-height: 100dvh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         /* Bandeau à 2 lignes (comparatif de design, 2026-09-18) : ligne 1 = logo + actions
@@ -2954,7 +2956,7 @@
             margin-bottom: 12px; flex-wrap: wrap; gap: 6px;
         }
         .enc-section-title {
-            font-family: 'Bebas Neue', cursive; font-size: 1.2rem;
+            font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem;
             letter-spacing: 0.04em; color: var(--fenix-blue);
         }
         .enc-section-meta { font-size: 0.72rem; color: #64748B; }
@@ -3002,7 +3004,7 @@
         .enc-card-caret { font-size: 0.7rem; color: #94A3B8; }
 
         .enc-famille-eff {
-            font-family: 'Bebas Neue', cursive; font-size: 2rem;
+            font-family: 'Bebas Neue', sans-serif; font-size: 2rem;
             color: var(--fenix-dark); line-height: 1;
         }
         .enc-famille-sublabel {
