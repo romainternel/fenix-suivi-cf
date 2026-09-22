@@ -293,7 +293,7 @@
             }
             const badgesHTML = staffBadges.length
                 ? `<div style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;border-bottom:1px solid #F1F5F9">
-                    ${staffBadges.map(b => `<span style="background:#EFF6FF;color:#1E3A8A;border:1px solid #BFDBFE;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700">${b}</span>`).join('')}
+                    ${staffBadges.map(b => `<span style="display:inline-flex;align-items:center;background:#EFF6FF;color:#1E3A8A;border:1px solid #BFDBFE;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700">${b}</span>`).join('')}
                    </div>` : '';
 
             if (posteCode === 'GB') {

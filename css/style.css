@@ -2601,7 +2601,7 @@
         /* Badges joueur */
         .pmf-badges-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
         .pmf-badge {
-            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px;
             font-size: 0.78rem; font-weight: 700; letter-spacing: 0.3px;
         }
         .pmf-badge-rank  { background: #FEF9C3; color: #92400E; }
@@ -2610,12 +2610,15 @@
         .pmf-badge-streak { background: #EFF6FF; color: #1E40AF; }
 
         /* Pastille de classement (badges "#N au poste"/"#N TJ au poste") — rond coloré avec le
-           chiffre dedans, plus lisible en petite taille qu'un emoji médaille + texte "#N" séparé. */
+           chiffre dedans, plus lisible en petite taille qu'un emoji médaille + texte "#N" séparé.
+           display:inline-flex sur le badge parent (.pmf-badge / span staff inline) aligne le
+           centre de la pastille sur le centre du texte — un vertical-align sur un enfant inline-flex
+           n'a aucun effet dans un parent flex, donc pas de règle de repli à maintenir ici. */
         .rank-medal {
             display: inline-flex; align-items: center; justify-content: center;
             width: 16px; height: 16px; border-radius: 50%;
             font-size: 0.68rem; font-weight: 800; line-height: 1;
-            flex-shrink: 0; vertical-align: -3px; margin-right: 1px;
+            flex-shrink: 0; margin-right: 3px;
             box-shadow: inset 0 -1px 1px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.1);
         }
         .rank-medal-gold   { background: linear-gradient(135deg, #FFE28A, #E0A82E); color: #6B4A00; }
