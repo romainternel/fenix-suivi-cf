@@ -2609,6 +2609,19 @@
         .pmf-badge-down  { background: #FEE2E2; color: #991B1B; }
         .pmf-badge-streak { background: #EFF6FF; color: #1E40AF; }
 
+        /* Pastille de classement (badges "#N au poste"/"#N TJ au poste") — rond coloré avec le
+           chiffre dedans, plus lisible en petite taille qu'un emoji médaille + texte "#N" séparé. */
+        .rank-medal {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 16px; height: 16px; border-radius: 50%;
+            font-size: 0.68rem; font-weight: 800; line-height: 1;
+            flex-shrink: 0; vertical-align: -3px; margin-right: 1px;
+            box-shadow: inset 0 -1px 1px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.1);
+        }
+        .rank-medal-gold   { background: linear-gradient(135deg, #FFE28A, #E0A82E); color: #6B4A00; }
+        .rank-medal-silver { background: linear-gradient(135deg, #F1F1F1, #B8BCC2); color: #3A3F47; }
+        .rank-medal-bronze { background: linear-gradient(135deg, #E3A469, #B06A34); color: #4A2A0E; }
+
         .pmf-signature {
             display: flex; align-items: center; gap: 14px;
             background: #FFFBEB; border-left: 4px solid #F59E0B;

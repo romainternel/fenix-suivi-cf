@@ -260,9 +260,8 @@
             const staffBadges = [];
             if (typeof computePlayerRank === 'function' && posteCode) {
                 const rnk = computePlayerRank(nom, posteCode);
-                if (rnk && rnk.total > 1) {
-                    const m = rnk.rank === 1 ? '🥇' : rnk.rank === 2 ? '🥈' : rnk.rank === 3 ? '🥉' : null;
-                    if (m) staffBadges.push(`${m} #${rnk.rank} au poste`);
+                if (rnk && rnk.total > 1 && rnk.rank <= 3) {
+                    staffBadges.push(`${_rankMedalHTML(rnk.rank)} au poste`);
                 }
             }
             if (typeof _computeNoteScore === 'function' && posteCode && posteCode !== 'GB' && JOUEURS_TERRAIN) {
@@ -284,8 +283,7 @@
                         const avg = d.matchs > 0 ? d.total / d.matchs : 0;
                         if (avg > myTJAvg) tjRank++;
                     });
-                    const tjM = tjRank === 1 ? '🥇' : tjRank === 2 ? '🥈' : tjRank === 3 ? '🥉' : null;
-                    if (tjM) staffBadges.push(`${tjM} #${tjRank} TJ au poste`);
+                    if (tjRank <= 3) staffBadges.push(`${_rankMedalHTML(tjRank)} TJ au poste`);
                 }
             }
             if (typeof computeStreak === 'function') {

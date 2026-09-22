@@ -400,9 +400,8 @@
             const bilanMatchs = _getPmBilanMatchs();
             const badges = [];
             const rank = computePlayerRank(nom, posteCode, bilanMatchs);
-            if (rank && rank.total > 1) {
-                const medal = rank.rank === 1 ? '🥇' : rank.rank === 2 ? '🥈' : rank.rank === 3 ? '🥉' : null;
-                if (medal) badges.push(`<span class="pmf-badge pmf-badge-rank">${medal} #${rank.rank} au poste</span>`);
+            if (rank && rank.total > 1 && rank.rank <= 3) {
+                badges.push(`<span class="pmf-badge pmf-badge-rank">${_rankMedalHTML(rank.rank)} au poste</span>`);
             }
             // Top ATT / Top DEF parmi coéquipiers du même poste (joueurs de champ uniquement)
             if (posteCode && posteCode !== 'GB' && JOUEURS_TERRAIN) {

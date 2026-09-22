@@ -7,6 +7,14 @@
             if (src && tgt) tgt.value = src.value;
         }
 
+        // Pastille de classement (1/2/3) pour les badges "#N au poste"/"#N TJ au poste" — remplace
+        // l'ancien couple emoji+"#N" (🥉 #3), moins lisible en petite taille, par un rond coloré
+        // or/argent/bronze avec le chiffre dedans (demande Romain, 2026-09-22).
+        function _rankMedalHTML(rank) {
+            const tier = rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze';
+            return `<span class="rank-medal rank-medal-${tier}">${rank}</span>`;
+        }
+
         function getEffColor(pct, poste) {
             if (pct === null) return '#94a3b8';
             const s = EFF_SEUILS[poste] || { hi: 55, mid: 38 };
