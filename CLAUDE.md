@@ -29,18 +29,18 @@ FENIX-HANDBALL-CF-SUIVI.html   Fichier principal (3857 lignes) : HTML de toutes 
 index.html                     Redirect immédiat vers FENIX-HANDBALL-CF-SUIVI.html (meta refresh)
 favicon.png
 
-css/style.css                  Tous les styles (3260 lignes) — tokens couleur/ombre en :root
+css/style.css                  Tous les styles (3303 lignes) — tokens couleur/ombre en :root
 
 js/
   supabase-client.js  (291 l.)  Client Supabase, chargement boot (loadFromSupabase), migration
                                  locale→Supabase (STORY-23), comptes joueurs (Edge Functions)
-  utils.js            (252 l.)  matchPlayerName() (résolution floue de nom, cache), getEffColor(),
-                                 getTJData()/findTJEntry(), detectIsGB(), _rankMedalHTML()
+  utils.js            (258 l.)  matchPlayerName() (résolution floue de nom, cache), getEffColor(),
+                                 getTJData()/findTJEntry(), detectIsGB(), _rankMedalHTML(), matchResultColor()
   player-photos.js     (44 l.)  PLAYER_PHOTOS (mapping nom→photo) + getPlayerPhoto() + préchargement
   impact-images.js      (4 l.)  Constantes images terrain (ALG/ALD)
   page-joueurs.js    (1791 l.)  Page Joueurs : terrain SVG interactif, fiche joueur, export PDF/PPT
   page-notes-graph.js (809 l.)  Page Notes (table GB) + graphique évolution (Chart.js)
-  page-analyse.js    (3640 l.)  Page Analyse : timeline, familles d'enclenchement, mode Articulation, onglet Gardien,
+  page-analyse.js    (3648 l.)  Page Analyse : timeline, familles d'enclenchement, mode Articulation, onglet Gardien,
                                  éditeurs Familles/Bilans, notes coach
   player-mode.js     (1832 l.)  Mode Lecture Joueur (mobile) : Ma Fiche, Stats Match, Impact
 
