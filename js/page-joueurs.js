@@ -422,7 +422,7 @@
                     const tjEntryG = findTJEntry(nom);
                     const tjMinG = tjEntryG && tjEntryG[m] !== undefined ? ` <span style="color:#94A3B8;font-size:0.8em">(${tjEntryG[m]} min)</span>` : '';
                     gbHTML += `<tr>
-                        <td style="color:${matchResultColor(m)}">${m}${tjMinG}</td>
+                        <td style="color:${matchResultColor(m, true)}">${m}${tjMinG}</td>
                         <td>${aT}/${tT}</td><td>${tT>0?Math.round(aT/tT*100)+'%':'-'}</td>
                         <td>${s.ac}/${tC}</td><td>${tC>0?Math.round(s.ac/tC*100)+'%':'-'}</td>
                         <td>${s.ap}/${tP}</td><td>${tP>0?Math.round(s.ap/tP*100)+'%':'-'}</td>
@@ -499,7 +499,7 @@
                     const tjEntry = findTJEntry(nom);
                     const tjMin = tjEntry && tjEntry[m] !== undefined ? ` <span style="color:#94A3B8;font-size:0.8em">(${tjEntry[m]} min)</span>` : '';
                     tbodyHTML += `<tr>
-                        <td style="color:${matchResultColor(m)}">${m}${tjMin}</td>
+                        <td style="color:${matchResultColor(m, true)}">${m}${tjMin}</td>
                         <td>${s.bc}/${tC}</td>
                         <td>${tC>0?Math.round(s.bc/tC*100)+'%':'-'}</td>
                         <td>${tP>0?s.bp+'/'+tP:'-'}</td>

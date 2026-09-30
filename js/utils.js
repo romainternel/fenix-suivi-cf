@@ -64,15 +64,18 @@
             return '';
         }
 
-        function matchResultColor(m) {
+        // `onDarkContainer` : true si le tableau appelant rend sur un fond qui passe réellement en
+        // navy sombre (`#joueur-matches`, page-joueurs.js) en thème sombre. Le tableau équivalent de
+        // player-mode.js (`.pmf-card`) garde un fond blanc fixe quel que soit le thème — lui passer
+        // `true` y rendrait le "Nul" illisible (texte quasi blanc sur fond resté blanc, cf. audit
+        // contraste v312) : ne jamais déduire cette couleur du seul thème global, la fonction n'a
+        // aucune idée d'où son résultat sera injecté sans que l'appelant le précise explicitement.
+        function matchResultColor(m, onDarkContainer) {
             const fenix = DATA.filter(r => r[COLS.rencontre] === m && r[COLS.club] === 'FENIX' && r[COLS.resultat] === 'But').length;
             const adv   = DATA.filter(r => r[COLS.rencontre] === m && r[COLS.club] !== 'FENIX' && r[COLS.resultat] === 'But').length;
             if (fenix > adv) return 'var(--fenix-success)';
             if (fenix < adv) return 'var(--fenix-danger)';
-            // Match nul : --fenix-dark (#0F172A) est quasi invisible sur un fond sombre (mêmes teintes
-            // navy que --dk-panel/--dk-bg) — cette fonction retourne une couleur inline (pas une classe),
-            // donc le thème doit être vérifié ici, comme _encCanvasIsDark()/_chartDarkColors() ailleurs.
-            return document.documentElement.dataset.theme === 'dark' ? 'var(--dk-text)' : 'var(--fenix-dark)';
+            return (onDarkContainer && document.documentElement.dataset.theme === 'dark') ? 'var(--dk-text)' : 'var(--fenix-dark)';
         }
 
         function effColor(posteCode, eff, total) {

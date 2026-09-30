@@ -635,21 +635,26 @@
         /* ── Thème sombre (phase 2 : page Joueurs) ──
            Mêmes principes que la phase 1 : chaque sélecteur vérifié un par un (grep) pour
            confirmer qu'il n'est pas partagé avec une autre page avant de l'ajouter ici.
-           .jm-table/.jm-total-row sont aussi utilisées par le Mode Lecture Joueur (player-mode.js)
-           — accepté volontairement, cohérent puisque le fond de page y devient sombre aussi
-           (règle body ci-dessus, globale) si jamais la bascule est active dans ce contexte. */
+           .jm-header/.jm-table/.jm-total-row sont AUSSI utilisées par le Mode Lecture Joueur
+           (player-mode.js, carte .pmf-card) — l'hypothèse d'origine ("cohérent puisque le fond de
+           page y devient sombre aussi") supposait .pmf-card transparente, mais elle a un fond blanc
+           opaque (`background:#fff`, jamais surchargé pour le thème sombre) : texte clair sur fond
+           resté blanc = illisible dans "Vue joueur" (aperçu staff) avec le thème sombre actif
+           (retour Romain, audit contraste v312). D'où le scope explicite à #joueur-matches
+           ci-dessous plutôt que .jm-* nu — la carte mobile garde son style clair d'origine, non
+           régressé, pas de nouveau traitement dark pour Mode Lecture Joueur dans ce cycle. */
         [data-theme="dark"] .joueur-panel,
         [data-theme="dark"] #joueur-matches { background: var(--dk-panel); border-color: var(--dk-line); }
         [data-theme="dark"] .jp-stat { border-right-color: var(--dk-line); }
         [data-theme="dark"] .jp-lbl { color: var(--dk-mut); }
         [data-theme="dark"] .jp-val { color: var(--dk-accent); }
         [data-theme="dark"] .jp-empty { color: var(--dk-mut); }
-        [data-theme="dark"] .jm-header { color: var(--dk-accent); border-bottom-color: var(--dk-line); }
-        [data-theme="dark"] .jm-table th { background: var(--dk-panel2); border-bottom-color: var(--dk-line); color: var(--dk-mut); }
-        [data-theme="dark"] .jm-table td { border-bottom-color: var(--dk-line); color: var(--dk-text); }
-        [data-theme="dark"] .jm-table td:first-child { color: var(--dk-accent); }
-        [data-theme="dark"] .jm-table tbody tr:hover { background: rgba(49,203,232,0.12); }
-        [data-theme="dark"] .jm-total-row td { background: var(--dk-panel2) !important; color: var(--dk-accent) !important; border-top-color: var(--dk-line2); }
+        [data-theme="dark"] #joueur-matches .jm-header { color: var(--dk-accent); border-bottom-color: var(--dk-line); }
+        [data-theme="dark"] #joueur-matches .jm-table th { background: var(--dk-panel2); border-bottom-color: var(--dk-line); color: var(--dk-mut); }
+        [data-theme="dark"] #joueur-matches .jm-table td { border-bottom-color: var(--dk-line); color: var(--dk-text); }
+        [data-theme="dark"] #joueur-matches .jm-table td:first-child { color: var(--dk-accent); }
+        [data-theme="dark"] #joueur-matches .jm-table tbody tr:hover { background: rgba(49,203,232,0.12); }
+        [data-theme="dark"] #joueur-matches .jm-total-row td { background: var(--dk-panel2) !important; color: var(--dk-accent) !important; border-top-color: var(--dk-line2); }
         [data-theme="dark"] .court-photo-view { background: linear-gradient(180deg, var(--dk-panel2) 0%, var(--dk-panel) 100%); }
 
         /* Phase 4 (2026-09-20) : page Notes (#page-notes + #section-notes-gb, imbriquée dedans)
@@ -1974,6 +1979,12 @@
             visibility: visible;
             transition: transform 200ms ease-out, visibility 0s linear 0s;
         }
+        /* Les 4 panneaux latéraux (Vue joueur/Comptes joueurs/Familles tactiques/Bilans) gardent un
+           fond blanc fixe (background ci-dessus) mais ne fixent jamais leur propre `color` — en thème
+           sombre, tout texte sans couleur explicite à l'intérieur hérite de [data-theme="dark"] body
+           (--dk-text, quasi blanc), donc quasi invisible sur ce fond resté blanc (ex. noms de joueurs
+           dans la liste "Comptes joueurs", retrouvé lors de l'audit contraste v312). */
+        [data-theme="dark"] .slide-panel { color: var(--fenix-dark); }
         @media (max-width: 480px) {
             .slide-panel { width: 100%; padding: 20px; }
         }
