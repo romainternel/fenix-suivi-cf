@@ -156,8 +156,8 @@
         // décrits par Romain (pas besoin de matérialiser les frontières de bloc : le total ne
         // dépend pas d'où elles tombent, seulement de l'ensemble des lignes taguées).
         function computeSuperiorites(matchData) {
-            const fenix = { buts: 0, tirs: 0 };
-            const adv = { buts: 0, tirs: 0 };
+            const fenix = { buts: 0, possessions: 0 };
+            const adv = { buts: 0, possessions: 0 };
             let hasData = false;
             // Tri chronologique explicite (Position) — "Pen" hérite ci-dessous du signe de la ligne
             // précédente, donc l'ordre doit être garanti plutôt que supposé (même précaution que
@@ -178,9 +178,17 @@
                 }
                 if (!phase.includes('+') && !phase.includes('-')) return;
                 hasData = true;
+                // Une possession = une ligne taguée `Possession` (colonne dédiée, déjà utilisée ainsi
+                // partout ailleurs dans ce fichier pour dédoublonner une séquence multi-lignes) — un
+                // sous-événement de la même séquence (Jet franc, PB post-PO, 2' obtenu...) n'est jamais
+                // lui-même une possession. Avant ce correctif, seules les lignes But/Tir raté étaient
+                // comptées au dénominateur : une possession en +/- se terminant par une perte de balle
+                // ou un jet franc n'était donc jamais comptée, ce qui sous-comptait fortement le total
+                // et faussait le % (bug signalé par Romain, écart avec son propre décompte manuel).
+                if (!(row[COLS.possession] || '').toString().trim()) return;
                 const side = row[COLS.club] === 'FENIX' ? fenix : adv;
-                if (row[COLS.resultat] === 'But') { side.buts++; side.tirs++; }
-                else if (row[COLS.resultat] === 'Tir raté') { side.tirs++; }
+                side.possessions++;
+                if (row[COLS.resultat] === 'But') side.buts++;
             });
             return { fenix, adv, hasData };
         }
@@ -361,12 +369,12 @@
 
             const supDiff = sup.fenix.buts - sup.adv.buts;
             const supCls = supDiff > 0 ? 'avantage' : supDiff < 0 ? 'desavantage' : '';
-            const fSupPct = sup.fenix.tirs > 0 ? Math.round(sup.fenix.buts / sup.fenix.tirs * 100) : 0;
-            const aSupPct = sup.adv.tirs > 0 ? Math.round(sup.adv.buts / sup.adv.tirs * 100) : 0;
+            const fSupPct = sup.fenix.possessions > 0 ? Math.round(sup.fenix.buts / sup.fenix.possessions * 100) : 0;
+            const aSupPct = sup.adv.possessions > 0 ? Math.round(sup.adv.buts / sup.adv.possessions * 100) : 0;
             const supBody = sup.hasData
                 ? `<div class="sup-score-main">FENIX <b>${sup.fenix.buts}</b> — <b>${sup.adv.buts}</b> Adversaire</div>
                    <div class="sup-eff-row">
-                       <span>FENIX ${sup.fenix.buts}/${sup.fenix.tirs} possessions (${fSupPct}%)</span><span class="sep">·</span><span>Adversaire ${sup.adv.buts}/${sup.adv.tirs} possessions (${aSupPct}%)</span>
+                       <span>FENIX ${sup.fenix.buts}/${sup.fenix.possessions} possessions (${fSupPct}%)</span><span class="sep">·</span><span>Adversaire ${sup.adv.buts}/${sup.adv.possessions} possessions (${aSupPct}%)</span>
                    </div>`
                 : `<div class="ind-sub">Non disponible pour ce match</div>`;
 
