@@ -1021,11 +1021,11 @@
             _momentsCles = moments;
 
             if (moments.length === 0) {
-                document.getElementById('moments-cles').innerHTML = '<p style="color:#6B7280;font-size:0.85rem;">Pas de séquence marquante détectée.</p>';
+                document.getElementById('moments-cles').innerHTML = '<p class="moments-cles-empty" style="font-size:0.85rem;">Pas de séquence marquante détectée.</p>';
                 return;
             }
 
-            let html = '<strong style="font-size:0.85rem;color:#333;">Moments clés :</strong> ';
+            let html = '<strong class="moments-cles-label" style="font-size:0.85rem;">Moments clés :</strong> ';
             moments.forEach((m, idx) => {
                 html += `<span class="moment-badge ${m.type}">MC${idx + 1} — ${m.text}</span> `;
             });

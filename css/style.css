@@ -703,6 +703,27 @@
         [data-theme="dark"] .indicateur-card { background: var(--dk-panel2); }
         [data-theme="dark"] .indicateur-label { color: var(--dk-mut); }
         [data-theme="dark"] .indicateur-fenix { color: var(--dk-accent); }
+        /* .avantage/.desavantage gardaient leur fond pastel clair (#D1FAE5/#FEE2E2) même en thème
+           sombre — jamais couvert par la règle .indicateur-card ci-dessus (plus spécifique) — ce qui
+           rendait le texte cyan (.indicateur-fenix, règle ci-dessus) illisible dessus (retour Romain,
+           carte Efficacité/Rythme/Supériorités). Fonds sombres teintés vert/rouge pour rester lisibles
+           avec les mêmes tokens --dk-* que le reste de l'appli. */
+        [data-theme="dark"] .indicateur-card.avantage { background: #123B2E; }
+        [data-theme="dark"] .indicateur-card.desavantage { background: #3B1620; }
+        [data-theme="dark"] .tempo-marker { background: var(--dk-text); }
+        [data-theme="dark"] .tempo-marker::after { color: var(--dk-text); }
+        [data-theme="dark"] .sup-score-main { color: var(--dk-text); }
+        [data-theme="dark"] .moments-cles-label { color: var(--dk-text); }
+        [data-theme="dark"] .moments-cles-empty { color: var(--dk-mut); }
+        [data-theme="dark"] .terrain-shot-legend { color: var(--dk-mut); }
+        /* Onglets internes page Analyse (Vue d'ensemble/Tactique/Notes & Outils, Tactique/Tendances) —
+           jamais couverts par le passage thème sombre initial (v296, restyling uniquement pastille→
+           soulignement) : le soulignement cyan de l'onglet actif était bien visible, mais son texte
+           (#0A2463, bleu marque) et le texte des onglets inactifs (#64748B) restaient quasi invisibles
+           sur le fond sombre du conteneur (retour Romain, capture d'écran). */
+        [data-theme="dark"] .an-tab-btn { color: var(--dk-mut); }
+        [data-theme="dark"] .an-tab-btn:hover { color: var(--dk-text); }
+        [data-theme="dark"] .an-tab-btn.active { color: var(--dk-accent); }
 
         /* Phase 5b (2026-09-21) : page Analyse — onglet Tactique (.enc-* et .artic-* : cartes familles
            d'enclenchement, articulation attaque/défense, section Gardien). Classes déjà spécifiques
@@ -1474,6 +1495,9 @@
             gap: 0.5rem;
             margin-top: 1rem;
         }
+        .moments-cles-label { color: #333; }
+        .moments-cles-empty { color: #6B7280; }
+        .terrain-shot-legend { color: #475569; }
 
         .moment-badge {
             padding: 0.4rem 0.8rem;

@@ -69,7 +69,10 @@
             const adv   = DATA.filter(r => r[COLS.rencontre] === m && r[COLS.club] !== 'FENIX' && r[COLS.resultat] === 'But').length;
             if (fenix > adv) return 'var(--fenix-success)';
             if (fenix < adv) return 'var(--fenix-danger)';
-            return 'var(--fenix-dark)';
+            // Match nul : --fenix-dark (#0F172A) est quasi invisible sur un fond sombre (mêmes teintes
+            // navy que --dk-panel/--dk-bg) — cette fonction retourne une couleur inline (pas une classe),
+            // donc le thème doit être vérifié ici, comme _encCanvasIsDark()/_chartDarkColors() ailleurs.
+            return document.documentElement.dataset.theme === 'dark' ? 'var(--dk-text)' : 'var(--fenix-dark)';
         }
 
         function effColor(posteCode, eff, total) {
