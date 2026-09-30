@@ -591,6 +591,14 @@
             --dk-accent: #31CBE8; --dk-red: #F0685F;
         }
         [data-theme="dark"] body { background: var(--dk-bg); color: var(--dk-text); }
+        /* Mode Lecture Joueur (mobile, body.player-mode) n'a jamais reçu de traitement thème sombre
+           (aucune de ses cartes .pm-* et .pmf-* — toutes à fond blanc fixe — n'a de règle [data-theme=
+           "dark"] dédiée dans tout ce fichier) : le seul héritage à corriger est la couleur de texte
+           de la règle body ci-dessus, qui rendait quasi blanc tout texte sans couleur explicite dans
+           ces cartes restées blanches (ex. "FENIX TOULOUSE"/"ADVERSAIRE" dans Stats Match, cf. audit
+           contraste v313). Un vrai joueur ne voit jamais cette combinaison (le réglage est côté
+           staff) — visible seulement via "Vue joueur" (aperçu staff) avec le thème sombre actif. */
+        [data-theme="dark"] body.player-mode { color: var(--fenix-dark); }
         [data-theme="dark"] .import-section,
         [data-theme="dark"] .team-card,
         [data-theme="dark"] #players-section { background: var(--dk-panel); border-color: var(--dk-line); }
