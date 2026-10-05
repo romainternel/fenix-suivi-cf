@@ -51,6 +51,10 @@ assets/photos/                 Photos joueurs (WebP, portrait + corps entier), a
 ALD.png, ALG.png, TERRAIN HB TIR.png
                                 Images terrain/zones utilisées par les canvas Impact
 
+IA STAT SAISON 26-27.xlsm, ESSAI IA STAT.xlsm
+                                Fichiers Excel source (non versionnés, ignorés par *.xlsm) : saison en cours (import)
+                                et fichier de test (audit de régression 2026-09-30)
+
 supabase/
   schema.sql                   Schéma des 7 tables (voir §5)
   seed-famille-mapping.sql     Seed initial de famille_mapping
