@@ -2973,21 +2973,39 @@
             return res;
         }
 
-        // Colonne "PVT 2 à 7" : renseignée = attaque 7 contre 6 avec deux pivots. Le sous-filtre
-        // window._articAttSup === '7v6' est appliqué ici, donc à toutes les agrégations d'attaque
-        // (stats, terrain, classement) qui passent par _articAttCounts.
-        function _articAttHasPvt2(r) {
-            return !!(r[COLS.att_pvt2] || '').toString().trim();
+        // Composition lue dans ARTICULATION ATT : "ARTICULATION ATT" = 6 contre 6, "ARTICULATION ATT +"
+        // = 6 contre 5 (art +), "ARTICULATION ATT à 7" = 7 contre 6. La colonne "PVT 2 à 7" renseignée
+        // vaut aussi 7 contre 6. Le filtre window._articAttSup est appliqué dans _articAttCounts, donc
+        // à toutes les agrégations d'attaque (stats, terrain, classement).
+        const ARTIC_ATT_SUP_MODES = [
+            { key: 'all', label: 'Toutes' },
+            { key: '6v6', label: '6 v 6' },
+            { key: '6v5', label: '6 v 5 (art +)' },
+            { key: '7v6', label: '7 v 6' },
+        ];
+
+        function _articAttComp(r) {
+            const v = (r[COLS.articulation_att] || '').toString().trim().toUpperCase();
+            if (!v) return null;
+            if ((r[COLS.att_pvt2] || '').toString().trim() || /À\s*7|7\s*VS\s*6/.test(v)) return '7v6';
+            if (v.includes('+') || /6\s*VS\s*5/.test(v)) return '6v5';
+            return '6v6';
         }
 
         function _articAttCounts(r) {
-            if (window._articAttSup === '7v6' && !_articAttHasPvt2(r)) return null;
+            const sup = window._articAttSup;
+            if (sup && sup !== 'all' && _articAttComp(r) !== sup) return null;
             return _articAttBaseCounts(r);
         }
 
         function _articAttControlBarHtml(matchData) {
-            const sup = window._articAttSup === '7v6' ? '7v6' : 'all';
-            const nPvt2 = matchData.filter(r => r[COLS.club] === 'FENIX' && _articAttHasPvt2(r) && _articAttBaseCounts(r) !== null).length;
+            const sup = window._articAttSup || 'all';
+            const supButtons = ARTIC_ATT_SUP_MODES.map(m => {
+                const n = m.key === 'all'
+                    ? matchData.filter(r => r[COLS.club] === 'FENIX' && _articAttBaseCounts(r) !== null).length
+                    : matchData.filter(r => r[COLS.club] === 'FENIX' && _articAttBaseCounts(r) !== null && _articAttComp(r) === m.key).length;
+                return `<button class="enc-pie-mode-btn${sup === m.key ? ' active' : ''}" onclick="_setArticAttSup('${m.key}')">${m.label} (${n})</button>`;
+            }).join('');
             return `<div class="artic-control-bar">
                 <div class="artic-control-row">
                     <span class="artic-control-label">LARGEUR</span>
@@ -2997,10 +3015,7 @@
                 </div>
                 <div class="artic-control-row">
                     <span class="artic-control-label">SUPÉRIORITÉ</span>
-                    <div class="artic-dispositif-toggle">
-                        <button class="enc-pie-mode-btn${sup === 'all' ? ' active' : ''}" onclick="_setArticAttSup('all')" title="Toutes les séquences d'attaque">Toutes</button>
-                        <button class="enc-pie-mode-btn${sup === '7v6' ? ' active' : ''}" onclick="_setArticAttSup('7v6')" title="Séquences 7 contre 6 à deux pivots (colonne PVT 2 à 7 renseignée)">7 v 6 à 2 PVT (${nPvt2} séq.)</button>
-                    </div>
+                    <div class="artic-dispositif-toggle">${supButtons}</div>
                 </div>
             </div>`;
         }
@@ -3127,8 +3142,9 @@
             // Pas de bloc DISPOSITIF côté attaque (n'existe pas) — LARGEUR et SUPÉRIORITÉ seulement.
             const controlBarHtml = _articAttControlBarHtml(matchData);
             if (!stats.total) {
-                const msg = window._articAttSup === '7v6'
-                    ? 'Aucune séquence 7 v 6 à 2 PVT sur cette période.'
+                const supMode = ARTIC_ATT_SUP_MODES.find(m => m.key === window._articAttSup);
+                const msg = supMode && supMode.key !== 'all'
+                    ? `Aucune séquence ${supMode.label} sur cette période.`
                     : "Pas encore de données d'articulation offensive sur cette période.";
                 container.innerHTML = `${controlBarHtml}<p class="artic-empty">${msg}</p>`;
                 return;
