@@ -11,15 +11,15 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=318">
-    <script src="js/supabase-client.js?v=318"></script>
-    <script src="js/utils.js?v=318"></script>
-    <script src="js/player-photos.js?v=318"></script>
-    <script src="js/impact-images.js?v=318"></script>
-    <script src="js/player-mode.js?v=318"></script>
-    <script src="js/page-joueurs.js?v=318"></script>
-    <script src="js/page-notes-graph.js?v=318"></script>
-    <script src="js/page-analyse.js?v=318"></script>
+    <link rel="stylesheet" href="css/style.css?v=319">
+    <script src="js/supabase-client.js?v=319"></script>
+    <script src="js/utils.js?v=319"></script>
+    <script src="js/player-photos.js?v=319"></script>
+    <script src="js/impact-images.js?v=319"></script>
+    <script src="js/player-mode.js?v=319"></script>
+    <script src="js/page-joueurs.js?v=319"></script>
+    <script src="js/page-notes-graph.js?v=319"></script>
+    <script src="js/page-analyse.js?v=319"></script>
 </head>
 <body>
 
@@ -1707,7 +1707,7 @@ let _effInfoPoste = null;
         }
 
         function extractUniqueValues() {
-            MATCHS = [...new Set(DATA.map(row => row[COLS.rencontre]).filter(Boolean))];
+            MATCHS = [...new Set(DATA.map(row => row[COLS.rencontre]).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
             SAISONS = [...new Set(DATA.map(row => row[COLS.saison]).filter(Boolean))].sort();
             const joueurs = new Set();
             DATA.forEach(row => {
@@ -2059,7 +2059,7 @@ let _effInfoPoste = null;
         function onSaisonChange() {
             const saison = document.getElementById('filter-saison').value;
             const matchesToShow = saison
-                ? [...new Set(DATA.filter(row => row[COLS.saison] === saison).map(row => row[COLS.rencontre]).filter(Boolean))]
+                ? [...new Set(DATA.filter(row => row[COLS.saison] === saison).map(row => row[COLS.rencontre]).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }))
                 : MATCHS;
 
             // Mettre à jour le select global de match
