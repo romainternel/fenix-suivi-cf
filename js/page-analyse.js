@@ -2600,16 +2600,6 @@
             </svg>`;
         }
 
-        // Choix du joueur "principal" affiché sur un poste tant qu'aucun override manuel n'existe :
-        // le plus utilisé à ce poste sur la période. Simplifiée en STORY-38 (l'ancien mode Suggestion,
-        // qui triait par efficacité individuelle, a été retiré avec le toggle Composition — Romain ne
-        // veut plus qu'un seul axe de composition automatique, sans notion d'efficacité individuelle).
-        function _articPrimaryEntry(pKey, joueurMap) {
-            const manuel = window._articManualPoste && window._articManualPoste[pKey];
-            if (manuel) return [manuel, joueurMap.get(manuel) || null];
-            return [...joueurMap.entries()].sort((a, b) => b[1].possessions - a[1].possessions)[0];
-        }
-
         // 3 charnières de largeur décroissante (6 → 4 → 2 postes) pour évaluer le taux de réussite
         // DÉFENSIVE d'une COMPOSITION de joueurs jouée ensemble, pas d'un joueur isolé à un poste
         // (demande Romain, v259bis puis recentrage collectif STORY-37) : plus la charnière est étroite,
@@ -2728,6 +2718,7 @@
             const dispositif = window._articDispositif;
             const layout = ARTIC_LAYOUTS[dispositif];
             const posteMap = stats.postes[dispositif];
+            const autoLineup = _articAutoLineup(ARTIC_POSTES, window._articManualPoste, posteMap);
 
             const ARTIC_DISPOSITIF_TIP = {
                 '0-6': 'Défense alignée : les 6 joueurs tiennent la ligne des 6m côte à côte.',
@@ -2772,13 +2763,14 @@
                     </div>`;
                     return;
                 }
-                if (!joueurMap || !joueurMap.size) {
+                if (!autoLineup[pKey]) {
                     lineup[pKey] = null;
-                    postesHtml += `<div class="artic-poste${isOpen ? ' selected' : ''}" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucun joueur connu sur ${pKey.toUpperCase()} sur cette période. Cliquer pour en choisir un." onclick="_toggleArticPosteEditor('${pKey}')">
+                    postesHtml += `<div class="artic-poste${isOpen ? ' selected' : ''}" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucun joueur disponible sans doublon sur ${pKey.toUpperCase()}. Cliquer pour en choisir un." onclick="_toggleArticPosteEditor('${pKey}')">
                         <div class="artic-poste-label">${pKey.toUpperCase()}</div><div class="artic-poste-joueur">—</div></div>`;
                     return;
                 }
-                const [topJoueur, topStats] = _articPrimaryEntry(pKey, joueurMap);
+                const topJoueur = autoLineup[pKey];
+                const topStats = joueurMap.get(topJoueur);
                 lineup[pKey] = topJoueur;
                 const badge = joueurMap.size > 1 ? `<div class="artic-poste-badge">+${joueurMap.size - 1}</div>` : '';
                 const autresTip = joueurMap.size > 1 ? ` · ${joueurMap.size - 1} autre(s) joueur(s) ont aussi occupé ce poste.` : '';
@@ -3056,13 +3048,12 @@
             return { postes, total, global };
         }
 
-        // Composition automatique attaque : un joueur n'occupe qu'un seul poste. Postes traités du plus
-        // certain (meilleur effectif observé) au moins certain ; un joueur déjà placé (manuel ou auto)
-        // n'est pas reproposé ailleurs. Un poste sans candidat libre reste vide, à choisir à la main.
-        function _articAttAutoLineup(posteMap) {
-            const manuel = window._articAttManualPoste || {};
-            const used = new Set(ARTIC_ATT_POSTES.map(pk => manuel[pk]).filter(Boolean));
-            const pending = ARTIC_ATT_POSTES.filter(pk => !manuel[pk] && posteMap.get(pk) && posteMap.get(pk).size);
+        // Composition automatique : un joueur n'occupe qu'un seul poste. Postes traités du plus certain
+        // (meilleur effectif observé) au moins certain ; un joueur déjà placé (manuel ou auto) n'est pas
+        // reproposé ailleurs. Un poste sans candidat libre reste vide, à choisir à la main.
+        function _articAutoLineup(postes, manuel, posteMap) {
+            const used = new Set(postes.map(pk => manuel[pk]).filter(Boolean));
+            const pending = postes.filter(pk => !manuel[pk] && posteMap.get(pk) && posteMap.get(pk).size);
             const bestCount = pk => Math.max(...[...posteMap.get(pk).values()].map(s => s.possessions));
             pending.sort((a, b) => bestCount(b) - bestCount(a));
             const auto = {};
@@ -3164,7 +3155,7 @@
             if (!window._articAttManualPoste) window._articAttManualPoste = {};
             if (!window._articAttWidth) window._articAttWidth = 'total';
             const posteMap = stats.postes;
-            const autoLineup = _articAttAutoLineup(posteMap);
+            const autoLineup = _articAutoLineup(ARTIC_ATT_POSTES, window._articAttManualPoste, posteMap);
 
             let postesHtml = '';
             const lineup = {};

@@ -40,7 +40,7 @@ js/
   impact-images.js      (4 l.)  Constantes images terrain (ALG/ALD)
   page-joueurs.js    (1791 l.)  Page Joueurs : terrain SVG interactif, fiche joueur, export PDF/PPT
   page-notes-graph.js (809 l.)  Page Notes (table GB) + graphique évolution (Chart.js)
-  page-analyse.js    (3710 l.)  Page Analyse : timeline, familles d'enclenchement, mode Articulation, onglet Gardien,
+  page-analyse.js    (3701 l.)  Page Analyse : timeline, familles d'enclenchement, mode Articulation, onglet Gardien,
                                  éditeurs Familles/Bilans, notes coach
   player-mode.js     (1832 l.)  Mode Lecture Joueur (mobile) : Ma Fiche, Stats Match, Impact
 
@@ -79,7 +79,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 - **Nommage HTML/CSS** : IDs et classes en kebab-case (`#filter-joueur-match`, `.jp-avatar`). Préfixes courts par module : `jp-*` (Joueurs), `pmf-*`/`pm-*` (Player Mode), `enc-*` (Enclenchements), `court-*` (terrain SVG).
 - **Fonctions JS** : camelCase. Fonctions privées à un module préfixées `_` (`_renderCourtPhotoState`, `_getJoueurBilanMatchs`).
-- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **9** balises `<link>`/`<script>` du projet (css/style.css + les 8 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v317**.
+- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **9** balises `<link>`/`<script>` du projet (css/style.css + les 8 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v318**.
 - **Résolution de nom joueur** : ne jamais comparer deux noms de joueur par égalité stricte. Le format court "Prénom.Initiale" (ex. `Lucas.G`) coexiste avec des colonnes Excel ne contenant que le prénom (ex. colonne `Gardien`) — toujours passer par `matchPlayerName(a, b)` (`js/utils.js`), qui gère ce cas et met en cache le résultat.
 - **Constantes de configuration maintenues à la main** : `POSTE_POSITIONS`, `GB_ZONE_WEIGHTS`, `EFF_SEUILS`, `PLAYER_PHOTOS` — objets JS statiques édités directement dans le code (par Romain ou en session), pas de table Supabase ni d'UI d'admin pour ces réglages ponctuels.
 - **Import Excel = remplacement complet** : chaque import Excel supprime et réinsère entièrement `match_data`/`joueurs`/`tableau_match`/`bilan` sur Supabase. Ne jamais stocker une donnée éditée en base (famille, note coach, compte joueur) sur une structure qui serait recréée par l'import — toujours une table séparée (`famille_mapping`, `coach_analyses`, `player_profiles`) ou un fichier hors pipeline (`player-photos.js`).
@@ -151,7 +151,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 ## 9. État d'avancement
 
-**Fonctionnel et en production (v317) :**
+**Fonctionnel et en production (v318) :**
 - [x] Import Excel → Supabase (remplacement complet des 4 tables de données)
 - [x] Dashboard, page Analyse (vue match : 3 onglets Vue d'ensemble/Tactique/Notes & Outils ; vue saison : 2 onglets Tactique/Tendances)
 - [x] Page Joueurs : terrain interactif (photos ou initiales), fiche staff, sous-onglets Fiche/Notes/Graphique/Impact
@@ -184,7 +184,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 **v315-v316** : barre SUPÉRIORITÉ (`js/page-analyse.js`, sous LARGEUR) qui filtre l'articulation attaque sur 3 compositions, plus « Toutes » : 6 v 6 (`ARTICULATION ATT`), 6 v 5 art + (`ARTICULATION ATT +`), 7 v 6 (`ARTICULATION ATT à 7`, ou colonne « PVT 2 à 7 » renseignée). Classification `_articAttComp()`, appliquée dans `_articAttCounts()` : stats, terrain, classement et résumé restent cohérents entre eux. Colonne Excel « PVT 2 à 7 » lue en `COLS.att_pvt2` (index 36) — migration `supabase/migrate-att-pvt2.sql` nécessaire uniquement si cette colonne est réimportée (sinon l'insertion échoue sur colonne inconnue).
 
-**v317** : composition automatique de l'articulation attaque sans doublon (`_articAttAutoLineup()`, `js/page-analyse.js`) — un joueur n'occupe plus deux postes ; les postes sont attribués du plus certain au moins certain, un poste sans candidat libre reste vide (à choisir à la main). Défense (`_articPrimaryEntry`) : même logique de choix indépendant par poste, non corrigée à ce stade.
+**v317-v318** : composition automatique des articulations attaque et défense sans doublon — un joueur n'occupe plus deux postes. Fonction générique `_articAutoLineup(postes, manuel, posteMap)` (`js/page-analyse.js`) : postes attribués du plus certain au moins certain, un poste sans candidat libre reste vide (à choisir à la main). Remplace `_articPrimaryEntry` (défense) et `_articAttPrimaryEntry` (attaque), supprimées.
 
 **En attente / non couvert :**
 - [ ] Photos pour 4 joueurs (Roman.L, Yoran.C, Zacharie.D, Roméo.G) — dépend de Romain
