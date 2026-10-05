@@ -3056,13 +3056,25 @@
             return { postes, total, global };
         }
 
-        // Jumelle de _articPrimaryEntry lisant l'état attaque séparé (window._articAttManualPoste) —
-        // dupliquée plutôt que paramétrée pour ne pas risquer de régression sur l'appelant défense
-        // déjà en production (Architecture §3.3).
-        function _articAttPrimaryEntry(pKey, joueurMap) {
-            const manuel = window._articAttManualPoste && window._articAttManualPoste[pKey];
-            if (manuel) return [manuel, joueurMap.get(manuel) || null];
-            return [...joueurMap.entries()].sort((a, b) => b[1].possessions - a[1].possessions)[0];
+        // Composition automatique attaque : un joueur n'occupe qu'un seul poste. Postes traités du plus
+        // certain (meilleur effectif observé) au moins certain ; un joueur déjà placé (manuel ou auto)
+        // n'est pas reproposé ailleurs. Un poste sans candidat libre reste vide, à choisir à la main.
+        function _articAttAutoLineup(posteMap) {
+            const manuel = window._articAttManualPoste || {};
+            const used = new Set(ARTIC_ATT_POSTES.map(pk => manuel[pk]).filter(Boolean));
+            const pending = ARTIC_ATT_POSTES.filter(pk => !manuel[pk] && posteMap.get(pk) && posteMap.get(pk).size);
+            const bestCount = pk => Math.max(...[...posteMap.get(pk).values()].map(s => s.possessions));
+            pending.sort((a, b) => bestCount(b) - bestCount(a));
+            const auto = {};
+            pending.forEach(pk => {
+                const libre = [...posteMap.get(pk).entries()]
+                    .filter(([joueur]) => !used.has(joueur))
+                    .sort((a, b) => b[1].possessions - a[1].possessions)[0];
+                if (!libre) return;
+                auto[pk] = libre[0];
+                used.add(libre[0]);
+            });
+            return auto;
         }
 
         // Contrairement à _articTauxDefense (inversion nécessaire côté défense, STORY-37), l'efficacité
@@ -3152,6 +3164,7 @@
             if (!window._articAttManualPoste) window._articAttManualPoste = {};
             if (!window._articAttWidth) window._articAttWidth = 'total';
             const posteMap = stats.postes;
+            const autoLineup = _articAttAutoLineup(posteMap);
 
             let postesHtml = '';
             const lineup = {};
@@ -3175,13 +3188,14 @@
                     </div>`;
                     return;
                 }
-                if (!joueurMap || !joueurMap.size) {
+                if (!autoLineup[pKey]) {
                     lineup[pKey] = null;
-                    postesHtml += `<div class="artic-poste${isOpen ? ' selected' : ''}" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucun joueur connu sur ${label} sur cette période. Cliquer pour en choisir un." onclick="_toggleArticAttPosteEditor('${pKey}')">
+                    postesHtml += `<div class="artic-poste${isOpen ? ' selected' : ''}" style="left:${x}%;top:${y}%;opacity:0.4" title="Aucun joueur disponible sans doublon sur ${label}. Cliquer pour en choisir un." onclick="_toggleArticAttPosteEditor('${pKey}')">
                         <div class="artic-poste-label">${label}</div><div class="artic-poste-joueur">—</div></div>`;
                     return;
                 }
-                const [topJoueur, topStats] = _articAttPrimaryEntry(pKey, joueurMap);
+                const topJoueur = autoLineup[pKey];
+                const topStats = joueurMap.get(topJoueur);
                 lineup[pKey] = topJoueur;
                 const badge = joueurMap.size > 1 ? `<div class="artic-poste-badge">+${joueurMap.size - 1}</div>` : '';
                 const autresTip = joueurMap.size > 1 ? ` · ${joueurMap.size - 1} autre(s) joueur(s) ont aussi occupé ce poste.` : '';
