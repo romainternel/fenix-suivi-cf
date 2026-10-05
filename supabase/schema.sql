@@ -41,10 +41,12 @@ create table match_data (
   att_dc             text,
   att_ard            text,
   att_ald            text,
-  att_pvt            text
+  att_pvt            text,
+  att_pvt2           text
 );
 -- Ordre des 7 colonnes ci-dessus aligné sur les en-têtes Excel AD-AJ (ARTICULATION ATT, ALG, ARG,
 -- DC, ARD, ALD, PVT) et sur COLS (FENIX-HANDBALL-CF-SUIVI.html, indices 29-35, STORY-47).
+-- att_pvt2 (Excel AK, "PVT 2 à 7", index 36) : renseignée = séquence 7 contre 6 à deux pivots.
 
 create table joueurs (
   nom         text primary key,

@@ -2965,12 +2965,49 @@
         // articulation_att n'ont pas le tag Possession (contre 0 des 31 "But"), tous confirmés
         // distincts (positions/joueurs différents du tir voisin dans la séquence, pas des doublons) —
         // sans cette règle, le % de réussite affiché aurait été mesuré sur un dénominateur incomplet.
-        function _articAttCounts(r) {
+        function _articAttBaseCounts(r) {
             if (!(r[COLS.articulation_att] || '').toString().trim()) return null;
             const res = (r[COLS.resultat] || '').toString().trim();
             if (res === 'But' || res === 'Tir raté') return res; // tir : la possession n'entre pas en jeu
             if (!(r[COLS.possession] || '').toString().trim()) return null; // sous-événement : dédoublonné par séquence
             return res;
+        }
+
+        // Colonne "PVT 2 à 7" : renseignée = attaque 7 contre 6 avec deux pivots. Le sous-filtre
+        // window._articAttSup === '7v6' est appliqué ici, donc à toutes les agrégations d'attaque
+        // (stats, terrain, classement) qui passent par _articAttCounts.
+        function _articAttHasPvt2(r) {
+            return !!(r[COLS.att_pvt2] || '').toString().trim();
+        }
+
+        function _articAttCounts(r) {
+            if (window._articAttSup === '7v6' && !_articAttHasPvt2(r)) return null;
+            return _articAttBaseCounts(r);
+        }
+
+        function _articAttControlBarHtml(matchData) {
+            const sup = window._articAttSup === '7v6' ? '7v6' : 'all';
+            const nPvt2 = matchData.filter(r => r[COLS.club] === 'FENIX' && _articAttHasPvt2(r) && _articAttBaseCounts(r) !== null).length;
+            return `<div class="artic-control-bar">
+                <div class="artic-control-row">
+                    <span class="artic-control-label">LARGEUR</span>
+                    <div class="artic-dispositif-toggle">
+                        ${ARTIC_ATT_BLOCKS.map(b => `<button class="enc-pie-mode-btn${window._articAttWidth === b.key ? ' active' : ''}" onclick="_setArticAttWidth('${b.key}')" title="${_escapeHtml(b.label)} (${b.postes.map(_articAttPosteLabel).join('-')})">${b.label}</button>`).join('')}
+                    </div>
+                </div>
+                <div class="artic-control-row">
+                    <span class="artic-control-label">SUPÉRIORITÉ</span>
+                    <div class="artic-dispositif-toggle">
+                        <button class="enc-pie-mode-btn${sup === 'all' ? ' active' : ''}" onclick="_setArticAttSup('all')" title="Toutes les séquences d'attaque">Toutes</button>
+                        <button class="enc-pie-mode-btn${sup === '7v6' ? ' active' : ''}" onclick="_setArticAttSup('7v6')" title="Séquences 7 contre 6 à deux pivots (colonne PVT 2 à 7 renseignée)">7 v 6 à 2 PVT (${nPvt2} séq.)</button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function _setArticAttSup(supKey) {
+            window._articAttSup = supKey;
+            _redrawArticAttCourt();
         }
 
         function computeArticulationAttStats(matchData) {
@@ -3087,23 +3124,18 @@
 
         function _drawArticulationAttCourt(container, matchData) {
             const stats = computeArticulationAttStats(matchData);
+            // Pas de bloc DISPOSITIF côté attaque (n'existe pas) — LARGEUR et SUPÉRIORITÉ seulement.
+            const controlBarHtml = _articAttControlBarHtml(matchData);
             if (!stats.total) {
-                container.innerHTML = `<p class="artic-empty">Pas encore de données d'articulation offensive sur cette période.</p>`;
+                const msg = window._articAttSup === '7v6'
+                    ? 'Aucune séquence 7 v 6 à 2 PVT sur cette période.'
+                    : "Pas encore de données d'articulation offensive sur cette période.";
+                container.innerHTML = `${controlBarHtml}<p class="artic-empty">${msg}</p>`;
                 return;
             }
             if (!window._articAttManualPoste) window._articAttManualPoste = {};
             if (!window._articAttWidth) window._articAttWidth = 'total';
             const posteMap = stats.postes;
-
-            // Pas de bloc DISPOSITIF côté attaque (n'existe pas) — seule la ligne LARGEUR reste.
-            const controlBarHtml = `<div class="artic-control-bar">
-                <div class="artic-control-row">
-                    <span class="artic-control-label">LARGEUR</span>
-                    <div class="artic-dispositif-toggle">
-                        ${ARTIC_ATT_BLOCKS.map(b => `<button class="enc-pie-mode-btn${window._articAttWidth === b.key ? ' active' : ''}" onclick="_setArticAttWidth('${b.key}')" title="${_escapeHtml(b.label)} (${b.postes.map(_articAttPosteLabel).join('-')})">${b.label}</button>`).join('')}
-                    </div>
-                </div>
-            </div>`;
 
             let postesHtml = '';
             const lineup = {};

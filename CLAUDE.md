@@ -32,7 +32,7 @@ favicon.png
 css/style.css                  Tous les styles (3303 lignes) — tokens couleur/ombre en :root
 
 js/
-  supabase-client.js  (291 l.)  Client Supabase, chargement boot (loadFromSupabase), migration
+  supabase-client.js  (292 l.)  Client Supabase, chargement boot (loadFromSupabase), migration
                                  locale→Supabase (STORY-23), comptes joueurs (Edge Functions)
   utils.js            (258 l.)  matchPlayerName() (résolution floue de nom, cache), getEffColor(),
                                  getTJData()/findTJEntry(), detectIsGB(), _rankMedalHTML(), matchResultColor()
@@ -40,7 +40,7 @@ js/
   impact-images.js      (4 l.)  Constantes images terrain (ALG/ALD)
   page-joueurs.js    (1791 l.)  Page Joueurs : terrain SVG interactif, fiche joueur, export PDF/PPT
   page-notes-graph.js (809 l.)  Page Notes (table GB) + graphique évolution (Chart.js)
-  page-analyse.js    (3648 l.)  Page Analyse : timeline, familles d'enclenchement, mode Articulation, onglet Gardien,
+  page-analyse.js    (3680 l.)  Page Analyse : timeline, familles d'enclenchement, mode Articulation, onglet Gardien,
                                  éditeurs Familles/Bilans, notes coach
   player-mode.js     (1832 l.)  Mode Lecture Joueur (mobile) : Ma Fiche, Stats Match, Impact
 
@@ -79,7 +79,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 - **Nommage HTML/CSS** : IDs et classes en kebab-case (`#filter-joueur-match`, `.jp-avatar`). Préfixes courts par module : `jp-*` (Joueurs), `pmf-*`/`pm-*` (Player Mode), `enc-*` (Enclenchements), `court-*` (terrain SVG).
 - **Fonctions JS** : camelCase. Fonctions privées à un module préfixées `_` (`_renderCourtPhotoState`, `_getJoueurBilanMatchs`).
-- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **9** balises `<link>`/`<script>` du projet (css/style.css + les 8 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v314**.
+- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **9** balises `<link>`/`<script>` du projet (css/style.css + les 8 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v315**.
 - **Résolution de nom joueur** : ne jamais comparer deux noms de joueur par égalité stricte. Le format court "Prénom.Initiale" (ex. `Lucas.G`) coexiste avec des colonnes Excel ne contenant que le prénom (ex. colonne `Gardien`) — toujours passer par `matchPlayerName(a, b)` (`js/utils.js`), qui gère ce cas et met en cache le résultat.
 - **Constantes de configuration maintenues à la main** : `POSTE_POSITIONS`, `GB_ZONE_WEIGHTS`, `EFF_SEUILS`, `PLAYER_PHOTOS` — objets JS statiques édités directement dans le code (par Romain ou en session), pas de table Supabase ni d'UI d'admin pour ces réglages ponctuels.
 - **Import Excel = remplacement complet** : chaque import Excel supprime et réinsère entièrement `match_data`/`joueurs`/`tableau_match`/`bilan` sur Supabase. Ne jamais stocker une donnée éditée en base (famille, note coach, compte joueur) sur une structure qui serait recréée par l'import — toujours une table séparée (`famille_mapping`, `coach_analyses`, `player_profiles`) ou un fichier hors pipeline (`player-photos.js`).
@@ -92,7 +92,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 | Table | Rôle | Remplacée à chaque import Excel ? |
 |---|---|---|
-| `match_data` | Une ligne par action de jeu (36 colonnes, cf. `COLS` dans le HTML — dont `articulation_def`/`p1`-`p6` (défense, ajoutées en v257/STORY-33, exploitées depuis v258/STORY-34) et `articulation_att`/`att_alg`/`att_arg`/`att_dc`/`att_ard`/`att_ald`/`att_pvt` (attaque FENIX, ajoutées en v282/STORY-47) | Oui |
+| `match_data` | Une ligne par action de jeu (37 colonnes, cf. `COLS` dans le HTML — dont `articulation_def`/`p1`-`p6` (défense, ajoutées en v257/STORY-33, exploitées depuis v258/STORY-34) et `articulation_att`/`att_alg`/`att_arg`/`att_dc`/`att_ard`/`att_ald`/`att_pvt` (attaque FENIX, ajoutées en v282/STORY-47) et `att_pvt2` ("PVT 2 à 7", séquence 7 v 6 à deux pivots, v315 — migration `supabase/migrate-att-pvt2.sql`) | Oui |
 | `joueurs` | `nom` (clé), `poste`, `saison`, `nom_complet` | Oui |
 | `tableau_match` | Temps de jeu par match/joueur | Oui |
 | `bilan` | Périodes de saison (saison, nom, journée fin) | Oui |
@@ -151,7 +151,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 ## 9. État d'avancement
 
-**Fonctionnel et en production (v314) :**
+**Fonctionnel et en production (v315) :**
 - [x] Import Excel → Supabase (remplacement complet des 4 tables de données)
 - [x] Dashboard, page Analyse (vue match : 3 onglets Vue d'ensemble/Tactique/Notes & Outils ; vue saison : 2 onglets Tactique/Tendances)
 - [x] Page Joueurs : terrain interactif (photos ou initiales), fiche staff, sous-onglets Fiche/Notes/Graphique/Impact
@@ -181,6 +181,8 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 **v313** : suite de l'audit contraste v312 — 2 classes de bug supplémentaires trouvées en poursuivant le tour de l'appli en thème sombre (panneaux Outils + Mode Lecture Joueur), toutes deux de la même famille structurelle "règle de couleur trop générique" plutôt qu'un oubli isolé. **1)** Les 4 panneaux latéraux `.slide-panel` (Comptes joueurs/Vue joueur/Familles tactiques/Bilans) gardent un fond blanc fixe (jamais surchargé pour le thème sombre) mais ne fixaient jamais leur propre `color` — en thème sombre, tout texte sans couleur explicite à l'intérieur héritait de `[data-theme="dark"] body` (`--dk-text`, quasi blanc) sur ce fond resté blanc (ex. noms de joueurs dans "Comptes joueurs"). Corrigé par une règle unique `[data-theme="dark"] .slide-panel { color: var(--fenix-dark); }`. **2)** `.jm-header`/`.jm-table`/`.jm-total-row` (tableau "Détail par match") sont partagées entre la fiche staff (`#joueur-matches`, fond navy en thème sombre — dans ce cas la couleur claire ajoutée en v292 est correcte) et Mode Lecture Joueur (`.pmf-card`, `js/player-mode.js`, fond blanc fixe — jamais conçu pour un thème sombre) : un commentaire de 2026-09 avait déjà anticipé ce partage en supposant `.pmf-card` transparente ("cohérent puisque le fond de page y devient sombre aussi"), une hypothèse jamais vérifiée qui s'est révélée fausse (`.pmf-card` a un `background:#fff` en dur). Concrètement visible via "Vue joueur" (aperçu staff) avec le thème sombre actif — un cas rare mais réel puisque ce réglage est celui du staff, pas du joueur. Corrigé en scopant ces 5 règles à `#joueur-matches .jm-*` au lieu de `.jm-*` nu, et en donnant à `matchResultColor()` (`js/utils.js`) un second paramètre explicite `onDarkContainer` (`true` uniquement pour les 2 appels de `js/page-joueurs.js` — jamais déduit du seul thème global, une fonction ne peut pas savoir où son résultat sera injecté sans que l'appelant le précise). Mode Lecture Joueur retrouve son style clair d'origine, non régressé ; aucun nouveau traitement thème sombre ajouté pour lui dans ce cycle (hors scope, décision délibérée).
 
 **v314** : en poursuivant le tour de Mode Lecture Joueur (constat de v313 : aucune de ses cartes n'a jamais reçu de traitement thème sombre), un 3ᵉ cas trouvé sans lien avec une classe partagée cette fois — `.pm-team-card`/`.pm-team-title` ("FENIX TOULOUSE"/"ADVERSAIRE" dans l'onglet Stats Match), purement mobile, jamais utilisées côté staff, mais avec le même symptôme : fond blanc fixe (`background:#fff`) sans `color` propre, héritant donc de `[data-theme="dark"] body`. Plutôt que corriger composant par composant (risque d'en rater d'autres), correctif générique à la source : `[data-theme="dark"] body.player-mode { color: var(--fenix-dark); }` neutralise l'héritage pour toute la surface Mode Lecture Joueur en une seule règle — sans toucher son fond (`body` reste sombre derrière, cohérent avec le reste de l'appli). **Incident évité pendant ce correctif** : le commentaire ajouté contenait initialement `.pm-*/.pmf-*`, un `*/` littéral qui aurait reproduit l'incident v303 (détecté immédiatement par la vérification `(css.match(/\/\*/g)||[]).length === (css.match(/\*\//g)||[]).length`, reformulé en ".pm-* et .pmf-*" avant tout commit).
+
+**v315** : sous-filtre « 7 v 6 à 2 PVT » dans le mode Articulation attaque (`js/page-analyse.js`, barre SUPÉRIORITÉ à côté de LARGEUR). Nouvelle colonne Excel « PVT 2 à 7 » (AK, index 36, `COLS.att_pvt2`) : renseignée = séquence 7 contre 6 avec deux pivots. Le sous-filtre passe par `_articAttCounts()`, donc stats, terrain, classement et résumé restent cohérents entre eux ; mode « Toutes » inchangé. **Pré-requis avant réimport Excel** : exécuter `supabase/migrate-att-pvt2.sql` dans le SQL Editor (sinon l'insertion échoue sur colonne inconnue).
 
 **En attente / non couvert :**
 - [ ] Photos pour 4 joueurs (Roman.L, Yoran.C, Zacharie.D, Roméo.G) — dépend de Romain
