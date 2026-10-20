@@ -114,7 +114,7 @@ Client : `js/supabase-client.js` (`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` en 
 
 **Colonne `intention_attaque`** (`COLS.intention_attaque = 21`) est la source de classification tactique principale — remplace l'ancienne colonne `enclenchement` (texte libre, `COLS.enclenchement = 9`) pour ce rôle. `getEncFamille()` (`js/page-analyse.js`) résout une valeur `intention_attaque` en famille via `famille_mapping`, avec un filet de sécurité `_ENC_FAMILLE_CUSTOM` (localStorage) pour les valeurs non encore classifiées. **`enclenchement` reste activement utilisée ailleurs** (vérifié dans le code, 2 usages) : tableau de détail niveau 2 (répartition brute *dans* une intention_attaque sélectionnée, `_buildEncIntentionDetailTable`), et colonne "avancée" du tableau détaillé des actions (`showMCSequences`) — à ne pas supprimer du schéma.
 
-**Colonne `articulation_att`** (`COLS.articulation_att = 29`) : composition de l'attaque FENIX, lue par `_articAttComp()` (`js/page-analyse.js`). Valeurs observées dans la base : `ARTICULATION ATT` = 6 v 6 (206 lignes FENIX), `ARTICULATION ATT +` = 6 v 5 art + (24), `ARTICULATION ATT à 7` = 7 v 6 (14). `att_pvt2` (« PVT 2 à 7 », `COLS.att_pvt2 = 36`) ajoute un signal 7 v 6, pas encore en base (migration non exécutée).
+**Colonne `articulation_att`** (`COLS.articulation_att = 29`) : composition de l'attaque FENIX, lue par `_articAttComp()` (`js/page-analyse.js`). Valeurs observées dans la base : `ARTICULATION ATT` = 6 v 6 (206 lignes FENIX), `ARTICULATION ATT +` = 6 v 5 art + (24), `ARTICULATION ATT à 7` = 7 v 6 (14). `att_pvt2` (« PVT 2 à 7 », `COLS.att_pvt2 = 36`) ajoute un signal 7 v 6 — colonne ajoutée en base le 2026-10-20 (`supabase/migrate-att-pvt2.sql`), en attente du prochain réimport Excel pour être peuplée.
 
 ### Variables globales en mémoire (déclarées dans le HTML, partagées par tous les fichiers `js/*.js`)
 
@@ -202,7 +202,6 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 **En attente / non couvert :**
 - [ ] Photos pour 4 joueurs (Roman.L, Yoran.C, Zacharie.D, Roméo.G) — dépend de Romain
-- [ ] Migration `supabase/migrate-att-pvt2.sql`, à faire avant tout réimport contenant « PVT 2 à 7 »
 - [ ] Audit de régression ciblé v315-v318 (checklist I22 défense, I30 attaque)
 
 ## 10. Décisions techniques actées / roadmap
