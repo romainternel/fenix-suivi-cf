@@ -23,7 +23,7 @@ Vanilla JS, zéro build, zéro framework. Un fichier HTML principal + modules JS
 ## 3. Structure des fichiers/dossiers
 
 ```
-FENIX-HANDBALL-CF-SUIVI.html   Fichier principal (3857 lignes) : HTML de toutes les pages,
+FENIX-HANDBALL-CF-SUIVI.html   Fichier principal (3862 lignes) : HTML de toutes les pages,
                                 script inline (COLS, globals, auth, import Excel, boot Supabase,
                                 terrain SVG, PDF/PPT export) + les tags <script src> versionnés
 index.html                     Redirect immédiat vers FENIX-HANDBALL-CF-SUIVI.html (meta refresh)
@@ -184,7 +184,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 **Dernier audit complet de régression : 2026-09-30 (v314), verdict RAS** — cf. `docs/regression/audit-complet-2026-09-30.md`. Précédent : `docs/regression/audit-complet-2026-09-23.md`
 
-**Changements non audités depuis : v315-v318** (articulation attaque et défense : filtre de composition, composition sans doublon). Aucun rapport QA ni Regression Guardian pour ces versions.
+**Changements non audités depuis : v315-v320** (articulation attaque et défense : filtre de composition, composition sans doublon ; tri du filtre match par journée ; icône d'écran d'accueil). Aucun rapport QA ni Regression Guardian pour ces versions.
 
 **v311** : correctif d'un bug de comptage dans `computeSuperiorites()` (`js/page-analyse.js`, carte "Supériorités/infériorités numériques" — indicateur I23) — signalé par Romain (écart avec son propre décompte manuel sur J03 BRUGES-FENIX). Avant le correctif, le dénominateur ne comptait que les lignes But/Tir raté en phase +/- : une possession en supériorité/infériorité se terminant par une perte de balle, un jet franc ou un 2' obtenu (sans tir) n'était jamais comptée, sous-estimant fortement le total de possessions réelles et faussant le %. Corrigé pour compter une possession dès qu'une ligne est taguée `Possession` (colonne dédiée déjà utilisée ainsi partout ailleurs dans `page-analyse.js` pour dédoublonner une séquence multi-lignes — un sous-événement comme un Jet franc n'est jamais lui-même une possession), plutôt que de se limiter aux lignes avec tir. Sur le match test, l'écart était important : FENIX passe de 7/12 (58%) à 7/14 (50%), Adversaire de 6/7 (**86%**, valeur irréaliste pour une réussite en supériorité) à 6/11 (55%, cohérent). Champs renommés `tirs` → `possessions` dans l'objet retourné par `computeSuperiorites()`.
 
@@ -198,11 +198,13 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 **v317-v318** : composition automatique des articulations attaque et défense sans doublon — un joueur n'occupe plus deux postes. Fonction générique `_articAutoLineup(postes, manuel, posteMap)` (`js/page-analyse.js`) : postes attribués du plus certain au moins certain, un poste sans candidat libre reste vide (à choisir à la main). Remplace `_articPrimaryEntry` (défense) et `_articAttPrimaryEntry` (attaque), supprimées.
 
+**v319** : le filtre MATCH (`#filter-match-global`, Dashboard/Analyse) listait les matchs dans l'ordre d'apparition des lignes Excel plutôt que par journée (ex. J04 avant J01 — retour Romain). `MATCHS` et la liste filtrée par saison sont désormais triées par ordre numérique sur le nom du match (`FENIX-HANDBALL-CF-SUIVI.html`).
+
 **v320** : icône d'écran d'accueil — `apple-touch-icon` (180 px), manifeste `manifest.webmanifest` (192/512 px) et balises `apple-mobile-web-app-*`/`theme-color` ajoutées dans `<head>`. Le seul `favicon.png` ne suffisait pas (iOS l'ignore pour l'écran d'accueil).
 
 **En attente / non couvert :**
 - [ ] Photos pour 4 joueurs (Roman.L, Yoran.C, Zacharie.D, Roméo.G) — dépend de Romain
-- [ ] Audit de régression ciblé v315-v318 (checklist I22 défense, I30 attaque)
+- [ ] Audit de régression ciblé v315-v320 (checklist I22 défense, I30 attaque ; tri du filtre match v319 et icône d'écran d'accueil v320 non testés E2E)
 
 ## 10. Décisions techniques actées / roadmap
 
