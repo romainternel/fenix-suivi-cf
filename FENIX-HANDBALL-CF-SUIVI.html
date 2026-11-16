@@ -16,15 +16,16 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=320">
-    <script src="js/supabase-client.js?v=320"></script>
-    <script src="js/utils.js?v=320"></script>
-    <script src="js/player-photos.js?v=320"></script>
-    <script src="js/impact-images.js?v=320"></script>
-    <script src="js/player-mode.js?v=320"></script>
-    <script src="js/page-joueurs.js?v=320"></script>
-    <script src="js/page-notes-graph.js?v=320"></script>
-    <script src="js/page-analyse.js?v=320"></script>
+    <link rel="stylesheet" href="css/style.css?v=321">
+    <script src="js/supabase-client.js?v=321"></script>
+    <script src="js/utils.js?v=321"></script>
+    <script src="js/player-photos.js?v=321"></script>
+    <script src="js/impact-images.js?v=321"></script>
+    <script src="js/player-mode.js?v=321"></script>
+    <script src="js/page-joueurs.js?v=321"></script>
+    <script src="js/page-notes-graph.js?v=321"></script>
+    <script src="js/page-analyse.js?v=321"></script>
+    <script src="js/page-faceaface.js?v=321"></script>
 </head>
 <body>
 
@@ -173,6 +174,7 @@
             <button class="nav-btn active" data-page="dashboard" role="tab" aria-selected="true">📊 Dashboard</button>
             <button class="nav-btn" data-page="analyse" role="tab" aria-selected="false">🔍 Analyse</button>
             <button class="nav-btn" data-page="joueurs" role="tab" aria-selected="false">👥 Joueurs</button>
+            <button class="nav-btn" data-page="faceaface" role="tab" aria-selected="false">🆚 Face à Face</button>
         </nav>
     </header>
     <script>
@@ -993,6 +995,17 @@
                     <span class="pmz-filter-item" id="impact-rf-but"  onclick="onImpactResultFilter('But')"><span style="color:#10B981">●</span> <span id="impact-lbl-but-legend">But marqué</span></span>
                     <span class="pmz-filter-item" id="impact-rf-rate" onclick="onImpactResultFilter('Tir raté')"><span style="color:#EF4444">✕</span> <span id="impact-lbl-rate-legend">Tir raté</span></span>
                 </div>
+            </div>
+        </div>
+
+        <!-- Face à Face Page (v321) -->
+        <div class="page" id="page-faceaface">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">🆚 Face à Face</h2>
+                </div>
+                <p id="faceaface-empty" class="artic-empty">Sélectionne un match (pas « Saison complète ») pour voir le comparatif.</p>
+                <div id="faceaface-content" style="display:none"></div>
             </div>
         </div>
     </main>
@@ -2095,6 +2108,7 @@ let _effInfoPoste = null;
             updateDashboard();
             updateAnalysePage();
             if (typeof updateImpactPage === 'function') updateImpactPage();
+            if (typeof updateFaceAFacePage === 'function') updateFaceAFacePage();
         }
 
         function setupFilters() {
@@ -2115,6 +2129,7 @@ let _effInfoPoste = null;
                 case 'notes': updateNotesPage(); break;
                 case 'notegraph': _ngFromDetail = null; updateNoteGraph(); updateGbGraph(); break;
                 case 'impact': updateImpactPage(); break;
+                case 'faceaface': updateFaceAFacePage(); break;
             }
         }
 

@@ -3301,3 +3301,47 @@
             font-size: 0.58rem;
             border-left: 2px solid rgba(255,255,255,0.1);
         }
+
+        /* Page Face à Face (v321) — comparatif par match, cartes score + tableaux de répartition */
+        #page-faceaface .fa-scoreboard { display: flex; gap: 16px; margin-bottom: 16px; }
+        #page-faceaface .fa-score-card { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-radius: 12px; background: #F8FAFC; border-top: 4px solid var(--fenix-blue); }
+        #page-faceaface .fa-score-card.fa-adv { border-top-color: var(--fenix-danger); }
+        #page-faceaface .fa-score-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 0.04em; color: var(--fenix-blue); }
+        #page-faceaface .fa-score-card.fa-adv .fa-score-name { color: var(--fenix-danger); }
+        #page-faceaface .fa-score-val { font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; color: var(--fenix-dark); }
+        #page-faceaface .fa-tables { display: flex; gap: 16px; flex-wrap: wrap; }
+        #page-faceaface .fa-table-card { flex: 1; min-width: 320px; background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        #page-faceaface .fa-table-title { font-weight: 700; font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--fenix-blue); margin-bottom: 10px; }
+        #page-faceaface .fa-table-card.fa-adv .fa-table-title { color: var(--fenix-danger); }
+        #page-faceaface .fa-table-scroll { overflow-x: auto; }
+        #page-faceaface .fa-table { border-collapse: collapse; width: 100%; font-size: 0.78rem; white-space: nowrap; }
+        #page-faceaface .fa-table th { text-align: right; font-weight: 600; color: #64748B; padding: 4px 6px; font-size: 0.68rem; line-height: 1.2; }
+        #page-faceaface .fa-table th:first-child { text-align: left; }
+        #page-faceaface .fa-table td { text-align: right; padding: 4px 6px; border-top: 1px solid #E2E8F0; }
+        #page-faceaface .fa-table td.fa-rowlabel { text-align: left; font-weight: 600; }
+        #page-faceaface .fa-table tr.fa-dispo td.fa-rowlabel { padding-left: 18px; color: #64748B; font-weight: 500; }
+        #page-faceaface .fa-table tr.fa-dispo td.fa-rowlabel::before { content: "↳ "; }
+        #page-faceaface .fa-table tr.fa-total td { font-weight: 700; border-top: 2px solid #1E293B; }
+        #page-faceaface .fa-table td.fa-eff { font-weight: 700; color: var(--fenix-blue); }
+        #page-faceaface .fa-table-card.fa-adv td.fa-eff { color: var(--fenix-danger); }
+        #page-faceaface .fa-table td.fa-eff-adv { color: #64748B; font-weight: 600; }
+        @media (max-width: 720px) {
+            #page-faceaface .fa-scoreboard, #page-faceaface .fa-tables { flex-direction: column; }
+        }
+
+        [data-theme="dark"] #page-faceaface .fa-score-card { background: var(--dk-panel2); border-top-color: var(--dk-accent); }
+        [data-theme="dark"] #page-faceaface .fa-score-card.fa-adv { border-top-color: var(--dk-red); }
+        [data-theme="dark"] #page-faceaface .fa-score-name { color: var(--dk-accent); }
+        [data-theme="dark"] #page-faceaface .fa-score-card.fa-adv .fa-score-name { color: var(--dk-red); }
+        [data-theme="dark"] #page-faceaface .fa-score-val { color: var(--dk-text); }
+        [data-theme="dark"] #page-faceaface .fa-table-card { background: var(--dk-panel2); }
+        [data-theme="dark"] #page-faceaface .fa-table-title { color: var(--dk-accent); }
+        [data-theme="dark"] #page-faceaface .fa-table-card.fa-adv .fa-table-title { color: var(--dk-red); }
+        [data-theme="dark"] #page-faceaface .fa-table th { color: var(--dk-mut); }
+        [data-theme="dark"] #page-faceaface .fa-table td { border-top-color: var(--dk-line); color: var(--dk-text); }
+        [data-theme="dark"] #page-faceaface .fa-table tr.fa-dispo td.fa-rowlabel { color: var(--dk-mut); }
+        [data-theme="dark"] #page-faceaface .fa-table tr.fa-total td { border-top-color: var(--dk-line2); }
+        [data-theme="dark"] #page-faceaface .fa-table td.fa-eff { color: var(--dk-accent); }
+        [data-theme="dark"] #page-faceaface .fa-table-card.fa-adv td.fa-eff { color: var(--dk-red); }
+        [data-theme="dark"] #page-faceaface .fa-table td.fa-eff-adv { color: var(--dk-mut); }
+        [data-theme="dark"] #page-faceaface .artic-empty { color: var(--dk-mut); }
