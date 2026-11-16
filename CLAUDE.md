@@ -31,7 +31,7 @@ favicon.png                    Icône d'onglet navigateur
 apple-touch-icon.png, icon-192.png, icon-512.png, manifest.webmanifest
                                 Icône d'écran d'accueil iOS/Android (fond navy plein, généré depuis favicon.png) et manifeste PWA
 
-css/style.css                  Tous les styles (3347 lignes) — tokens couleur/ombre en :root
+css/style.css                  Tous les styles (3406 lignes) — tokens couleur/ombre en :root
 
 js/
   supabase-client.js  (292 l.)  Client Supabase, chargement boot (loadFromSupabase), migration
@@ -45,8 +45,9 @@ js/
   page-analyse.js    (3701 l.)  Page Analyse : timeline, familles d'enclenchement, mode Articulation, onglet Gardien,
                                  éditeurs Familles/Bilans, notes coach
   player-mode.js     (1832 l.)  Mode Lecture Joueur (mobile) : Ma Fiche, Stats Match, Impact
-  page-faceaface.js  (166 l.)   Page Face à Face (v321) : comparatif par match, répartition Attaque/Jeu
-                                 rapide par dispositif adverse (défense_attaquee), inspirée d'un artefact externe
+  page-faceaface.js  (405 l.)   Page Face à Face (v321-v323) : 3 sous-onglets Général/Face à Face/Comparatif,
+                                 comptage détaillé par phase (attaque placée/jeu rapide/penalty) et dispositif
+                                 adverse (défense_attaquee), formules relues dans le code source d'un artefact externe
 
 assets/photos/                 Photos joueurs (WebP, portrait + corps entier), ajoutées à la main
                                 — voir §5 pour le mapping. Fichiers sources bruts (haute résolution,
@@ -89,7 +90,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 - **Nommage HTML/CSS** : IDs et classes en kebab-case (`#filter-joueur-match`, `.jp-avatar`). Préfixes courts par module : `jp-*` (Joueurs), `pmf-*`/`pm-*` (Player Mode), `enc-*` (Enclenchements), `court-*` (terrain SVG).
 - **Fonctions JS** : camelCase. Fonctions privées à un module préfixées `_` (`_renderCourtPhotoState`, `_getJoueurBilanMatchs`).
-- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **10** balises `<link>`/`<script>` du projet (css/style.css + les 9 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v322**.
+- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **10** balises `<link>`/`<script>` du projet (css/style.css + les 9 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v323**.
 - **Piège de spécificité CSS avec `th` nu** : une règle globale non scopée `th { background: var(--fenix-blue); color: var(--fenix-white); }` (`css/style.css` ~L542) s'applique à tous les `<th>` du site. Un sélecteur plus spécifique qui ne fixe QUE `color` (sans `background`) hérite quand même du fond bleu marine global — texte illisible (incident réel, Face à Face v321→v322). Toujours fixer `background` ET `color` ensemble dans toute règle `th` scopée, jamais l'un sans l'autre.
 - **Résolution de nom joueur** : ne jamais comparer deux noms de joueur par égalité stricte. Le format court "Prénom.Initiale" (ex. `Lucas.G`) coexiste avec des colonnes Excel ne contenant que le prénom (ex. colonne `Gardien`) — toujours passer par `matchPlayerName(a, b)` (`js/utils.js`), qui gère ce cas et met en cache le résultat.
 - **Constantes de configuration maintenues à la main** : `POSTE_POSITIONS`, `GB_ZONE_WEIGHTS`, `EFF_SEUILS`, `PLAYER_PHOTOS` — objets JS statiques édités directement dans le code (par Romain ou en session), pas de table Supabase ni d'UI d'admin pour ces réglages ponctuels.
@@ -164,7 +165,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 ## 9. État d'avancement
 
-**Fonctionnel et en production (v322) :**
+**Fonctionnel et en production (v323) :**
 - [x] Import Excel → Supabase (remplacement complet des 4 tables de données)
 - [x] Dashboard, page Analyse (vue match : 3 onglets Vue d'ensemble/Tactique/Notes & Outils ; vue saison : 2 onglets Tactique/Tendances)
 - [x] Page Joueurs : terrain interactif (photos ou initiales), fiche staff, sous-onglets Fiche/Notes/Graphique/Impact
@@ -187,7 +188,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 **Dernier audit complet de régression : 2026-09-30 (v314), verdict RAS** — cf. `docs/regression/audit-complet-2026-09-30.md`. Précédent : `docs/regression/audit-complet-2026-09-23.md`
 
-**Changements non audités depuis : v315-v322** (articulation attaque et défense : filtre de composition, composition sans doublon ; tri du filtre match par journée ; icône d'écran d'accueil ; nouvel onglet Face à Face). Aucun rapport QA ni Regression Guardian pour ces versions.
+**Changements non audités depuis : v315-v323** (articulation attaque et défense : filtre de composition, composition sans doublon ; tri du filtre match par journée ; icône d'écran d'accueil ; nouvel onglet Face à Face et ses 3 sous-onglets Général/Face à Face/Comparatif). Aucun rapport QA ni Regression Guardian pour ces versions.
 
 **v311** : correctif d'un bug de comptage dans `computeSuperiorites()` (`js/page-analyse.js`, carte "Supériorités/infériorités numériques" — indicateur I23) — signalé par Romain (écart avec son propre décompte manuel sur J03 BRUGES-FENIX). Avant le correctif, le dénominateur ne comptait que les lignes But/Tir raté en phase +/- : une possession en supériorité/infériorité se terminant par une perte de balle, un jet franc ou un 2' obtenu (sans tir) n'était jamais comptée, sous-estimant fortement le total de possessions réelles et faussant le %. Corrigé pour compter une possession dès qu'une ligne est taguée `Possession` (colonne dédiée déjà utilisée ainsi partout ailleurs dans `page-analyse.js` pour dédoublonner une séquence multi-lignes — un sous-événement comme un Jet franc n'est jamais lui-même une possession), plutôt que de se limiter aux lignes avec tir. Sur le match test, l'écart était important : FENIX passe de 7/12 (58%) à 7/14 (50%), Adversaire de 6/7 (**86%**, valeur irréaliste pour une réussite en supériorité) à 6/11 (55%, cohérent). Champs renommés `tirs` → `possessions` dans l'objet retourné par `computeSuperiorites()`.
 
@@ -207,9 +208,11 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 **v321** : nouvel onglet « 🆚 Face à Face » (`js/page-faceaface.js`), comparatif par match uniquement (vide tant qu'un match précis n'est pas sélectionné, pas de vue saison). Mise en page inspirée d'un artefact externe (U21 France) : deux cartes score + deux tableaux de répartition de l'attaque (Attaque placée, avec sous-lignes par dispositif défensif adverse 0-6/1-5/6v5/5v6 ; Jeu rapide ; Total), colonnes Poss./Buts/PO/PB/JF/2'/Arrêts/Échecs/Réussite. Décisions validées par Romain avant codage (cf. §10) : dispositif lu dans `defense_attaquee` (remplie des deux côtés, contrairement à `articulation_def` qui ne l'est que côté défense FENIX) ; "Jeu rapide" = `phase_att` ∈ {CA, ER, Transition/Mdb}, le reste (Att al/Att ét/Pen/+/-) = Attaque placée. Comptage réutilisé tel quel (règle Possession déjà établie v285/v311, formule de réussite `(buts+PO)/possessions` déjà utilisée par `computeArticulationStats`) — aucune nouvelle règle de comptage, uniquement une nouvelle mise en forme et un nouvel assemblage. Page ajoutée sans toucher à l'existant (nouvel onglet dédié, pas de modification des pages Dashboard/Analyse).
 
+**v323** : extension de l'onglet Face à Face avec 2 sous-onglets supplémentaires (barre `enc-pie-mode-btn`), Général et Comparatif — toujours inspirés de l'artefact externe, mais cette fois les formules exactes ont été relues directement dans le code source de l'artefact (fonctions `agg()`/`recap()`/`duel()`) plutôt que devinées depuis des captures. Ajoute un 3ᵉ compartiment dans `_faCounts()` : `penalty` (`phase_att = Pen`, auparavant fusionné dans `attaque`) isolé de `attaquePlacee` — `attaque`/`parDispositif`/`total` restent calculés identiquement à v321 (mêmes chiffres, vérifiés inchangés). **Général** : 7 cartes « duel » (barre miroir centrée) par match — Possessions d'attaque, Buts (répartition 3 voies Attaque placée/Jeu rapide/Penalty, arrondi au plus grand reste), Réussite au tir (`buts/(buts+arrêts+échecs)`, formule propre à cette carte, différente de `(buts+PO)/possessions`), 6 contre 5 (réutilise `parDispositif['6vs5']`), Pertes de balle, Jets francs subis, Réussite gardien (`arrêts/(arrêts+buts)`, tirs cadrés uniquement — détail par gardien individuel non implémenté, à ajouter si besoin). **Comparatif** : 7 cartes indépendantes par phase (Attaque total/Défense total/Attaque placée/Défense placée/Jeu rapide/Repli/6 contre 5) — contrairement à l'onglet Face à Face où chaque camp lit sa propre réussite et le complément de l'adversaire sur les MÊMES lignes, ici chaque % est calculé indépendamment sur les lignes propres à chaque camp (sauf les 4 cartes "Défense"/"Repli", qui restent le complément du camp adverse sur ses propres lignes d'attaque — flux exact relu dans `duel()`).
+
 **En attente / non couvert :**
 - [ ] Photos pour 4 joueurs (Roman.L, Yoran.C, Zacharie.D, Roméo.G) — dépend de Romain
-- [ ] Audit de régression ciblé v315-v322 (checklist I22 défense, I30 attaque ; tri du filtre match v319 et icône d'écran d'accueil v320 non testés E2E ; nouvel onglet Face à Face v321-v322 jamais passé par le squad QA/Regression Guardian)
+- [ ] Audit de régression ciblé v315-v323 (checklist I22 défense, I30 attaque ; tri du filtre match v319 et icône d'écran d'accueil v320 non testés E2E ; nouvel onglet Face à Face et ses 3 sous-onglets v321-v323 jamais passés par le squad QA/Regression Guardian)
 
 ## 10. Décisions techniques actées / roadmap
 

@@ -3325,8 +3325,47 @@
         #page-faceaface .fa-table td.fa-eff { font-weight: 700; color: var(--fenix-blue); }
         #page-faceaface .fa-table-card.fa-adv td.fa-eff { color: var(--fenix-danger); }
         #page-faceaface .fa-table td.fa-eff-adv { color: #64748B; font-weight: 600; }
+
+        /* Sous-navigation Général/Face à Face/Comparatif (v323) */
+        #page-faceaface .fa-subnav { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        #page-faceaface .fa-mode-desc { color: #64748B; font-size: 0.78rem; margin: 0 0 16px; }
+        #page-faceaface .fa-duels { display: flex; flex-direction: column; gap: 12px; }
+        #page-faceaface .fa-duelcard { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 14px; align-items: start; background: #fff; border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        #page-faceaface .fa-duel-side { min-width: 0; }
+        #page-faceaface .fa-duel-r { text-align: right; }
+        #page-faceaface .fa-duel-label { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 0.04em; color: var(--fenix-blue); }
+        #page-faceaface .fa-duel-r .fa-duel-label { color: var(--fenix-danger); }
+        #page-faceaface .fa-duel-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.9rem; line-height: 1; color: var(--fenix-dark); margin-top: 2px; }
+        #page-faceaface .fa-duel-caption { font-size: 0.72rem; color: #64748B; font-weight: 600; margin-top: 3px; }
+        #page-faceaface .fa-duel-mid { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 4px; }
+        #page-faceaface .fa-duel-title { font-weight: 700; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: #475569; text-align: center; }
+        #page-faceaface .fa-duel-sub { font-size: 0.68rem; color: #94A3B8; text-align: center; }
+        #page-faceaface .fa-duel-bar { display: flex; width: 100%; height: 12px; margin-top: 4px; }
+        #page-faceaface .fa-duel-bar-half { flex: 1; height: 100%; background: #F1F5F9; border: 1px solid #E2E8F0; overflow: hidden; display: flex; }
+        #page-faceaface .fa-duel-bar-l { justify-content: flex-end; border-radius: 999px 0 0 999px; border-right: 0; }
+        #page-faceaface .fa-duel-bar-r { border-radius: 0 999px 999px 0; }
+        #page-faceaface .fa-duel-bar-l span { display: block; height: 100%; background: var(--fenix-blue); }
+        #page-faceaface .fa-duel-bar-r span { display: block; height: 100%; background: var(--fenix-danger); }
+        #page-faceaface .fa-duel-gap { font-size: 0.68rem; font-weight: 600; color: #64748B; margin-top: 2px; }
+        #page-faceaface .fa-breakdown { margin-top: 8px; }
+        #page-faceaface .fa-breakdown-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #E2E8F0; margin-bottom: 4px; }
+        #page-faceaface .fa-breakdown-line { font-size: 0.68rem; color: #475569; font-weight: 600; }
+        #page-faceaface .fa-breakdown-line i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+        #page-faceaface .fa-duel-r .fa-breakdown-line i { margin-right: 0; margin-left: 4px; }
+        #page-faceaface .fa-bd-fenix .fa-bd-seg-1 { background: var(--fenix-blue); }
+        #page-faceaface .fa-bd-fenix .fa-bd-seg-2 { background: #6f8fd8; }
+        #page-faceaface .fa-bd-fenix .fa-bd-seg-3 { background: #CBD5E1; }
+        #page-faceaface .fa-bd-adv .fa-bd-seg-1 { background: var(--fenix-danger); }
+        #page-faceaface .fa-bd-adv .fa-bd-seg-2 { background: #f3a5a5; }
+        #page-faceaface .fa-bd-adv .fa-bd-seg-3 { background: #CBD5E1; }
+
         @media (max-width: 720px) {
             #page-faceaface .fa-scoreboard, #page-faceaface .fa-tables { flex-direction: column; }
+            #page-faceaface .fa-duelcard { grid-template-columns: 1fr; text-align: left; }
+            #page-faceaface .fa-duel-r { text-align: left; }
+            #page-faceaface .fa-duel-mid { align-items: flex-start; }
+            #page-faceaface .fa-duel-title, #page-faceaface .fa-duel-sub { text-align: left; }
+            #page-faceaface .fa-duel-r .fa-breakdown-line i { margin-right: 4px; margin-left: 0; }
         }
 
         [data-theme="dark"] #page-faceaface .fa-score-card { background: var(--dk-panel2); border-top-color: var(--dk-accent); }
@@ -3345,3 +3384,23 @@
         [data-theme="dark"] #page-faceaface .fa-table-card.fa-adv td.fa-eff { color: var(--dk-red); }
         [data-theme="dark"] #page-faceaface .fa-table td.fa-eff-adv { color: var(--dk-mut); }
         [data-theme="dark"] #page-faceaface .artic-empty { color: var(--dk-mut); }
+        [data-theme="dark"] #page-faceaface .fa-mode-desc { color: var(--dk-mut); }
+        [data-theme="dark"] #page-faceaface .fa-duelcard { background: var(--dk-panel2); }
+        [data-theme="dark"] #page-faceaface .fa-duel-label { color: var(--dk-accent); }
+        [data-theme="dark"] #page-faceaface .fa-duel-r .fa-duel-label { color: var(--dk-red); }
+        [data-theme="dark"] #page-faceaface .fa-duel-val { color: var(--dk-text); }
+        [data-theme="dark"] #page-faceaface .fa-duel-caption { color: var(--dk-mut); }
+        [data-theme="dark"] #page-faceaface .fa-duel-title { color: var(--dk-text); }
+        [data-theme="dark"] #page-faceaface .fa-duel-sub { color: var(--dk-mut); }
+        [data-theme="dark"] #page-faceaface .fa-duel-bar-half { background: var(--dk-panel); border-color: var(--dk-line); }
+        [data-theme="dark"] #page-faceaface .fa-duel-bar-l span { background: var(--dk-accent); }
+        [data-theme="dark"] #page-faceaface .fa-duel-bar-r span { background: var(--dk-red); }
+        [data-theme="dark"] #page-faceaface .fa-duel-gap { color: var(--dk-mut); }
+        [data-theme="dark"] #page-faceaface .fa-breakdown-bar { background: var(--dk-line); }
+        [data-theme="dark"] #page-faceaface .fa-breakdown-line { color: var(--dk-text); }
+        [data-theme="dark"] #page-faceaface .fa-bd-fenix .fa-bd-seg-1 { background: var(--dk-accent); }
+        [data-theme="dark"] #page-faceaface .fa-bd-fenix .fa-bd-seg-2 { background: #3a5a8a; }
+        [data-theme="dark"] #page-faceaface .fa-bd-fenix .fa-bd-seg-3 { background: var(--dk-line2); }
+        [data-theme="dark"] #page-faceaface .fa-bd-adv .fa-bd-seg-1 { background: var(--dk-red); }
+        [data-theme="dark"] #page-faceaface .fa-bd-adv .fa-bd-seg-2 { background: #8a4a4a; }
+        [data-theme="dark"] #page-faceaface .fa-bd-adv .fa-bd-seg-3 { background: var(--dk-line2); }
