@@ -45,7 +45,7 @@ js/
   page-analyse.js    (3701 l.)  Page Analyse : timeline, familles d'enclenchement, mode Articulation, onglet Gardien,
                                  éditeurs Familles/Bilans, notes coach
   player-mode.js     (1832 l.)  Mode Lecture Joueur (mobile) : Ma Fiche, Stats Match, Impact
-  page-faceaface.js  (405 l.)   Page Face à Face (v321-v323) : 3 sous-onglets Général/Face à Face/Comparatif,
+  page-faceaface.js  (413 l.)   Page Face à Face (v321-v325) : 3 sous-onglets Général/Face à Face/Comparatif,
                                  comptage détaillé par phase (attaque placée/jeu rapide/penalty) et dispositif
                                  adverse (défense_attaquee), formules relues dans le code source d'un artefact externe
 
@@ -90,7 +90,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 - **Nommage HTML/CSS** : IDs et classes en kebab-case (`#filter-joueur-match`, `.jp-avatar`). Préfixes courts par module : `jp-*` (Joueurs), `pmf-*`/`pm-*` (Player Mode), `enc-*` (Enclenchements), `court-*` (terrain SVG).
 - **Fonctions JS** : camelCase. Fonctions privées à un module préfixées `_` (`_renderCourtPhotoState`, `_getJoueurBilanMatchs`).
-- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **10** balises `<link>`/`<script>` du projet (css/style.css + les 9 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v324**.
+- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **10** balises `<link>`/`<script>` du projet (css/style.css + les 9 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v325**.
 - **Piège de spécificité CSS avec `th` nu** : une règle globale non scopée `th { background: var(--fenix-blue); color: var(--fenix-white); }` (`css/style.css` ~L542) s'applique à tous les `<th>` du site. Un sélecteur plus spécifique qui ne fixe QUE `color` (sans `background`) hérite quand même du fond bleu marine global — texte illisible (incident réel, Face à Face v321→v322). Toujours fixer `background` ET `color` ensemble dans toute règle `th` scopée, jamais l'un sans l'autre.
 - **Résolution de nom joueur** : ne jamais comparer deux noms de joueur par égalité stricte. Le format court "Prénom.Initiale" (ex. `Lucas.G`) coexiste avec des colonnes Excel ne contenant que le prénom (ex. colonne `Gardien`) — toujours passer par `matchPlayerName(a, b)` (`js/utils.js`), qui gère ce cas et met en cache le résultat.
 - **Constantes de configuration maintenues à la main** : `POSTE_POSITIONS`, `GB_ZONE_WEIGHTS`, `EFF_SEUILS`, `PLAYER_PHOTOS` — objets JS statiques édités directement dans le code (par Romain ou en session), pas de table Supabase ni d'UI d'admin pour ces réglages ponctuels.
@@ -165,7 +165,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 ## 9. État d'avancement
 
-**Fonctionnel et en production (v324) :**
+**Fonctionnel et en production (v325) :**
 - [x] Import Excel → Supabase (remplacement complet des 4 tables de données)
 - [x] Dashboard, page Analyse (vue match : 3 onglets Vue d'ensemble/Tactique/Notes & Outils ; vue saison : 2 onglets Tactique/Tendances)
 - [x] Page Joueurs : terrain interactif (photos ou initiales), fiche staff, sous-onglets Fiche/Notes/Graphique/Impact
@@ -211,6 +211,8 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 **v323** : extension de l'onglet Face à Face avec 2 sous-onglets supplémentaires (barre `enc-pie-mode-btn`), Général et Comparatif — toujours inspirés de l'artefact externe, mais cette fois les formules exactes ont été relues directement dans le code source de l'artefact (fonctions `agg()`/`recap()`/`duel()`) plutôt que devinées depuis des captures. Ajoute un 3ᵉ compartiment dans `_faCounts()` : `penalty` (`phase_att = Pen`, auparavant fusionné dans `attaque`) isolé de `attaquePlacee` — `attaque`/`parDispositif`/`total` restent calculés identiquement à v321 (mêmes chiffres, vérifiés inchangés). **Général** : 7 cartes « duel » (barre miroir centrée) par match — Possessions d'attaque, Buts (répartition 3 voies Attaque placée/Jeu rapide/Penalty, arrondi au plus grand reste), Réussite au tir (`buts/(buts+arrêts+échecs)`, formule propre à cette carte, différente de `(buts+PO)/possessions`), 6 contre 5 (réutilise `parDispositif['6vs5']`), Pertes de balle, Jets francs subis, Réussite gardien (`arrêts/(arrêts+buts)`, tirs cadrés uniquement — détail par gardien individuel non implémenté, à ajouter si besoin). **Comparatif** : 7 cartes indépendantes par phase (Attaque total/Défense total/Attaque placée/Défense placée/Jeu rapide/Repli/6 contre 5) — contrairement à l'onglet Face à Face où chaque camp lit sa propre réussite et le complément de l'adversaire sur les MÊMES lignes, ici chaque % est calculé indépendamment sur les lignes propres à chaque camp (sauf les 4 cartes "Défense"/"Repli", qui restent le complément du camp adverse sur ses propres lignes d'attaque — flux exact relu dans `duel()`).
 
 **v324** : retour Romain sur le Comparatif — nombre de possessions ajouté dans la légende de chaque carte (`_faAttCaption()`/`_faDefCaption()`, "... sur N possessions"), et le titre de carte (`.fa-duel-title`, "Attaque (total)", "Défense (total)"...) agrandi (0.75rem → 1.05rem, partagé avec Général donc effet identique sur ses 7 cartes).
+
+**v325** : correctif de la carte « Jets francs subis » (onglet Général) — affichait 0 des deux côtés. Un jet franc arrête une séquence sans jamais porter le tag `Possession` (ce n'est l'issue d'aucune possession terminée), donc la règle de dédoublonnage de `_faCounts()` l'excluait entièrement du total `jf`. Comptage sorti du moteur de possessions pour cette carte précisément, en lignes brutes sur `resultat` (pas `finalite`, sur demande explicite de Romain) : `_faJetFrancSubiCount()` compte une ligne par club avec `resultat = 'Jet franc'`. Les autres usages de `jf` (colonne JF du tableau Face à Face, captions du Comparatif) restent inchangés, pas concernés par ce correctif — à surveiller si un sous-comptage similaire s'y révèle un jour.
 
 **En attente / non couvert :**
 - [ ] Photos pour 4 joueurs (Roman.L, Yoran.C, Zacharie.D, Roméo.G) — dépend de Romain

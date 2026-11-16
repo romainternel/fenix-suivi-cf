@@ -203,7 +203,16 @@ function _faDuelCard(o) {
         </div>`;
 }
 
-function _faGeneralHtml(fenixStats, advStats, advLabel) {
+// Un jet franc arrête la séquence sans jamais porter le tag Possession (ce n'est l'issue d'aucune
+// possession terminée) — la règle de dédoublonnage de _faCounts() l'exclut donc entièrement, ce qui
+// sous-comptait ce total à 0 (retour Romain, v325). Comptage volontairement à part, en lignes brutes
+// sur la colonne `resultat` (pas `finalite`, sur demande explicite) : une ligne = un jet franc subi par
+// le club qui avait la balle sur cette ligne.
+function _faJetFrancSubiCount(matchData, isFenix) {
+    return matchData.filter(r => (r[COLS.club] === 'FENIX') === isFenix && (r[COLS.resultat] || '').toString().trim() === 'Jet franc').length;
+}
+
+function _faGeneralHtml(matchData, fenixStats, advStats, advLabel) {
     const cards = [];
     cards.push(_faDuelCard({
         title: "Possessions d'attaque", sub: 'possessions terminées', isPct: false, advLabel,
@@ -242,7 +251,7 @@ function _faGeneralHtml(fenixStats, advStats, advLabel) {
 
     cards.push(_faDuelCard({
         title: 'Jets francs subis', isPct: false, advLabel,
-        leftVal: fenixStats.total.jf, rightVal: advStats.total.jf,
+        leftVal: _faJetFrancSubiCount(matchData, true), rightVal: _faJetFrancSubiCount(matchData, false),
     }));
 
     cards.push(_faDuelCard({
@@ -396,7 +405,7 @@ function updateFaceAFacePage() {
     const advStats = _faCounts(matchData, false);
 
     const mode = window._faMode || 'gen';
-    const body = mode === 'gen' ? _faGeneralHtml(fenixStats, advStats, advLabel)
+    const body = mode === 'gen' ? _faGeneralHtml(matchData, fenixStats, advStats, advLabel)
         : mode === 'comp' ? _faComparatifHtml(fenixStats, advStats, advLabel)
         : _faFaceHtml(fenixStats, advStats, advLabel);
 
