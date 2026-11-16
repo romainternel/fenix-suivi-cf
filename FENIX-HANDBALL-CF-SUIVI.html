@@ -16,16 +16,16 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=327">
-    <script src="js/supabase-client.js?v=327"></script>
-    <script src="js/utils.js?v=327"></script>
-    <script src="js/player-photos.js?v=327"></script>
-    <script src="js/impact-images.js?v=327"></script>
-    <script src="js/player-mode.js?v=327"></script>
-    <script src="js/page-joueurs.js?v=327"></script>
-    <script src="js/page-notes-graph.js?v=327"></script>
-    <script src="js/page-analyse.js?v=327"></script>
-    <script src="js/page-faceaface.js?v=327"></script>
+    <link rel="stylesheet" href="css/style.css?v=328">
+    <script src="js/supabase-client.js?v=328"></script>
+    <script src="js/utils.js?v=328"></script>
+    <script src="js/player-photos.js?v=328"></script>
+    <script src="js/impact-images.js?v=328"></script>
+    <script src="js/player-mode.js?v=328"></script>
+    <script src="js/page-joueurs.js?v=328"></script>
+    <script src="js/page-notes-graph.js?v=328"></script>
+    <script src="js/page-analyse.js?v=328"></script>
+    <script src="js/page-faceaface.js?v=328"></script>
 </head>
 <body>
 
@@ -177,6 +177,14 @@
             <button class="nav-btn" data-page="faceaface" role="tab" aria-selected="false">🆚 Face à Face</button>
         </nav>
     </header>
+    <!-- Bannière match — commune à toutes les pages (Dashboard/Analyse/Joueurs/Face à Face), au lieu
+         d'être cachée dans la page Analyse (retour Romain : "ne pas aller chercher à chaque fois") -->
+    <div id="global-match-bar">
+        <span class="sticky-filter-label">MATCH</span>
+        <select id="filter-match-global" onchange="onMatchGlobalChange()" class="sticky-select" style="min-width:160px;max-width:260px;">
+            <option value="">Saison complète</option>
+        </select>
+    </div>
     <script>
         // Phase 1 du nouveau design (comparatif 2026-09-18) : bascule thème sombre, pour l'instant
         // uniquement appliquée au Dashboard (voir commentaire css/style.css). L'attribut lui-même
@@ -345,13 +353,6 @@
         <div class="page" id="page-analyse">
             <!-- Barre sticky : match + filtres -->
             <div id="analyse-sticky-bar">
-                <div class="sticky-filter-group">
-                    <span class="sticky-filter-label">MATCH</span>
-                    <select id="filter-match-global" onchange="onMatchGlobalChange()" class="sticky-select" style="min-width:160px;max-width:260px;">
-                        <option value="">Saison complète</option>
-                    </select>
-                </div>
-                <div class="sticky-sep"></div>
                 <div class="sticky-filter-group">
                     <span class="sticky-filter-label">CLUB</span>
                     <select id="filter-club" onchange="updateMatchPage()" class="sticky-select">
@@ -1115,14 +1116,27 @@ let _effInfoPoste = null;
             // collées sous l'ancienne hauteur, donc cachées derrière le header une fois celui-ci
             // agrandi — invisibles dès qu'on scrollait la page Analyse ou Joueurs.
             const hdr = document.querySelector('.header');
-            const stickyUnderHeader = [
+            const globalMatchBar = document.getElementById('global-match-bar');
+            // #global-match-bar (v328) est désormais TOUJOURS présente sous le header, sur toutes les
+            // pages — les barres sticky encore spécifiques à une page (analyse-sticky-bar, joueurs-subnav)
+            // doivent donc s'empiler SOUS elle (header + global-match-bar cumulés), pas se superposer au
+            // même `top` qu'elle.
+            const stickyUnderGlobalBar = [
                 document.getElementById('analyse-sticky-bar'),
                 document.querySelector('.joueurs-subnav')
             ].filter(Boolean);
-            if (hdr && stickyUnderHeader.length) {
-                const syncStickyTop = () => stickyUnderHeader.forEach(el => { el.style.top = hdr.offsetHeight + 'px'; });
+            if (hdr) {
+                const syncStickyTop = () => {
+                    const headerH = hdr.offsetHeight;
+                    if (globalMatchBar) globalMatchBar.style.top = headerH + 'px';
+                    const combinedH = headerH + (globalMatchBar ? globalMatchBar.offsetHeight : 0);
+                    stickyUnderGlobalBar.forEach(el => { el.style.top = combinedH + 'px'; });
+                };
                 syncStickyTop();
-                if (typeof ResizeObserver !== 'undefined') new ResizeObserver(syncStickyTop).observe(hdr);
+                if (typeof ResizeObserver !== 'undefined') {
+                    new ResizeObserver(syncStickyTop).observe(hdr);
+                    if (globalMatchBar) new ResizeObserver(syncStickyTop).observe(globalMatchBar);
+                }
             }
             // Redraw impact canvases on resize
             if (typeof ResizeObserver !== 'undefined') {
