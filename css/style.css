@@ -3315,7 +3315,7 @@
         #page-faceaface .fa-table-card.fa-adv .fa-table-title { color: var(--fenix-danger); }
         #page-faceaface .fa-table-scroll { overflow-x: auto; }
         #page-faceaface .fa-table { border-collapse: collapse; width: 100%; font-size: 0.78rem; white-space: nowrap; }
-        #page-faceaface .fa-table th { text-align: right; font-weight: 600; color: #64748B; padding: 4px 6px; font-size: 0.68rem; line-height: 1.2; }
+        #page-faceaface .fa-table th { text-align: right; font-weight: 600; color: #64748B; background: #F8FAFC; padding: 4px 6px; font-size: 0.68rem; line-height: 1.2; }
         #page-faceaface .fa-table th:first-child { text-align: left; }
         #page-faceaface .fa-table td { text-align: right; padding: 4px 6px; border-top: 1px solid #E2E8F0; }
         #page-faceaface .fa-table td.fa-rowlabel { text-align: left; font-weight: 600; }
@@ -3337,7 +3337,7 @@
         [data-theme="dark"] #page-faceaface .fa-table-card { background: var(--dk-panel2); }
         [data-theme="dark"] #page-faceaface .fa-table-title { color: var(--dk-accent); }
         [data-theme="dark"] #page-faceaface .fa-table-card.fa-adv .fa-table-title { color: var(--dk-red); }
-        [data-theme="dark"] #page-faceaface .fa-table th { color: var(--dk-mut); }
+        [data-theme="dark"] #page-faceaface .fa-table th { color: var(--dk-mut); background: var(--dk-panel2); }
         [data-theme="dark"] #page-faceaface .fa-table td { border-top-color: var(--dk-line); color: var(--dk-text); }
         [data-theme="dark"] #page-faceaface .fa-table tr.fa-dispo td.fa-rowlabel { color: var(--dk-mut); }
         [data-theme="dark"] #page-faceaface .fa-table tr.fa-total td { border-top-color: var(--dk-line2); }
