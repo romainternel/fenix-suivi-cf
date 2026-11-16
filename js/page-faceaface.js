@@ -373,12 +373,15 @@ function _faSubnavHtml() {
 function _setFaMode(mode) {
     window._faMode = mode;
     updateFaceAFacePage();
+    if (document.getElementById('pm-fa-match-sel')) renderPlayerFaceAFace();
 }
 
-function updateFaceAFacePage() {
-    const matchFilterEl = document.getElementById('filter-match-global');
-    const empty = document.getElementById('faceaface-empty');
-    const content = document.getElementById('faceaface-content');
+// Partagée entre la page staff (#page-faceaface, filtre global) et l'onglet Mode Lecture Joueur
+// (#pm-faceaface-page, son propre sélecteur de match) — même calcul, même rendu, deux conteneurs.
+function _faRenderInto(matchSelId, emptyId, contentId) {
+    const matchFilterEl = document.getElementById(matchSelId);
+    const empty = document.getElementById(emptyId);
+    const content = document.getElementById(contentId);
     if (!matchFilterEl || !empty || !content) return;
     const matchFilter = matchFilterEl.value;
 
@@ -411,4 +414,12 @@ function updateFaceAFacePage() {
         : _faFaceHtml(fenixStats, advStats, advLabel);
 
     content.innerHTML = _faSubnavHtml() + body;
+}
+
+function updateFaceAFacePage() {
+    _faRenderInto('filter-match-global', 'faceaface-empty', 'faceaface-content');
+}
+
+function renderPlayerFaceAFace() {
+    _faRenderInto('pm-fa-match-sel', 'pm-fa-empty', 'pm-fa-content');
 }

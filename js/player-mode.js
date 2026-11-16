@@ -129,21 +129,31 @@
             const ficheEl = document.getElementById('pm-fiche-page');
             const matchEl = document.getElementById('pm-match-page');
             const zonesEl = document.getElementById('pm-zones-page');
+            const faEl = document.getElementById('pm-faceaface-page');
 
             if (tab === 'fiche') {
                 if (matchEl) matchEl.style.display = 'none';
                 if (zonesEl) zonesEl.style.display = 'none';
+                if (faEl) faEl.style.display = 'none';
                 if (ficheEl) ficheEl.style.display = 'block';
                 renderPlayerFiche();
             } else if (tab === 'zones') {
                 if (_pmfChart) { _pmfChart.destroy(); _pmfChart = null; }
                 if (ficheEl) ficheEl.style.display = 'none';
                 if (matchEl) matchEl.style.display = 'none';
+                if (faEl) faEl.style.display = 'none';
                 if (zonesEl) { zonesEl.style.display = 'block'; renderPlayerZones(); }
+            } else if (tab === 'faceaface') {
+                if (_pmfChart) { _pmfChart.destroy(); _pmfChart = null; }
+                if (ficheEl) ficheEl.style.display = 'none';
+                if (matchEl) matchEl.style.display = 'none';
+                if (zonesEl) zonesEl.style.display = 'none';
+                if (faEl) { faEl.style.display = 'block'; renderPlayerFaceAFace(); }
             } else {
                 if (_pmfChart) { _pmfChart.destroy(); _pmfChart = null; }
                 if (ficheEl) ficheEl.style.display = 'none';
                 if (zonesEl) zonesEl.style.display = 'none';
+                if (faEl) faEl.style.display = 'none';
                 if (matchEl) matchEl.style.display = 'block';
                 renderPlayerMatchStats();
             }
@@ -1356,6 +1366,9 @@
             // Peupler aussi le sélecteur Impact
             const impactSel = document.getElementById('pm-impact-match-sel');
             if (impactSel) { impactSel.innerHTML = opts; impactSel.value = ''; }
+            // Peupler le sélecteur Face à Face (pas de "Tous les matchs" — un match précis obligatoire)
+            const faSel = document.getElementById('pm-fa-match-sel');
+            if (faSel) { faSel.innerHTML = '<option value="">— Choisir un match —</option>' + (MATCHS || []).map(m => `<option value="${m}">${m}</option>`).join(''); faSel.value = ''; }
             // Peupler bilan dropdown
             const bilanSel  = document.getElementById('pm-bilan-sel');
             const bilanWrap = document.getElementById('pm-bilan-wrap');
@@ -1364,6 +1377,7 @@
                 if (bilanWrap) bilanWrap.style.display = BILANS.length ? 'flex' : 'none';
             }
             renderPlayerMatchStats();
+            if (typeof renderPlayerFaceAFace === 'function') renderPlayerFaceAFace();
         }
 
         function pmImpactMatchSelect() {

@@ -3303,69 +3303,69 @@
         }
 
         /* Page Face à Face (v321) — comparatif par match, cartes score + tableaux de répartition */
-        #page-faceaface .fa-scoreboard { display: flex; gap: 16px; margin-bottom: 16px; }
-        #page-faceaface .fa-score-card { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-radius: 12px; background: #F8FAFC; border-top: 4px solid var(--fenix-blue); }
-        #page-faceaface .fa-score-card.fa-adv { border-top-color: var(--fenix-danger); }
-        #page-faceaface .fa-score-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 0.04em; color: var(--fenix-blue); }
-        #page-faceaface .fa-score-card.fa-adv .fa-score-name { color: var(--fenix-danger); }
-        #page-faceaface .fa-score-val { font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; color: var(--fenix-dark); }
-        #page-faceaface .fa-tables { display: flex; gap: 16px; flex-wrap: wrap; }
-        #page-faceaface .fa-table-card { flex: 1; min-width: 320px; background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        #page-faceaface .fa-table-title { font-weight: 700; font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--fenix-blue); margin-bottom: 10px; }
-        #page-faceaface .fa-table-card.fa-adv .fa-table-title { color: var(--fenix-danger); }
-        #page-faceaface .fa-table-scroll { overflow-x: auto; }
-        #page-faceaface .fa-table { border-collapse: collapse; width: 100%; font-size: 0.78rem; white-space: nowrap; }
-        #page-faceaface .fa-table th { text-align: right; font-weight: 600; color: #64748B; background: #F8FAFC; padding: 4px 6px; font-size: 0.68rem; line-height: 1.2; }
-        #page-faceaface .fa-table th:first-child { text-align: left; }
-        #page-faceaface .fa-table td { text-align: right; padding: 4px 6px; border-top: 1px solid #E2E8F0; }
-        #page-faceaface .fa-table td.fa-rowlabel { text-align: left; font-weight: 600; }
-        #page-faceaface .fa-table tr.fa-dispo td.fa-rowlabel { padding-left: 18px; color: #64748B; font-weight: 500; }
-        #page-faceaface .fa-table tr.fa-dispo td.fa-rowlabel::before { content: "↳ "; }
-        #page-faceaface .fa-table tr.fa-total td { font-weight: 700; border-top: 2px solid #1E293B; }
-        #page-faceaface .fa-table td.fa-eff { font-weight: 700; color: var(--fenix-blue); }
-        #page-faceaface .fa-table-card.fa-adv td.fa-eff { color: var(--fenix-danger); }
-        #page-faceaface .fa-table td.fa-eff-adv { color: #64748B; font-weight: 600; }
+        .fa-root .fa-scoreboard { display: flex; gap: 16px; margin-bottom: 16px; }
+        .fa-root .fa-score-card { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-radius: 12px; background: #F8FAFC; border-top: 4px solid var(--fenix-blue); }
+        .fa-root .fa-score-card.fa-adv { border-top-color: var(--fenix-danger); }
+        .fa-root .fa-score-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 0.04em; color: var(--fenix-blue); }
+        .fa-root .fa-score-card.fa-adv .fa-score-name { color: var(--fenix-danger); }
+        .fa-root .fa-score-val { font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; color: var(--fenix-dark); }
+        .fa-root .fa-tables { display: flex; gap: 16px; flex-wrap: wrap; }
+        .fa-root .fa-table-card { flex: 1; min-width: 320px; background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .fa-root .fa-table-title { font-weight: 700; font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--fenix-blue); margin-bottom: 10px; }
+        .fa-root .fa-table-card.fa-adv .fa-table-title { color: var(--fenix-danger); }
+        .fa-root .fa-table-scroll { overflow-x: auto; }
+        .fa-root .fa-table { border-collapse: collapse; width: 100%; font-size: 0.78rem; white-space: nowrap; }
+        .fa-root .fa-table th { text-align: right; font-weight: 600; color: #64748B; background: #F8FAFC; padding: 4px 6px; font-size: 0.68rem; line-height: 1.2; }
+        .fa-root .fa-table th:first-child { text-align: left; }
+        .fa-root .fa-table td { text-align: right; padding: 4px 6px; border-top: 1px solid #E2E8F0; }
+        .fa-root .fa-table td.fa-rowlabel { text-align: left; font-weight: 600; }
+        .fa-root .fa-table tr.fa-dispo td.fa-rowlabel { padding-left: 18px; color: #64748B; font-weight: 500; }
+        .fa-root .fa-table tr.fa-dispo td.fa-rowlabel::before { content: "↳ "; }
+        .fa-root .fa-table tr.fa-total td { font-weight: 700; border-top: 2px solid #1E293B; }
+        .fa-root .fa-table td.fa-eff { font-weight: 700; color: var(--fenix-blue); }
+        .fa-root .fa-table-card.fa-adv td.fa-eff { color: var(--fenix-danger); }
+        .fa-root .fa-table td.fa-eff-adv { color: #64748B; font-weight: 600; }
 
         /* Sous-navigation Général/Face à Face/Comparatif (v323) */
-        #page-faceaface .fa-subnav { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-        #page-faceaface .fa-mode-desc { color: #64748B; font-size: 0.78rem; margin: 0 0 16px; }
-        #page-faceaface .fa-duels { display: flex; flex-direction: column; gap: 12px; }
-        #page-faceaface .fa-duelcard { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 14px; align-items: start; background: #fff; border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        #page-faceaface .fa-duel-side { min-width: 0; }
-        #page-faceaface .fa-duel-r { text-align: right; }
-        #page-faceaface .fa-duel-label { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 0.04em; color: var(--fenix-blue); }
-        #page-faceaface .fa-duel-r .fa-duel-label { color: var(--fenix-danger); }
-        #page-faceaface .fa-duel-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.9rem; line-height: 1; color: var(--fenix-dark); margin-top: 2px; }
-        #page-faceaface .fa-duel-caption { font-size: 0.72rem; color: #64748B; font-weight: 600; margin-top: 3px; }
-        #page-faceaface .fa-duel-mid { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 4px; }
-        #page-faceaface .fa-duel-title { font-weight: 700; font-size: 1.05rem; letter-spacing: 0.03em; text-transform: uppercase; color: #475569; text-align: center; }
-        #page-faceaface .fa-duel-sub { font-size: 0.68rem; color: #94A3B8; text-align: center; }
-        #page-faceaface .fa-duel-bar { display: flex; width: 100%; height: 12px; margin-top: 4px; }
-        #page-faceaface .fa-duel-bar-half { flex: 1; height: 100%; background: #F1F5F9; border: 1px solid #E2E8F0; overflow: hidden; display: flex; }
-        #page-faceaface .fa-duel-bar-l { justify-content: flex-end; border-radius: 999px 0 0 999px; border-right: 0; }
-        #page-faceaface .fa-duel-bar-r { border-radius: 0 999px 999px 0; }
-        #page-faceaface .fa-duel-bar-l span { display: block; height: 100%; background: var(--fenix-blue); }
-        #page-faceaface .fa-duel-bar-r span { display: block; height: 100%; background: var(--fenix-danger); }
-        #page-faceaface .fa-duel-gap { font-size: 0.68rem; font-weight: 600; color: #64748B; margin-top: 2px; }
-        #page-faceaface .fa-breakdown { margin-top: 8px; }
-        #page-faceaface .fa-breakdown-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #E2E8F0; margin-bottom: 4px; }
-        #page-faceaface .fa-breakdown-line { font-size: 0.68rem; color: #475569; font-weight: 600; }
-        #page-faceaface .fa-breakdown-line i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
-        #page-faceaface .fa-duel-r .fa-breakdown-line i { margin-right: 0; margin-left: 4px; }
-        #page-faceaface .fa-bd-fenix .fa-bd-seg-1 { background: var(--fenix-blue); }
-        #page-faceaface .fa-bd-fenix .fa-bd-seg-2 { background: #6f8fd8; }
-        #page-faceaface .fa-bd-fenix .fa-bd-seg-3 { background: #CBD5E1; }
-        #page-faceaface .fa-bd-adv .fa-bd-seg-1 { background: var(--fenix-danger); }
-        #page-faceaface .fa-bd-adv .fa-bd-seg-2 { background: #f3a5a5; }
-        #page-faceaface .fa-bd-adv .fa-bd-seg-3 { background: #CBD5E1; }
+        .fa-root .fa-subnav { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .fa-root .fa-mode-desc { color: #64748B; font-size: 0.78rem; margin: 0 0 16px; }
+        .fa-root .fa-duels { display: flex; flex-direction: column; gap: 12px; }
+        .fa-root .fa-duelcard { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 14px; align-items: start; background: #fff; border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .fa-root .fa-duel-side { min-width: 0; }
+        .fa-root .fa-duel-r { text-align: right; }
+        .fa-root .fa-duel-label { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 0.04em; color: var(--fenix-blue); }
+        .fa-root .fa-duel-r .fa-duel-label { color: var(--fenix-danger); }
+        .fa-root .fa-duel-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.9rem; line-height: 1; color: var(--fenix-dark); margin-top: 2px; }
+        .fa-root .fa-duel-caption { font-size: 0.72rem; color: #64748B; font-weight: 600; margin-top: 3px; }
+        .fa-root .fa-duel-mid { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 4px; }
+        .fa-root .fa-duel-title { font-weight: 700; font-size: 1.05rem; letter-spacing: 0.03em; text-transform: uppercase; color: #475569; text-align: center; }
+        .fa-root .fa-duel-sub { font-size: 0.68rem; color: #94A3B8; text-align: center; }
+        .fa-root .fa-duel-bar { display: flex; width: 100%; height: 12px; margin-top: 4px; }
+        .fa-root .fa-duel-bar-half { flex: 1; height: 100%; background: #F1F5F9; border: 1px solid #E2E8F0; overflow: hidden; display: flex; }
+        .fa-root .fa-duel-bar-l { justify-content: flex-end; border-radius: 999px 0 0 999px; border-right: 0; }
+        .fa-root .fa-duel-bar-r { border-radius: 0 999px 999px 0; }
+        .fa-root .fa-duel-bar-l span { display: block; height: 100%; background: var(--fenix-blue); }
+        .fa-root .fa-duel-bar-r span { display: block; height: 100%; background: var(--fenix-danger); }
+        .fa-root .fa-duel-gap { font-size: 0.68rem; font-weight: 600; color: #64748B; margin-top: 2px; }
+        .fa-root .fa-breakdown { margin-top: 8px; }
+        .fa-root .fa-breakdown-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #E2E8F0; margin-bottom: 4px; }
+        .fa-root .fa-breakdown-line { font-size: 0.68rem; color: #475569; font-weight: 600; }
+        .fa-root .fa-breakdown-line i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+        .fa-root .fa-duel-r .fa-breakdown-line i { margin-right: 0; margin-left: 4px; }
+        .fa-root .fa-bd-fenix .fa-bd-seg-1 { background: var(--fenix-blue); }
+        .fa-root .fa-bd-fenix .fa-bd-seg-2 { background: #6f8fd8; }
+        .fa-root .fa-bd-fenix .fa-bd-seg-3 { background: #CBD5E1; }
+        .fa-root .fa-bd-adv .fa-bd-seg-1 { background: var(--fenix-danger); }
+        .fa-root .fa-bd-adv .fa-bd-seg-2 { background: #f3a5a5; }
+        .fa-root .fa-bd-adv .fa-bd-seg-3 { background: #CBD5E1; }
 
         @media (max-width: 720px) {
-            #page-faceaface .fa-scoreboard, #page-faceaface .fa-tables { flex-direction: column; }
-            #page-faceaface .fa-duelcard { grid-template-columns: 1fr; text-align: left; }
-            #page-faceaface .fa-duel-r { text-align: left; }
-            #page-faceaface .fa-duel-mid { align-items: flex-start; }
-            #page-faceaface .fa-duel-title, #page-faceaface .fa-duel-sub { text-align: left; }
-            #page-faceaface .fa-duel-r .fa-breakdown-line i { margin-right: 4px; margin-left: 0; }
+            .fa-root .fa-scoreboard, .fa-root .fa-tables { flex-direction: column; }
+            .fa-root .fa-duelcard { grid-template-columns: 1fr; text-align: left; }
+            .fa-root .fa-duel-r { text-align: left; }
+            .fa-root .fa-duel-mid { align-items: flex-start; }
+            .fa-root .fa-duel-title, .fa-root .fa-duel-sub { text-align: left; }
+            .fa-root .fa-duel-r .fa-breakdown-line i { margin-right: 4px; margin-left: 0; }
         }
 
         [data-theme="dark"] #page-faceaface .fa-score-card { background: var(--dk-panel2); border-top-color: var(--dk-accent); }

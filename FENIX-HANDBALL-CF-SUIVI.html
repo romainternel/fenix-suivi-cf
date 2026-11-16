@@ -16,16 +16,16 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=326">
-    <script src="js/supabase-client.js?v=326"></script>
-    <script src="js/utils.js?v=326"></script>
-    <script src="js/player-photos.js?v=326"></script>
-    <script src="js/impact-images.js?v=326"></script>
-    <script src="js/player-mode.js?v=326"></script>
-    <script src="js/page-joueurs.js?v=326"></script>
-    <script src="js/page-notes-graph.js?v=326"></script>
-    <script src="js/page-analyse.js?v=326"></script>
-    <script src="js/page-faceaface.js?v=326"></script>
+    <link rel="stylesheet" href="css/style.css?v=327">
+    <script src="js/supabase-client.js?v=327"></script>
+    <script src="js/utils.js?v=327"></script>
+    <script src="js/player-photos.js?v=327"></script>
+    <script src="js/impact-images.js?v=327"></script>
+    <script src="js/player-mode.js?v=327"></script>
+    <script src="js/page-joueurs.js?v=327"></script>
+    <script src="js/page-notes-graph.js?v=327"></script>
+    <script src="js/page-analyse.js?v=327"></script>
+    <script src="js/page-faceaface.js?v=327"></script>
 </head>
 <body>
 
@@ -999,7 +999,7 @@
         </div>
 
         <!-- Face à Face Page (v321) -->
-        <div class="page" id="page-faceaface">
+        <div class="page fa-root" id="page-faceaface">
             <div class="section">
                 <div class="section-header">
                     <h2 class="section-title">🆚 Face à Face</h2>
@@ -3611,6 +3611,9 @@ let _effInfoPoste = null;
             <button class="pm-tab-btn" data-tab="zones" onclick="pmTab('zones')">
                 💥 <span class="pm-tab-label">Impact</span>
             </button>
+            <button class="pm-tab-btn" data-tab="faceaface" onclick="pmTab('faceaface')">
+                🆚 <span class="pm-tab-label">Face à Face</span>
+            </button>
         </div>
         <button id="pm-back-btn" onclick="exitPreviewMode()"
                 style="display:none;align-items:center;gap:5px;background:rgba(255,255,255,.2);
@@ -3696,6 +3699,20 @@ let _effInfoPoste = null;
             </select>
         </div>
         <div id="pm-zones-content"></div>
+    </div>
+
+    <!-- ── MODE JOUEUR ── page face à face ──────────────────────────────── -->
+    <div id="pm-faceaface-page" class="fa-root" style="display:none;padding:76px 16px 24px;max-width:1100px;margin:0 auto">
+        <div class="pm-impact-filter">
+            <label style="font-size:0.8rem;font-weight:600;color:#64748B">MATCH</label>
+            <select id="pm-fa-match-sel" onchange="renderPlayerFaceAFace()"
+                    style="border:1px solid #E2E8F0;border-radius:8px;padding:6px 12px;
+                           font-size:0.85rem;color:#1E293B;background:white;max-width:220px">
+                <option value="">— Choisir un match —</option>
+            </select>
+        </div>
+        <p id="pm-fa-empty" class="artic-empty">Sélectionne un match pour voir le comparatif.</p>
+        <div id="pm-fa-content" style="display:none"></div>
     </div>
 
     <!-- ── STAFF ── modal gestion comptes joueurs ──────────────────────────── -->
