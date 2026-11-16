@@ -45,7 +45,7 @@ js/
   page-analyse.js    (3701 l.)  Page Analyse : timeline, familles d'enclenchement, mode Articulation, onglet Gardien,
                                  éditeurs Familles/Bilans, notes coach
   player-mode.js     (1832 l.)  Mode Lecture Joueur (mobile) : Ma Fiche, Stats Match, Impact
-  page-faceaface.js  (413 l.)   Page Face à Face (v321-v325) : 3 sous-onglets Général/Face à Face/Comparatif,
+  page-faceaface.js  (414 l.)   Page Face à Face (v321-v326) : 3 sous-onglets Général/Face à Face/Comparatif,
                                  comptage détaillé par phase (attaque placée/jeu rapide/penalty) et dispositif
                                  adverse (défense_attaquee), formules relues dans le code source d'un artefact externe
 
@@ -90,7 +90,7 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 - **Nommage HTML/CSS** : IDs et classes en kebab-case (`#filter-joueur-match`, `.jp-avatar`). Préfixes courts par module : `jp-*` (Joueurs), `pmf-*`/`pm-*` (Player Mode), `enc-*` (Enclenchements), `court-*` (terrain SVG).
 - **Fonctions JS** : camelCase. Fonctions privées à un module préfixées `_` (`_renderCourtPhotoState`, `_getJoueurBilanMatchs`).
-- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **10** balises `<link>`/`<script>` du projet (css/style.css + les 9 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v325**.
+- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **10** balises `<link>`/`<script>` du projet (css/style.css + les 9 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v326**.
 - **Piège de spécificité CSS avec `th` nu** : une règle globale non scopée `th { background: var(--fenix-blue); color: var(--fenix-white); }` (`css/style.css` ~L542) s'applique à tous les `<th>` du site. Un sélecteur plus spécifique qui ne fixe QUE `color` (sans `background`) hérite quand même du fond bleu marine global — texte illisible (incident réel, Face à Face v321→v322). Toujours fixer `background` ET `color` ensemble dans toute règle `th` scopée, jamais l'un sans l'autre.
 - **Résolution de nom joueur** : ne jamais comparer deux noms de joueur par égalité stricte. Le format court "Prénom.Initiale" (ex. `Lucas.G`) coexiste avec des colonnes Excel ne contenant que le prénom (ex. colonne `Gardien`) — toujours passer par `matchPlayerName(a, b)` (`js/utils.js`), qui gère ce cas et met en cache le résultat.
 - **Constantes de configuration maintenues à la main** : `POSTE_POSITIONS`, `GB_ZONE_WEIGHTS`, `EFF_SEUILS`, `PLAYER_PHOTOS` — objets JS statiques édités directement dans le code (par Romain ou en session), pas de table Supabase ni d'UI d'admin pour ces réglages ponctuels.
@@ -165,7 +165,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 ## 9. État d'avancement
 
-**Fonctionnel et en production (v325) :**
+**Fonctionnel et en production (v326) :**
 - [x] Import Excel → Supabase (remplacement complet des 4 tables de données)
 - [x] Dashboard, page Analyse (vue match : 3 onglets Vue d'ensemble/Tactique/Notes & Outils ; vue saison : 2 onglets Tactique/Tendances)
 - [x] Page Joueurs : terrain interactif (photos ou initiales), fiche staff, sous-onglets Fiche/Notes/Graphique/Impact
@@ -212,7 +212,9 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 **v324** : retour Romain sur le Comparatif — nombre de possessions ajouté dans la légende de chaque carte (`_faAttCaption()`/`_faDefCaption()`, "... sur N possessions"), et le titre de carte (`.fa-duel-title`, "Attaque (total)", "Défense (total)"...) agrandi (0.75rem → 1.05rem, partagé avec Général donc effet identique sur ses 7 cartes).
 
-**v325** : correctif de la carte « Jets francs subis » (onglet Général) — affichait 0 des deux côtés. Un jet franc arrête une séquence sans jamais porter le tag `Possession` (ce n'est l'issue d'aucune possession terminée), donc la règle de dédoublonnage de `_faCounts()` l'excluait entièrement du total `jf`. Comptage sorti du moteur de possessions pour cette carte précisément, en lignes brutes sur `resultat` (pas `finalite`, sur demande explicite de Romain) : `_faJetFrancSubiCount()` compte une ligne par club avec `resultat = 'Jet franc'`. Les autres usages de `jf` (colonne JF du tableau Face à Face, captions du Comparatif) restent inchangés, pas concernés par ce correctif — à surveiller si un sous-comptage similaire s'y révèle un jour.
+**v325** : correctif de la carte « Jets francs subis » (onglet Général) — affichait 0 des deux côtés. Un jet franc arrête une séquence sans jamais porter le tag `Possession` (ce n'est l'issue d'aucune possession terminée), donc la règle de dédoublonnage de `_faCounts()` l'excluait entièrement du total `jf`. Comptage sorti du moteur de possessions pour cette carte précisément, en lignes brutes sur `resultat`.
+
+**v326** : même correctif généralisé directement dans `_faCounts()` (retour Romain, "corrige aussi") plutôt que gardé en aparté — `jf` est désormais toujours compté dans sa case, pour tout l'onglet Face à Face (dont la colonne JF du tableau, par dispositif), sans jamais incrémenter `poss` (un jet franc n'est jamais le point terminal d'une possession dans la convention de saisie). La carte « Jets francs subis » relit maintenant `total.jf` comme toutes les autres cartes, le comptage à part ajouté en v325 est retiré (une seule source de vérité). Vérifié : `poss` et toutes les autres valeurs déjà validées (v321-v324) restent strictement inchangées — seul `jf`, auparavant à 0, passe à sa vraie valeur.
 
 **En attente / non couvert :**
 - [ ] Photos pour 4 joueurs (Roman.L, Yoran.C, Zacharie.D, Roméo.G) — dépend de Romain

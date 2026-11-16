@@ -71,15 +71,25 @@ function _faCounts(matchData, isFenix) {
     rows.forEach(r => {
         const cat = _faCat(r);
         if (!cat) return;
-        if (!FA_SHOT_CATS.has(cat) && !(r[COLS.possession] || '').toString().trim()) return;
+        const countsAsPoss = FA_SHOT_CATS.has(cat) || !!(r[COLS.possession] || '').toString().trim();
+        // Un jet franc n'est jamais le point terminal d'une possession dans la convention de saisie de
+        // Romain (la possession continue toujours après) : il ne porte donc jamais le tag Possession,
+        // et la règle de dédoublonnage ci-dessus l'excluait entièrement du total — sous-comptage à 0
+        // constaté sur la carte "Jets francs subis" (retour Romain, v325/v326). On le compte quand même
+        // dans sa propre case (sans l'ajouter à `poss`, qui reste le nombre de possessions réellement
+        // terminées), pour qu'il apparaisse comme un évènement à part entière partout où `jf` est lu.
+        if (!countsAsPoss && cat !== 'jf') return;
 
         const phase = (r[COLS.phase_att] || '').toString().trim();
         const bucket = FA_JEURAPIDE_PHASES.includes(phase) ? jeurapide : (phase === FA_PENALTY_PHASE ? penalty : attaquePlacee);
-        bucket.poss++;
+        if (countsAsPoss) bucket.poss++;
         bucket[cat]++;
         if (bucket !== jeurapide) {
             const d = _faNormDispositif(r[COLS.defense_attaquee]);
-            if (d) { parDispositif[d].poss++; parDispositif[d][cat]++; }
+            if (d) {
+                if (countsAsPoss) parDispositif[d].poss++;
+                parDispositif[d][cat]++;
+            }
         }
     });
 
@@ -203,16 +213,7 @@ function _faDuelCard(o) {
         </div>`;
 }
 
-// Un jet franc arrête la séquence sans jamais porter le tag Possession (ce n'est l'issue d'aucune
-// possession terminée) — la règle de dédoublonnage de _faCounts() l'exclut donc entièrement, ce qui
-// sous-comptait ce total à 0 (retour Romain, v325). Comptage volontairement à part, en lignes brutes
-// sur la colonne `resultat` (pas `finalite`, sur demande explicite) : une ligne = un jet franc subi par
-// le club qui avait la balle sur cette ligne.
-function _faJetFrancSubiCount(matchData, isFenix) {
-    return matchData.filter(r => (r[COLS.club] === 'FENIX') === isFenix && (r[COLS.resultat] || '').toString().trim() === 'Jet franc').length;
-}
-
-function _faGeneralHtml(matchData, fenixStats, advStats, advLabel) {
+function _faGeneralHtml(fenixStats, advStats, advLabel) {
     const cards = [];
     cards.push(_faDuelCard({
         title: "Possessions d'attaque", sub: 'possessions terminées', isPct: false, advLabel,
@@ -251,7 +252,7 @@ function _faGeneralHtml(matchData, fenixStats, advStats, advLabel) {
 
     cards.push(_faDuelCard({
         title: 'Jets francs subis', isPct: false, advLabel,
-        leftVal: _faJetFrancSubiCount(matchData, true), rightVal: _faJetFrancSubiCount(matchData, false),
+        leftVal: fenixStats.total.jf, rightVal: advStats.total.jf,
     }));
 
     cards.push(_faDuelCard({
@@ -405,7 +406,7 @@ function updateFaceAFacePage() {
     const advStats = _faCounts(matchData, false);
 
     const mode = window._faMode || 'gen';
-    const body = mode === 'gen' ? _faGeneralHtml(matchData, fenixStats, advStats, advLabel)
+    const body = mode === 'gen' ? _faGeneralHtml(fenixStats, advStats, advLabel)
         : mode === 'comp' ? _faComparatifHtml(fenixStats, advStats, advLabel)
         : _faFaceHtml(fenixStats, advStats, advLabel);
 
