@@ -134,11 +134,10 @@ function _fa65Caption(row) {
     return `${row.but} but${row.but > 1 ? 's' : ''} · ${row.po} PO · ${row.pb} PB · ${tirs} tir${tirs > 1 ? 's' : ''} raté${tirs > 1 ? 's' : ''} sur ${row.poss} possession${row.poss > 1 ? 's' : ''}`;
 }
 function _faAttCaption(row) {
-    return `${row.but} but${row.but > 1 ? 's' : ''} + ${row.po} PO obtenu${row.po > 1 ? 's' : ''}`;
+    return `${row.but} but${row.but > 1 ? 's' : ''} + ${row.po} PO obtenu${row.po > 1 ? 's' : ''} sur ${row.poss} possession${row.poss > 1 ? 's' : ''}`;
 }
 function _faDefCaption(row) {
-    const tirs = row.arret + row.echec;
-    return `${row.pb} perte${row.pb > 1 ? 's' : ''} de balle + ${row.arret} arrêt${row.arret > 1 ? 's' : ''} GB + ${row.echec} échec${row.echec > 1 ? 's' : ''} tir`;
+    return `${row.pb} perte${row.pb > 1 ? 's' : ''} de balle + ${row.arret} arrêt${row.arret > 1 ? 's' : ''} GB + ${row.echec} échec${row.echec > 1 ? 's' : ''} tir sur ${row.poss} possession${row.poss > 1 ? 's' : ''}`;
 }
 
 // Répartition en 3 parts (ex. Buts : Attaque placée/Jeu rapide/Penalty) avec arrondi "au plus grand

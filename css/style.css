@@ -3338,7 +3338,7 @@
         #page-faceaface .fa-duel-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.9rem; line-height: 1; color: var(--fenix-dark); margin-top: 2px; }
         #page-faceaface .fa-duel-caption { font-size: 0.72rem; color: #64748B; font-weight: 600; margin-top: 3px; }
         #page-faceaface .fa-duel-mid { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 4px; }
-        #page-faceaface .fa-duel-title { font-weight: 700; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: #475569; text-align: center; }
+        #page-faceaface .fa-duel-title { font-weight: 700; font-size: 1.05rem; letter-spacing: 0.03em; text-transform: uppercase; color: #475569; text-align: center; }
         #page-faceaface .fa-duel-sub { font-size: 0.68rem; color: #94A3B8; text-align: center; }
         #page-faceaface .fa-duel-bar { display: flex; width: 100%; height: 12px; margin-top: 4px; }
         #page-faceaface .fa-duel-bar-half { flex: 1; height: 100%; background: #F1F5F9; border: 1px solid #E2E8F0; overflow: hidden; display: flex; }
