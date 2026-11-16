@@ -747,6 +747,12 @@
         [data-theme="dark"] .moments-cles-label { color: var(--dk-text); }
         [data-theme="dark"] .moments-cles-empty { color: var(--dk-mut); }
         [data-theme="dark"] .terrain-shot-legend { color: var(--dk-mut); }
+        [data-theme="dark"] .tl-sp-item { background: var(--dk-panel2); border-color: var(--dk-line); }
+        [data-theme="dark"] .tl-sp-item.tl-sp-fenix { border-left-color: var(--dk-accent); }
+        [data-theme="dark"] .tl-sp-item.tl-sp-adv { border-left-color: var(--dk-red); }
+        [data-theme="dark"] .tl-sp-head.tl-sp-fenix { color: var(--dk-accent); }
+        [data-theme="dark"] .tl-sp-head.tl-sp-adv { color: var(--dk-red); }
+        [data-theme="dark"] .tl-sp-detail { color: var(--dk-mut); }
         /* Onglets internes page Analyse (Vue d'ensemble/Tactique/Notes & Outils, Tactique/Tendances) —
            jamais couverts par le passage thème sombre initial (v296, restyling uniquement pastille→
            soulignement) : le soulignement cyan de l'onglet actif était bien visible, mais son texte
@@ -1519,6 +1525,18 @@
             width: 100%;
             height: 100%;
         }
+
+        /* Séries et pannes offensives sous la timeline (v329) */
+        .tl-sp-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .tl-sp-item { background: #fff; border: 1px solid #E2E8F0; border-left-width: 4px; border-left-style: solid; border-radius: 10px; padding: 8px 12px; }
+        .tl-sp-item.tl-sp-fenix { border-left-color: var(--fenix-blue); }
+        .tl-sp-item.tl-sp-adv { border-left-color: var(--fenix-danger); }
+        .tl-sp-head { font-weight: 700; display: inline-block; margin-bottom: 4px; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+        .tl-sp-head.tl-sp-fenix { color: var(--fenix-blue); }
+        .tl-sp-head.tl-sp-adv { color: var(--fenix-danger); }
+        .tl-sp-head.tl-sp-good { text-decoration: underline; text-decoration-color: #16A34A; }
+        .tl-sp-head.tl-sp-bad { text-decoration: underline; text-decoration-color: #DC2626; }
+        .tl-sp-detail { font-size: 0.78rem; color: #64748B; }
 
         .moments-cles {
             display: flex;

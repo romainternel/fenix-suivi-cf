@@ -104,6 +104,7 @@
             window._currentMatchName = matchFilter;
             window._currentMatchData = matchData;
             drawTimeline(matchFilter, matchData);
+            renderSeriesEtPannes(matchData);
             const _tlCanvas = document.getElementById('timeline-canvas');
             if (_tlCanvas && !_tlCanvas._tooltipInit) { initTimelineTooltip(); _tlCanvas._tooltipInit = true; }
             renderBasculContext(matchData, _bascules);
@@ -141,6 +142,7 @@
             // l'onglet évite un canvas figé sur la taille du dernier onglet actif au moment du rendu.
             if (isMatch && tab === 'overview' && window._currentMatchName && window._currentMatchData) {
                 drawTimeline(window._currentMatchName, window._currentMatchData);
+                renderSeriesEtPannes(window._currentMatchData);
             } else if (tab === 'tactique') {
                 requestAnimationFrame(() => _drawEncChart());
             }
@@ -853,6 +855,127 @@
                     text: scoreText
                 });
             });
+        }
+
+        // ===== Séries et pannes offensives (inspiré d'un artefact externe, v329) =====
+        // Repris du graphique "déroulé de match" : liste de cartes sous la timeline, calculée en espace
+        // de minute normalisée (0-60, même échelle que drawTimeline/_timeNorm) pour que les seuils
+        // "5 minutes" désignent bien 1/6e d'une mi-temps affichée, pas des secondes vidéo brutes qui
+        // peuvent différer d'une mi-temps à l'autre. Comptage des possessions non terminées par un but :
+        // règle de dédoublonnage déjà établie (_articAttBaseCounts, computeSuperiorites, v285/v311) —
+        // un tir compte toujours, un sous-événement (PB/PO) seulement s'il porte le tag Possession.
+        const TL_SER_MIN = 3, TL_PAN_MIN = 5, TL_PAN_POSS = 5;
+
+        function _tlNormPos(pos) {
+            const { max1, maxAll, hasTwo } = _timeNorm;
+            if (!hasTwo) return maxAll > 0 ? (pos / maxAll) * 60 : 0;
+            if (pos <= max1) return max1 > 0 ? (pos / max1) * 30 : 0;
+            return 30 + ((pos - max1) / Math.max(maxAll - max1, 1)) * 30;
+        }
+
+        function _tlNonGoalPossessions(matchData) {
+            return matchData.filter(r => {
+                const res = (r[COLS.resultat] || '').toString().trim();
+                if (res === 'Tir raté') return true;
+                if (res === 'PB' || res === 'PO') return !!(r[COLS.possession] || '').toString().trim();
+                return false;
+            });
+        }
+
+        function computeSeriesEtPannes(matchData) {
+            const sortedGoals = getSortedGoals(matchData);
+            if (sortedGoals.length === 0) return [];
+
+            const goals = sortedGoals.map(g => ({
+                isFenix: g.row[COLS.club] === 'FENIX',
+                periode: getPeriodeNum(g.row),
+                pos: _tlNormPos(g.pos),
+            }));
+
+            // Même calcul d'offset MT2 que getSortedGoals (js/utils.js), pour exprimer les non-buts
+            // dans le même espace de position avant normalisation.
+            const g1 = matchData.filter(r => r[COLS.resultat] === 'But' && getPeriodeNum(r) === 1);
+            const g2 = matchData.filter(r => r[COLS.resultat] === 'But' && getPeriodeNum(r) === 2);
+            const max1raw = g1.length ? Math.max(...g1.map(r => parseTimecode(r[COLS.position]))) : 0;
+            const min2raw = g2.length ? Math.min(...g2.map(r => parseTimecode(r[COLS.position]))) : Infinity;
+            const offset = (g2.length > 0 && min2raw < max1raw) ? max1raw : 0;
+
+            const nonGoalPoss = _tlNonGoalPossessions(matchData).map(r => ({
+                isFenix: r[COLS.club] === 'FENIX',
+                periode: getPeriodeNum(r),
+                pos: _tlNormPos(parseTimecode(r[COLS.position]) + (getPeriodeNum(r) === 2 ? offset : 0)),
+            }));
+
+            // ── Séries : TL_SER_MIN buts d'affilée sans réponse de l'autre camp ──
+            const series = [];
+            let i0 = 0;
+            while (i0 < goals.length) {
+                let j0 = i0;
+                while (j0 + 1 < goals.length && goals[j0 + 1].isFenix === goals[i0].isFenix) j0++;
+                const run = j0 - i0 + 1;
+                if (run >= TL_SER_MIN) {
+                    let bf = 0, ba = 0;
+                    for (let q = 0; q < i0; q++) { if (goals[q].isFenix) bf++; else ba++; }
+                    series.push({
+                        type: 'serie', isFenix: goals[i0].isFenix, n: run,
+                        p0: goals[i0].pos, p1: goals[j0].pos,
+                        f: bf + (goals[i0].isFenix ? run : 0), a: ba + (goals[i0].isFenix ? 0 : run),
+                        bf, ba,
+                    });
+                }
+                i0 = j0 + 1;
+            }
+
+            // ── Pannes : TL_PAN_MIN minutes (normalisées) OU TL_PAN_POSS possessions sans but, dans
+            // la même mi-temps ──
+            const pannes = [];
+            const periodes = _timeNorm.hasTwo ? [1, 2] : [1];
+            const halfBounds = { 1: [0, _timeNorm.hasTwo ? 30 : 60], 2: [30, 60] };
+            [true, false].forEach(isFenix => {
+                periodes.forEach(periode => {
+                    const [startB, endB] = halfBounds[periode];
+                    const halfGoals = goals.filter(g => g.isFenix === isFenix && g.periode === periode).map(g => g.pos);
+                    const pts = [startB, ...halfGoals, endB];
+                    const poss = nonGoalPoss.filter(p => p.isFenix === isFenix && p.periode === periode).map(p => p.pos);
+                    for (let k = 1; k < pts.length; k++) {
+                        const a0 = pts[k - 1], b0 = pts[k];
+                        const n = poss.filter(p => p > a0 - 1e-9 && p < b0 + 1e-9).length;
+                        const d = b0 - a0;
+                        if (d >= TL_PAN_MIN || n >= TL_PAN_POSS) {
+                            pannes.push({ type: 'panne', isFenix, p0: a0, p1: b0, d, n, byTime: d >= TL_PAN_MIN, byPoss: n >= TL_PAN_POSS });
+                        }
+                    }
+                });
+            });
+
+            return series.concat(pannes).sort((x, y) => x.p0 - y.p0 || (x.type === 'serie' ? -1 : 1));
+        }
+
+        function renderSeriesEtPannes(matchData) {
+            const container = document.getElementById('timeline-series-pannes');
+            if (!container) return;
+            const list = computeSeriesEtPannes(matchData);
+            if (!list.length) { container.innerHTML = ''; return; }
+            const advLabel = document.getElementById('adversaire-title-text')?.textContent?.trim() || 'Adversaire';
+            const mn = p => Math.round(p) + "'";
+            const nom = isFenix => isFenix ? 'FENIX' : advLabel;
+            container.innerHTML = list.map(e => {
+                const cls = e.isFenix ? 'tl-sp-fenix' : 'tl-sp-adv';
+                if (e.type === 'serie') {
+                    return `<div class="tl-sp-item ${cls}">
+                        <div class="tl-sp-head ${cls} tl-sp-good">Série attaque ${_escapeHtml(nom(e.isFenix))} · ${e.n}-0</div>
+                        <div class="tl-sp-detail">de ${mn(e.p0)} à ${mn(e.p1)} · le score passe de ${e.bf}-${e.ba} à ${e.f}-${e.a}</div>
+                    </div>`;
+                }
+                const parts = [];
+                if (e.byTime) parts.push(Math.round(e.d) + ' min');
+                if (e.byPoss) parts.push(e.n + ' possession' + (e.n > 1 ? 's' : '') + ' ratée' + (e.n > 1 ? 's' : ''));
+                const detail = 'de ' + mn(e.p0) + ' à ' + mn(e.p1) + (e.byTime && !e.byPoss ? ' · ' + e.n + ' possession' + (e.n > 1 ? 's' : '') + ' sans but' : '');
+                return `<div class="tl-sp-item ${cls}">
+                    <div class="tl-sp-head ${cls} tl-sp-bad">Panne attaque ${_escapeHtml(nom(e.isFenix))} · 0 but pendant ${parts.join(' · ')}</div>
+                    <div class="tl-sp-detail">${detail}</div>
+                </div>`;
+            }).join('');
         }
 
         function findMomentsCles(matchName, matchData) {
