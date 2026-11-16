@@ -89,7 +89,8 @@ package.json, package-lock.json   devDependencies (sharp, xlsx) — jamais charg
 
 - **Nommage HTML/CSS** : IDs et classes en kebab-case (`#filter-joueur-match`, `.jp-avatar`). Préfixes courts par module : `jp-*` (Joueurs), `pmf-*`/`pm-*` (Player Mode), `enc-*` (Enclenchements), `court-*` (terrain SVG).
 - **Fonctions JS** : camelCase. Fonctions privées à un module préfixées `_` (`_renderCourtPhotoState`, `_getJoueurBilanMatchs`).
-- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **10** balises `<link>`/`<script>` du projet (css/style.css + les 9 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v321**.
+- **Cache-busting** : chaque déploiement incrémente `?v=N` sur les **10** balises `<link>`/`<script>` du projet (css/style.css + les 9 fichiers `js/*.js`) — jamais sur les CDN externes. Version actuelle : **v322**.
+- **Piège de spécificité CSS avec `th` nu** : une règle globale non scopée `th { background: var(--fenix-blue); color: var(--fenix-white); }` (`css/style.css` ~L542) s'applique à tous les `<th>` du site. Un sélecteur plus spécifique qui ne fixe QUE `color` (sans `background`) hérite quand même du fond bleu marine global — texte illisible (incident réel, Face à Face v321→v322). Toujours fixer `background` ET `color` ensemble dans toute règle `th` scopée, jamais l'un sans l'autre.
 - **Résolution de nom joueur** : ne jamais comparer deux noms de joueur par égalité stricte. Le format court "Prénom.Initiale" (ex. `Lucas.G`) coexiste avec des colonnes Excel ne contenant que le prénom (ex. colonne `Gardien`) — toujours passer par `matchPlayerName(a, b)` (`js/utils.js`), qui gère ce cas et met en cache le résultat.
 - **Constantes de configuration maintenues à la main** : `POSTE_POSITIONS`, `GB_ZONE_WEIGHTS`, `EFF_SEUILS`, `PLAYER_PHOTOS` — objets JS statiques édités directement dans le code (par Romain ou en session), pas de table Supabase ni d'UI d'admin pour ces réglages ponctuels.
 - **Import Excel = remplacement complet** : chaque import Excel supprime et réinsère entièrement `match_data`/`joueurs`/`tableau_match`/`bilan` sur Supabase. Ne jamais stocker une donnée éditée en base (famille, note coach, compte joueur) sur une structure qui serait recréée par l'import — toujours une table séparée (`famille_mapping`, `coach_analyses`, `player_profiles`) ou un fichier hors pipeline (`player-photos.js`).
@@ -163,7 +164,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 ## 9. État d'avancement
 
-**Fonctionnel et en production (v321) :**
+**Fonctionnel et en production (v322) :**
 - [x] Import Excel → Supabase (remplacement complet des 4 tables de données)
 - [x] Dashboard, page Analyse (vue match : 3 onglets Vue d'ensemble/Tactique/Notes & Outils ; vue saison : 2 onglets Tactique/Tendances)
 - [x] Page Joueurs : terrain interactif (photos ou initiales), fiche staff, sous-onglets Fiche/Notes/Graphique/Impact
@@ -186,7 +187,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 **Dernier audit complet de régression : 2026-09-30 (v314), verdict RAS** — cf. `docs/regression/audit-complet-2026-09-30.md`. Précédent : `docs/regression/audit-complet-2026-09-23.md`
 
-**Changements non audités depuis : v315-v321** (articulation attaque et défense : filtre de composition, composition sans doublon ; tri du filtre match par journée ; icône d'écran d'accueil ; nouvel onglet Face à Face). Aucun rapport QA ni Regression Guardian pour ces versions.
+**Changements non audités depuis : v315-v322** (articulation attaque et défense : filtre de composition, composition sans doublon ; tri du filtre match par journée ; icône d'écran d'accueil ; nouvel onglet Face à Face). Aucun rapport QA ni Regression Guardian pour ces versions.
 
 **v311** : correctif d'un bug de comptage dans `computeSuperiorites()` (`js/page-analyse.js`, carte "Supériorités/infériorités numériques" — indicateur I23) — signalé par Romain (écart avec son propre décompte manuel sur J03 BRUGES-FENIX). Avant le correctif, le dénominateur ne comptait que les lignes But/Tir raté en phase +/- : une possession en supériorité/infériorité se terminant par une perte de balle, un jet franc ou un 2' obtenu (sans tir) n'était jamais comptée, sous-estimant fortement le total de possessions réelles et faussant le %. Corrigé pour compter une possession dès qu'une ligne est taguée `Possession` (colonne dédiée déjà utilisée ainsi partout ailleurs dans `page-analyse.js` pour dédoublonner une séquence multi-lignes — un sous-événement comme un Jet franc n'est jamais lui-même une possession), plutôt que de se limiter aux lignes avec tir. Sur le match test, l'écart était important : FENIX passe de 7/12 (58%) à 7/14 (50%), Adversaire de 6/7 (**86%**, valeur irréaliste pour une réussite en supériorité) à 6/11 (55%, cohérent). Champs renommés `tirs` → `possessions` dans l'objet retourné par `computeSuperiorites()`.
 
@@ -208,7 +209,7 @@ Deux rôles, un seul écran de connexion (`checkLogin()`, async) :
 
 **En attente / non couvert :**
 - [ ] Photos pour 4 joueurs (Roman.L, Yoran.C, Zacharie.D, Roméo.G) — dépend de Romain
-- [ ] Audit de régression ciblé v315-v321 (checklist I22 défense, I30 attaque ; tri du filtre match v319 et icône d'écran d'accueil v320 non testés E2E ; nouvel onglet Face à Face v321 jamais passé par le squad QA/Regression Guardian)
+- [ ] Audit de régression ciblé v315-v322 (checklist I22 défense, I30 attaque ; tri du filtre match v319 et icône d'écran d'accueil v320 non testés E2E ; nouvel onglet Face à Face v321-v322 jamais passé par le squad QA/Regression Guardian)
 
 ## 10. Décisions techniques actées / roadmap
 
