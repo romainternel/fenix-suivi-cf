@@ -193,8 +193,10 @@
                 ? `<img src="${photoUrl}" alt="${displayNom}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${initials}'}))">`
                 : initials;
 
+            // Moyenne de temps de jeu retirée d'ici (v336) — affichée dans renderBadges() pour
+            // éviter le doublon avec le badge "⌀ min/match" (même correctif que page-joueurs.js).
             const tjNom  = (typeof getTJData === 'function') ? getTJData(nom, MATCHS) : { matchs: 0, total: 0 };
-            const tjStr  = tjNom.matchs ? `<span class="pmf-meta-item">⏱ ${tjNom.matchs} match${tjNom.matchs > 1 ? 's' : ''}</span><span class="pmf-meta-item">⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>` : '';
+            const tjStr  = tjNom.matchs ? `<span class="pmf-meta-item">⏱ ${tjNom.matchs} match${tjNom.matchs > 1 ? 's' : ''}</span>` : '';
 
             // ── Stats KPI ──
             const bilanMatchs = _getPmBilanMatchs();
@@ -409,10 +411,9 @@
             if (!el) return;
             const bilanMatchs = _getPmBilanMatchs();
             const badges = [];
-            const rank = computePlayerRank(nom, posteCode, bilanMatchs);
-            if (rank && rank.total > 1 && rank.rank <= 3) {
-                badges.push(`<span class="pmf-badge pmf-badge-rank">${_rankMedalHTML(rank.rank)} au poste</span>`);
-            }
+            // Badge de classement par médaille ("X au poste") retiré à la demande de Romain
+            // (même correctif que js/page-joueurs.js) — remplacé par la moyenne de temps de jeu,
+            // affichée en pill neutre plutôt qu'un classement compétitif entre coéquipiers.
             // Top ATT / Top DEF parmi coéquipiers du même poste (joueurs de champ uniquement)
             if (posteCode && posteCode !== 'GB' && JOUEURS_TERRAIN) {
                 const teammates = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
@@ -423,6 +424,10 @@
                     if (topAtt) badges.push(`<span class="pmf-badge pmf-badge-rank">⚡ Top ATT au poste</span>`);
                     if (topDef) badges.push(`<span class="pmf-badge pmf-badge-rank">🛡️ Top DEF au poste</span>`);
                 }
+            }
+            const tjNom = (typeof getTJData === 'function') ? getTJData(nom, bilanMatchs || MATCHS) : { matchs: 0, total: 0 };
+            if (tjNom.matchs > 0) {
+                badges.push(`<span class="pmf-badge pmf-badge-rank">⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>`);
             }
             const str = computeStreak(nom);
             if (str.dir === 1 && str.streak >= 3) badges.push(`<span class="pmf-badge pmf-badge-up">↑ En progression (${str.streak} matchs)</span>`);

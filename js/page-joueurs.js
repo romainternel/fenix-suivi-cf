@@ -236,10 +236,11 @@
             // ── Carte joueur (droite du terrain) ──────────────────────────────
             const effectiveTJMatchs = matchFilter ? [matchFilter] : (bilanMatchs || MATCHS);
             const tjNom = getTJData(nom, effectiveTJMatchs);
+            // Moyenne de temps de jeu retirée d'ici (v336) — affichée dans badgesHTML pour
+            // éviter le doublon avec le nouveau badge "⌀ min/match" (cf. commentaire plus bas).
             const tjHeaderStr = tjNom.matchs
                 ? `<div style="display:flex;gap:1rem;margin-top:0.35rem;font-size:0.75rem;opacity:0.9;">
                     <span>⏱ ${tjNom.matchs} matchs</span>
-                    <span>⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>
                   </div>`
                 : '';
             const jpHeader = `
@@ -256,14 +257,13 @@
                     </div>
                 </div>`;
 
-            // ── Badges (rang note, top att/def, rang TJ, progression) ──────────
+            // ── Badges (top att/def, moyenne temps de jeu, progression) ─────────
+            // Les badges de classement par médaille ("X au poste"/"X TJ au poste", rang parmi
+            // les coéquipiers du même poste) ont été retirés à la demande de Romain (retour
+            // direct sur capture — "j'aime pas"), remplacés par la moyenne de temps de jeu
+            // (déjà calculée dans tjNom ci-dessus pour l'en-tête) affichée en pill neutre plutôt
+            // qu'un classement compétitif entre coéquipiers.
             const staffBadges = [];
-            if (typeof computePlayerRank === 'function' && posteCode) {
-                const rnk = computePlayerRank(nom, posteCode);
-                if (rnk && rnk.total > 1 && rnk.rank <= 3) {
-                    staffBadges.push(`${_rankMedalHTML(rnk.rank)} au poste`);
-                }
-            }
             if (typeof _computeNoteScore === 'function' && posteCode && posteCode !== 'GB' && JOUEURS_TERRAIN) {
                 const tms = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
                 if (tms.length > 0) {
@@ -272,19 +272,8 @@
                     if (mn.def > 0 && tms.every(p => _computeNoteScore(p.nom, posteCode).def <= mn.def)) staffBadges.push('🛡️ Top DEF au poste');
                 }
             }
-            if (posteCode && typeof JOUEURS_TERRAIN !== 'undefined') {
-                const tms = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
-                if (tms.length > 0) {
-                    const myTJData = getTJData(nom, effectiveTJMatchs);
-                    const myTJAvg = myTJData.matchs > 0 ? myTJData.total / myTJData.matchs : 0;
-                    let tjRank = 1;
-                    tms.forEach(p => {
-                        const d = getTJData(p.nom, effectiveTJMatchs);
-                        const avg = d.matchs > 0 ? d.total / d.matchs : 0;
-                        if (avg > myTJAvg) tjRank++;
-                    });
-                    if (tjRank <= 3) staffBadges.push(`${_rankMedalHTML(tjRank)} TJ au poste`);
-                }
+            if (tjNom.matchs > 0) {
+                staffBadges.push(`⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match`);
             }
             if (typeof computeStreak === 'function') {
                 const str = computeStreak(nom);
