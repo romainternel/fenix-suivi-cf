@@ -222,10 +222,16 @@ function _faGeneralHtml(fenixStats, advStats, advLabel) {
     const fBreakVals = [fenixStats.attaquePlacee.but, fenixStats.jeurapide.but, fPen.but];
     const aBreakVals = [advStats.attaquePlacee.but, advStats.jeurapide.but, aPen.but];
     const labels = ['Attaque placée', 'Jeu rapide', 'Penalty'];
+    // Un penalty n'est jamais tagué Possession dans la convention de saisie (ce n'est pas la continuation
+    // d'une séquence) : fPen.poss vaut donc toujours 0, un dénominateur absurde pour "X buts sur Y
+    // penaltys". On lit plutôt le nombre de tentatives (but+arret+echec), comme le fait déjà le Dashboard
+    // pour son propre "Pen: X/Y" (buts/buts+tirs ratés) — même principe que _faTirEff/_faTirCaption.
+    const fPenTirs = fPen.but + fPen.arret + fPen.echec;
+    const aPenTirs = aPen.but + aPen.arret + aPen.echec;
     cards.push(_faDuelCard({
         title: 'Buts', isPct: false, advLabel,
         leftVal: fenixStats.total.but, rightVal: advStats.total.but,
-        leftCaption: `dont ${fPen.but}/${fPen.poss} penalty`, rightCaption: `dont ${aPen.but}/${aPen.poss} penalty`,
+        leftCaption: `dont ${fPen.but}/${fPenTirs} penalty`, rightCaption: `dont ${aPen.but}/${aPenTirs} penalty`,
         leftExtra: _faBreakdownBar(labels, fBreakVals, _faLargestRemainderPct(fBreakVals), 'fenix', false),
         rightExtra: _faBreakdownBar(labels, aBreakVals, _faLargestRemainderPct(aBreakVals), 'adv', true),
     }));
