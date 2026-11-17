@@ -16,16 +16,16 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=334">
-    <script src="js/supabase-client.js?v=334"></script>
-    <script src="js/utils.js?v=334"></script>
-    <script src="js/player-photos.js?v=334"></script>
-    <script src="js/impact-images.js?v=334"></script>
-    <script src="js/player-mode.js?v=334"></script>
-    <script src="js/page-joueurs.js?v=334"></script>
-    <script src="js/page-notes-graph.js?v=334"></script>
-    <script src="js/page-analyse.js?v=334"></script>
-    <script src="js/page-faceaface.js?v=334"></script>
+    <link rel="stylesheet" href="css/style.css?v=335">
+    <script src="js/supabase-client.js?v=335"></script>
+    <script src="js/utils.js?v=335"></script>
+    <script src="js/player-photos.js?v=335"></script>
+    <script src="js/impact-images.js?v=335"></script>
+    <script src="js/player-mode.js?v=335"></script>
+    <script src="js/page-joueurs.js?v=335"></script>
+    <script src="js/page-notes-graph.js?v=335"></script>
+    <script src="js/page-analyse.js?v=335"></script>
+    <script src="js/page-faceaface.js?v=335"></script>
 </head>
 <body>
 
@@ -213,6 +213,7 @@
         <button class="jsub-btn" data-jsub="notes" role="tab" aria-selected="false" onclick="switchJoueursTab('notes')">⭐ Notes</button>
         <button id="btn-joueur-graph" class="jsub-btn" data-jsub="notegraph" role="tab" aria-selected="false" disabled onclick="switchJoueursTab('notegraph')">📈 Graphique</button>
         <button id="btn-joueur-impact" class="jsub-btn" data-jsub="impact" role="tab" aria-selected="false" disabled onclick="switchJoueursTab('impact')">🎯 Impact</button>
+        <button id="btn-jp-fullscreen" class="jp-fs-btn" onclick="toggleJoueursFullscreen()" title="Grand écran">⛶ Grand écran</button>
     </div>
 
     <main class="main">
@@ -1310,6 +1311,31 @@ let _effInfoPoste = null;
             }
         }
 
+        // Mode "Grand écran" (fiche joueur, Graphique, Impact) : cache le header/bandeau match
+        // pour que la carte occupe tout l'écran, combiné à l'API Fullscreen navigateur quand
+        // disponible. Les onglets Fiche/Notes/Graphique/Impact (.joueurs-subnav) restent affichés
+        // et utilisables — seul chrome qui survit à ce mode, cf. demande Romain "toujours
+        // possibilité de basculer sur graph et impact".
+        function toggleJoueursFullscreen() {
+            const active = document.body.classList.toggle('fenix-fs-fiche');
+            const btn = document.getElementById('btn-jp-fullscreen');
+            if (btn) btn.innerHTML = active ? '✕ Quitter le grand écran' : '⛶ Grand écran';
+            if (active) {
+                if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+            } else if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+        // Sortie du plein écran natif par Échap sans repasser par le bouton ⛶ : resynchronise
+        // le mode CSS, sinon il resterait actif sans le vrai fullscreen navigateur derrière.
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && document.body.classList.contains('fenix-fs-fiche')) {
+                document.body.classList.remove('fenix-fs-fiche');
+                const btn = document.getElementById('btn-jp-fullscreen');
+                if (btn) btn.innerHTML = '⛶ Grand écran';
+            }
+        });
+
         function togglePmMenu() {
             const drop = document.getElementById('pm-menu-dropdown');
             if (!drop) return;
@@ -1382,6 +1408,7 @@ let _effInfoPoste = null;
         }
 
         function goToAnalysePage() {
+            if (document.body.classList.contains('fenix-fs-fiche')) toggleJoueursFullscreen();
             document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
             document.querySelector('.nav-btn[data-page="analyse"]')?.classList.add('active');
             document.querySelector('.nav-btn[data-page="analyse"]')?.setAttribute('aria-selected', 'true');
@@ -1394,6 +1421,7 @@ let _effInfoPoste = null;
         function setupNavigation() {
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
+                    if (this.dataset.page !== 'joueurs' && document.body.classList.contains('fenix-fs-fiche')) toggleJoueursFullscreen();
                     document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
                     this.classList.add('active');
                     this.setAttribute('aria-selected', 'true');

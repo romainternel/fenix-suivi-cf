@@ -1459,6 +1459,31 @@
         .jm-table td:first-child { text-align: left; font-weight: 600; color: var(--fenix-blue); white-space: nowrap; }
         .jm-table tbody tr:hover { background: #F8FAFC; }
         .jm-total-row td { background: #EEF2FF; font-weight: 700; color: var(--fenix-blue) !important; border-top: 2px solid #CBD5E1; }
+
+        /* ── Mode "Grand écran" (toggleJoueursFullscreen(), FENIX-HANDBALL-CF-SUIVI.html) ──────
+           Cache le header/bandeau match pour que la carte joueur occupe tout l'écran (combiné à
+           l'API Fullscreen navigateur côté JS). La sous-nav Joueurs (.joueurs-subnav) n'est PAS
+           cachée : Fiche/Notes/Graphique/Impact restent accessibles pendant tout le mode. */
+        body.fenix-fs-fiche .header,
+        body.fenix-fs-fiche #global-match-bar { display: none !important; }
+        body.fenix-fs-fiche .joueurs-subnav { top: 0 !important; }
+        body.fenix-fs-fiche .main { max-width: 100%; padding: 0.75rem 2rem 3rem; }
+        body.fenix-fs-fiche .jp-header { padding: 2rem 2.5rem; gap: 1.75rem; }
+        body.fenix-fs-fiche .jp-avatar { width: 96px; height: 96px; font-size: 2.2rem; }
+        body.fenix-fs-fiche .jp-name { font-size: 2.6rem; }
+        body.fenix-fs-fiche .jp-poste-label { font-size: 1.1rem; }
+        body.fenix-fs-fiche .jp-print-btn { font-size: 0.85rem; padding: 0.5rem 0.9rem; }
+        body.fenix-fs-fiche .jp-stat { padding: 1.75rem 0.75rem; }
+        body.fenix-fs-fiche .jp-val { font-size: 3rem; }
+        body.fenix-fs-fiche .jp-lbl { font-size: 0.85rem; }
+        body.fenix-fs-fiche .jm-header { font-size: 1.4rem; }
+        body.fenix-fs-fiche .jm-table { font-size: 0.92rem; }
+        body.fenix-fs-fiche .jm-table th { font-size: 0.78rem; padding: 0.55rem 0.5rem; }
+        body.fenix-fs-fiche .jm-table td { padding: 0.5rem 0.5rem; }
+        /* Graphique/Impact en grand écran : profitent aussi du header masqué, sans retouche
+           dimensionnelle propre (canvas déjà responsive à son conteneur). */
+        body.fenix-fs-fiche #page-notegraph .ng-page-layout,
+        body.fenix-fs-fiche #page-impact .section { max-width: 1100px; margin: 0 auto; }
         .jm-note-col { min-width: 38px; }
 
         .no-data { text-align: center; padding: 3rem; color: #64748B; }
@@ -2797,6 +2822,26 @@
         .jsub-btn:disabled { color: #CBD5E1; cursor: not-allowed; }
         .jsub-btn.active { color: #0A2463; border-bottom-color: #31CBE8; }
         .jsub-btn:focus-visible { outline: 2px solid #31CBE8; outline-offset: -2px; }
+
+        /* Bouton "Grand écran" (toggleJoueursFullscreen()) — poussé à droite de la sous-nav,
+           seul bouton d'action de cette barre (le reste est des onglets). */
+        .jp-fs-btn {
+            margin-left: auto;
+            background: #F1F5F9;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            color: #475569;
+            padding: 0.4rem 0.8rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        .jp-fs-btn:hover { background: #E2E8F0; color: #1E293B; }
+        body.fenix-fs-fiche .jp-fs-btn { background: #0A2463; color: #fff; border-color: #0A2463; }
+        body.fenix-fs-fiche .jp-fs-btn:hover { background: #123a8c; }
 
         /* ── Badge données dans le header ────────────────────────────────────── */
         .header-data-badge {
