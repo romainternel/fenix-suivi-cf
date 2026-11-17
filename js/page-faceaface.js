@@ -14,7 +14,6 @@ const FA_DISPO_LIST = ['0-6', '1-5', '6vs5', '5vs6'];
 const FA_DISPO_LABEL = { '0-6': '0-6', '1-5': '1-5', '6vs5': '6 v 5', '5vs6': '5 v 6' };
 const FA_JEURAPIDE_PHASES = ['CA', 'ER', 'Transition/Mdb'];
 const FA_PENALTY_PHASE = 'Pen';
-const FA_SHOT_CATS = new Set(['but', 'arret', 'echec']);
 const FA_MODES = [['gen', 'Général'], ['face', 'Face à Face'], ['comp', 'Comparatif']];
 const FA_MODE_DESC = {
     gen: "Général : chaque statistique, équipe contre équipe, sur la totalité de la période affichée (barres proportionnelles à la plus grande des deux valeurs).",
@@ -52,9 +51,15 @@ function _faMerge(...rows) {
     return out;
 }
 
-// Règle de possession déjà établie (_articAttBaseCounts, computeSuperiorites, v285/v311) : un tir
-// (but/arret/echec) compte toujours ; un sous-événement (po/pb/jf/deuxmin) n'est compté que s'il porte
-// le tag Possession, pour ne pas dédoubler une séquence qui s'étale sur plusieurs lignes.
+// Règle de possession alignée sur le Dashboard (v331, retour Romain : "il faut que ça colle avec mon
+// comptage" — un différentiel avait été repéré entre Dashboard et Face à Face sur les possessions).
+// `fenixPossessions`/`advPossessions` du Dashboard (et la série "Possessions" du graphique d'évolution)
+// comptent une possession dès que la colonne Possession porte une valeur non vide, sans aucune
+// exception pour les tirs — règle reprise ici à l'identique. Chaque catégorie (but/po/pb/jf/deuxmin/
+// arret/echec) est comptée sans condition dès que la ligne porte une valeur de `finalite` reconnue,
+// exactement comme le Dashboard compte buts/tirs/pb/po/neut sans jamais filtrer sur le tag Possession
+// — seul `poss` (le dénominateur) dépend du tag. Un tir (but/arret/echec) ou un jet franc sans tag
+// Possession n'est donc jamais perdu : il reste compté dans sa catégorie, simplement pas dans `poss`.
 //
 // 3 compartiments mutuellement exclusifs : attaquePlacee (ni Jeu rapide, ni Penalty) / penalty
 // (phase_att = Pen) / jeurapide. `attaque` = attaquePlacee + penalty fusionnés, et `parDispositif` est
@@ -71,14 +76,7 @@ function _faCounts(matchData, isFenix) {
     rows.forEach(r => {
         const cat = _faCat(r);
         if (!cat) return;
-        const countsAsPoss = FA_SHOT_CATS.has(cat) || !!(r[COLS.possession] || '').toString().trim();
-        // Un jet franc n'est jamais le point terminal d'une possession dans la convention de saisie de
-        // Romain (la possession continue toujours après) : il ne porte donc jamais le tag Possession,
-        // et la règle de dédoublonnage ci-dessus l'excluait entièrement du total — sous-comptage à 0
-        // constaté sur la carte "Jets francs subis" (retour Romain, v325/v326). On le compte quand même
-        // dans sa propre case (sans l'ajouter à `poss`, qui reste le nombre de possessions réellement
-        // terminées), pour qu'il apparaisse comme un évènement à part entière partout où `jf` est lu.
-        if (!countsAsPoss && cat !== 'jf') return;
+        const countsAsPoss = !!(r[COLS.possession] || '').toString().trim();
 
         const phase = (r[COLS.phase_att] || '').toString().trim();
         const bucket = FA_JEURAPIDE_PHASES.includes(phase) ? jeurapide : (phase === FA_PENALTY_PHASE ? penalty : attaquePlacee);
