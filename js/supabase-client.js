@@ -7,10 +7,21 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_j0_GH_oE27RqVqq4PMZk3g_D-waLx7f
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
+// PostgREST plafonne une requête sans .range() à 1000 lignes (sous silence, pas d'erreur) : match_data
+// a dépassé ce seuil (1303 lignes vues le 2026-11-17, J07 FENIX-LIBOURNE tronqué à 9 lignes sur 180) —
+// pagination par lots de 1000 pour charger la table en entier, quelle que soit sa taille (v331).
 async function fetchAll(table) {
-    const { data, error } = await supabaseClient.from(table).select('*');
-    if (error) throw error;
-    return data;
+    const PAGE_SIZE = 1000;
+    let all = [];
+    let from = 0;
+    while (true) {
+        const { data, error } = await supabaseClient.from(table).select('*').range(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
+        all = all.concat(data);
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+    }
+    return all;
 }
 
 // Tables issues de l'Excel, remplacées intégralement à chaque import (STORY-21).
