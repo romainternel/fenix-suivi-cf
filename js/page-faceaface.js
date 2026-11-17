@@ -116,17 +116,39 @@ function _faComplement(row) {
     return e === null ? null : 100 - e;
 }
 
+// Réussite de l'"Attaque"/"Total" (tableau détaillé Face à Face) uniquement : un but sur penalty ne
+// doit pas s'ajouter à PO comme un 2e succès pour la même séquence disciplinaire — le PO qui a provoqué
+// le penalty est déjà le succès compté pour cette possession (retour Romain, 2026-11-17 : "ça gonfle en
+// double"). On retranche donc but/po du compartiment `penalty` du numérateur avant la même formule
+// (but+po)/poss ; `poss` n'a rien à retrancher, un penalty n'étant jamais tagué Possession (penalty.poss
+// vaut déjà 0 — v333). Les autres lectures de `_faEff` (attaquePlacee, jeurapide, parDispositif, 6 v 5)
+// ne passent jamais par `penalty` et restent inchangées.
+function _faEffNoPen(row, pen) {
+    return row.poss > 0 ? Math.round((row.but - pen.but + row.po - pen.po) / row.poss * 100) : null;
+}
+function _faEffNoPenLabel(row, pen) {
+    const e = _faEffNoPen(row, pen);
+    return e === null ? '—' : e + '%';
+}
+function _faEffDefNoPenLabel(row, pen) {
+    const e = _faEffNoPen(row, pen);
+    return e === null ? '—' : (100 - e) + '%';
+}
+
 // Réussite au tir = buts / (buts + arrêts + échecs), penalties compris dans le total — formule propre
 // à cette statistique (différente de (buts+PO)/possessions utilisée partout ailleurs), lue dans
-// l'artefact de référence.
+// l'artefact de référence. Contrairement à la réussite "Attaque" ci-dessus, pas de double-comptage ici :
+// un but sur penalty est un vrai tir, à sa place dans le ratio — précisé en-dessous par "dont X/Y pen"
+// (retour Romain, 2026-11-17).
 function _faTirEff(row) {
     const tirs = row.but + row.arret + row.echec;
     return tirs > 0 ? Math.round(row.but / tirs * 100) : null;
 }
-function _faTirCaption(row) {
+function _faTirCaption(row, pen) {
     const tirs = row.but + row.arret + row.echec;
     const echecs = tirs - row.but;
-    return `${row.but} / ${tirs} · ${echecs} échec${echecs > 1 ? 's' : ''} dont ${row.echec} hors cadre`;
+    const penTirs = pen.but + pen.arret + pen.echec;
+    return `${row.but} / ${tirs} · ${echecs} échec${echecs > 1 ? 's' : ''} dont ${row.echec} hors cadre · dont ${pen.but}/${penTirs} pen`;
 }
 
 // Réussite gardien = arrêts / (arrêts + buts encaissés), sur les tirs cadrés uniquement (les tirs hors
@@ -239,7 +261,7 @@ function _faGeneralHtml(fenixStats, advStats, advLabel) {
     cards.push(_faDuelCard({
         title: 'Réussite au tir', sub: 'buts / tirs, penalties compris', isPct: true, advLabel,
         leftVal: _faTirEff(fenixStats.total), rightVal: _faTirEff(advStats.total),
-        leftCaption: _faTirCaption(fenixStats.total), rightCaption: _faTirCaption(advStats.total),
+        leftCaption: _faTirCaption(fenixStats.total, fPen), rightCaption: _faTirCaption(advStats.total, aPen),
     }));
 
     const f65 = fenixStats.parDispositif['6vs5'], a65 = advStats.parDispositif['6vs5'];
@@ -315,13 +337,15 @@ function _faComparatifHtml(fenixStats, advStats, advLabel) {
 }
 
 function _faTableRows(stats) {
-    const rows = [{ label: 'Attaque', cls: 'fa-sub', data: stats.attaque }];
+    // `pen` posé sur Attaque/Total : seules ces 2 lignes incluent le compartiment `penalty` dans leur
+    // `data` fusionnée, donc seules elles ont besoin de la réussite "sans double-compte" (_faEffNoPen*).
+    const rows = [{ label: 'Attaque', cls: 'fa-sub', data: stats.attaque, pen: stats.penalty }];
     FA_DISPO_LIST.forEach(d => {
         const data = stats.parDispositif[d];
         if (data.poss > 0) rows.push({ label: FA_DISPO_LABEL[d], cls: 'fa-dispo', data });
     });
     rows.push({ label: 'Jeu rapide', cls: 'fa-sub', data: stats.jeurapide });
-    rows.push({ label: 'Total', cls: 'fa-total', data: stats.total });
+    rows.push({ label: 'Total', cls: 'fa-total', data: stats.total, pen: stats.penalty });
     return rows;
 }
 
@@ -337,8 +361,8 @@ function _faTableHtml(clubLabel, advLabel, stats) {
             <td title="2' obtenu">${r.data.deuxmin}</td>
             <td>${r.data.arret}</td>
             <td>${r.data.echec}</td>
-            <td class="fa-eff">${_faEffLabel(r.data)}</td>
-            <td class="fa-eff fa-eff-adv">${_faEffDefLabel(r.data)}</td>
+            <td class="fa-eff">${r.pen ? _faEffNoPenLabel(r.data, r.pen) : _faEffLabel(r.data)}</td>
+            <td class="fa-eff fa-eff-adv">${r.pen ? _faEffDefNoPenLabel(r.data, r.pen) : _faEffDefLabel(r.data)}</td>
         </tr>`).join('');
     return `
         <div class="fa-table-title">QUAND ${_escapeHtml(clubLabel.toUpperCase())} ATTAQUE</div>
