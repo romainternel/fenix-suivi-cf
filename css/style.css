@@ -1546,7 +1546,7 @@
             position: relative;
         }
 
-        #timeline-canvas {
+        #timeline-canvas, #fa-tl-canvas {
             width: 100%;
             height: 100%;
         }
@@ -3406,6 +3406,11 @@
         .fa-root .fa-table td.fa-eff { font-weight: 700; color: var(--fenix-blue); }
         .fa-root .fa-table-card.fa-adv td.fa-eff { color: var(--fenix-danger); }
         .fa-root .fa-table td.fa-eff-adv { color: #64748B; font-weight: 600; }
+
+        /* Carte générique blanche (v338, sous-onglet Déroulé) — même traitement visuel que
+           .fa-table-card/.fa-duelcard, sans leur layout spécifique (flex côte-à-côte / grille). */
+        .fa-root .fa-card { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 16px; }
+        [data-theme="dark"] #page-faceaface .fa-card { background: var(--dk-panel2); }
 
         /* Sous-navigation Général/Face à Face/Comparatif (v323) */
         .fa-root .fa-subnav { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }

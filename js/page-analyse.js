@@ -866,8 +866,11 @@
         // un tir compte toujours, un sous-événement (PB/PO) seulement s'il porte le tag Possession.
         const TL_SER_MIN = 3, TL_PAN_MIN = 5, TL_PAN_POSS = 5;
 
-        function _tlNormPos(pos) {
-            const { max1, maxAll, hasTwo } = _timeNorm;
+        // `norm` optionnel (sinon la timeline courante de la page Analyse, _timeNorm) — permet à
+        // d'autres pages (Face à Face, v338) de calculer séries/pannes sur leur propre match sans
+        // dépendre de l'état global de la page Analyse.
+        function _tlNormPos(pos, norm) {
+            const { max1, maxAll, hasTwo } = norm || _timeNorm;
             if (!hasTwo) return maxAll > 0 ? (pos / maxAll) * 60 : 0;
             if (pos <= max1) return max1 > 0 ? (pos / max1) * 30 : 0;
             return 30 + ((pos - max1) / Math.max(maxAll - max1, 1)) * 30;
@@ -882,14 +885,16 @@
             });
         }
 
-        function computeSeriesEtPannes(matchData) {
+        // `norm` optionnel (sinon _timeNorm, mis à jour par drawTimeline()) — cf. _tlNormPos ci-dessus.
+        function computeSeriesEtPannes(matchData, norm) {
+            norm = norm || _timeNorm;
             const sortedGoals = getSortedGoals(matchData);
             if (sortedGoals.length === 0) return [];
 
             const goals = sortedGoals.map(g => ({
                 isFenix: g.row[COLS.club] === 'FENIX',
                 periode: getPeriodeNum(g.row),
-                pos: _tlNormPos(g.pos),
+                pos: _tlNormPos(g.pos, norm),
             }));
 
             // Même calcul d'offset MT2 que getSortedGoals (js/utils.js), pour exprimer les non-buts
@@ -903,7 +908,7 @@
             const nonGoalPoss = _tlNonGoalPossessions(matchData).map(r => ({
                 isFenix: r[COLS.club] === 'FENIX',
                 periode: getPeriodeNum(r),
-                pos: _tlNormPos(parseTimecode(r[COLS.position]) + (getPeriodeNum(r) === 2 ? offset : 0)),
+                pos: _tlNormPos(parseTimecode(r[COLS.position]) + (getPeriodeNum(r) === 2 ? offset : 0), norm),
             }));
 
             // ── Séries : TL_SER_MIN buts d'affilée sans réponse de l'autre camp ──
@@ -929,8 +934,8 @@
             // ── Pannes : TL_PAN_MIN minutes (normalisées) OU TL_PAN_POSS possessions sans but, dans
             // la même mi-temps ──
             const pannes = [];
-            const periodes = _timeNorm.hasTwo ? [1, 2] : [1];
-            const halfBounds = { 1: [0, _timeNorm.hasTwo ? 30 : 60], 2: [30, 60] };
+            const periodes = norm.hasTwo ? [1, 2] : [1];
+            const halfBounds = { 1: [0, norm.hasTwo ? 30 : 60], 2: [30, 60] };
             [true, false].forEach(isFenix => {
                 periodes.forEach(periode => {
                     const [startB, endB] = halfBounds[periode];

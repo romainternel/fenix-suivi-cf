@@ -14,11 +14,12 @@ const FA_DISPO_LIST = ['0-6', '1-5', '6vs5', '5vs6'];
 const FA_DISPO_LABEL = { '0-6': '0-6', '1-5': '1-5', '6vs5': '6 v 5', '5vs6': '5 v 6' };
 const FA_JEURAPIDE_PHASES = ['CA', 'ER', 'Transition/Mdb'];
 const FA_PENALTY_PHASE = 'Pen';
-const FA_MODES = [['gen', 'Général'], ['face', 'Face à Face'], ['comp', 'Comparatif']];
+const FA_MODES = [['gen', 'Général'], ['face', 'Face à Face'], ['comp', 'Comparatif'], ['deroule', 'Déroulé']];
 const FA_MODE_DESC = {
     gen: "Général : chaque statistique, équipe contre équipe, sur la totalité de la période affichée (barres proportionnelles à la plus grande des deux valeurs).",
     face: "Face à Face : la répartition détaillée de l'attaque de chaque équipe, par dispositif défensif adverse.",
     comp: "Comparatif : la même phase de jeu des deux côtés (attaque / attaque, défense / défense...). Chaque % se lit sur ses propres possessions.",
+    deroule: "Déroulé : évolution du score minute par minute sur le match entier, avec les séries et pannes offensives de chaque équipe.",
 };
 
 // "PF" vu en base est une variante orthographique de "PB" (CLAUDE.md §5) ; "2' obt" et "Jet franc"
@@ -392,6 +393,259 @@ function _faFaceHtml(fenixStats, advStats, advLabel) {
         </div>`;
 }
 
+// ===== Sous-onglet "Déroulé" (v338) — demande Romain, reprend le graphique "déroulé de match"
+// (évolution du score) et la liste "Séries et pannes offensives" déjà construits pour la page
+// Analyse (js/page-analyse.js, drawTimeline()/renderSeriesEtPannes(), v301-329, eux-mêmes inspirés
+// de l'artefact externe U21 FRANCE) — même calcul, même rendu visuel, mais entièrement autonome :
+// état local (_faComputeNorm, pas le _timeNorm global de la page Analyse), canvas et conteneurs à
+// id dédiés (fa-tl-*). Volontairement SANS les marqueurs "Moments clés"/"Bascules" du graphique
+// Analyse : ce sont des annotations tactiques (familles d'enclenchement) propres à cette page,
+// hors du périmètre comparatif de Face à Face. computeSeriesEtPannes()/_tlNormPos() (page-analyse.js)
+// ont été généralisées pour accepter un `norm` explicite au lieu de toujours lire _timeNorm, sans
+// changer leur comportement par défaut (appelées sans 2e argument, elles continuent de lire
+// _timeNorm comme avant) — zéro risque de régression côté Analyse.
+function _faComputeNorm(matchData) {
+    const sortedGoals = getSortedGoals(matchData);
+    const g1Pos  = sortedGoals.filter(g => getPeriodeNum(g.row) === 1).map(g => g.pos);
+    const g2Pos  = sortedGoals.filter(g => getPeriodeNum(g.row) === 2).map(g => g.pos);
+    const max1   = g1Pos.length ? Math.max(...g1Pos) : 0;
+    const maxAll = sortedGoals.length ? Math.max(...sortedGoals.map(g => g.pos), 1) : 1;
+    const hasTwo = g1Pos.length > 0 && g2Pos.length > 0;
+    return { max1, maxAll, hasTwo };
+}
+
+function _faDerouleHtml() {
+    return `
+        <div class="fa-card">
+            <div id="fa-tl-scores" class="timeline-scores"></div>
+            <div class="timeline-container"><canvas id="fa-tl-canvas"></canvas></div>
+        </div>
+        <div class="fa-card">
+            <div id="fa-tl-series-pannes" class="tl-sp-list"></div>
+        </div>`;
+}
+
+function _faDrawTimeline(matchData, advLabel) {
+    const canvas = document.getElementById('fa-tl-canvas');
+    if (!canvas) return null;
+    const container = canvas.parentElement;
+    const cw = container.clientWidth || container.offsetWidth || 600;
+    const dpr = window.devicePixelRatio || 1;
+    const logicalW = Math.max(cw, 300);
+    const logicalH = Math.max(container.clientHeight || 0, 380);
+    canvas.width  = logicalW * dpr;
+    canvas.height = logicalH * dpr;
+    canvas.style.width  = logicalW + 'px';
+    canvas.style.height = logicalH + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, logicalW, logicalH);
+
+    const sortedGoals = getSortedGoals(matchData);
+    const norm = _faComputeNorm(matchData);
+    const scoresEl = document.getElementById('fa-tl-scores');
+    if (sortedGoals.length === 0) {
+        if (scoresEl) scoresEl.textContent = 'Aucun but sur ce match.';
+        return norm;
+    }
+
+    const { max1, maxAll, hasTwo } = norm;
+    const normPos = pos => {
+        if (!hasTwo) return (pos / maxAll) * 60;
+        if (pos <= max1) return max1 > 0 ? (pos / max1) * 30 : 0;
+        return 30 + ((pos - max1) / Math.max(maxAll - max1, 1)) * 30;
+    };
+
+    let fenixScore = 0, advScore = 0;
+    const scoreHistory = [{ pos: 0, fenix: 0, adv: 0 }];
+    sortedGoals.forEach(({ row, pos }) => {
+        if (row[COLS.club] === 'FENIX') fenixScore++;
+        else advScore++;
+        scoreHistory.push({ pos: normPos(pos), fenix: fenixScore, adv: advScore });
+    });
+
+    const fenixMT1G = sortedGoals.filter(g => getPeriodeNum(g.row) === 1 && g.row[COLS.club] === 'FENIX').length;
+    const advMT1G   = sortedGoals.filter(g => getPeriodeNum(g.row) === 1 && g.row[COLS.club] !== 'FENIX').length;
+    if (scoresEl) {
+        scoresEl.textContent = hasTwo
+            ? `MT1 : ${fenixMT1G}-${advMT1G} · Final : ${fenixScore}-${advScore}`
+            : `Score final : ${fenixScore}-${advScore}`;
+    }
+
+    const padding = { top: 40, right: 30, bottom: 30, left: 32 };
+    const graphWidth  = logicalW - padding.left - padding.right;
+    const graphHeight = logicalH - padding.top  - padding.bottom;
+    const maxPos = 60;
+    const posToX = pos => padding.left + (pos / maxPos) * graphWidth;
+
+    const diffs  = scoreHistory.map(p => p.fenix - p.adv);
+    const maxAbs = Math.max(...diffs.map(Math.abs), 1);
+    const midY   = padding.top + graphHeight / 2;
+    const diffToY = d => midY - (d / maxAbs) * (graphHeight / 2) * 0.9;
+
+    ctx.strokeStyle = '#E5E7EB';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '10px Inter';
+    ctx.textAlign = 'center';
+    for (let min = 0; min <= maxPos; min += 10) {
+        const x = posToX(min);
+        ctx.beginPath();
+        ctx.moveTo(x, padding.top);
+        ctx.lineTo(x, padding.top + graphHeight);
+        ctx.stroke();
+        ctx.fillText(min + "'", x, padding.top + graphHeight + 16);
+    }
+
+    if (hasTwo) {
+        const xHalf = posToX(30);
+        ctx.save();
+        ctx.strokeStyle = '#94A3B8';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.moveTo(xHalf, padding.top);
+        ctx.lineTo(xHalf, padding.top + graphHeight);
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '10px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('MI-TEMPS', xHalf, padding.top - 6);
+    }
+
+    function fillZone(positive) {
+        ctx.save();
+        ctx.beginPath();
+        let open = false;
+        scoreHistory.forEach(p => {
+            const d = p.fenix - p.adv, x = posToX(p.pos);
+            const inZone = positive ? d >= 0 : d <= 0;
+            if (inZone && !open) { ctx.moveTo(x, midY); open = true; }
+            if (open) ctx.lineTo(x, diffToY(d));
+            if (!inZone && open) { ctx.lineTo(x, midY); ctx.closePath(); open = false; }
+        });
+        if (open) { ctx.lineTo(posToX(scoreHistory[scoreHistory.length - 1].pos), midY); ctx.closePath(); }
+        ctx.clip();
+        const grad = ctx.createLinearGradient(0, padding.top, 0, padding.top + graphHeight);
+        if (positive) {
+            grad.addColorStop(0, 'rgba(16,185,129,0.35)');
+            grad.addColorStop(1, 'rgba(16,185,129,0.04)');
+        } else {
+            grad.addColorStop(0, 'rgba(239,68,68,0.04)');
+            grad.addColorStop(1, 'rgba(239,68,68,0.35)');
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(padding.left, padding.top, graphWidth, graphHeight);
+        ctx.restore();
+    }
+    fillZone(true);
+    fillZone(false);
+
+    ctx.strokeStyle = '#94A3B8';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, midY);
+    ctx.lineTo(logicalW - padding.right, midY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = '#0A2463';
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    scoreHistory.forEach((p, i) => {
+        const x = posToX(p.pos), y = diffToY(p.fenix - p.adv);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.font = 'bold 16px Inter';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#0A2463';
+    ctx.fillText(fenixScore, logicalW - padding.right - 30, padding.top - 15);
+    ctx.fillStyle = '#6B7280';
+    ctx.fillText('-', logicalW - padding.right - 20, padding.top - 15);
+    ctx.fillStyle = '#DC2626';
+    ctx.fillText(advScore, logicalW - padding.right, padding.top - 15);
+
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    const legY = padding.top - 15;
+    ctx.fillStyle = '#10B981';
+    ctx.fillRect(padding.left, legY - 8, 10, 10);
+    ctx.fillStyle = '#333';
+    ctx.fillText('FENIX devant', padding.left + 14, legY);
+    ctx.fillStyle = '#EF4444';
+    ctx.fillRect(padding.left + 90, legY - 8, 10, 10);
+    ctx.fillStyle = '#333';
+    ctx.fillText(advLabel + ' devant', padding.left + 104, legY);
+
+    window._faTlHitAreas = [];
+    scoreHistory.forEach((p, i) => {
+        if (i === 0) return;
+        const x = posToX(p.pos), y = diffToY(p.fenix - p.adv);
+        window._faTlHitAreas.push({
+            x, y, w: 16, h: 16,
+            text: `${Math.round(p.pos)}' · FENIX <strong>${p.fenix}</strong> · ${_escapeHtml(advLabel)} <strong>${p.adv}</strong>`,
+        });
+    });
+
+    return norm;
+}
+
+function _faInitTimelineTooltip() {
+    const canvas = document.getElementById('fa-tl-canvas');
+    const tooltip = document.getElementById('timeline-tooltip');
+    if (!canvas || !tooltip) return;
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        const found = (window._faTlHitAreas || []).find(a => Math.abs(mx - a.x) <= a.w / 2 && Math.abs(my - a.y) <= a.h / 2);
+        if (found) {
+            tooltip.innerHTML = found.text;
+            tooltip.style.background = 'rgba(15,23,42,0.9)';
+            tooltip.style.display = 'block';
+            const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+            let left = e.clientX + 14;
+            if (left + tw > window.innerWidth - 8) left = e.clientX - tw - 14;
+            const top = Math.min(e.clientY - 10, window.innerHeight - th - 8);
+            tooltip.style.left = Math.max(8, left) + 'px';
+            tooltip.style.top = Math.max(8, top) + 'px';
+        } else {
+            tooltip.style.display = 'none';
+        }
+    });
+    canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+}
+
+function _faRenderSeriesEtPannes(matchData, norm, advLabel) {
+    const container = document.getElementById('fa-tl-series-pannes');
+    if (!container) return;
+    const list = computeSeriesEtPannes(matchData, norm);
+    if (!list.length) { container.innerHTML = '<p class="fa-mode-desc">Aucune série ni panne offensive marquante sur ce match.</p>'; return; }
+    const mn = p => Math.round(p) + "'";
+    const nom = isFenix => isFenix ? 'FENIX' : advLabel;
+    container.innerHTML = list.map(e => {
+        const cls = e.isFenix ? 'tl-sp-fenix' : 'tl-sp-adv';
+        if (e.type === 'serie') {
+            return `<div class="tl-sp-item ${cls}">
+                <div class="tl-sp-head ${cls} tl-sp-good">Série attaque ${_escapeHtml(nom(e.isFenix))} · ${e.n}-0</div>
+                <div class="tl-sp-detail">de ${mn(e.p0)} à ${mn(e.p1)} · le score passe de ${e.bf}-${e.ba} à ${e.f}-${e.a}</div>
+            </div>`;
+        }
+        const parts = [];
+        if (e.byTime) parts.push(Math.round(e.d) + ' min');
+        if (e.byPoss) parts.push(e.n + ' possession' + (e.n > 1 ? 's' : '') + ' ratée' + (e.n > 1 ? 's' : ''));
+        const detail = 'de ' + mn(e.p0) + ' à ' + mn(e.p1) + (e.byTime && !e.byPoss ? ' · ' + e.n + ' possession' + (e.n > 1 ? 's' : '') + ' sans but' : '');
+        return `<div class="tl-sp-item ${cls}">
+            <div class="tl-sp-head ${cls} tl-sp-bad">Panne attaque ${_escapeHtml(nom(e.isFenix))} · 0 but pendant ${parts.join(' · ')}</div>
+            <div class="tl-sp-detail">${detail}</div>
+        </div>`;
+    }).join('');
+}
+
 // Filtre période (v330, étendu à Général/Face à Face en v337 — demande Romain) — disponible sur
 // les 3 sous-onglets. "tot" (Complet) = match entier, inchangé par défaut.
 const FA_PERIODES = [['tot', 'Complet'], ['1', 'MT1'], ['2', 'MT2']];
@@ -399,9 +653,14 @@ const FA_PERIODES = [['tot', 'Complet'], ['1', 'MT1'], ['2', 'MT2']];
 function _faSubnavHtml() {
     const mode = window._faMode || 'gen';
     const btns = FA_MODES.map(([key, label]) => `<button class="enc-pie-mode-btn${mode === key ? ' active' : ''}" onclick="_setFaMode('${key}')">${_escapeHtml(label)}</button>`).join('');
-    const per = window._faPeriode || 'tot';
-    const pbtns = FA_PERIODES.map(([key, label]) => `<button class="enc-pie-mode-btn${per === key ? ' active' : ''}" onclick="_setFaPeriode('${key}')">${_escapeHtml(label)}</button>`).join('');
-    const periodeHtml = `<div class="fa-subnav fa-subnav-periode">${pbtns}</div>`;
+    // Le filtre période n'a pas de sens sur le Déroulé : la timeline couvre déjà tout le match
+    // (les 2 mi-temps sur un seul axe 0-60), pas de notion de "MT1 seule" à isoler.
+    let periodeHtml = '';
+    if (mode !== 'deroule') {
+        const per = window._faPeriode || 'tot';
+        const pbtns = FA_PERIODES.map(([key, label]) => `<button class="enc-pie-mode-btn${per === key ? ' active' : ''}" onclick="_setFaPeriode('${key}')">${_escapeHtml(label)}</button>`).join('');
+        periodeHtml = `<div class="fa-subnav fa-subnav-periode">${pbtns}</div>`;
+    }
     return `<div class="fa-subnav">${btns}</div>${periodeHtml}<p class="fa-mode-desc">${_escapeHtml(FA_MODE_DESC[mode])}</p>`;
 }
 
@@ -463,9 +722,20 @@ function _faRenderInto(matchSelId, emptyId, contentId) {
 
     const body = mode === 'gen' ? _faGeneralHtml(fenixStats, advStats, advLabel)
         : mode === 'comp' ? _faComparatifHtml(fenixStats, advStats, advLabel)
+        : mode === 'deroule' ? _faDerouleHtml()
         : _faFaceHtml(fenixStats, advStats, advLabel);
 
     content.innerHTML = _faSubnavHtml() + body;
+
+    // Le canvas/la liste séries-pannes n'existent dans le DOM qu'une fois le innerHTML ci-dessus
+    // posé — dessin différé après coup, comme drawTimeline()/renderSeriesEtPannes() côté Analyse.
+    // Déroulé lit matchData brut (tout le match), jamais statsData (filtré période) : la timeline
+    // montre déjà les 2 mi-temps sur un seul axe, pas de sens à n'en tracer qu'une moitié.
+    if (mode === 'deroule') {
+        const norm = _faDrawTimeline(matchData, advLabel);
+        _faInitTimelineTooltip();
+        _faRenderSeriesEtPannes(matchData, norm, advLabel);
+    }
 }
 
 function updateFaceAFacePage() {
