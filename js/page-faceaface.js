@@ -393,7 +393,7 @@ function _faFaceHtml(fenixStats, advStats, advLabel) {
         </div>`;
 }
 
-// ===== Sous-onglet "Déroulé" (v338-339) — demande Romain, reprend le graphique "déroulé de match"
+// ===== Sous-onglet "Déroulé" (v338-340) — demande Romain, reprend le graphique "déroulé de match"
 // (évolution du score) et la liste "Séries et pannes offensives" déjà construits pour la page
 // Analyse (js/page-analyse.js, drawTimeline()/renderSeriesEtPannes(), v301-329, eux-mêmes inspirés
 // de l'artefact externe U21 FRANCE) — même calcul, même rendu visuel, mais entièrement autonome :
@@ -402,17 +402,16 @@ function _faFaceHtml(fenixStats, advStats, advLabel) {
 // pour accepter un `norm` explicite au lieu de toujours lire _timeNorm, sans changer leur
 // comportement par défaut (appelées sans 2e argument, elles continuent de lire _timeNorm comme
 // avant) — zéro risque de régression côté Analyse.
-// v339 : marqueurs "Moments clés"/"Bascules" ajoutés (demande Romain après v338, "remets-les en
-// bas sur le compteur") — repris via computeMomentsCles() (extraction pure de findMomentsCles(),
-// page-analyse.js, sans toucher #moments-cles qui n'existe pas sur cette page) et detectAllBascules()
-// (déjà pure, réutilisée telle quelle). Positionnés en bas sur l'axe des minutes plutôt qu'en haut
-// (MC)/sur la courbe (bascule) comme sur la page Analyse — seule différence de placement, calcul et
-// données identiques. Toujours posToX(normPos(rawPos)), jamais la position vidéo brute : un match
-// fait 2x30 min réelles, mais le métrage vidéo d'une mi-temps peut monter à 40-45 min (les arrêts de
-// jeu ne sont pas décomptés du scope vidéo) — la normalisation déjà en place pour la courbe (et déjà
-// utilisée par la page Analyse pour ces mêmes marqueurs) est ce qui ramène ça à l'échelle réelle.
-// Détail volontairement exclu : le clic pour ouvrir le détail des séquences (showMCSequences(),
-// page-analyse.js) ouvre un panneau DOM propre à la page Analyse — hors scope ici, survol seul (tooltip).
+// v340 (après une v339 erronée, cf. historique CLAUDE.md) : 3 "couloirs" Séries/Pannes dessinés sur
+// le canvas sous la courbe — barres arrondies posToX(p0)..posToX(p1), alignées sur le même axe des
+// minutes que la courbe. Reprise fidèle du mécanisme de l'artefact externe (sa fonction bar(), dans
+// drawTimeline()) : l'artefact ne connaît que Séries/Pannes sous le graphique, jamais de marqueurs
+// "Moments clés"/"Bascules" (concepts propres à js/page-analyse.js, absents de l'artefact). Toujours
+// posToX(p) où p est déjà normalisé 0-30/30-60 par computeSeriesEtPannes(), jamais la position vidéo
+// brute : une mi-temps filmée peut dépasser 40-45 min (arrêts de jeu non décomptés de la vidéo), seule
+// la normalisation la ramène aux 30 min réelles. Hauteur de canvas dédiée (`.fa-tl-container`,
+// css/style.css) pour loger les 3 couloirs sans toucher `.timeline-container` nu (page Analyse,
+// inchangée, 380px).
 function _faComputeNorm(matchData) {
     const sortedGoals = getSortedGoals(matchData);
     const g1Pos  = sortedGoals.filter(g => getPeriodeNum(g.row) === 1).map(g => g.pos);
@@ -427,7 +426,7 @@ function _faDerouleHtml() {
     return `
         <div class="fa-card">
             <div id="fa-tl-scores" class="timeline-scores"></div>
-            <div class="timeline-container"><canvas id="fa-tl-canvas"></canvas></div>
+            <div class="timeline-container fa-tl-container"><canvas id="fa-tl-canvas"></canvas></div>
         </div>
         <div class="fa-card">
             <div id="fa-tl-series-pannes" class="tl-sp-list"></div>
@@ -481,7 +480,7 @@ function _faDrawTimeline(matchData, advLabel) {
             : `Score final : ${fenixScore}-${advScore}`;
     }
 
-    const padding = { top: 40, right: 30, bottom: 30, left: 32 };
+    const padding = { top: 40, right: 30, bottom: 130, left: 32 };
     const graphWidth  = logicalW - padding.left - padding.right;
     const graphHeight = logicalH - padding.top  - padding.bottom;
     const maxPos = 60;
@@ -593,74 +592,6 @@ function _faDrawTimeline(matchData, advLabel) {
 
     window._faTlHitAreas = [];
 
-    // Marqueurs Moments clés / Bascules — en bas, sur l'axe des minutes (le "compteur" 0'-60'),
-    // demande Romain (v339). Toujours posToX(normPos(rawPos)), jamais la position vidéo brute :
-    // un match fait 60 min (2x30), mais une mi-temps filmée peut dépasser 40-45 min de métrage
-    // (la vidéo ne décompte pas les arrêts de jeu) — seule la position normalisée ramène ça à
-    // l'échelle réelle de 30 min par mi-temps, cohérente avec la courbe et la grille.
-    const moments  = (typeof computeMomentsCles === 'function') ? computeMomentsCles(matchData) : [];
-    const bascules = (typeof detectAllBascules === 'function') ? detectAllBascules(sortedGoals, matchData) : [];
-    const axisY = padding.top + graphHeight;
-    const bottomMarkers = [];
-    moments.forEach((mc, idx) => bottomMarkers.push({ kind: 'mc', idx, x: posToX(normPos(mc.rawPos)), data: mc }));
-    bascules.forEach((b, idx) => { if (b.rawPos != null) bottomMarkers.push({ kind: 'bascule', idx, x: posToX(normPos(b.rawPos)), data: b }); });
-    bottomMarkers.sort((a, b) => a.x - b.x);
-    const markerRow = new Array(bottomMarkers.length).fill(0);
-    for (let i = 1; i < bottomMarkers.length; i++) {
-        for (let j = i - 1; j >= 0; j--) {
-            if (Math.abs(bottomMarkers[i].x - bottomMarkers[j].x) < 18) {
-                markerRow[i] = markerRow[j] === 0 ? 1 : 0;
-                break;
-            }
-        }
-    }
-    bottomMarkers.forEach((m, i) => {
-        const y = axisY - 8 - markerRow[i] * 13;
-        const isMc = m.kind === 'mc';
-        const positif = isMc ? m.data.type === 'positif' : m.data.positif;
-        const dotColor = isMc ? (positif ? '#16a34a' : '#dc2626') : '#F59E0B';
-        const label = isMc ? String(m.idx + 1) : '⚡' + (m.idx + 1);
-
-        ctx.save();
-        ctx.strokeStyle = dotColor + '99';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(m.x, y + 5);
-        ctx.lineTo(m.x, axisY);
-        ctx.stroke();
-
-        if (isMc) {
-            ctx.beginPath();
-            ctx.fillStyle = dotColor;
-            ctx.arc(m.x, y, 4, 0, Math.PI * 2);
-            ctx.fill();
-        } else {
-            const r = 5;
-            ctx.beginPath();
-            ctx.moveTo(m.x, y - r);
-            ctx.lineTo(m.x + r, y);
-            ctx.lineTo(m.x, y + r);
-            ctx.lineTo(m.x - r, y);
-            ctx.closePath();
-            ctx.fillStyle = dotColor;
-            ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1.2;
-            ctx.stroke();
-        }
-
-        ctx.font = 'bold 7px Inter, sans-serif';
-        ctx.fillStyle = isMc ? dotColor : '#92400e';
-        ctx.textAlign = 'center';
-        ctx.fillText(label, m.x, y - 8);
-        ctx.restore();
-
-        const tooltipHtml = isMc
-            ? `<span style="color:${dotColor};font-weight:700">MC${label}</span><br>${_escapeHtml(m.data.text)}`
-            : `<strong style="color:#f59e0b">${label} ${_escapeHtml(m.data.label)}</strong><br>${_escapeHtml(m.data.description || '')}`;
-        window._faTlHitAreas.push({ x: m.x, y: y - 8, w: 16, h: 16, text: tooltipHtml });
-    });
-
     scoreHistory.forEach((p, i) => {
         if (i === 0) return;
         const x = posToX(p.pos), y = diffToY(p.fenix - p.adv);
@@ -668,6 +599,81 @@ function _faDrawTimeline(matchData, advLabel) {
             x, y, w: 16, h: 16,
             text: `${Math.round(p.pos)}' · FENIX <strong>${p.fenix}</strong> · ${_escapeHtml(advLabel)} <strong>${p.adv}</strong>`,
         });
+    });
+
+    // Couloirs Séries/Pannes sous le graphique (v340) — reprise fidèle du mécanisme de l'artefact
+    // externe U21 FRANCE (fonction drawTimeline()/bar() : 3 "couloirs" canvas, chacun une rangée de
+    // barres arrondies positionnées par posToX(p0)..posToX(p1), SUR LE MÊME AXE DES MINUTES que la
+    // courbe au-dessus — demande Romain ("remets-les en bas sur le compteur") mal comprise une
+    // première fois en v339 (marqueurs Moments clés/Bascules de la page Analyse, retirés : l'artefact
+    // ne connaît que Séries/Pannes, cf. #tlbas/fillBas() ET ces couloirs canvas qui en sont le pendant
+    // visuel aligné sur le temps). Toujours posToX(p) où p est déjà la position normalisée 0-30/30-60
+    // (computeSeriesEtPannes()/_tlNormPos(), page-analyse.js, généralisées en v338 pour accepter ce
+    // `norm` local) — jamais la position vidéo brute, cohérent avec le rappel de Romain sur les mi-temps
+    // filmées pouvant dépasser 40-45 min (arrêts de jeu non décomptés de la vidéo).
+    const axisY = padding.top + graphHeight;
+    const spList  = (typeof computeSeriesEtPannes === 'function') ? computeSeriesEtPannes(matchData, norm) : [];
+    const series   = spList.filter(e => e.type === 'serie');
+    const pannesFx = spList.filter(e => e.type === 'panne' && e.isFenix);
+    const pannesAd = spList.filter(e => e.type === 'panne' && !e.isFenix);
+    const laneS = axisY + 40, laneF = axisY + 66, laneA = axisY + 92;
+    const mn = p => Math.round(p) + "'";
+
+    function laneLabel(y, txt) {
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#94A3B8';
+        ctx.fillText(txt, padding.left, y - 11);
+        ctx.strokeStyle = '#E5E7EB';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(logicalW - padding.right, y);
+        ctx.stroke();
+    }
+    laneLabel(laneS, 'Séries');
+    laneLabel(laneF, 'Pannes FENIX');
+    laneLabel(laneA, 'Pannes ' + advLabel);
+
+    function drawBar(y, p0, p1, color, label) {
+        const x0 = posToX(p0), x1 = Math.max(posToX(p1), x0 + 6);
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x0, y - 8, x1 - x0, 16, 4); else ctx.rect(x0, y - 8, x1 - x0, 16);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        const tw = ctx.measureText(label).width;
+        if (x1 - x0 >= tw + 8) { ctx.fillStyle = '#fff'; ctx.fillText(label, (x0 + x1) / 2, y + 3.5); }
+        else { ctx.fillStyle = color; ctx.fillText(label, (x0 + x1) / 2, y - 12); }
+        return { x0, x1 };
+    }
+
+    function spTooltip(e) {
+        const nom = e.isFenix ? 'FENIX' : advLabel;
+        const col = e.isFenix ? '#0A2463' : '#DC2626';
+        if (e.type === 'serie') {
+            return `<span style="color:${col};font-weight:700">Série attaque ${_escapeHtml(nom)} · ${e.n}-0</span><br>de ${mn(e.p0)} à ${mn(e.p1)} · le score passe de ${e.bf}-${e.ba} à ${e.f}-${e.a}`;
+        }
+        const parts = [];
+        if (e.byTime) parts.push(Math.round(e.d) + ' min');
+        if (e.byPoss) parts.push(e.n + ' possession' + (e.n > 1 ? 's' : '') + ' ratée' + (e.n > 1 ? 's' : ''));
+        return `<span style="color:${col};font-weight:700">Panne attaque ${_escapeHtml(nom)} · 0 but pendant ${parts.join(' · ')}</span><br>de ${mn(e.p0)} à ${mn(e.p1)}`;
+    }
+
+    series.forEach(e => {
+        const { x0, x1 } = drawBar(laneS, e.p0, e.p1, e.isFenix ? '#0A2463' : '#DC2626', e.n + '-0');
+        window._faTlHitAreas.push({ x: (x0 + x1) / 2, y: laneS, w: Math.max(x1 - x0 + 8, 16), h: 16, text: spTooltip(e) });
+    });
+    pannesFx.forEach(e => {
+        const label = e.byTime ? Math.floor(e.d) + "'" : e.n + ' poss.';
+        const { x0, x1 } = drawBar(laneF, e.p0, e.p1, 'rgba(10,36,99,0.75)', label);
+        window._faTlHitAreas.push({ x: (x0 + x1) / 2, y: laneF, w: Math.max(x1 - x0 + 8, 16), h: 16, text: spTooltip(e) });
+    });
+    pannesAd.forEach(e => {
+        const label = e.byTime ? Math.floor(e.d) + "'" : e.n + ' poss.';
+        const { x0, x1 } = drawBar(laneA, e.p0, e.p1, 'rgba(220,38,38,0.75)', label);
+        window._faTlHitAreas.push({ x: (x0 + x1) / 2, y: laneA, w: Math.max(x1 - x0 + 8, 16), h: 16, text: spTooltip(e) });
     });
 
     return norm;

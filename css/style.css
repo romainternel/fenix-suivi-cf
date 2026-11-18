@@ -1546,6 +1546,13 @@
             position: relative;
         }
 
+        /* Face à Face / Déroulé (v340) : hauteur dédiée pour laisser la place aux 3 couloirs
+           Séries/Pannes dessinés sous la courbe — ne touche jamais .timeline-container nu (la
+           timeline d'Analyse garde sa hauteur de 380px, inchangée). */
+        .timeline-container.fa-tl-container {
+            height: 480px;
+        }
+
         #timeline-canvas, #fa-tl-canvas {
             width: 100%;
             height: 100%;
