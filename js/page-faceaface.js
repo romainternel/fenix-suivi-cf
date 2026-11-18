@@ -392,19 +392,16 @@ function _faFaceHtml(fenixStats, advStats, advLabel) {
         </div>`;
 }
 
-// Filtre période (v330) — uniquement sur l'onglet Comparatif (demande explicite de Romain), pas sur
-// Général ni Face à Face. "tot" (Complet) = match entier, inchangé par défaut.
+// Filtre période (v330, étendu à Général/Face à Face en v337 — demande Romain) — disponible sur
+// les 3 sous-onglets. "tot" (Complet) = match entier, inchangé par défaut.
 const FA_PERIODES = [['tot', 'Complet'], ['1', 'MT1'], ['2', 'MT2']];
 
 function _faSubnavHtml() {
     const mode = window._faMode || 'gen';
     const btns = FA_MODES.map(([key, label]) => `<button class="enc-pie-mode-btn${mode === key ? ' active' : ''}" onclick="_setFaMode('${key}')">${_escapeHtml(label)}</button>`).join('');
-    let periodeHtml = '';
-    if (mode === 'comp') {
-        const per = window._faPeriode || 'tot';
-        const pbtns = FA_PERIODES.map(([key, label]) => `<button class="enc-pie-mode-btn${per === key ? ' active' : ''}" onclick="_setFaPeriode('${key}')">${_escapeHtml(label)}</button>`).join('');
-        periodeHtml = `<div class="fa-subnav fa-subnav-periode">${pbtns}</div>`;
-    }
+    const per = window._faPeriode || 'tot';
+    const pbtns = FA_PERIODES.map(([key, label]) => `<button class="enc-pie-mode-btn${per === key ? ' active' : ''}" onclick="_setFaPeriode('${key}')">${_escapeHtml(label)}</button>`).join('');
+    const periodeHtml = `<div class="fa-subnav fa-subnav-periode">${pbtns}</div>`;
     return `<div class="fa-subnav">${btns}</div>${periodeHtml}<p class="fa-mode-desc">${_escapeHtml(FA_MODE_DESC[mode])}</p>`;
 }
 
@@ -460,7 +457,7 @@ function _faRenderInto(matchSelId, emptyId, contentId) {
     const advRow = matchData.find(r => r[COLS.club] !== 'FENIX');
     const advLabel = advRow ? advRow[COLS.club] : 'Adversaire';
     const mode = window._faMode || 'gen';
-    const statsData = mode === 'comp' ? _faPeriodeFilter(matchData) : matchData;
+    const statsData = _faPeriodeFilter(matchData);
     const fenixStats = _faCounts(statsData, true);
     const advStats = _faCounts(statsData, false);
 
