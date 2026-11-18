@@ -983,13 +983,13 @@
             }).join('');
         }
 
-        function findMomentsCles(matchName, matchData) {
+        // Calcul pur (aucun accès DOM), extrait de findMomentsCles pour être réutilisable hors de la
+        // page Analyse — le sous-onglet Déroulé de Face à Face (js/page-faceaface.js, v339) l'appelle
+        // directement avec son propre matchData, sans jamais toucher #moments-cles (élément inexistant
+        // sur cette page).
+        function computeMomentsCles(matchData) {
             const sortedGoals = getSortedGoals(matchData);
-
-            if (sortedGoals.length < 3) {
-                document.getElementById('moments-cles').innerHTML = '<p style="color:#6B7280;font-size:0.85rem;">Pas assez de données pour identifier des séquences.</p>';
-                return;
-            }
+            if (sortedGoals.length < 3) return [];
 
             const moments = [];
 
@@ -1146,6 +1146,16 @@
             }
 
             moments.sort((a, b) => a.rawPos - b.rawPos);
+            return moments;
+        }
+
+        function findMomentsCles(matchName, matchData) {
+            if (getSortedGoals(matchData).length < 3) {
+                document.getElementById('moments-cles').innerHTML = '<p style="color:#6B7280;font-size:0.85rem;">Pas assez de données pour identifier des séquences.</p>';
+                return;
+            }
+
+            const moments = computeMomentsCles(matchData);
             _momentsCles = moments;
 
             if (moments.length === 0) {

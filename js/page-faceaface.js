@@ -393,17 +393,26 @@ function _faFaceHtml(fenixStats, advStats, advLabel) {
         </div>`;
 }
 
-// ===== Sous-onglet "Déroulé" (v338) — demande Romain, reprend le graphique "déroulé de match"
+// ===== Sous-onglet "Déroulé" (v338-339) — demande Romain, reprend le graphique "déroulé de match"
 // (évolution du score) et la liste "Séries et pannes offensives" déjà construits pour la page
 // Analyse (js/page-analyse.js, drawTimeline()/renderSeriesEtPannes(), v301-329, eux-mêmes inspirés
 // de l'artefact externe U21 FRANCE) — même calcul, même rendu visuel, mais entièrement autonome :
 // état local (_faComputeNorm, pas le _timeNorm global de la page Analyse), canvas et conteneurs à
-// id dédiés (fa-tl-*). Volontairement SANS les marqueurs "Moments clés"/"Bascules" du graphique
-// Analyse : ce sont des annotations tactiques (familles d'enclenchement) propres à cette page,
-// hors du périmètre comparatif de Face à Face. computeSeriesEtPannes()/_tlNormPos() (page-analyse.js)
-// ont été généralisées pour accepter un `norm` explicite au lieu de toujours lire _timeNorm, sans
-// changer leur comportement par défaut (appelées sans 2e argument, elles continuent de lire
-// _timeNorm comme avant) — zéro risque de régression côté Analyse.
+// id dédiés (fa-tl-*). computeSeriesEtPannes()/_tlNormPos() (page-analyse.js) ont été généralisées
+// pour accepter un `norm` explicite au lieu de toujours lire _timeNorm, sans changer leur
+// comportement par défaut (appelées sans 2e argument, elles continuent de lire _timeNorm comme
+// avant) — zéro risque de régression côté Analyse.
+// v339 : marqueurs "Moments clés"/"Bascules" ajoutés (demande Romain après v338, "remets-les en
+// bas sur le compteur") — repris via computeMomentsCles() (extraction pure de findMomentsCles(),
+// page-analyse.js, sans toucher #moments-cles qui n'existe pas sur cette page) et detectAllBascules()
+// (déjà pure, réutilisée telle quelle). Positionnés en bas sur l'axe des minutes plutôt qu'en haut
+// (MC)/sur la courbe (bascule) comme sur la page Analyse — seule différence de placement, calcul et
+// données identiques. Toujours posToX(normPos(rawPos)), jamais la position vidéo brute : un match
+// fait 2x30 min réelles, mais le métrage vidéo d'une mi-temps peut monter à 40-45 min (les arrêts de
+// jeu ne sont pas décomptés du scope vidéo) — la normalisation déjà en place pour la courbe (et déjà
+// utilisée par la page Analyse pour ces mêmes marqueurs) est ce qui ramène ça à l'échelle réelle.
+// Détail volontairement exclu : le clic pour ouvrir le détail des séquences (showMCSequences(),
+// page-analyse.js) ouvre un panneau DOM propre à la page Analyse — hors scope ici, survol seul (tooltip).
 function _faComputeNorm(matchData) {
     const sortedGoals = getSortedGoals(matchData);
     const g1Pos  = sortedGoals.filter(g => getPeriodeNum(g.row) === 1).map(g => g.pos);
@@ -583,6 +592,75 @@ function _faDrawTimeline(matchData, advLabel) {
     ctx.fillText(advLabel + ' devant', padding.left + 104, legY);
 
     window._faTlHitAreas = [];
+
+    // Marqueurs Moments clés / Bascules — en bas, sur l'axe des minutes (le "compteur" 0'-60'),
+    // demande Romain (v339). Toujours posToX(normPos(rawPos)), jamais la position vidéo brute :
+    // un match fait 60 min (2x30), mais une mi-temps filmée peut dépasser 40-45 min de métrage
+    // (la vidéo ne décompte pas les arrêts de jeu) — seule la position normalisée ramène ça à
+    // l'échelle réelle de 30 min par mi-temps, cohérente avec la courbe et la grille.
+    const moments  = (typeof computeMomentsCles === 'function') ? computeMomentsCles(matchData) : [];
+    const bascules = (typeof detectAllBascules === 'function') ? detectAllBascules(sortedGoals, matchData) : [];
+    const axisY = padding.top + graphHeight;
+    const bottomMarkers = [];
+    moments.forEach((mc, idx) => bottomMarkers.push({ kind: 'mc', idx, x: posToX(normPos(mc.rawPos)), data: mc }));
+    bascules.forEach((b, idx) => { if (b.rawPos != null) bottomMarkers.push({ kind: 'bascule', idx, x: posToX(normPos(b.rawPos)), data: b }); });
+    bottomMarkers.sort((a, b) => a.x - b.x);
+    const markerRow = new Array(bottomMarkers.length).fill(0);
+    for (let i = 1; i < bottomMarkers.length; i++) {
+        for (let j = i - 1; j >= 0; j--) {
+            if (Math.abs(bottomMarkers[i].x - bottomMarkers[j].x) < 18) {
+                markerRow[i] = markerRow[j] === 0 ? 1 : 0;
+                break;
+            }
+        }
+    }
+    bottomMarkers.forEach((m, i) => {
+        const y = axisY - 8 - markerRow[i] * 13;
+        const isMc = m.kind === 'mc';
+        const positif = isMc ? m.data.type === 'positif' : m.data.positif;
+        const dotColor = isMc ? (positif ? '#16a34a' : '#dc2626') : '#F59E0B';
+        const label = isMc ? String(m.idx + 1) : '⚡' + (m.idx + 1);
+
+        ctx.save();
+        ctx.strokeStyle = dotColor + '99';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(m.x, y + 5);
+        ctx.lineTo(m.x, axisY);
+        ctx.stroke();
+
+        if (isMc) {
+            ctx.beginPath();
+            ctx.fillStyle = dotColor;
+            ctx.arc(m.x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            const r = 5;
+            ctx.beginPath();
+            ctx.moveTo(m.x, y - r);
+            ctx.lineTo(m.x + r, y);
+            ctx.lineTo(m.x, y + r);
+            ctx.lineTo(m.x - r, y);
+            ctx.closePath();
+            ctx.fillStyle = dotColor;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+        }
+
+        ctx.font = 'bold 7px Inter, sans-serif';
+        ctx.fillStyle = isMc ? dotColor : '#92400e';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, m.x, y - 8);
+        ctx.restore();
+
+        const tooltipHtml = isMc
+            ? `<span style="color:${dotColor};font-weight:700">MC${label}</span><br>${_escapeHtml(m.data.text)}`
+            : `<strong style="color:#f59e0b">${label} ${_escapeHtml(m.data.label)}</strong><br>${_escapeHtml(m.data.description || '')}`;
+        window._faTlHitAreas.push({ x: m.x, y: y - 8, w: 16, h: 16, text: tooltipHtml });
+    });
+
     scoreHistory.forEach((p, i) => {
         if (i === 0) return;
         const x = posToX(p.pos), y = diffToY(p.fenix - p.adv);
