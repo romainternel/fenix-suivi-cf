@@ -708,11 +708,10 @@
 
         /* Phase 5 (2026-09-20) : page Analyse — 1ère passe (onglets Vue d'ensemble/Notes & Outils
            + bloc Terrain/Comparatif + barre sticky, tous des conteneurs CSS classiques). Les
-           canvas dessinés en JS (timeline #timeline-canvas, camembert/matrice familles, terrain
-           d'articulation, nuage de tirs #terrain-canvas) figent leurs couleurs à la création comme
-           Chart.js (cf. v298) — pas couverts ici, chantier séparé. Classes déjà spécifiques à cette
-           page (vérifié : aucune réutilisée par Dashboard/Joueurs/Notes), pas besoin de scoper par
-           #page-analyse en plus. */
+           canvas dessinés en JS (timeline #timeline-canvas, camembert/matrice familles) figent
+           leurs couleurs à la création comme Chart.js (cf. v298) — pas couverts ici, chantier séparé.
+           Classes déjà spécifiques à cette page (vérifié : aucune réutilisée par Dashboard/Joueurs/
+           Notes), pas besoin de scoper par #page-analyse en plus. */
         [data-theme="dark"] #global-match-bar { background: var(--dk-panel); border-bottom-color: var(--dk-line); }
         [data-theme="dark"] #analyse-sticky-bar { background: var(--dk-panel); border-bottom-color: var(--dk-line); }
         [data-theme="dark"] .sticky-sep { background: var(--dk-line); }
@@ -762,35 +761,23 @@
         [data-theme="dark"] .an-tab-btn:hover { color: var(--dk-text); }
         [data-theme="dark"] .an-tab-btn.active { color: var(--dk-accent); }
 
-        /* Phase 5b (2026-09-21) : page Analyse — onglet Tactique (.enc-* et .artic-* : cartes familles
-           d'enclenchement, articulation attaque/défense, section Gardien). Classes déjà spécifiques
-           à cette page (mêmes vérifications que Phase 5a). Les canvas (camembert/matrice familles,
-           terrain d'articulation SVG, mini heatmap gardien) restent hors scope ici. */
+        /* Phase 5b (2026-09-21) : page Analyse — onglet Tactique (.enc-* : cartes familles
+           d'enclenchement, section Gardien). Classes déjà spécifiques à cette page (mêmes
+           vérifications que Phase 5a). Les canvas (camembert/matrice familles, mini heatmap
+           gardien) restent hors scope ici. */
         [data-theme="dark"] .enc-section-title { color: var(--dk-accent); }
         [data-theme="dark"] .enc-section-meta,
         [data-theme="dark"] .enc-famille-meta,
-        [data-theme="dark"] .artic-control-label,
-        [data-theme="dark"] .artic-summary-eff-label,
-        [data-theme="dark"] .artic-summary-detail,
-        [data-theme="dark"] .artic-listing-hint,
         [data-theme="dark"] .enc-gardien-select-label,
         [data-theme="dark"] .enc-bascule-ecart,
         [data-theme="dark"] .enc-signal-neutre { color: var(--dk-mut); }
         [data-theme="dark"] .enc-famille-card,
         [data-theme="dark"] .enc-card-mini,
-        [data-theme="dark"] .artic-poste,
-        [data-theme="dark"] .artic-poste-editor,
-        [data-theme="dark"] .artic-summary,
-        [data-theme="dark"] .artic-listing-col,
-        [data-theme="dark"] .artic-control-bar,
         [data-theme="dark"] .enc-bascule-item { background: var(--dk-panel2); border-color: var(--dk-line); }
         [data-theme="dark"] .enc-famille-eff { color: var(--dk-accent); }
         [data-theme="dark"] .enc-famille-name,
         [data-theme="dark"] .enc-stat-main-val,
         [data-theme="dark"] .enc-legend-item,
-        [data-theme="dark"] .artic-poste-joueur,
-        [data-theme="dark"] .artic-summary-noms,
-        [data-theme="dark"] .artic-listing-row,
         [data-theme="dark"] .enc-bascule-item-desc { color: var(--dk-text); }
         [data-theme="dark"] .enc-progress-track { background: var(--dk-line); }
         [data-theme="dark"] .enc-team-btn,
@@ -806,12 +793,6 @@
         [data-theme="dark"] .enc-info-btn:hover,
         [data-theme="dark"] .enc-detail-back:hover { background: var(--dk-line); }
         [data-theme="dark"] .enc-card-mini.selected { background: var(--dk-panel); box-shadow: 0 0 0 2px var(--dk-accent); }
-        [data-theme="dark"] .artic-poste-editor-title,
-        [data-theme="dark"] .artic-listing-title { color: var(--dk-accent); }
-        [data-theme="dark"] .artic-listing-row { border-bottom-color: var(--dk-line); }
-        [data-theme="dark"] .artic-listing-row-clickable:hover { background: var(--dk-line); }
-        [data-theme="dark"] .artic-listing-row-clickable.active { background: var(--dk-panel); color: var(--dk-accent); }
-        [data-theme="dark"] .artic-listing-select { border-top-color: var(--dk-line2); }
         [data-theme="dark"] .enc-gardien-row:hover td { background: var(--dk-panel2); }
         [data-theme="dark"] .enc-gardien-row.selected td { background: var(--dk-line); }
         [data-theme="dark"] .enc-gardien-total,
@@ -3118,114 +3099,6 @@
         }
         .enc-info-btn:hover { background: #CBD5E1; }
 
-        /* Mode Articulation défensive (STORY-34, flux unique STORY-38) — demi-terrain, postes P1-P6.
-           Un seul flux de lecture : Largeur (bandeau) → classement cliquable (colonne de droite) →
-           terrain → résumé sous le terrain. Plus de toggle Composition, plus de filtre Poste séparé,
-           plus de cartes multiples en haut d'écran (tout ça retiré, pas juste caché, cf. Architecture
-           articulation-flux-unique.md). */
-        .enc-pie-mode-btn.artic-disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
-        .artic-empty { color: #94A3B8; font-size: 0.85rem; text-align: center; padding: 24px 0; }
-        /* Bandeau de contrôles : Dispositif + Largeur, les 2 seuls axes de choix restants. */
-        .artic-control-bar {
-            background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;
-            padding: 10px 14px; margin-bottom: 14px; box-shadow: var(--shadow-sm);
-        }
-        .artic-control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
-        .artic-control-row:last-of-type { margin-bottom: 0; }
-        .artic-control-label { font-size: 0.68rem; font-weight: 700; color: #64748B; letter-spacing: 0.5px; min-width: 80px; }
-        .artic-dispositif-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
-        /* Terrain à gauche, classement à droite. Le terrain garde sa taille de référence (520px), la
-           colonne de droite est volontairement étroite à côté. */
-        .artic-main-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
-        .artic-court-col { flex: 1 1 380px; max-width: 520px; }
-        /* Lignes du terrain dessinées en SVG (_articCourtSvg, défs locales dupliquées — cf. commentaire
-           dans _articCourtSvg()). */
-        .artic-court {
-            width: 100%; aspect-ratio: 1 / 1;
-            border-radius: 12px; box-shadow: var(--shadow-md);
-            position: relative; overflow: hidden;
-        }
-        .artic-recap { text-align: center; font-size: 0.75rem; color: #475569; margin-top: 10px; }
-        .artic-poste {
-            position: absolute; width: 56px; height: 56px; border-radius: 50%;
-            transform: translate(-50%, -50%);
-            background: #fff; border: 3px solid var(--fenix-blue);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px;
-            box-shadow: var(--shadow-md);
-            cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
-        .artic-poste:hover { transform: translate(-50%, -50%) scale(1.08); box-shadow: var(--shadow-lg); }
-        /* "selected" = encart d'édition ouvert pour ce poste (clic sur le rond), pas un liseré
-           d'efficacité (retiré depuis STORY-37 — aucune évaluation individuelle sur le terrain). */
-        .artic-poste.selected { outline: 2px solid #FCD34D; outline-offset: 2px; }
-        .artic-poste-label { font-size: 0.55rem; color: #94A3B8; letter-spacing: 1px; }
-        .artic-poste-joueur { font-size: 0.72rem; color: var(--fenix-dark); font-weight: 700; line-height: 1.1; text-align: center; }
-        .artic-poste-manual {
-            position: absolute; top: -6px; left: -6px; width: 16px; height: 16px; border-radius: 50%;
-            background: var(--fenix-accent); color: #fff; font-size: 0.6rem;
-            display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff;
-        }
-        .artic-poste-badge {
-            position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%;
-            background: var(--fenix-accent); color: #fff; font-size: 0.55rem; font-weight: 700;
-            display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff;
-        }
-        /* Encart d'édition d'un poste, ouvert par clic sur son rond — sous le terrain, au-dessus du
-           résumé. Cadre bleu pour signaler une action en cours (Visual §1/§4). */
-        .artic-poste-editor {
-            margin-top: 10px; padding: 10px 14px; background: #fff;
-            border: 2px solid var(--fenix-accent); border-radius: 10px; font-size: 0.8rem;
-            box-shadow: var(--shadow-md);
-            animation: articEditorIn 0.15s ease-out;
-        }
-        @keyframes articEditorIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-        .artic-poste-editor-title { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; color: #0A2463; letter-spacing: 0.5px; margin-bottom: 6px; }
-        /* Résumé de la largeur active, sous le terrain — LE point focal de l'écran (Visual §2). */
-        .artic-summary {
-            margin-top: 10px; padding: 14px; background: #F8FAFC;
-            border: 1px solid #E2E8F0; border-radius: 10px; text-align: center; box-shadow: var(--shadow-sm);
-        }
-        .artic-summary-eff { font-size: 2rem; font-weight: 700; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
-        .artic-summary-eff-label { font-size: 0.85rem; font-family: 'Inter', sans-serif; font-weight: 500; color: #64748B; }
-        /* Même sens que _articDefClass : plus haut = meilleure défense, vert = bon. */
-        .artic-summary-eff.fort   { color: #10B981; }
-        .artic-summary-eff.moyen  { color: #F59E0B; }
-        .artic-summary-eff.faible { color: #EF4444; }
-        .artic-summary-eff.noref  { color: #94A3B8; }
-        .artic-summary-noms { font-size: 0.85rem; font-weight: 600; color: var(--fenix-dark); margin-top: 4px; }
-        .artic-summary-detail { font-size: 0.78rem; color: #64748B; margin-top: 6px; }
-        .artic-summary-empty { color: #94A3B8; font-size: 0.85rem; padding: 8px 0; }
-        /* Colonne de classement (droite du terrain) : un titre + la liste groupée Fiable/Échantillon
-           faible pour la largeur active — plus de <select> de filtre, la largeur se choisit dans le
-           bandeau de contrôles. */
-        .artic-listing-col {
-            flex: 1 1 200px; max-width: 240px; padding: 12px 14px; background: #F8FAFC;
-            border: 1px solid #E2E8F0; border-radius: 10px; font-size: 0.8rem;
-        }
-        .artic-listing-title { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--fenix-blue); letter-spacing: 0.3px; margin-bottom: 8px; }
-        .artic-listing-rows { display: flex; flex-direction: column; gap: 2px; }
-        .artic-listing-row {
-            display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-            padding: 4px 2px; border-bottom: 1px solid #E8EFF5; color: var(--fenix-dark);
-        }
-        .artic-listing-row:last-child { border-bottom: none; }
-        .artic-listing-empty { color: #94A3B8; font-style: italic; }
-        .artic-listing-row-clickable { cursor: pointer; border-radius: 6px; transition: background 0.15s ease; }
-        .artic-listing-row-clickable:hover { background: #EEF2F7; }
-        .artic-listing-row-clickable.active { background: #DBEAFE; font-weight: 700; color: var(--fenix-blue); }
-        .artic-listing-hint { font-size: 0.62rem; color: #475569; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin: 8px 0 4px; }
-        .artic-listing-hint:first-child { margin-top: 0; }
-        /* % réussite défensive du duo/quatuor — même palette/sens que .artic-summary-eff. */
-        .artic-listing-eff { font-weight: 700; white-space: nowrap; }
-        .artic-listing-eff.fort   { color: #10B981; }
-        .artic-listing-eff.moyen  { color: #F59E0B; }
-        .artic-listing-eff.faible { color: #EF4444; }
-        .artic-listing-eff.noref  { color: #94A3B8; font-weight: 500; }
-        .artic-listing-n { font-weight: 400; color: #94A3B8; font-size: 0.72rem; }
-        .artic-listing-select { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #CBD5E1; }
-        .artic-listing-select select { width: 100%; font-size: 0.78rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #CBD5E1; background: #fff; color: var(--fenix-dark); }
-
         /* Panel détail (droite) */
         .enc-detail-header-bar {
             display: flex; align-items: center; gap: 6px;
@@ -3422,6 +3295,9 @@
         /* Sous-navigation Général/Face à Face/Comparatif (v323) */
         .fa-root .fa-subnav { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
         .fa-root .fa-mode-desc { color: #64748B; font-size: 0.78rem; margin: 0 0 16px; }
+        /* Message d'état vide générique (sélecteur de match pas encore choisi) — ex-.artic-empty,
+           renommée en retirant le mode Articulation (v341) : réutilisée par Face à Face, sans rapport. */
+        .fa-empty-msg { color: #94A3B8; font-size: 0.85rem; text-align: center; padding: 24px 0; }
         .fa-root .fa-duels { display: flex; flex-direction: column; gap: 12px; }
         .fa-root .fa-duelcard { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 14px; align-items: start; background: #fff; border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .fa-root .fa-duel-side { min-width: 0; }
@@ -3476,7 +3352,7 @@
         [data-theme="dark"] #page-faceaface .fa-table td.fa-eff { color: var(--dk-accent); }
         [data-theme="dark"] #page-faceaface .fa-table-card.fa-adv td.fa-eff { color: var(--dk-red); }
         [data-theme="dark"] #page-faceaface .fa-table td.fa-eff-adv { color: var(--dk-mut); }
-        [data-theme="dark"] #page-faceaface .artic-empty { color: var(--dk-mut); }
+        [data-theme="dark"] #page-faceaface .fa-empty-msg { color: var(--dk-mut); }
         [data-theme="dark"] #page-faceaface .fa-mode-desc { color: var(--dk-mut); }
         [data-theme="dark"] #page-faceaface .fa-duelcard { background: var(--dk-panel2); }
         [data-theme="dark"] #page-faceaface .fa-duel-label { color: var(--dk-accent); }

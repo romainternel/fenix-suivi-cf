@@ -97,8 +97,8 @@ function _faCounts(matchData, isFenix) {
     return { attaquePlacee, penalty, attaque, parDispositif, jeurapide, total };
 }
 
-// Réussite = (buts + PO) / possessions — formule déjà utilisée par computeArticulationStats (mode
-// Articulation défensive) pour ce même ratio, reprise ici telle quelle.
+// Réussite = (buts + PO) / possessions — même formule que computeSuperiorites()/v311, reprise ici
+// telle quelle.
 function _faEff(row) {
     return row.poss > 0 ? Math.round((row.but + row.po) / row.poss * 100) : null;
 }
