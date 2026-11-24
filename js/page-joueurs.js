@@ -239,14 +239,14 @@
             // Moyenne de temps de jeu fusionnée avec le nombre de matchs sur la même ligne
             // (v345, retour Romain — la rangée de badges séparée en dessous est retirée).
             const tjHeaderStr = tjNom.matchs
-                ? `<div style="display:flex;gap:1rem;margin-top:0.35rem;font-size:0.75rem;opacity:0.9;">
+                ? `<div class="jp-tj-line">
                     <span>⏱ ${tjNom.matchs} matchs  ·  ⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>
                   </div>`
                 : '';
             const jpHeader = `
                 <div class="jp-header" style="background:linear-gradient(135deg,${color} 0%,${color}cc 100%);">
                     <div class="jp-avatar${corpsUrl ? ' jp-avatar-clickable' : ''}"${corpsUrl ? ` onclick="toggleCourtPhoto()"` : ''}>${avatarInner}${corpsUrl ? '<span class="jp-avatar-badge">👤</span>' : ''}</div>
-                    <div style="flex:1">
+                    <div class="jp-header-text">
                         <div class="jp-name">${displayNom}</div>
                         <div class="jp-poste-label">${posteCode} — ${posteLabel}</div>
                         ${tjHeaderStr}

@@ -1420,7 +1420,7 @@
         /* Fiche principale = bloc le plus important de la page : élévation "hero" (§ élévation ci-dessus) */
         .joueur-panel { background: var(--fenix-white); border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden; }
         .jp-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2.5rem 2rem; color: #94A3B8; text-align: center; }
-        .jp-header { padding: 1.25rem 1.5rem; color: white; display: flex; align-items: center; gap: 1rem; }
+        .jp-header { padding: 1.25rem 1.5rem; color: white; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .jp-avatar { width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; position: relative; overflow: hidden; }
         .jp-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: center top; }
         .jp-avatar-clickable { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
@@ -1433,6 +1433,10 @@
         }
         .jp-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 1px; line-height: 1.1; }
         .jp-poste-label { font-size: 0.8rem; opacity: 0.85; margin-top: 0.2rem; }
+        /* Ligne "X matchs · ⌀ Y min/match" de l'en-tête (v345) — classe dédiée plutôt qu'un style
+           inline pour pouvoir la faire grossir en Grand écran comme .jp-name/.jp-poste-label
+           ci-dessous (sinon elle reste minuscule à côté d'un avatar à 96px, gros vide en dessous). */
+        .jp-tj-line { display: flex; gap: 1rem; margin-top: 0.35rem; font-size: 0.75rem; opacity: 0.9; }
         .jp-stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); border-top: 1px solid #E8EFF5; }
         .jp-stat { padding: 1rem 0.5rem; text-align: center; border-right: 1px solid #E8EFF5; }
         .jp-stat:last-child { border-right: none; }
@@ -1462,6 +1466,7 @@
         body.fenix-fs-fiche .jp-avatar { width: 96px; height: 96px; font-size: 2.2rem; }
         body.fenix-fs-fiche .jp-name { font-size: 2.6rem; }
         body.fenix-fs-fiche .jp-poste-label { font-size: 1.1rem; }
+        body.fenix-fs-fiche .jp-tj-line { font-size: 1.05rem; margin-top: 0.6rem; }
         body.fenix-fs-fiche .jp-print-btn { font-size: 0.78rem; padding: 0.3rem 0.8rem; }
         body.fenix-fs-fiche .jp-stat { padding: 1.75rem 0.75rem; }
         body.fenix-fs-fiche .jp-val { font-size: 3rem; }
@@ -2124,8 +2129,14 @@
         }
 
         /* Boutons d'export PDF/PowerPoint — petits, en haut à droite de .jp-header (v345,
-           retour Romain : "pas bouton aussi gros", juste la taille de la phrase). */
+           retour Romain : "pas bouton aussi gros", juste la taille de la phrase). 3e item flex
+           (pas de position absolue : testé en Grand écran sur iPad 1024px — la carte y est étroite
+           car elle partage l'écran avec le terrain, et un nom long + boutons absolus se superposaient
+           illisiblement ; en flex, le pire cas est juste un nom qui repasse à la ligne, jamais un
+           chevauchement). min-width:0 sur la colonne texte est nécessaire pour qu'un flex:1 accepte
+           de rétrécir sous sa largeur de contenu naturelle (comportement par défaut sinon). */
         .jp-header-actions { display: flex; gap: 6px; align-self: flex-start; margin-left: auto; flex-shrink: 0; }
+        .jp-header-text { flex: 1; min-width: 160px; }
         .jp-print-btn {
             background: transparent;
             border: 1px solid rgba(255,255,255,0.4);
