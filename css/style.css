@@ -1432,11 +1432,11 @@
             display: flex; align-items: center; justify-content: center; line-height: 1;
         }
         .jp-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 1px; line-height: 1.1; }
-        .jp-poste-label { font-size: 0.8rem; opacity: 0.85; margin-top: 0.2rem; }
-        /* Ligne "X matchs · ⌀ Y min/match" de l'en-tête (v345) — classe dédiée plutôt qu'un style
-           inline pour pouvoir la faire grossir en Grand écran comme .jp-name/.jp-poste-label
-           ci-dessous (sinon elle reste minuscule à côté d'un avatar à 96px, gros vide en dessous). */
-        .jp-tj-line { display: flex; gap: 1rem; margin-top: 0.35rem; font-size: 0.75rem; opacity: 0.9; }
+        .jp-poste-label { font-size: 0.8rem; opacity: 0.85; }
+        /* Ligne "X matchs · ⌀ Y min/match" de l'en-tête (v345, taille dédiée pour grossir en Grand
+           écran comme .jp-name/.jp-poste-label ci-dessous — sinon minuscule à côté d'un avatar à
+           96px, gros vide en dessous, cf. v346). */
+        .jp-tj-line { font-size: 0.75rem; opacity: 0.9; white-space: nowrap; }
         .jp-stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); border-top: 1px solid #E8EFF5; }
         .jp-stat { padding: 1rem 0.5rem; text-align: center; border-right: 1px solid #E8EFF5; }
         .jp-stat:last-child { border-right: none; }
@@ -1466,7 +1466,7 @@
         body.fenix-fs-fiche .jp-avatar { width: 96px; height: 96px; font-size: 2.2rem; }
         body.fenix-fs-fiche .jp-name { font-size: 2.6rem; }
         body.fenix-fs-fiche .jp-poste-label { font-size: 1.1rem; }
-        body.fenix-fs-fiche .jp-tj-line { font-size: 1.05rem; margin-top: 0.6rem; }
+        body.fenix-fs-fiche .jp-tj-line { font-size: 1.05rem; }
         body.fenix-fs-fiche .jp-print-btn { font-size: 0.78rem; padding: 0.3rem 0.8rem; }
         body.fenix-fs-fiche .jp-stat { padding: 1.75rem 0.75rem; }
         body.fenix-fs-fiche .jp-val { font-size: 3rem; }
@@ -2136,7 +2136,12 @@
            chevauchement). min-width:0 sur la colonne texte est nécessaire pour qu'un flex:1 accepte
            de rétrécir sous sa largeur de contenu naturelle (comportement par défaut sinon). */
         .jp-header-actions { display: flex; gap: 6px; align-self: flex-start; margin-left: auto; flex-shrink: 0; }
-        .jp-header-text { flex: 1; min-width: 160px; }
+        /* Nom/poste/matchs/TJ alignés sur une seule ligne (v347, retour Romain — "toujours l'un
+           en dessous de l'autre pas aligné sur une ligne" : le v345 n'avait fusionné que matchs+TJ
+           entre eux, nom et poste restaient chacun sur leur ligne). flex-wrap pour dégrader
+           proprement (repasse en lignes empilées) si la largeur manque, plutôt que de clipper ou
+           chevaucher — même logique que .jp-header lui-même (v346). */
+        .jp-header-text { flex: 1 1 440px; min-width: 160px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.25rem 0.6rem; }
         .jp-print-btn {
             background: transparent;
             border: 1px solid rgba(255,255,255,0.4);

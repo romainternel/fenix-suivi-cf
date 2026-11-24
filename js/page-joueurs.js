@@ -236,19 +236,19 @@
             // ── Carte joueur (droite du terrain) ──────────────────────────────
             const effectiveTJMatchs = matchFilter ? [matchFilter] : (bilanMatchs || MATCHS);
             const tjNom = getTJData(nom, effectiveTJMatchs);
-            // Moyenne de temps de jeu fusionnée avec le nombre de matchs sur la même ligne
-            // (v345, retour Romain — la rangée de badges séparée en dessous est retirée).
+            // Nom, poste, nombre de matchs et TJ moyen alignés sur une seule ligne (v347, retour
+            // Romain — "c'est toujours l'un en dessous de l'autre pas aligné sur une ligne" : le
+            // v345 n'avait fusionné que matchs+TJ ensemble, nom et poste restaient chacun sur leur
+            // propre ligne au-dessus. .jp-header-text passe en flex row (voir css/style.css).
             const tjHeaderStr = tjNom.matchs
-                ? `<div class="jp-tj-line">
-                    <span>⏱ ${tjNom.matchs} matchs  ·  ⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>
-                  </div>`
+                ? `<span class="jp-tj-line">⏱ ${tjNom.matchs} matchs  ·  ⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>`
                 : '';
             const jpHeader = `
                 <div class="jp-header" style="background:linear-gradient(135deg,${color} 0%,${color}cc 100%);">
                     <div class="jp-avatar${corpsUrl ? ' jp-avatar-clickable' : ''}"${corpsUrl ? ` onclick="toggleCourtPhoto()"` : ''}>${avatarInner}${corpsUrl ? '<span class="jp-avatar-badge">👤</span>' : ''}</div>
                     <div class="jp-header-text">
-                        <div class="jp-name">${displayNom}</div>
-                        <div class="jp-poste-label">${posteCode} — ${posteLabel}</div>
+                        <span class="jp-name">${displayNom}</span>
+                        <span class="jp-poste-label">${posteCode} — ${posteLabel}</span>
                         ${tjHeaderStr}
                     </div>
                     <div class="jp-header-actions">
