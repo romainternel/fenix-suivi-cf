@@ -16,16 +16,16 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=343">
-    <script src="js/supabase-client.js?v=343"></script>
-    <script src="js/utils.js?v=343"></script>
-    <script src="js/player-photos.js?v=343"></script>
-    <script src="js/impact-images.js?v=343"></script>
-    <script src="js/player-mode.js?v=343"></script>
-    <script src="js/page-joueurs.js?v=343"></script>
-    <script src="js/page-notes-graph.js?v=343"></script>
-    <script src="js/page-analyse.js?v=343"></script>
-    <script src="js/page-faceaface.js?v=343"></script>
+    <link rel="stylesheet" href="css/style.css?v=344">
+    <script src="js/supabase-client.js?v=344"></script>
+    <script src="js/utils.js?v=344"></script>
+    <script src="js/player-photos.js?v=344"></script>
+    <script src="js/impact-images.js?v=344"></script>
+    <script src="js/player-mode.js?v=344"></script>
+    <script src="js/page-joueurs.js?v=344"></script>
+    <script src="js/page-notes-graph.js?v=344"></script>
+    <script src="js/page-analyse.js?v=344"></script>
+    <script src="js/page-faceaface.js?v=344"></script>
 </head>
 <body>
 
@@ -159,6 +159,12 @@
             <button class="nav-btn" data-page="analyse" role="tab" aria-selected="false">🔍 Analyse</button>
             <button class="nav-btn" data-page="joueurs" role="tab" aria-selected="false">👥 Joueurs</button>
             <button class="nav-btn" data-page="faceaface" role="tab" aria-selected="false">🆚 Face à Face</button>
+            <span class="nav-match-filter">
+                <span class="nav-match-filter-label">MATCH</span>
+                <select id="filter-match-global" onchange="onMatchGlobalChange()" class="nav-match-filter-select">
+                    <option value="">Saison complète</option>
+                </select>
+            </span>
         </nav>
         <div class="header-actions">
 <div class="nav-tools-container">
@@ -176,14 +182,6 @@
         </div>
     </div>
     </header>
-    <!-- Bannière match — commune à toutes les pages (Dashboard/Analyse/Joueurs/Face à Face), au lieu
-         d'être cachée dans la page Analyse (retour Romain : "ne pas aller chercher à chaque fois") -->
-    <div id="global-match-bar">
-        <span class="sticky-filter-label">MATCH</span>
-        <select id="filter-match-global" onchange="onMatchGlobalChange()" class="sticky-select" style="min-width:160px;max-width:260px;">
-            <option value="">Saison complète</option>
-        </select>
-    </div>
     <script>
         // Phase 1 du nouveau design (comparatif 2026-09-18) : bascule thème sombre, pour l'instant
         // uniquement appliquée au Dashboard (voir commentaire css/style.css). L'attribut lui-même
@@ -1111,32 +1109,26 @@ let _effInfoPoste = null;
             loadFromSupabase();
             // Ajuster le top des barres sticky sous le header selon sa hauteur réelle — via
             // ResizeObserver plutôt qu'une mesure one-shot, car le header grandit après ce point
-            // (le <select> de saison passe de display:none à 'block' dans populateFilters(),
-            // une fois SAISONS chargé depuis Supabase). Une mesure figée à DOMContentLoaded (ou
-            // une valeur codée en dur dans le CSS, cas de .joueurs-subnav) laissait ces barres
-            // collées sous l'ancienne hauteur, donc cachées derrière le header une fois celui-ci
-            // agrandi — invisibles dès qu'on scrollait la page Analyse ou Joueurs.
+            // (le <select> de saison passe de display:none à 'block' dans populateFilters(), une
+            // fois SAISONS chargé depuis Supabase). Une mesure figée à DOMContentLoaded (ou une
+            // valeur codée en dur dans le CSS, cas de .joueurs-subnav) laissait ces barres collées
+            // sous l'ancienne hauteur, donc cachées derrière le header une fois celui-ci agrandi —
+            // invisibles dès qu'on scrollait la page Analyse ou Joueurs. Le filtre MATCH (ex-
+            // #global-match-bar, v328) vit directement dans le header depuis v344 — une seule
+            // barre à empiler sous le header désormais, plus de hauteur cumulée à calculer.
             const hdr = document.querySelector('.header');
-            const globalMatchBar = document.getElementById('global-match-bar');
-            // #global-match-bar (v328) est désormais TOUJOURS présente sous le header, sur toutes les
-            // pages — les barres sticky encore spécifiques à une page (analyse-sticky-bar, joueurs-subnav)
-            // doivent donc s'empiler SOUS elle (header + global-match-bar cumulés), pas se superposer au
-            // même `top` qu'elle.
-            const stickyUnderGlobalBar = [
+            const stickyUnderHeader = [
                 document.getElementById('analyse-sticky-bar'),
                 document.querySelector('.joueurs-subnav')
             ].filter(Boolean);
             if (hdr) {
                 const syncStickyTop = () => {
                     const headerH = hdr.offsetHeight;
-                    if (globalMatchBar) globalMatchBar.style.top = headerH + 'px';
-                    const combinedH = headerH + (globalMatchBar ? globalMatchBar.offsetHeight : 0);
-                    stickyUnderGlobalBar.forEach(el => { el.style.top = combinedH + 'px'; });
+                    stickyUnderHeader.forEach(el => { el.style.top = headerH + 'px'; });
                 };
                 syncStickyTop();
                 if (typeof ResizeObserver !== 'undefined') {
                     new ResizeObserver(syncStickyTop).observe(hdr);
-                    if (globalMatchBar) new ResizeObserver(syncStickyTop).observe(globalMatchBar);
                 }
             }
             // Redraw impact canvases on resize

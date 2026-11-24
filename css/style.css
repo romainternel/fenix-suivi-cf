@@ -226,22 +226,27 @@
 
         .main { padding: 2rem; max-width: 1600px; margin: 0 auto; }
 
-        /* Bannière match globale (v328) — commune à toutes les pages, sticky sous le header comme
-           #analyse-sticky-bar ci-dessous (même mécanisme JS de synchronisation du `top`) */
-        #global-match-bar {
-            position: sticky;
-            top: 54px; /* ajusté dynamiquement par JS, comme #analyse-sticky-bar */
-            z-index: 95; /* entre le header (100) et joueurs-subnav/analyse-sticky-bar (99/50), qui
-                            s'empilent maintenant SOUS cette bannière en scroll */
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            padding: 0.4rem 1.5rem;
-            background: #fff;
-            border-bottom: 1px solid #E2E8F0;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        /* Filtre MATCH — à côté de l'onglet Face à Face dans le header (v344, retour Romain :
+           "met le à côté de face à face"). Vivait avant dans sa propre bannière sticky blanche
+           sous le header (#global-match-bar, v328) ; même `id`/`onchange` sur le <select>, donc
+           getSelectedMatch()/onMatchGlobalChange() et tous les appelants (updateDashboard(),
+           updateAnalysePage()...) fonctionnent sans changement — seul le conteneur visuel change. */
+        .nav-match-filter { display: flex; align-items: center; gap: 6px; margin-left: 6px; }
+        .nav-match-filter-label { font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.55); letter-spacing: 0.07em; text-transform: uppercase; white-space: nowrap; }
+        .nav-match-filter-select {
+            padding: 0.25rem 0.5rem;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            font-size: 0.78rem;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            min-width: 150px;
+            max-width: 220px;
         }
+        .nav-match-filter-select:focus { outline: none; border-color: #31CBE8; }
+        .nav-match-filter-select option { color: #0A2463; }
 
         #analyse-sticky-bar {
             position: sticky;
@@ -717,7 +722,6 @@
            leurs couleurs à la création comme Chart.js (cf. v298) — pas couverts ici, chantier séparé.
            Classes déjà spécifiques à cette page (vérifié : aucune réutilisée par Dashboard/Joueurs/
            Notes), pas besoin de scoper par #page-analyse en plus. */
-        [data-theme="dark"] #global-match-bar { background: var(--dk-panel); border-bottom-color: var(--dk-line); }
         [data-theme="dark"] #analyse-sticky-bar { background: var(--dk-panel); border-bottom-color: var(--dk-line); }
         [data-theme="dark"] .sticky-sep { background: var(--dk-line); }
         [data-theme="dark"] #match-block-section,
@@ -1447,11 +1451,11 @@
         .jm-total-row td { background: #EEF2FF; font-weight: 700; color: var(--fenix-blue) !important; border-top: 2px solid #CBD5E1; }
 
         /* ── Mode "Grand écran" (toggleJoueursFullscreen(), FENIX-HANDBALL-CF-SUIVI.html) ──────
-           Cache le header/bandeau match pour que la carte joueur occupe tout l'écran (combiné à
-           l'API Fullscreen navigateur côté JS). La sous-nav Joueurs (.joueurs-subnav) n'est PAS
-           cachée : Fiche/Notes/Graphique/Impact restent accessibles pendant tout le mode. */
-        body.fenix-fs-fiche .header,
-        body.fenix-fs-fiche #global-match-bar { display: none !important; }
+           Cache le header (qui inclut le filtre MATCH depuis v344) pour que la carte joueur occupe
+           tout l'écran (combiné à l'API Fullscreen navigateur côté JS). La sous-nav Joueurs
+           (.joueurs-subnav) n'est PAS cachée : Fiche/Notes/Graphique/Impact restent accessibles
+           pendant tout le mode. */
+        body.fenix-fs-fiche .header { display: none !important; }
         body.fenix-fs-fiche .joueurs-subnav { top: 0 !important; }
         body.fenix-fs-fiche .main { max-width: 100%; padding: 0.75rem 2rem 3rem; }
         body.fenix-fs-fiche .jp-header { padding: 2rem 2.5rem; gap: 1.75rem; }
