@@ -16,16 +16,16 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=342">
-    <script src="js/supabase-client.js?v=342"></script>
-    <script src="js/utils.js?v=342"></script>
-    <script src="js/player-photos.js?v=342"></script>
-    <script src="js/impact-images.js?v=342"></script>
-    <script src="js/player-mode.js?v=342"></script>
-    <script src="js/page-joueurs.js?v=342"></script>
-    <script src="js/page-notes-graph.js?v=342"></script>
-    <script src="js/page-analyse.js?v=342"></script>
-    <script src="js/page-faceaface.js?v=342"></script>
+    <link rel="stylesheet" href="css/style.css?v=343">
+    <script src="js/supabase-client.js?v=343"></script>
+    <script src="js/utils.js?v=343"></script>
+    <script src="js/player-photos.js?v=343"></script>
+    <script src="js/impact-images.js?v=343"></script>
+    <script src="js/player-mode.js?v=343"></script>
+    <script src="js/page-joueurs.js?v=343"></script>
+    <script src="js/page-notes-graph.js?v=343"></script>
+    <script src="js/page-analyse.js?v=343"></script>
+    <script src="js/page-faceaface.js?v=343"></script>
 </head>
 <body>
 
@@ -152,10 +152,14 @@
                 <select id="filter-saison" onchange="onSaisonChange()" style="margin-top:0.25rem;padding:0.2rem 0.6rem;border:1px solid rgba(255,255,255,0.3);border-radius:6px;background:rgba(255,255,255,0.15);color:white;font-size:0.72rem;font-family:'Inter',sans-serif;cursor:pointer;display:none;">
                     <option value="" style="color:#0A2463">Toutes saisons</option>
                 </select>
-                <span>ANALYSE HANDBALL PRO</span>
-                <button id="header-data-badge" class="header-data-badge" onclick="document.getElementById('file-input').click()" style="display:none;"></button>
             </div>
         </div>
+        <nav class="nav" role="tablist">
+            <button class="nav-btn active" data-page="dashboard" role="tab" aria-selected="true">📊 Dashboard</button>
+            <button class="nav-btn" data-page="analyse" role="tab" aria-selected="false">🔍 Analyse</button>
+            <button class="nav-btn" data-page="joueurs" role="tab" aria-selected="false">👥 Joueurs</button>
+            <button class="nav-btn" data-page="faceaface" role="tab" aria-selected="false">🆚 Face à Face</button>
+        </nav>
         <div class="header-actions">
 <div class="nav-tools-container">
                 <button id="nav-tools-btn" class="nav-tools-btn" onclick="toggleToolsMenu()" aria-haspopup="true" aria-expanded="false">⚙ Outils <span class="dropdown-arrow">▾</span></button>
@@ -165,17 +169,12 @@
                     <button id="btn-familles" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); openFamillesModal();">🏷️ Familles tactiques</button>
                     <button id="btn-bilans" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); openBilansModal();">📅 Bilans</button>
                     <button id="btn-migrate-local" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); checkAndOfferLocalMigration(true);">🔄 Migrer mes données locales</button>
+                    <button id="header-data-badge" class="nav-tools-item" role="menuitem" onclick="closeToolsMenu(); document.getElementById('file-input').click();" style="display:none;"></button>
                 </div>
             </div>
             <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleAppTheme()" title="Thème sombre (Dashboard pour l'instant)">🌙</button>
         </div>
     </div>
-    <nav class="nav" role="tablist">
-            <button class="nav-btn active" data-page="dashboard" role="tab" aria-selected="true">📊 Dashboard</button>
-            <button class="nav-btn" data-page="analyse" role="tab" aria-selected="false">🔍 Analyse</button>
-            <button class="nav-btn" data-page="joueurs" role="tab" aria-selected="false">👥 Joueurs</button>
-            <button class="nav-btn" data-page="faceaface" role="tab" aria-selected="false">🆚 Face à Face</button>
-        </nav>
     </header>
     <!-- Bannière match — commune à toutes les pages (Dashboard/Analyse/Joueurs/Face à Face), au lieu
          d'être cachée dans la page Analyse (retour Romain : "ne pas aller chercher à chaque fois") -->

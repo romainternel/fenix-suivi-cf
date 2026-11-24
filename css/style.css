@@ -168,7 +168,7 @@
            référence, ici toujours visible (pas conditionné par [data-theme="dark"]). */
         .header {
             background: linear-gradient(135deg, #071322 0%, #0D1F33 100%);
-            padding: 0.5rem 1.5rem 0;
+            padding: 0.5rem 1.5rem;
             display: flex;
             flex-direction: column;
             box-shadow: var(--shadow-lg);
@@ -177,10 +177,14 @@
             z-index: 100;
         }
 
-        .header-top-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 0.4rem; flex-wrap: wrap; }
-        .header-actions { display: flex; align-items: center; gap: 0.5rem; }
+        /* Bandeau ramené à une seule ligne (v343, retour Romain "la bande est trop grosse") :
+           logo à gauche, onglets de page centrés, Outils/thème à droite. Grid 3 colonnes plutôt
+           que flex : seule une grid garantit que la colonne du milieu reste centrée quel que soit
+           l'écart de largeur entre le logo et le bloc Outils/thème. */
+        .header-top-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
+        .header-actions { display: flex; align-items: center; gap: 0.5rem; justify-self: end; }
 
-        .logo { display: flex; align-items: center; gap: 0.5rem; }
+        .logo { display: flex; align-items: center; gap: 0.5rem; justify-self: start; }
 
         .logo-icon {
             width: 28px; height: 28px;
@@ -196,8 +200,9 @@
         .logo-text h1 { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px; line-height: 1; }
         .logo-text span { font-size: 0.6rem; opacity: 0.8; }
 
-        /* Onglets soulignés (remplace l'ancien style pastille pleine) */
-        .nav { display: flex; gap: 4px; align-items: center; border-top: 1px solid rgba(255,255,255,0.12); flex-wrap: wrap; }
+        /* Onglets soulignés (remplace l'ancien style pastille pleine) — colonne centrale du
+           bandeau depuis v343 : plus de border-top (n'avait de sens que posé sous une 2e ligne) */
+        .nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-self: center; }
 
         .nav-btn {
             background: none;
@@ -2054,6 +2059,8 @@
 
         @media (max-width: 768px) {
             .header { flex-direction: column; gap: 1rem; }
+            .header-top-row { grid-template-columns: 1fr; gap: 0.6rem; }
+            .logo, .header-actions { justify-self: center; }
             .nav { flex-wrap: wrap; justify-content: center; }
             .team-cards { grid-template-columns: 1fr; }
             .terrain-container { grid-template-columns: 1fr; }
@@ -2831,26 +2838,12 @@
         body.fenix-fs-fiche .jp-fs-btn { background: #0A2463; color: #fff; border-color: #0A2463; }
         body.fenix-fs-fiche .jp-fs-btn:hover { background: #123a8c; }
 
-        /* ── Badge données dans le header ────────────────────────────────────── */
-        .header-data-badge {
-            display: none;
-            align-items: center;
-            gap: 4px;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 12px;
-            padding: 2px 10px;
-            font-size: 0.68rem;
-            color: rgba(255,255,255,0.9);
-            cursor: pointer;
-            white-space: nowrap;
-            max-width: 180px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-top: 4px;
-            transition: background 0.15s;
-        }
-        .header-data-badge:hover { background: rgba(255,255,255,0.25); }
+        /* ── Source de données, déplacée dans le menu Outils (v343) ──────────────
+           Anciennement une pastille flottante dans le header — devient un item .nav-tools-item
+           comme les autres (mêmes couleurs/padding/hover), avec juste un filet au-dessus pour la
+           distinguer visuellement : ce n'est pas une action comme les autres mais un état (fichier/
+           date source) qui déclenche un réimport au clic. */
+        #header-data-badge { border-top: 1px solid var(--fenix-gray); margin-top: 4px; }
 
         /* ── Bouton Analyse dans matchs-bar ─────────────────────────────────── */
         .btn-goto-analyse {
