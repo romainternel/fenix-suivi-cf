@@ -1421,7 +1421,7 @@
         .joueur-panel { background: var(--fenix-white); border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden; }
         .jp-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2.5rem 2rem; color: #94A3B8; text-align: center; }
         .jp-header { padding: 1.25rem 1.5rem; color: white; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .jp-avatar { width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; position: relative; overflow: hidden; }
+        .jp-avatar { width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; position: relative; overflow: hidden; }
         .jp-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: center top; }
         .jp-avatar-clickable { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .jp-avatar-clickable:hover { transform: scale(1.06); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
@@ -1432,11 +1432,11 @@
             display: flex; align-items: center; justify-content: center; line-height: 1;
         }
         .jp-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 1px; line-height: 1.1; }
-        .jp-poste-label { font-size: 0.8rem; opacity: 0.85; }
+        .jp-poste-label { font-size: 0.95rem; opacity: 0.85; }
         /* Ligne "X matchs · ⌀ Y min/match" de l'en-tête (v345, taille dédiée pour grossir en Grand
            écran comme .jp-name/.jp-poste-label ci-dessous — sinon minuscule à côté d'un avatar à
            96px, gros vide en dessous, cf. v346). */
-        .jp-tj-line { font-size: 0.75rem; opacity: 0.9; white-space: nowrap; }
+        .jp-tj-line { font-size: 0.9rem; opacity: 0.9; white-space: nowrap; }
         .jp-stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); border-top: 1px solid #E8EFF5; }
         .jp-stat { padding: 1rem 0.5rem; text-align: center; border-right: 1px solid #E8EFF5; }
         .jp-stat:last-child { border-right: none; }
