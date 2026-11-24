@@ -236,11 +236,11 @@
             // ── Carte joueur (droite du terrain) ──────────────────────────────
             const effectiveTJMatchs = matchFilter ? [matchFilter] : (bilanMatchs || MATCHS);
             const tjNom = getTJData(nom, effectiveTJMatchs);
-            // Moyenne de temps de jeu retirée d'ici (v336) — affichée dans badgesHTML pour
-            // éviter le doublon avec le nouveau badge "⌀ min/match" (cf. commentaire plus bas).
+            // Moyenne de temps de jeu fusionnée avec le nombre de matchs sur la même ligne
+            // (v345, retour Romain — la rangée de badges séparée en dessous est retirée).
             const tjHeaderStr = tjNom.matchs
                 ? `<div style="display:flex;gap:1rem;margin-top:0.35rem;font-size:0.75rem;opacity:0.9;">
-                    <span>⏱ ${tjNom.matchs} matchs</span>
+                    <span>⏱ ${tjNom.matchs} matchs  ·  ⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match</span>
                   </div>`
                 : '';
             const jpHeader = `
@@ -250,40 +250,12 @@
                         <div class="jp-name">${displayNom}</div>
                         <div class="jp-poste-label">${posteCode} — ${posteLabel}</div>
                         ${tjHeaderStr}
-                        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-                            <button class="jp-print-btn" onclick="printFicheJoueur()">🖨️ PDF</button>
-                            <button class="jp-print-btn" onclick="exportJoueurPPT()" style="background:rgba(255,255,255,0.25)">📊 PowerPoint</button>
-                        </div>
+                    </div>
+                    <div class="jp-header-actions">
+                        <button class="jp-print-btn" onclick="printFicheJoueur()">🖨️ PDF</button>
+                        <button class="jp-print-btn" onclick="exportJoueurPPT()">📊 PowerPoint</button>
                     </div>
                 </div>`;
-
-            // ── Badges (top att/def, moyenne temps de jeu, progression) ─────────
-            // Les badges de classement par médaille ("X au poste"/"X TJ au poste", rang parmi
-            // les coéquipiers du même poste) ont été retirés à la demande de Romain (retour
-            // direct sur capture — "j'aime pas"), remplacés par la moyenne de temps de jeu
-            // (déjà calculée dans tjNom ci-dessus pour l'en-tête) affichée en pill neutre plutôt
-            // qu'un classement compétitif entre coéquipiers.
-            const staffBadges = [];
-            if (typeof _computeNoteScore === 'function' && posteCode && posteCode !== 'GB' && JOUEURS_TERRAIN) {
-                const tms = JOUEURS_TERRAIN.filter(p => p.poste === posteCode && p.nom !== nom);
-                if (tms.length > 0) {
-                    const mn = _computeNoteScore(nom, posteCode);
-                    if (mn.att > 0 && tms.every(p => _computeNoteScore(p.nom, posteCode).att <= mn.att)) staffBadges.push('⚡ Top ATT au poste');
-                    if (mn.def > 0 && tms.every(p => _computeNoteScore(p.nom, posteCode).def <= mn.def)) staffBadges.push('🛡️ Top DEF au poste');
-                }
-            }
-            if (tjNom.matchs > 0) {
-                staffBadges.push(`⌀ ${Math.round(tjNom.total / tjNom.matchs)} min/match`);
-            }
-            if (typeof computeStreak === 'function') {
-                const str = computeStreak(nom);
-                if (str.dir === 1 && str.streak >= 3) staffBadges.push(`↑ En progression (${str.streak} matchs)`);
-                else if (str.dir === -1 && str.streak >= 3) staffBadges.push(`↓ En baisse (${str.streak} matchs)`);
-            }
-            const badgesHTML = staffBadges.length
-                ? `<div style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;border-bottom:1px solid #F1F5F9">
-                    ${staffBadges.map(b => `<span style="display:inline-flex;align-items:center;background:#EFF6FF;color:#1E3A8A;border:1px solid #BFDBFE;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700">${b}</span>`).join('')}
-                   </div>` : '';
 
             if (posteCode === 'GB') {
                 // Stats gardien : tirs adverses sur lignes club≠FENIX, filtrées sur gardien
@@ -331,7 +303,7 @@
                 const gbNoteColor   = gbNoteTotal > 0 ? 'var(--fenix-success)' : gbNoteTotal < 0 ? 'var(--fenix-danger)' : '#64748B';
                 const gbNoteDisplay = (gbNoteTotal > 0 ? '+' : '') + gbNoteTotal;
 
-                document.getElementById('joueur-panel').innerHTML = jpHeader + badgesHTML + `
+                document.getElementById('joueur-panel').innerHTML = jpHeader + `
                     <div class="jp-stats-grid" style="grid-template-columns:repeat(5,1fr)">
                         <div class="jp-stat"><div class="jp-val">${arrets}/${totalFaced}</div><div class="jp-lbl">Arrêts / Tirs</div></div>
                         <div class="jp-stat"><div class="jp-val" style="color:${gbEffColor}">${gbEff}%</div><div class="jp-lbl">Efficacité</div></div>
@@ -340,7 +312,7 @@
                         <div class="jp-stat"><div class="jp-val" style="color:${gbNoteColor}">${gbNoteDisplay}</div><div class="jp-lbl" style="display:flex;align-items:center;justify-content:center;gap:2px;">Note GB<span title="Score pondéré par zone : arrêt difficile = +3 pts, arrêt moyen = +2 pts, arrêt facile = +1 pt, but concédé = -1 pt" style="cursor:help;background:#CBD5E1;color:#1E293B;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0">i</span></div></div>
                     </div>`;
             } else {
-                document.getElementById('joueur-panel').innerHTML = jpHeader + badgesHTML + `
+                document.getElementById('joueur-panel').innerHTML = jpHeader + `
                     <div class="jp-stats-grid">
                         <div class="jp-stat"><div class="jp-val">${buts}/${total}</div><div class="jp-lbl">But / Tir</div></div>
                         <div class="jp-stat"><div class="jp-val" style="color:${effColor(posteCode, eff, total)}">${eff}%</div><div class="jp-lbl" style="display:flex;align-items:center;justify-content:center;gap:2px;">Efficacité<span class="eff-info-btn" onclick="openEffInfoModal(event,'${posteCode}')">i</span></div></div>
