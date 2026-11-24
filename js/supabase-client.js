@@ -36,15 +36,23 @@ async function replaceTable(table, rows) {
     if (!pk) throw new Error(`replaceTable: table "${table}" non prise en charge`);
 
     if (pk === 'id') {
-        const { data: oldRows, error: oldErr } = await supabaseClient.from(table).select('id');
-        if (oldErr) throw oldErr;
-        const oldIds = (oldRows || []).map(r => r.id);
+        // Bug critique corrigé en v342 : `select('id')` sans `.range()` était plafonné à 1000 lignes
+        // par PostgREST (même limite que fetchAll() avant v332, jamais corrigée ici) — au-delà de
+        // 1000 lignes existantes, seules les 1000 premières étaient supprimées à chaque réimport,
+        // laissant les lignes au-delà s'accumuler indéfiniment (constaté : jusqu'à 3x duplication sur
+        // match_data après plusieurs réimports, toutes les stats de l'app en étaient faussées d'autant).
+        // MAX(id) + suppression "id <= ancien max" couvre n'importe quelle taille de table sans
+        // pagination ni clause IN géante (id auto-incrémenté, jamais fourni par buildMatchDataRows()
+        // ni les autres constructeurs de lignes — tout nouvel id inséré est forcément > l'ancien max).
+        const { data: maxRows, error: maxErr } = await supabaseClient.from(table).select('id').order('id', { ascending: false }).limit(1);
+        if (maxErr) throw maxErr;
+        const maxOldId = maxRows && maxRows.length ? maxRows[0].id : null;
         if (rows.length) {
             const { error: insertErr } = await supabaseClient.from(table).insert(rows);
             if (insertErr) throw insertErr;
         }
-        if (oldIds.length) {
-            const { error: deleteErr } = await supabaseClient.from(table).delete().in('id', oldIds);
+        if (maxOldId !== null) {
+            const { error: deleteErr } = await supabaseClient.from(table).delete().lte('id', maxOldId);
             if (deleteErr) throw deleteErr;
         }
     } else {
